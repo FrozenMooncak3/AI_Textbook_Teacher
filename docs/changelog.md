@@ -94,6 +94,21 @@
 
 ---
 
+## 2026-03-15 | Phase 1 第4步：读前指引 + 原文视图
+
+**完成内容**：进入模块后，AI 生成读前指引（目标/重点/易错点），用户阅读原文后才能进入 Q&A。
+
+**具体操作**：
+- 创建 `src/app/api/modules/[moduleId]/guide/route.ts`：生成读前指引
+- 创建 `src/app/api/modules/[moduleId]/status/route.ts`：PATCH 更新模块学习状态
+- 创建 `src/app/books/[bookId]/modules/[moduleId]/page.tsx`：模块页面（Server Component）
+- 创建 `src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`：读前指引 + 原文视图（Client Component）
+
+**修改的文件**：
+- 新增：4个文件（见上）
+
+---
+
 <!-- 后续每完成一个功能，在此处追加，格式如下：
 
 ## YYYY-MM-DD | Phase X：功能名称
