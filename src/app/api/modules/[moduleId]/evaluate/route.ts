@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
 import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { recordMistakes } from '@/lib/mistakes'
 
 interface Question {
   id: number
@@ -162,6 +163,20 @@ ${qaList.map((q, i) => `
       ORDER BY q.id
     `)
     .all(Number(moduleId))
+
+  // 记录 Q&A 低分错题（满分10分，得分 < 6 算错题）
+  const qaMistakes = parsed.evaluations
+    .filter((ev) => ev.score < 6)
+    .map((ev) => {
+      const q = questions.find((qu) => qu.id === ev.question_id)!
+      return {
+        moduleId: Number(moduleId),
+        questionId: ev.question_id,
+        errorType: ev.error_type,
+        explanation: q.explanation,
+      }
+    })
+  recordMistakes(db, qaMistakes)
 
   // feedback 来自 Claude 返回，合并进结果
   const withFeedback = (result as Array<Record<string, unknown>>).map((row) => {

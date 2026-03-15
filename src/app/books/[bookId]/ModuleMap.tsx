@@ -111,6 +111,17 @@ export default function ModuleMap({ bookId, modules: initialModules }: Props) {
                 <p className="text-xs text-blue-500 mt-1">
                   {STATUS_LABEL[mod.learning_status] ?? mod.learning_status}
                 </p>
+                {mod.pass_status === 'not_passed' && mod.learning_status === 'completed' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      router.push(`/books/${bookId}/modules/${mod.id}/mistakes`)
+                    }}
+                    className="text-xs text-red-500 hover:text-red-700 mt-1 block"
+                  >
+                    查看错题 →
+                  </button>
+                )}
               </div>
             </div>
           </div>

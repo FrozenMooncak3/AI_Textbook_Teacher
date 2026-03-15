@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
 import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { recordMistakes } from '@/lib/mistakes'
 
 interface Question {
   id: number
@@ -143,6 +144,20 @@ ${openQuestions.map((q, i) => {
     'completed',
     Number(moduleId)
   )
+
+  // 记录错题（任何失分题目均记录）
+  const mistakeRecords = allResults
+    .filter((r) => r.score === 0 || (r.score !== null && r.score < 5 && !isMC(questions.find((q) => q.id === r.question_id)!)))
+    .map((r) => {
+      const q = questions.find((qu) => qu.id === r.question_id)!
+      return {
+        moduleId: Number(moduleId),
+        questionId: r.question_id,
+        errorType: r.error_type,
+        explanation: q.explanation,
+      }
+    })
+  recordMistakes(db, mistakeRecords)
 
   // 组装最终结果（含 feedback）
   const finalResults = questions.map((q) => {

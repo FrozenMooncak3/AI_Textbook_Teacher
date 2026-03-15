@@ -140,6 +140,24 @@
 
 ---
 
+## 2026-03-15 | Phase 1 第7步：错题诊断 + 记录
+
+**完成内容**：Q&A 和测试的错题自动写入 mistakes 表，错题诊断页展示 4 种错误类型对应的补救方案。
+
+**具体操作**：
+- 新增 `src/lib/mistakes.ts`：共享错题记录工具函数（防重复写入，自动设置3天后复习日期）
+- 修改 `evaluate/route.ts`：Q&A 得分 < 6 的题自动记录错题
+- 修改 `test-evaluate/route.ts`：测试失分题自动记录错题
+- 新增 `src/app/api/modules/[moduleId]/mistakes/route.ts`：查询错题 API
+- 新增 `src/app/books/[bookId]/modules/[moduleId]/mistakes/page.tsx`：错题诊断页（含4种错误类型补救建议）
+- 修改 `ModuleMap.tsx`：测试未过关时显示"查看错题"入口
+
+**修改的文件**：
+- 新增：3个文件
+- 修改：3个文件
+
+---
+
 <!-- 后续每完成一个功能，在此处追加，格式如下：
 
 ## YYYY-MM-DD | Phase X：功能名称
