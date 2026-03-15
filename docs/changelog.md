@@ -77,6 +77,23 @@
 
 ---
 
+## 2026-03-15 | Phase 1 第3步：模块地图生成 + 展示页面
+
+**完成内容**：上传教材后，AI 分析原文并生成学习模块地图，模块地图页面展示所有模块。
+
+**具体操作**：
+- 创建 `src/lib/claude.ts`：Claude 客户端单例
+- 创建 `src/app/api/modules/route.ts`：POST 生成模块（调用 Claude API）+ GET 查询模块
+- 创建 `src/app/books/[bookId]/page.tsx`：模块地图 Server Component
+- 创建 `src/app/books/[bookId]/ModuleMap.tsx`：Client Component，含生成按钮 + 模块卡片列表
+
+**修改的文件**：
+- 新增：`src/lib/claude.ts`、`src/app/api/modules/route.ts`、`src/app/books/[bookId]/page.tsx`、`src/app/books/[bookId]/ModuleMap.tsx`
+
+**注意**：需要在 `.env.local` 中配置 `ANTHROPIC_API_KEY` 才能调用 Claude API
+
+---
+
 <!-- 后续每完成一个功能，在此处追加，格式如下：
 
 ## YYYY-MM-DD | Phase X：功能名称
