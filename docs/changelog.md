@@ -60,6 +60,23 @@
 
 ---
 
+## 2026-03-15 | Phase 1 第2步：文件上传 API + 上传页面
+
+**完成内容**：用户可上传 PDF 或 TXT 文件，服务端提取文本存入数据库，跳转至教材页。
+
+**具体操作**：
+- 安装 `pdf-parse`（新版 API 使用 `PDFParse` 类）
+- 创建 `src/lib/parse-file.ts`：统一处理 PDF/TXT 文本提取
+- 创建 `src/app/api/books/route.ts`：POST 上传 + GET 列表
+- 创建 `src/app/upload/page.tsx`：上传页面（文件拖选 + 教材名称输入）
+- 验证：API 返回 201，数据库写入正常
+
+**修改的文件**：
+- 新增：`src/lib/parse-file.ts`、`src/app/api/books/route.ts`、`src/app/upload/page.tsx`
+- 修改：`package.json`（新增 pdf-parse 依赖）
+
+---
+
 <!-- 后续每完成一个功能，在此处追加，格式如下：
 
 ## YYYY-MM-DD | Phase X：功能名称
