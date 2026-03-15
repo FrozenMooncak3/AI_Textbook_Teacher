@@ -70,6 +70,20 @@ review_tasks   → 复习任务，属于 module（Phase 2 使用）
 
 ---
 
+## GitHub
+
+- **仓库地址**：`https://github.com/FrozenMooncak3/AI_Textbook_Teacher.git`
+- **分支**：`master`
+- **用途**：代码备份 + 版本历史 + Phase 3 Vercel 部署入口
+- **git 身份**：`zs2911@nyu.edu` / `FrozenMooncak3`
+
+### Commit 规范
+- 每完成一个 Phase 1 步骤后 commit + push
+- commit message 格式：`Phase X 第N步：做了什么`
+- 不得 commit `data/app.db`、`.env.local`、`node_modules`
+
+---
+
 ## 技术红线（违反会导致安全或质量问题）
 
 - 不写 TypeScript `any`，不绕过类型系统
