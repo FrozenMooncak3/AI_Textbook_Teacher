@@ -125,6 +125,21 @@
 
 ---
 
+## 2026-03-15 | Phase 1 第6步：模块测试页面
+
+**完成内容**：完整测试流程——软性提醒 → 出题 → 作答 → AI 评分 → 80% 过关判断。
+
+**具体操作**：
+- `src/app/api/modules/[moduleId]/test-questions/route.ts`：生成测试题（单选+计算+思考，含反模式限制）
+- `src/app/api/modules/[moduleId]/test-evaluate/route.ts`：评分（单选自动判对，开放题 AI 评分），更新 pass_status
+- `src/app/books/[bookId]/modules/[moduleId]/test/page.tsx`：测试页面
+- `src/app/books/[bookId]/modules/[moduleId]/test/TestSession.tsx`：完整状态机（reminder → loading → answering → submitting → results）
+
+**修改的文件**：
+- 新增：4个文件（见上）
+
+---
+
 <!-- 后续每完成一个功能，在此处追加，格式如下：
 
 ## YYYY-MM-DD | Phase X：功能名称
