@@ -75,5 +75,36 @@ function initSchema(db: Database.Database): void {
       due_date  TEXT    NOT NULL,
       status    TEXT    NOT NULL DEFAULT 'pending'
     );
+
+    CREATE TABLE IF NOT EXISTS logs (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+      level      TEXT    NOT NULL DEFAULT 'info',
+      action     TEXT    NOT NULL,
+      details    TEXT    NOT NULL DEFAULT ''
+    );
+
+    CREATE TABLE IF NOT EXISTS conversations (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      book_id          INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+      page_number      INTEGER NOT NULL,
+      screenshot_text  TEXT    NOT NULL DEFAULT '',
+      created_at       TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS messages (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      conversation_id INTEGER NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+      role            TEXT    NOT NULL CHECK(role IN ('user', 'assistant')),
+      content         TEXT    NOT NULL,
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
   `)
+
+  // 迁移：为旧版 modules 表加 guide_json 列
+  try {
+    db.exec(`ALTER TABLE modules ADD COLUMN guide_json TEXT`)
+  } catch {
+    // 列已存在，忽略
+  }
 }
