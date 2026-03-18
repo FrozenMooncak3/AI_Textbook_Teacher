@@ -6,6 +6,24 @@
 
 ---
 
+## 2026-03-15 | Bug 修复批次：OCR + 日志 + 指引持久化
+
+**完成内容**：三个问题一次修完。
+
+**具体操作**：
+- 新增 OCR 支持：`scripts/ocr_pdf.py`（PyMuPDF + Tesseract），`src/lib/parse-file.ts` 改用 Python OCR
+- 新增系统日志：`src/lib/log.ts`、`src/app/api/logs/route.ts`、`src/app/logs/page.tsx`，数据库加 `logs` 表
+- 修复读前指引重复生成：`modules` 表加 `guide_json` 列，`guide/route.ts` 改为先读缓存再生成
+- `ModuleLearning.tsx` 加载时先 GET 已有指引
+- `page.tsx` 改为真实首页（教材列表 + 日志入口）
+- API routes 加 logAction 调用（books、modules、guide）
+- 修复代理问题：`src/lib/claude.ts` 改用 undici ProxyAgent（解决中国区 403）
+- 安装依赖：`undici`、`pdf2json`（测试用）
+
+**修改文件**：`src/lib/db.ts`、`src/lib/log.ts`（新建）、`src/lib/parse-file.ts`、`src/lib/claude.ts`、`scripts/ocr_pdf.py`（新建）、`src/app/api/logs/route.ts`（新建）、`src/app/logs/page.tsx`（新建）、`src/app/api/modules/[moduleId]/guide/route.ts`、`src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`、`src/app/api/books/route.ts`、`src/app/api/modules/route.ts`、`src/app/page.tsx`
+
+---
+
 ## 2026-03-14 | Phase 0：项目地基
 
 **完成内容**：项目 Setup 全部完成，文档体系建立。
@@ -155,6 +173,117 @@
 **修改的文件**：
 - 新增：3个文件
 - 修改：3个文件
+
+---
+
+## 2026-03-17 | 多 Agent 架构建立 + 上传页优化
+
+**完成内容**：引入多 Agent 并行开发架构，同时优化上传页等待体验。
+
+**具体操作**：
+- 创建 `.agents/` 系统文件：Master/Agent1/Agent2 身份文件、工作日志、计划文件、接口契约
+- Agent 2 完成上传页进度提示优化：三阶段状态（idle/uploading/redirecting）+ OCR 等待说明
+
+**修改的文件**：
+- 新增：`.agents/` 下全部文件（MASTER_IDENTITY.md、AGENT1_IDENTITY.md、AGENT2_IDENTITY.md、PLAN.md、API_CONTRACT.md、*_LOG.md）
+- 修改：`src/app/upload/page.tsx`（Agent 2）
+
+---
+
+## 2026-03-18 | Phase 2 M1：PDF API + OCR 修复
+
+**完成内容**：Agent 1 完成 M1 全部后端任务，PDF 阅读器前端开发中。
+
+**具体操作**：
+- 创建 `GET /api/books/[bookId]/pdf` API，返回 PDF 文件流
+- `claude.ts` 加 60s 超时保护
+- `ocr_pdf.py` 加页级 try/except，坏页不再导致全书 OCR 崩溃
+- Agent 2 开始 M1 前端：PDF 阅读器页面（pdf.js 集成）
+
+**修改的文件**：
+- 新增：`src/app/api/books/[bookId]/pdf/route.ts`（Agent 1）、`src/app/books/[bookId]/reader/page.tsx`（Agent 2，进行中）
+- 修改：`src/lib/claude.ts`、`scripts/ocr_pdf.py`（Agent 1）
+
+---
+
+## 2026-03-18 | Phase 2 M2：截图问 AI 后端
+
+**完成内容**：Agent 1 完成 M2 全部后端任务。截图 OCR + AI 对话的完整链路可用。
+
+**具体操作**：
+- `db.ts` 新增 `conversations` 和 `messages` 两张表
+- 创建 `POST /api/books/[bookId]/screenshot-ask`：base64 截图 → PaddleOCR → Claude 解读 → 存对话记录
+- 创建 `POST /api/conversations/[conversationId]/messages`：带历史上下文追问
+- 创建 `scripts/ocr_image.py`：截图 OCR 专用脚本
+- 截图 OCR 速度验证：半页裁剪 3.97s（目标 < 5s），通过
+
+**修改的文件**：
+- 新增：`src/app/api/books/[bookId]/screenshot-ask/route.ts`、`src/app/api/conversations/[conversationId]/messages/route.ts`、`scripts/ocr_image.py`
+- 修改：`src/lib/db.ts`
+
+---
+
+## 2026-03-18 | Phase 2 M3：OCR 后台化 + 逐页进度
+
+**完成内容**：Agent 1 完成 M3。OCR 进度可被前端实时轮询。
+
+**具体操作**：
+- `db.ts` 新增 `ocr_current_page` 和 `ocr_total_pages` 列（ALTER TABLE 迁移）
+- `ocr_pdf.py` 改为逐页更新进度（原来每 10 页），启动时写入总页数
+- `GET /api/books/[bookId]/status` 扩展：返回 `{ parseStatus, ocrCurrentPage, ocrTotalPages }`
+- 兼容旧数据：`parse_status='done'` 映射为 `'completed'`
+
+**修改的文件**：
+- 修改：`src/lib/db.ts`、`scripts/ocr_pdf.py`、`src/app/api/books/[bookId]/status/route.ts`
+
+---
+
+## 2026-03-18 | Phase 2 M4：目录导航 TOC API
+
+**完成内容**：Agent 1 完成 M4。PyMuPDF 提取 PDF 内嵌书签。
+
+**具体操作**：
+- 创建 `scripts/extract_toc.py`：从 PDF 提取书签目录，输出 JSON
+- 创建 `GET /api/books/[bookId]/toc`：返回 `{ items: [{title, page, level}] }`
+- 修复 Windows 环境 Python stdout 中文编码问题
+
+**修改的文件**：
+- 新增：`scripts/extract_toc.py`、`src/app/api/books/[bookId]/toc/route.ts`
+
+---
+
+## 2026-03-18 | 截图 OCR 修复：常驻 HTTP 服务
+
+**完成内容**：修复截图问 AI 的 OCR 超时问题。
+
+**具体操作**：
+- 根本原因：每次 `execFile` 重新加载 PaddleOCR 模型（10-20s），撞 30s 超时
+- 新增 `scripts/ocr_server.py`：PaddleOCR 常驻 HTTP 服务（端口 9876），模型只加载一次
+- `screenshot-ask` API 改为 `http.request` 直连本地 OCR 服务，绕过 `HTTP_PROXY`
+- `ocrImage()` 的 catch 块加 `logAction` 错误日志（不再静默失败）
+- 超时 30s → 60s
+
+**修改的文件**：
+- 新增：`scripts/ocr_server.py`
+- 修改：`src/app/api/books/[bookId]/screenshot-ask/route.ts`
+
+**备注**：启动方式 `python scripts/ocr_server.py`，需在 Next.js 之前或同时启动
+
+---
+
+## 2026-03-18 | Phase 2 M5：高亮标注 + 页面笔记
+
+**完成内容**：Agent 1 完成 M5。数据库表 + 完整 CRUD API。
+
+**具体操作**：
+- `db.ts` 新增 `highlights` 表（id, book_id, page_number, text, color, rects_json, created_at）
+- `db.ts` 新增 `notes` 表（id, book_id, page_number, content, created_at, updated_at）
+- `highlights` API：GET（按页筛选）、POST（新增）、DELETE
+- `notes` API：GET（按页筛选）、POST、PUT（编辑）、DELETE
+
+**修改的文件**：
+- 新增：`src/app/api/books/[bookId]/highlights/route.ts`、`src/app/api/books/[bookId]/notes/route.ts`
+- 修改：`src/lib/db.ts`
 
 ---
 
