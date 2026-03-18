@@ -4,21 +4,55 @@ import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
 import { logAction } from '@/lib/log'
 import { writeFile, unlink } from 'fs/promises'
 import { join } from 'path'
-import { execFile } from 'child_process'
-import { promisify } from 'util'
 import { tmpdir } from 'os'
+import http from 'http'
 
-const execFileAsync = promisify(execFile)
+const OCR_SERVER_PORT = 9876
 
+/** 直接用 http.request 调用本地 OCR 服务，绕过 HTTP_PROXY 环境变量 */
 async function ocrImage(imagePath: string): Promise<string> {
-  const scriptPath = join(process.cwd(), 'scripts', 'ocr_image.py')
   try {
-    const { stdout } = await execFileAsync('python', [scriptPath, imagePath], {
-      timeout: 30_000,
-      maxBuffer: 1024 * 1024,
+    const result = await new Promise<string>((resolve, reject) => {
+      const postData = JSON.stringify({ image_path: imagePath })
+      const req = http.request(
+        {
+          hostname: '127.0.0.1',
+          port: OCR_SERVER_PORT,
+          path: '/ocr',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData),
+          },
+          timeout: 60_000,
+        },
+        (res) => {
+          let data = ''
+          res.on('data', (chunk: Buffer) => { data += chunk.toString() })
+          res.on('end', () => {
+            try {
+              const json = JSON.parse(data) as { text?: string; error?: string }
+              if (res.statusCode !== 200 || json.error) {
+                logAction('截图OCR失败', `${imagePath}: ${json.error ?? `HTTP ${res.statusCode}`}`, 'error')
+                resolve('')
+              } else {
+                resolve(json.text ?? '')
+              }
+            } catch {
+              logAction('截图OCR失败', `${imagePath}: 响应解析失败`, 'error')
+              resolve('')
+            }
+          })
+        }
+      )
+      req.on('error', (e) => reject(e))
+      req.on('timeout', () => { req.destroy(); reject(new Error('OCR 请求超时')) })
+      req.write(postData)
+      req.end()
     })
-    return stdout.trim()
-  } catch {
+    return result
+  } catch (e) {
+    logAction('截图OCR失败', `${imagePath}: ${String(e)}`, 'error')
     return ''
   }
 }

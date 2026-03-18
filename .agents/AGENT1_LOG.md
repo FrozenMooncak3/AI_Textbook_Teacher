@@ -44,3 +44,11 @@
 - 已验证：bookId=5 返回 37 个书签，bookId=6（无书签）返回空数组，bookId=999 返回 404
 - 接口符合 API_CONTRACT.md 格式，额外返回 level 字段方便前端做缩进
 
+[2026-03-18] [DONE] 截图 OCR 修复：常驻服务 + 错误日志 | scripts/ocr_server.py, src/app/api/books/[bookId]/screenshot-ask/route.ts
+- 新增 scripts/ocr_server.py：PaddleOCR 常驻 HTTP 服务（端口 9876），模型只加载一次
+- screenshot-ask API 改为调用本地 OCR HTTP 服务，用 http.request 绕过 HTTP_PROXY
+- ocrImage() 的 catch 块加 logAction 错误日志
+- 超时从 30s 提升到 60s
+- 根本原因：每次 execFile 都重新加载 PaddleOCR 模型（10-20s），撞 30s 超时
+- 启动方式：`python scripts/ocr_server.py`（需在 Next.js 之前或同时启动）
+
