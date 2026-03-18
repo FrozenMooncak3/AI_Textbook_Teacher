@@ -35,3 +35,12 @@
 - POST /api/books 上传流程无需改动，已是后台 spawn 模式
 - 已验证：bookId=6 OCR 运行中，API 返回 {"parseStatus":"processing","ocrCurrentPage":1,"ocrTotalPages":189}
 
+[2026-03-18] [START] M4 Agent 1：目录导航 TOC API
+
+[2026-03-18] [DONE] M4 Agent 1 任务全部完成 | scripts/extract_toc.py, src/app/api/books/[bookId]/toc/route.ts
+- 创建 extract_toc.py：用 PyMuPDF 提取 PDF 内嵌书签，输出 JSON
+- 创建 GET /api/books/[bookId]/toc API：调用 Python 脚本，返回 { items: [{title, page, level}] }
+- 修复 Windows 环境 Python stdout 中文编码问题（PYTHONIOENCODING=utf-8）
+- 已验证：bookId=5 返回 37 个书签，bookId=6（无书签）返回空数组，bookId=999 返回 404
+- 接口符合 API_CONTRACT.md 格式，额外返回 level 字段方便前端做缩进
+
