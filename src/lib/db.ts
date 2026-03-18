@@ -107,4 +107,16 @@ function initSchema(db: Database.Database): void {
   } catch {
     // 列已存在，忽略
   }
+
+  // 迁移：books 表加 OCR 进度列
+  try {
+    db.exec(`ALTER TABLE books ADD COLUMN ocr_current_page INTEGER NOT NULL DEFAULT 0`)
+  } catch {
+    // 列已存在，忽略
+  }
+  try {
+    db.exec(`ALTER TABLE books ADD COLUMN ocr_total_pages INTEGER NOT NULL DEFAULT 0`)
+  } catch {
+    // 列已存在，忽略
+  }
 }

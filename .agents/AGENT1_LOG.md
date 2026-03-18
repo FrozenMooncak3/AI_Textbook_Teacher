@@ -25,3 +25,13 @@
 - 所有接口符合 API_CONTRACT.md 格式，错误响应统一 {error, code}
 - NOTE: reader/page.tsx 有 SSR 错误（ssr:false in Server Component），属 Agent 2 文件边界，已记录未修改
 
+[2026-03-18] [START] M3 Agent 1：OCR 后台化 + 进度 API
+
+[2026-03-18] [DONE] M3 Agent 1 任务全部完成 | src/lib/db.ts, scripts/ocr_pdf.py, src/app/api/books/[bookId]/status/route.ts
+- db.ts 新增 ocr_current_page 和 ocr_total_pages 两列（ALTER TABLE 迁移）
+- ocr_pdf.py 改为逐页更新 ocr_current_page（原来每 10 页），启动时写入 ocr_total_pages
+- status API 扩展：返回 { parseStatus, ocrCurrentPage, ocrTotalPages }，符合 API_CONTRACT.md
+- status API 兼容旧数据：parse_status='done' 映射为 'completed'，'error' 映射为 'failed'
+- POST /api/books 上传流程无需改动，已是后台 spawn 模式
+- 已验证：bookId=6 OCR 运行中，API 返回 {"parseStatus":"processing","ocrCurrentPage":1,"ocrTotalPages":189}
+
