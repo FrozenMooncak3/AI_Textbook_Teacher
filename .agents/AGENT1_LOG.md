@@ -52,3 +52,13 @@
 - 根本原因：每次 execFile 都重新加载 PaddleOCR 模型（10-20s），撞 30s 超时
 - 启动方式：`python scripts/ocr_server.py`（需在 Next.js 之前或同时启动）
 
+[2026-03-18] [START] M5 Agent 1：高亮标注 + 页面笔记（数据库 + CRUD API）
+
+[2026-03-18] [DONE] M5 Agent 1 任务全部完成 | src/lib/db.ts, src/app/api/books/[bookId]/highlights/route.ts, src/app/api/books/[bookId]/notes/route.ts
+- db.ts 新增 highlights 表（id, book_id, page_number, text, color, rects_json, created_at）
+- db.ts 新增 notes 表（id, book_id, page_number, content, created_at, updated_at）
+- highlights API：GET（按页筛选）、POST（新增）、DELETE（按 id 删除）
+- notes API：GET（按页筛选）、POST（新增）、PUT（编辑）、DELETE（按 id 删除）
+- 所有接口符合统一错误格式 {error, code}
+- 已验证：创建、查询、删除均正常
+

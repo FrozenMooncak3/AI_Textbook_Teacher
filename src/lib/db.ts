@@ -99,6 +99,25 @@ function initSchema(db: Database.Database): void {
       content         TEXT    NOT NULL,
       created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS highlights (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      book_id     INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+      page_number INTEGER NOT NULL,
+      text        TEXT    NOT NULL,
+      color       TEXT    NOT NULL DEFAULT 'yellow',
+      rects_json  TEXT    NOT NULL DEFAULT '[]',
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS notes (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      book_id     INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+      page_number INTEGER NOT NULL,
+      content     TEXT    NOT NULL,
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
   `)
 
   // 迁移：为旧版 modules 表加 guide_json 列
