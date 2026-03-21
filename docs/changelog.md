@@ -6,6 +6,22 @@
 
 ---
 
+## 2026-03-21 | 架构重构：从多 Agent 迁移到 CCB + Skill 体系
+
+- 重写 CLAUDE.md（154行 → 79行，删除流程细节，只保留身份/规则/CCB角色）
+- 新建 AGENTS.md（Codex 后端指令，含数据库表结构和调试信息）
+- 新建 GEMINI.md（Gemini 前端指令）
+- 创建自定义 skill：debug-ocr（OCR 排查流程）、api-contract（接口契约更新规范）
+- 更新 .gitignore（忽略 CCB 会话文件）
+- 旧 Agent 文件（.agents/*_IDENTITY.md、*_LOG.md）冻结保留
+
+修改文件：CLAUDE.md, .gitignore, docs/project_status.md, docs/changelog.md, docs/decisions.md
+新增文件：AGENTS.md, GEMINI.md, .claude/skills/debug-ocr/SKILL.md, .claude/skills/api-contract/SKILL.md
+设计文档：docs/superpowers/specs/2026-03-21-architecture-redesign-design.md
+实施计划：docs/superpowers/plans/2026-03-21-architecture-redesign.md
+
+---
+
 ## 2026-03-15 | Bug 修复批次：OCR + 日志 + 指引持久化
 
 **完成内容**：三个问题一次修完。

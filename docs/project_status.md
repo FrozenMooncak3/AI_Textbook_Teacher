@@ -5,11 +5,18 @@
 
 ---
 
-## 当前状态（2026-03-18）
+## 当前状态（2026-03-21）
 
 **阶段**：Phase 2 — PDF 阅读器 + 截图问 AI
 
-**架构**：多 Agent 并行开发（Master 统筹 + Agent 1 后端 + Agent 2 前端）
+**架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + ECC skill 体系
+
+**架构重构已完成 ✅**：
+- CLAUDE.md 瘦身（154行 → 79行），只保留身份/规则/CCB角色
+- 新建 AGENTS.md（Codex 后端指令）和 GEMINI.md（Gemini 前端指令）
+- 创建自定义 skill：debug-ocr、api-contract
+- 旧 Agent 文件（.agents/*_IDENTITY.md、*_LOG.md）冻结保留
+- 设计文档：docs/superpowers/specs/2026-03-21-architecture-redesign-design.md
 
 **Agent 1 后端进度（M1-M5 全部完成 ✅）**：
 - M1 ✅ PDF 文件访问 API + claude.ts 超时保护 + OCR 坏页修复
@@ -19,12 +26,22 @@
 - M5 ✅ 高亮标注 + 页面笔记（highlights/notes 表 + CRUD API）
 - 额外 ✅ 截图 OCR 改为常驻 HTTP 服务（解决模型重复加载超时问题）
 
-**Agent 2 前端进度**：
-- M1 进行中：PDF 阅读器页面（pdf.js + 连续翻页 + 工具栏）🔧
+**Agent 2 前端进度（M1-M4 完成，M5 待开发）**：
+- M1 ✅ PDF 阅读器（连续滚动 + 单页切换 + 工具栏 + pdf.js 渲染冲突修复）
+- M2 ✅ 截图问 AI 前端（框选 + 对话框 + 追问，已对接真实 API）
+- M3 ✅ OCR 进度条 + 上传后直接跳转阅读器
+- M4 ✅ 目录导航侧边栏（可折叠 + 位置高亮 + 跳转）
+- M5 🔧 高亮标注 + 页面笔记前端（待开发）
+
+**待解决**：
+- ⚠️ OCR 进度条停在 1/189 不动（需排查：OCR 脚本卡住 or 前端轮询问题）
+- ⚠️ 截图 OCR 识别失败（AI 返回"无法识别"，需排查 ocr_server.py 是否运行）
+- ⚠️ 缺少历史对话列表 API（Agent 2 NOTE：需 Agent 1 提供 GET /api/books/[bookId]/conversations）
 
 **下一步**：
-- Agent 2 完成 M1-M5 前端对接
-- Agent 1 后端已就绪，等前端联调
+- 排查 OCR 进度条 + 截图 OCR 两个 bug
+- Agent 2 完成 M5 前端（高亮 + 笔记）
+- Agent 1 补充历史对话列表 API
 
 **详细计划见**：`.agents/PLAN.md`
 

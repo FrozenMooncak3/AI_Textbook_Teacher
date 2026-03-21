@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-03-21：架构迁移到 CCB + Skill 体系
+
+**决定**：从多 Agent 文件协调（Master + Agent1 + Agent2）迁移到 CCB 多模型协作（Claude + Codex + Gemini）+ Superpowers/ECC skill 体系。CLAUDE.md 瘦身为身份+规则，流程全部移到 skill。
+
+**理由**：消除手动搬运对话的痛苦；Prompt/Skill 分离让指令文件稳定、流程可插拔；CCB 提供跨模型实时通信。
+
+**可逆性**：容易反悔——旧文件全部保留，回退只需 `git checkout` 恢复旧版本。
+
+**设计文档**：`docs/superpowers/specs/2026-03-21-architecture-redesign-design.md`
+
+**状态**：已关闭
+
+---
+
 ## 2026-03-14：Q&A 交互方式
 
 **决定**：一次只显示一道题，下方有回答输入框，点"下一题"进入下一题，全部答完后 AI 逐题评价。已答题目不可修改。
