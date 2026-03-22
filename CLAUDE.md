@@ -42,8 +42,21 @@
 | **Codex** | 后端工程师 | `AGENTS.md` | `src/app/api/**`、`src/lib/**`、`scripts/**` |
 | **Gemini** | 前端工程师 | `GEMINI.md` | `src/app/**`（非 api）、`src/components/**` |
 
+- **语言规则**：派发指令给 Codex / Gemini 时一律使用英文；用户沟通用中文，Claude 负责翻译
 - **GitHub**：`https://github.com/FrozenMooncak3/AI_Textbook_Teacher.git`，分支 `master`，git 身份 `zs2911@nyu.edu` / `FrozenMooncak3`
 - **提交后必须 push**：commit 后必须 `git push origin master`，不得等用户提醒
+
+### CCB 模型调度规则
+
+根据任务复杂度分 3 档，Claude 派发指令时必须标注推荐档位 `[轻/标准/重]`，由用户切换模型：
+
+| 档位 | Codex 配置 | Gemini 配置 | 适用场景 |
+|------|-----------|-------------|---------|
+| **轻档** | gpt-5.4-mini, medium | gemini-2.5-flash | 计划里代码写好了照抄、简单重命名、模板生成、格式调整 |
+| **标准档** | gpt-5.4-mini, high | gemini-2.5-pro | 有明确需求的常规开发、小范围重构、已知 pattern 的 API 实现 |
+| **重档** | gpt-5.4, high | gemini-2.5-pro | Bug 诊断（原因未知）、新 API 设计、跨模块重构、需要独立判断的架构决策 |
+
+原则：默认用轻档，只在需要时升档。不用 xhigh——边际收益低，额度消耗高。
 
 ## Claude 的文件边界
 - **可写**：`docs/**`、`.claude/skills/**`、`CLAUDE.md`、`AGENTS.md`、`GEMINI.md`

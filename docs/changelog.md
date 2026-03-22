@@ -323,6 +323,40 @@
 
 ---
 
+## 2026-03-22 | M0 Task 1：数据库 schema 重写
+
+**完成内容**：19 张 KP 中心化表的破坏性迁移，替换旧的 12 张表 schema。
+
+**具体操作**：
+- 重写 `src/lib/db.ts` 的 `initSchema()`，用 19 张表的完整 SQL 替换旧建表逻辑
+- 删除旧表定义（questions, user_responses, review_tasks, notes）
+- 删除所有旧的 ALTER TABLE 迁移代码块
+- 新增表：knowledge_points, clusters, reading_notes, module_notes, qa_questions, qa_responses, test_papers, test_questions, test_responses, review_schedule, review_records, prompt_templates
+- 保留表（同结构或扩展）：books, modules, conversations, messages, highlights, logs, mistakes
+
+**修改的文件**：
+- 修改：`src/lib/db.ts`
+
+---
+
+## 2026-03-22 | M0 Task 2：Prompt 模板系统
+
+**完成内容**：创建 prompt 模板加载/渲染系统 + 11 个种子模板（覆盖 5 个 AI 角色的全部阶段）。
+
+**具体操作**：
+- 新增 `src/lib/prompt-templates.ts`：getActiveTemplate / renderTemplate / getPrompt 三个函数
+- 新增 `src/lib/seed-templates.ts`：11 个种子模板定义 + seedTemplates() 幂等插入
+- 修改 `src/lib/db.ts`：import seedTemplates 并在 initSchema() 末尾调用
+- 新增 `scripts/test-prompt-templates.ts`：renderTemplate 单元测试
+
+**修改的文件**：
+- 新增：`src/lib/prompt-templates.ts`、`src/lib/seed-templates.ts`、`scripts/test-prompt-templates.ts`
+- 修改：`src/lib/db.ts`
+
+**备注**：首次写入时遇到 Windows UTF-8/GBK 编码问题，中文模板内容变为乱码，通过第二次 commit 修复（M0-T2-fix）。
+
+---
+
 <!-- 后续每完成一个功能，在此处追加，格式如下：
 
 ## YYYY-MM-DD | Phase X：功能名称
