@@ -8,6 +8,14 @@
 ## 每次会话开始时
 1. 读 `docs/project_status.md` — 当前状态与下一步
 2. 读 `docs/decisions.md` — 已关闭的决策（不重新讨论）
+3. 读 `docs/journal/INDEX.md` — 会话日志索引（跟踪未解决事项和想法停车场）
+
+## 想法与日志处理
+当用户在开发过程中提出新想法或重要 insight 时：
+1. **先评估**：这个想法是否正确？适合当前阶段还是未来？
+2. **当前阶段**：纳入当前计划
+3. **未来做 / 需要记住**：通过 journal skill 写入 `docs/journal/`，标注类型和状态
+4. 不得跳过评估直接执行，也不得不记录就忽略
 
 ## 技术栈
 - **框架**: Next.js 15 (App Router) + React + Tailwind CSS
@@ -19,7 +27,7 @@
 2. **Q&A 已答的题不可修改**，只能继续向前
 3. **测试阶段禁止查看笔记和 Q&A 记录**，界面上不得出现相关入口
 4. **模块过关线是 80%**，这是硬规则，不是建议值，不得改为软提示
-5. **Q&A 是一次一题**：显示一题 → 用户作答 → 点"下一题" → 全部答完后 AI 逐题评价
+5. **Q&A 是一次一题 + 即时反馈**：显示一题 → 用户作答 → 立即显示评分和解析 → 点"下一题"继续
 
 ## 技术红线
 - 不写 TypeScript `any`，不绕过类型系统
@@ -30,26 +38,28 @@
 ## CCB 角色分工
 | 角色 | 身份 | 指令文件 | 文件边界 |
 |------|------|----------|----------|
-| **Claude** | PM + 架构师（不写业务代码） | 本文件 | `docs/**`、`.agents/PLAN.md`、`.agents/API_CONTRACT.md` |
+| **Claude** | PM + 架构师（不写业务代码） | 本文件 | `docs/**`、`CLAUDE.md`、`AGENTS.md`、`GEMINI.md` |
 | **Codex** | 后端工程师 | `AGENTS.md` | `src/app/api/**`、`src/lib/**`、`scripts/**` |
 | **Gemini** | 前端工程师 | `GEMINI.md` | `src/app/**`（非 api）、`src/components/**` |
 
 - **GitHub**：`https://github.com/FrozenMooncak3/AI_Textbook_Teacher.git`，分支 `master`，git 身份 `zs2911@nyu.edu` / `FrozenMooncak3`
+- **提交后必须 push**：commit 后必须 `git push origin master`，不得等用户提醒
 
 ## Claude 的文件边界
-- **可写**：`docs/**`、`.agents/PLAN.md`、`.agents/API_CONTRACT.md`、`CLAUDE.md`、`AGENTS.md`、`GEMINI.md`
+- **可写**：`docs/**`、`.claude/skills/**`、`CLAUDE.md`、`AGENTS.md`、`GEMINI.md`
 - **不写**：`src/**`、`scripts/**`、`package.json`
 
 ## 协调文件
-- `.agents/PLAN.md` — 任务拆解与排期
-- `.agents/API_CONTRACT.md` — 前后端接口契约
+- `docs/superpowers/plans/` — 里程碑实现计划
+- `docs/superpowers/specs/` — 设计文稿
 - `docs/changelog.md` — 变更日志
+- `docs/journal/` — 会话日志（想法、决策推理、待跟进）
 
 ## 禁止事项
 - 禁止引入多用户 / 登录 / 注册系统
 - 禁止添加 MVP 范围外的功能（社区、个性化推荐、游戏化等）
 - 禁止未经确认就修改产品不变量
-- 禁止在未更新三个日志文件的情况下声称任务完成
+- 禁止在未更新 `docs/project_status.md` 和 `docs/changelog.md` 的情况下声称任务完成
 
 ## 与项目负责人的沟通协议
 

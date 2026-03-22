@@ -303,6 +303,26 @@
 
 ---
 
+## 2026-03-22 | M0 Task 0：结构化错误处理 + 服务层分离
+
+**完成内容**：基于 Harness 架构调研，建立三级错误分类 + handleRoute 包装函数 + 服务层模式，为 M1-M5 的代码质量打地基。
+
+**具体操作**：
+- 新增 `src/lib/errors.ts`：UserError（用户错误，400/404/409/422）+ SystemError（系统错误，500）
+- 新增 `src/lib/handle-route.ts`：handleRoute 包装函数，自动将 throw 的错误映射为统一 JSON 响应 `{ success, data?, error?, code? }`
+- 新增 `src/lib/services/book-service.ts`：第一个服务模块（list + getById），示范"薄路由 + 胖服务层"模式
+- 改造 `src/app/api/books/route.ts`：GET 重构为 handleRoute + bookService（POST 不动）
+- 更新 `AGENTS.md`：新增编码规范章节（错误处理 / 路由结构 / 服务模块），修复产品不变量 #5（批量反馈 → 即时反馈）
+
+**修改的文件**：
+- 新增：`src/lib/errors.ts`、`src/lib/handle-route.ts`、`src/lib/services/book-service.ts`
+- 修改：`src/app/api/books/route.ts`、`AGENTS.md`
+
+**设计文档**：`docs/superpowers/specs/2026-03-22-error-handling-service-layer-design.md`
+**实现计划**：`docs/superpowers/plans/2026-03-22-m0-task0-error-handling-service-layer.md`
+
+---
+
 <!-- 后续每完成一个功能，在此处追加，格式如下：
 
 ## YYYY-MM-DD | Phase X：功能名称
