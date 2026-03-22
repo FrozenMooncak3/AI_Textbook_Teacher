@@ -1,39 +1,37 @@
-import Database from 'better-sqlite3'
+import { getDb } from './db.ts'
 
-interface MistakeRecord {
+interface RecordMistakeParams {
   moduleId: number
-  questionId: number
-  errorType: string | null
-  explanation: string
+  knowledgePoint: string
+  kpId?: number
+  errorType: 'blind_spot' | 'procedural' | 'confusion' | 'careless'
+  source?: 'test' | 'qa' | 'review'
+  remediation?: string
 }
 
-function nextReviewDate(daysFromNow: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() + daysFromNow)
-  return d.toISOString().split('T')[0]
+export function recordMistake(params: RecordMistakeParams): void {
+  const db = getDb()
+  db.prepare(`
+    INSERT INTO mistakes (module_id, kp_id, knowledge_point, error_type, source, remediation)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(
+    params.moduleId,
+    params.kpId ?? null,
+    params.knowledgePoint,
+    params.errorType,
+    params.source ?? 'test',
+    params.remediation ?? null
+  )
 }
 
-export function recordMistakes(db: Database.Database, records: MistakeRecord[]): void {
-  if (records.length === 0) return
+export function getUnresolvedMistakes(moduleId: number): unknown[] {
+  const db = getDb()
+  return db.prepare(
+    'SELECT * FROM mistakes WHERE module_id = ? AND is_resolved = 0 ORDER BY created_at DESC'
+  ).all(moduleId)
+}
 
-  const insert = db.prepare(
-    'INSERT INTO mistakes (module_id, question_id, knowledge_point, next_review_date) VALUES (?, ?, ?, ?)'
-  )
-  // 已存在则跳过（同一题不重复记录）
-  const exists = db.prepare(
-    'SELECT id FROM mistakes WHERE module_id = ? AND question_id = ?'
-  )
-
-  const insertAll = db.transaction(() => {
-    for (const r of records) {
-      const already = exists.get(r.moduleId, r.questionId)
-      if (!already) {
-        const knowledgePoint = r.errorType
-          ? `[${r.errorType}] ${r.explanation.slice(0, 100)}`
-          : r.explanation.slice(0, 100)
-        insert.run(r.moduleId, r.questionId, knowledgePoint, nextReviewDate(3))
-      }
-    }
-  })
-  insertAll()
+export function resolveMistake(mistakeId: number): void {
+  const db = getDb()
+  db.prepare('UPDATE mistakes SET is_resolved = 1 WHERE id = ?').run(mistakeId)
 }
