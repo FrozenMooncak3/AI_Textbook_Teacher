@@ -357,6 +357,61 @@
 
 ---
 
+## 2026-03-22 | M0 Task 3：更新 mistakes.ts
+
+**完成内容**：重写 mistakes 模块适配新 schema（新增 kpId、errorType、source、remediation 字段）。
+
+**具体操作**：
+- 重写 `src/lib/mistakes.ts`：RecordMistakeParams 接口 + recordMistake / getUnresolvedMistakes / resolveMistake 三个函数
+
+**修改的文件**：
+- 修改：`src/lib/mistakes.ts`
+
+---
+
+## 2026-03-22 | M0 Task 4：修复 OCR 进度条 bug
+
+**完成内容**：OCR 进度条从停在 1/189 修复为逐页正常更新。
+
+**具体操作**：
+- `scripts/ocr_pdf.py`：改为命令行参数接收 `--book-id` 和 `--db-path`，每页 try/except + 每页更新进度
+- `src/app/api/books/route.ts`：POST 改用 `spawn` 显式传 DB 路径，捕获 stderr，处理非零退出码
+- `src/app/api/books/[bookId]/status/route.ts`：加类型接口，映射 done→completed / error→failed
+
+**修改的文件**：
+- 修改：`scripts/ocr_pdf.py`、`src/app/api/books/route.ts`、`src/app/api/books/[bookId]/status/route.ts`
+
+---
+
+## 2026-03-22 | M0 Task 5：修复截图 OCR bug
+
+**完成内容**：截图问 AI 从"无法识别"修复为正常回答（OCR 失败时用 Claude vision 兜底）。
+
+**具体操作**：
+- `scripts/ocr_server.py`：加图片预处理（EXIF 旋转、对比度增强、小图放大）+ 置信度过滤（<0.35 丢弃）
+- `src/app/api/books/[bookId]/screenshot-ask/route.ts`：重写为双通道——OCR 结果可用时作为辅助文本，不可用时直接把 base64 截图发给 Claude vision API，prompt 告诉 Claude 用图片回答
+
+**修改的文件**：
+- 修改：`scripts/ocr_server.py`、`src/app/api/books/[bookId]/screenshot-ask/route.ts`
+
+---
+
+## 2026-03-22 | 架构优化：CCB 操作规范抽离 + claudemd-check 动态化
+
+**完成内容**：CLAUDE.md 瘦身，CCB 操作细节抽到独立文件，claudemd-check skill 改为动态读取 CLAUDE.md 而非硬编码规则。
+
+**具体操作**：
+- 新建 `docs/ccb-protocol.md`：语言规则、任务派发流程、模型调度、Git 规则、Review 规则
+- 精简 CLAUDE.md 的 CCB 部分（22 行 → 5 行），加指针到 ccb-protocol.md
+- CLAUDE.md 必读文件新增第 4 项：`docs/ccb-protocol.md`
+- 重写 `claudemd-check` skill：不再硬编码检查项，运行时读 CLAUDE.md 动态生成检查清单
+
+**修改的文件**：
+- 新增：`docs/ccb-protocol.md`
+- 修改：`CLAUDE.md`、`.claude/skills/claudemd-check/SKILL.md`
+
+---
+
 <!-- 后续每完成一个功能，在此处追加，格式如下：
 
 ## YYYY-MM-DD | Phase X：功能名称

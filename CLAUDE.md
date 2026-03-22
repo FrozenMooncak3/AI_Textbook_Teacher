@@ -9,6 +9,7 @@
 1. 读 `docs/project_status.md` — 当前状态与下一步
 2. 读 `docs/decisions.md` — 已关闭的决策（不重新讨论）
 3. 读 `docs/journal/INDEX.md` — 会话日志索引（跟踪未解决事项和想法停车场）
+4. 读 `docs/ccb-protocol.md` — CCB 多模型协作操作规范
 
 ## 想法与日志处理
 当用户在开发过程中提出新想法或重要 insight 时：
@@ -42,21 +43,7 @@
 | **Codex** | 后端工程师 | `AGENTS.md` | `src/app/api/**`、`src/lib/**`、`scripts/**` |
 | **Gemini** | 前端工程师 | `GEMINI.md` | `src/app/**`（非 api）、`src/components/**` |
 
-- **语言规则**：派发指令给 Codex / Gemini 时一律使用英文；用户沟通用中文，Claude 负责翻译
-- **GitHub**：`https://github.com/FrozenMooncak3/AI_Textbook_Teacher.git`，分支 `master`，git 身份 `zs2911@nyu.edu` / `FrozenMooncak3`
-- **提交后必须 push**：commit 后必须 `git push origin master`，不得等用户提醒
-
-### CCB 模型调度规则
-
-根据任务复杂度分 3 档，Claude 派发指令时必须标注推荐档位 `[轻/标准/重]`，由用户切换模型：
-
-| 档位 | Codex 配置 | Gemini 配置 | 适用场景 |
-|------|-----------|-------------|---------|
-| **轻档** | gpt-5.4-mini, medium | gemini-2.5-flash | 计划里代码写好了照抄、简单重命名、模板生成、格式调整 |
-| **标准档** | gpt-5.4-mini, high | gemini-2.5-pro | 有明确需求的常规开发、小范围重构、已知 pattern 的 API 实现 |
-| **重档** | gpt-5.4, high | gemini-2.5-pro | Bug 诊断（原因未知）、新 API 设计、跨模块重构、需要独立判断的架构决策 |
-
-原则：默认用轻档，只在需要时升档。不用 xhigh——边际收益低，额度消耗高。
+操作规范（语言、派发流程、模型调度、Git、Review）见 `docs/ccb-protocol.md`。
 
 ## Claude 的文件边界
 - **可写**：`docs/**`、`.claude/skills/**`、`CLAUDE.md`、`AGENTS.md`、`GEMINI.md`

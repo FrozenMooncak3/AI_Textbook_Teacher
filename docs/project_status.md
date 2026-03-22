@@ -21,7 +21,13 @@
 
 **M0 Task 2（已完成）**：Prompt 模板系统 — 11 个种子模板 + getPrompt API（含编码修复）
 
-**下一步**：M0 Task 3（更新 mistakes.ts）
+**M0 Task 3（已完成）**：更新 mistakes.ts 适配新 schema
+
+**M0 Task 4（已完成）**：修复 OCR 进度条 bug（DB 路径不匹配 + 子进程错误处理）
+
+**M0 Task 5（已完成）**：修复截图 OCR bug（OCR 失败时改用 Claude vision 兜底）
+
+**下一步**：M0 Task 6（最终验证——实际运行测试）
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系
 
@@ -31,7 +37,7 @@
 
 | 里程碑 | 内容 | 状态 |
 |--------|------|------|
-| M0 | 地基重建：19 张表 + prompt 模板系统 + bug 修复 | **进行中**（Task 0-2 完成，Task 3-6 待执行） |
+| M0 | 地基重建：19 张表 + prompt 模板系统 + bug 修复 | **进行中**（Task 0-5 完成，Task 6 最终验证待执行） |
 | M1 | 教练核心：KP 提取 + 读前指引 + Q&A（即时反馈） | 未开始 |
 | M2 | 考试 + 错题诊断 | 未开始 |
 | M3 | PDF 阅读器集成 | 未开始 |
@@ -80,3 +86,6 @@
 | 2026-03-22 | M0 Task 0 完成：结构化错误处理 + 服务层分离（基于 Harness 架构调研） |
 | 2026-03-22 | M0 Task 1 完成：数据库 schema 重写（19 张表，破坏性迁移） |
 | 2026-03-22 | M0 Task 2 完成：Prompt 模板系统（11 个种子模板 + 编码修复） |
+| 2026-03-22 | M0 Task 3 完成：mistakes.ts 适配新 schema |
+| 2026-03-22 | M0 Task 4 完成：OCR 进度条 bug 修复 |
+| 2026-03-22 | M0 Task 5 完成：截图 OCR bug 修复（Claude vision 兜底） |
