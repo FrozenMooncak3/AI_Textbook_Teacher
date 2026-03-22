@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
-import { logAction } from '@/lib/log'
 import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
 import { spawn } from 'child_process'
+import { join } from 'path'
+import { getDb } from '@/lib/db'
 import { handleRoute } from '@/lib/handle-route'
+import { logAction } from '@/lib/log'
 import { bookService } from '@/lib/services/book-service'
 
 const UPLOADS_DIR = join(process.cwd(), 'data', 'uploads')
@@ -19,54 +19,95 @@ export async function POST(req: NextRequest) {
   const file = formData.get('file') as File | null
   const title = formData.get('title') as string | null
 
-  if (!file) return NextResponse.json({ error: '请选择文件' }, { status: 400 })
-  if (!title?.trim()) return NextResponse.json({ error: '请填写教材名称' }, { status: 400 })
+  if (!file) {
+    return NextResponse.json({ error: 'Missing file' }, { status: 400 })
+  }
+
+  if (!title?.trim()) {
+    return NextResponse.json({ error: 'Missing title' }, { status: 400 })
+  }
 
   const ext = file.name.split('.').pop()?.toLowerCase()
   if (!ext || !['pdf', 'txt'].includes(ext)) {
-    return NextResponse.json({ error: '不支持的文件格式，请上传 PDF 或 TXT 文件' }, { status: 422 })
+    return NextResponse.json({ error: 'Unsupported file type' }, { status: 422 })
   }
 
   const buffer = Buffer.from(await file.arrayBuffer())
   const db = getDb()
 
-  logAction('上传文件', `文件名：${file.name}，教材：${title}`)
+  logAction('book_upload_started', `file=${file.name}, title=${title}`)
 
-  // TXT 直接处理
   if (ext === 'txt') {
     const rawText = buffer.toString('utf-8').trim()
     if (rawText.length < 100) {
-      logAction('文件内容过短', `提取字数：${rawText.length}`, 'warn')
-      return NextResponse.json({ error: '文件内容过短，请确认文件内容正确' }, { status: 422 })
+      logAction('book_upload_short_text', `chars=${rawText.length}`, 'warn')
+      return NextResponse.json({ error: 'Text file content is too short' }, { status: 422 })
     }
+
     const result = db
       .prepare('INSERT INTO books (title, raw_text, parse_status) VALUES (?, ?, ?)')
       .run(title.trim(), rawText, 'done')
-    logAction('教材上传成功（TXT）', `《${title}》bookId=${result.lastInsertRowid}，字数：${rawText.length}`)
+
+    logAction('book_upload_completed_txt', `bookId=${result.lastInsertRowid}, chars=${rawText.length}`)
     return NextResponse.json({ bookId: result.lastInsertRowid }, { status: 201 })
   }
 
-  // PDF：先插入 processing 记录，再后台 OCR
   const result = db
     .prepare('INSERT INTO books (title, raw_text, parse_status) VALUES (?, ?, ?)')
     .run(title.trim(), '', 'processing')
   const bookId = result.lastInsertRowid as number
 
-  logAction('PDF 开始后台 OCR', `bookId=${bookId}，教材：${title}`)
-
-  // 保存 PDF 到磁盘
   await mkdir(UPLOADS_DIR, { recursive: true })
   const pdfPath = join(UPLOADS_DIR, `${bookId}.pdf`)
   await writeFile(pdfPath, buffer)
 
-  // 后台启动 OCR（detached 让进程在响应返回后继续运行）
+  const markOcrFailure = (details: string) => {
+    try {
+      db.prepare("UPDATE books SET parse_status='error' WHERE id = ?").run(bookId)
+    } catch {
+      // Ignore logging-path failures while surfacing OCR failures.
+    }
+    logAction('book_ocr_failed', `bookId=${bookId}, ${details}`, 'error')
+  }
+
   const dbPath = join(process.cwd(), 'data', 'app.db')
   const scriptPath = join(process.cwd(), 'scripts', 'ocr_pdf.py')
-  const child = spawn('python', [scriptPath, pdfPath, '--book-id', String(bookId), '--db-path', dbPath], {
-    detached: true,
-    stdio: 'ignore',
-  })
-  child.unref()
+  const pythonCommand = process.env.PYTHON_BIN ?? (process.platform === 'win32' ? 'python' : 'python3')
 
+  let child: ReturnType<typeof spawn>
+  try {
+    child = spawn(pythonCommand, [scriptPath, pdfPath, '--book-id', String(bookId), '--db-path', dbPath], {
+      cwd: process.cwd(),
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    })
+  } catch (error) {
+    markOcrFailure(`spawn exception: ${String(error)}`)
+    return NextResponse.json({ error: 'Failed to start OCR worker' }, { status: 500 })
+  }
+
+  let completed = false
+  let stderr = ''
+
+  const failOnce = (details: string) => {
+    if (completed) return
+    completed = true
+    markOcrFailure(details)
+  }
+
+  child.stdout?.on('data', () => {})
+  child.stderr?.on('data', (chunk: Buffer | string) => {
+    stderr = `${stderr}${chunk.toString()}`.slice(-4000)
+  })
+  child.on('error', (error) => {
+    failOnce(`spawn error: ${String(error)}`)
+  })
+  child.on('exit', (code, signal) => {
+    if (code === 0) return
+    const errorOutput = stderr.trim() || `signal=${signal ?? 'none'}`
+    failOnce(`exit code=${code ?? 'null'}, ${errorOutput}`)
+  })
+
+  logAction('book_ocr_started', `bookId=${bookId}, title=${title}`)
   return NextResponse.json({ bookId, processing: true }, { status: 201 })
 }
