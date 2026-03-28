@@ -117,7 +117,7 @@ export const POST = handleRoute(async (req, context) => {
 
   return {
     data: {
-      responseId: result.lastInsertRowid,
+      responseId: Number(result.lastInsertRowid),
       is_correct: feedback.is_correct,
       score: feedback.score,
       feedback: feedback.feedback,

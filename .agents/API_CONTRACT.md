@@ -111,7 +111,33 @@ Response `200`:
 }
 ```
 
+### `POST /api/modules/[moduleId]/qa-feedback`
+
+Request body:
+
+```json
+{
+  "questionId": 1,
+  "userAnswer": "string"
+}
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "responseId": 1,
+    "is_correct": true,
+    "score": 1,
+    "feedback": "string"
+  }
+}
+```
+
 ## Change Log
 
 - [2026-03-28] [Codex] Added reading notes CRUD API contract for M2.
 - [2026-03-28] [Codex] Added Q&A question generation API contract for M2.
+- [2026-03-28] [Codex] Added Q&A instant feedback API contract for M2.
