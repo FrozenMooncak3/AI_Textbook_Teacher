@@ -1,37 +1,51 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { handleRoute } from '@/lib/handle-route'
 import { getDb } from '@/lib/db'
+import { UserError } from '@/lib/errors'
 
-interface BookStatus {
+interface BookStatusRow {
   parse_status: string
   kp_extraction_status: string
   ocr_current_page: number
   ocr_total_pages: number
 }
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ bookId: string }> }
-) {
-  const { bookId } = await params
+interface BookStatusResponse {
+  parseStatus: string
+  ocrCurrentPage: number
+  ocrTotalPages: number
+  parse_status: string
+  kp_extraction_status: string
+  ocr_current_page: number
+  ocr_total_pages: number
+}
+
+export const GET = handleRoute(async (_req, context) => {
+  const { bookId } = await context!.params
   const id = Number(bookId)
-  if (Number.isNaN(id)) {
-    return NextResponse.json({ error: 'Invalid book ID', code: 'INVALID_ID' }, { status: 400 })
+
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new UserError('Invalid book ID', 'INVALID_ID', 400)
   }
 
   const db = getDb()
   const book = db
-    .prepare('SELECT parse_status, kp_extraction_status, ocr_current_page, ocr_total_pages FROM books WHERE id = ?')
-    .get(id) as BookStatus | undefined
+    .prepare(
+      'SELECT parse_status, kp_extraction_status, ocr_current_page, ocr_total_pages FROM books WHERE id = ?'
+    )
+    .get(id) as BookStatusRow | undefined
 
   if (!book) {
-    return NextResponse.json({ error: 'Book not found', code: 'NOT_FOUND' }, { status: 404 })
+    throw new UserError('Book not found', 'NOT_FOUND', 404)
   }
 
   let parseStatus = book.parse_status
-  if (parseStatus === 'done') parseStatus = 'completed'
-  else if (parseStatus === 'error') parseStatus = 'failed'
+  if (parseStatus === 'done') {
+    parseStatus = 'completed'
+  } else if (parseStatus === 'error') {
+    parseStatus = 'failed'
+  }
 
-  return NextResponse.json({
+  const response: BookStatusResponse = {
     parseStatus,
     ocrCurrentPage: book.ocr_current_page,
     ocrTotalPages: book.ocr_total_pages,
@@ -39,5 +53,7 @@ export async function GET(
     kp_extraction_status: book.kp_extraction_status,
     ocr_current_page: book.ocr_current_page,
     ocr_total_pages: book.ocr_total_pages,
-  })
-}
+  }
+
+  return { data: response }
+})

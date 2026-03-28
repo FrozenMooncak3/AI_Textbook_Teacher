@@ -16,7 +16,7 @@ export function getClaudeClient(): Anthropic {
 
   const options: ConstructorParameters<typeof Anthropic>[0] = {
     apiKey,
-    timeout: 180_000,
+    timeout: 300_000,
   }
 
   if (proxy) {
