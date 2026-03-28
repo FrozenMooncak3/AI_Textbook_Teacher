@@ -4,6 +4,19 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-03-28 | M1: Extractor AI - 前端实现 (Tasks 4-5)
+
+- **T4: Module Map Page**: 新建 `src/app/books/[bookId]/module-map/page.tsx`，支持模块展示、KP 分组、类型勋章及状态轮询。
+- **T5: Reader Integration**: 在 `PdfViewer.tsx` 中新增 KP 提取状态横幅，支持自动触发、进度跟踪及模块地图跳转。
+- **修复**: 
+    - 修正 `ocrStatus` 类型及判断逻辑（`completed` → `done`）。
+    - 移除所有 `console.error` 调用及未使用的变量，符合技术红线。
+    - 修复 `ModuleMapPage` 中统计数据的 TypeScript 类型推断错误。
+- **重构**: 移除阅读器内旧版 OCR 进度条，统一使用 KP 提取状态横幅。
+
+修改文件：`src/app/books/[bookId]/reader/PdfViewer.tsx`, `src/app/books/[bookId]/module-map/page.tsx`, `docs/changelog.md`
+新增文件：`src/app/books/[bookId]/module-map/page.tsx`
+
 ---
 
 ## 2026-03-21 | 架构重构：从多 Agent 迁移到 CCB + Skill 体系

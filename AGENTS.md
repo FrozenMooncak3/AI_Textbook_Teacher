@@ -22,27 +22,47 @@
 
 ---
 
-## 数据库表结构（11 张表）
+## 数据库表结构（19 张表）
 
-### 原始 7 张表
+> Schema 定义在 `src/lib/db.ts` 的 `initSchema()` 中。M0 破坏性迁移后的完整结构。
 
-```
-books          → 教材（id, title, raw_text, created_at, parse_status, ocr_current_page, ocr_total_pages）
-modules        → 学习模块，属于 book（含 kp_count, learning_status, pass_status, guide_json）
-questions      → 题目，type: qa/test/review，属于 module
-user_responses → 用户回答，属于 question（含 score, error_type）
-mistakes       → 错题记录，属于 module（含 knowledge_point, next_review_date）
-review_tasks   → 复习任务，属于 module（Phase 2 使用）
-logs           → 系统日志（id, created_at, level, action, details）
-```
-
-### Phase 2 新增 4 张表
+### 核心实体
 
 ```
-conversations  → 截图对话（id, book_id, page_number, screenshot_text, created_at）
-messages       → 对话消息（id, conversation_id, role, content, created_at）
-highlights     → 高亮标注（id, book_id, page_number, ...）
-notes          → 页面笔记（id, book_id, page_number, content, ...）
+books              → 教材（id, title, raw_text, file_path, parse_status, kp_extraction_status, ocr_current_page, ocr_total_pages）
+modules            → 学习模块，属于 book（kp_count, cluster_count, page_start, page_end, learning_status）
+knowledge_points   → 知识点，属于 module（kp_code, section_name, description, type, importance, detailed_content, cluster_id, ocr_quality）
+clusters           → KP 聚类，属于 module（current_p_value, last_review_result, consecutive_correct, next_review_date）
+```
+
+### 学习链路
+
+```
+reading_notes      → 用户阅读笔记（book_id, module_id, page_number, content）
+module_notes       → AI 生成的学习笔记（module_id, content, generated_from）
+qa_questions       → Q&A 题目（module_id, kp_id, question_type, question_text, correct_answer, scaffolding, is_review）
+qa_responses       → Q&A 回答 + AI 反馈（question_id, user_answer, is_correct, ai_feedback, score）
+test_papers        → 测试卷（module_id, attempt_number, total_score, pass_rate, is_passed）
+test_questions     → 测试题目（paper_id, kp_id, question_type, question_text, options, correct_answer, explanation）
+test_responses     → 测试回答 + 评分（question_id, user_answer, is_correct, score, ai_feedback, error_type）
+mistakes           → 错题记录（module_id, kp_id, error_type, source, remediation, is_resolved）
+```
+
+### 复习系统
+
+```
+review_schedule    → 复习日程（module_id, review_round, due_date, status）
+review_records     → 复习结果 + P 值变更（schedule_id, cluster_id, questions_count, correct_count, p_value_before, p_value_after）
+```
+
+### 独立问答 + 基础设施
+
+```
+conversations      → 截图对话（book_id, page_number, screenshot_text）
+messages           → 对话消息（conversation_id, role, content）
+highlights         → 高亮标注（book_id, page_number, text, color, rects_json）
+logs               → 系统日志（level, action, details）
+prompt_templates   → Prompt 模板（role, stage, version, template_text, is_active）— UNIQUE(role, stage, version)
 ```
 
 ---

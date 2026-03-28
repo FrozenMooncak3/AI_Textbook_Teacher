@@ -43,9 +43,14 @@ export default function PdfViewer({ bookId, bookTitle }: Props) {
   const [chatPage, setChatPage] = useState(1)
 
   // OCR 进度
-  const [ocrStatus, setOcrStatus] = useState<'pending' | 'processing' | 'completed' | 'failed'>('pending')
+  const [ocrStatus, setOcrStatus] = useState<'pending' | 'processing' | 'done' | 'failed'>('pending')
   const [ocrCurrent, setOcrCurrent] = useState(0)
   const [ocrTotal, setOcrTotal] = useState(0)
+
+  // KP 提取状态 (T5)
+  const [kpStatus, setKpStatus] = useState<'pending' | 'processing' | 'completed' | 'failed'>('pending')
+  const [kpBannerDismissed, setKpBannerDismissed] = useState(false)
+  const hasTriggeredExtraction = useRef(false)
 
   const renderedAt = useRef<Map<number, number>>(new Map())
   const renderTasks = useRef<Map<number, RenderTask>>(new Map())
@@ -53,7 +58,7 @@ export default function PdfViewer({ bookId, bookTitle }: Props) {
   const singleRenderTask = useRef<RenderTask | null>(null)
   const isJumping = useRef(false)
 
-  // ── 轮询 OCR 进度 ──────────────────────────────────────────
+  // ── 轮询 OCR & KP 提取进度 ──────────────────────────────────────────
   useEffect(() => {
     let cancelled = false
 
@@ -62,20 +67,47 @@ export default function PdfViewer({ bookId, bookTitle }: Props) {
         const res = await fetch(`/api/books/${bookId}/status`)
         if (!res.ok || cancelled) return
         const data = await res.json()
+        
+        // 旧 OCR 状态
         setOcrStatus(data.parseStatus)
         setOcrCurrent(data.ocrCurrentPage ?? 0)
         setOcrTotal(data.ocrTotalPages ?? 0)
+
+        // 新 KP 提取状态 (T5)
+        const currentKpStatus = data.kp_extraction_status || 'pending'
+        setKpStatus(currentKpStatus)
+
+        // 如果 OCR 完成且 KP 提取尚未开始，自动触发一次提取
+        if (data.parseStatus === 'done' && currentKpStatus === 'pending' && !hasTriggeredExtraction.current) {
+          hasTriggeredExtraction.current = true
+          fetch(`/api/books/${bookId}/extract`, { method: 'POST' }).catch(() => {
+            hasTriggeredExtraction.current = false // 重置以便重试
+          })
+        }
       } catch { /* ignore */ }
     }
 
     poll()
     const id = setInterval(() => {
-      if (ocrStatus === 'completed' || ocrStatus === 'failed') return
+      // 如果两个都完成了，停止轮询
+      if ((ocrStatus === 'done' || ocrStatus === 'failed') && 
+          (kpStatus === 'completed' || kpStatus === 'failed')) {
+        return
+      }
       poll()
     }, 3000)
 
     return () => { cancelled = true; clearInterval(id) }
-  }, [bookId, ocrStatus])
+  }, [bookId, ocrStatus, kpStatus])
+
+  const handleRetryExtraction = async () => {
+    setKpStatus('processing')
+    try {
+      await fetch(`/api/books/${bookId}/extract`, { method: 'POST' })
+    } catch {
+      setKpStatus('failed')
+    }
+  }
 
   // ── 加载 PDF 文档 ─────────────────────────────────────────
   useEffect(() => {
@@ -434,37 +466,55 @@ export default function PdfViewer({ bookId, bookTitle }: Props) {
         )}
       </div>
 
-      {/* OCR 进度条 */}
-      {ocrStatus !== 'completed' && (
-        <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center gap-3 shrink-0">
-          {ocrStatus === 'failed' ? (
-            <span className="text-xs text-red-600">结构化学习处理失败，请重新上传</span>
-          ) : (
-            <>
-              <div className="flex-1 h-1.5 bg-blue-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                  style={{ width: ocrTotal > 0 ? `${Math.round((ocrCurrent / ocrTotal) * 100)}%` : '0%' }}
-                />
-              </div>
-              <span className="text-xs text-blue-600 shrink-0">
-                {ocrTotal > 0
-                  ? `结构化学习准备中 ${ocrCurrent}/${ocrTotal} 页`
-                  : '结构化学习准备中…'}
-              </span>
-            </>
-          )}
-        </div>
-      )}
-      {ocrStatus === 'completed' && (
-        <div className="bg-green-50 border-b border-green-100 px-4 py-2 flex items-center justify-between shrink-0">
-          <span className="text-xs text-green-700">结构化学习已就绪</span>
-          <button
-            onClick={() => router.push(`/books/${bookId}`)}
-            className="text-xs text-green-700 font-medium hover:text-green-900 underline"
-          >
-            开始学习 →
-          </button>
+      {/* KP 提取状态横幅 (T5) */}
+      {!kpBannerDismissed && (
+        <div className={`px-4 py-2 border-b flex items-center justify-between transition-colors ${
+          kpStatus === 'failed' ? 'bg-red-50 border-red-100' : 
+          kpStatus === 'completed' ? 'bg-green-50 border-green-100' : 'bg-blue-50 border-blue-100'
+        }`}>
+          <div className="flex items-center gap-3">
+            {kpStatus === 'processing' && (
+              <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            )}
+            <span className={`text-xs font-medium ${
+              kpStatus === 'failed' ? 'text-red-700' : 
+              kpStatus === 'completed' ? 'text-green-700' : 'text-blue-700'
+            }`}>
+              {kpStatus === 'pending' && ocrStatus === 'done' && 'OCR 完成，正在提取知识点...'}
+              {kpStatus === 'pending' && ocrStatus !== 'done' && `正在准备 PDF (${ocrCurrent}/${ocrTotal})...`}
+              {kpStatus === 'processing' && '正在提取知识点...（这可能需要几分钟）'}
+              {kpStatus === 'completed' && '模块地图已生成！'}
+              {kpStatus === 'failed' && '知识点提取失败'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {kpStatus === 'completed' && (
+              <button
+                onClick={() => router.push(`/books/${bookId}/module-map`)}
+                className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded font-bold shadow-sm transition-colors"
+              >
+                查看模块地图 →
+              </button>
+            )}
+            {kpStatus === 'failed' && (
+              <button
+                onClick={handleRetryExtraction}
+                className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-bold shadow-sm transition-colors"
+              >
+                重试
+              </button>
+            )}
+            <button 
+              onClick={() => setKpBannerDismissed(true)}
+              className="text-gray-400 hover:text-gray-600"
+              title="关闭"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
 

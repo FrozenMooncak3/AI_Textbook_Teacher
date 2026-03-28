@@ -11,13 +11,13 @@
 
 **设计文稿**：`docs/superpowers/specs/2026-03-21-mvp-redesign-design.md`
 
-**当前里程碑**：M0 已完成，Hook 自动化已部署，准备进入 M1
+**当前里程碑**：M1 进行中——提取器 AI
+
+**实现计划**：`docs/superpowers/plans/2026-03-28-m1-extractor-ai.md`
 
 **M0（已完成）**：地基重建——19 张表 + prompt 模板系统 + bug 修复 + 最终验证通过
 
-**Hook 自动化（已完成）**：4 个 hook 脚本 + settings.json + structured-dispatch skill + claudemd-check 更新
-
-**下一步**：第三次 brainstorming 实施完成（session-init + skill chaining + retrospective），准备进入 M1
+**下一步**：Codex 执行 T0-T3（后端），Gemini 执行 T4-T5（前端），然后集成测试
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
