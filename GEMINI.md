@@ -28,6 +28,7 @@
 - 不在客户端代码中暴露任何 API Key 或密钥
 - 不写 TypeScript `any`，不绕过类型系统
 - 不在生产代码中留 `console.log`
+- **禁止自行触发会调用 Claude API 的操作**（包括 curl 触发提取/问答接口、任何会发送请求到 Anthropic API 的代码路径）。Claude API 调用 = 真金白银，只有用户手动触发才允许。
 
 ---
 

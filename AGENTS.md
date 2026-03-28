@@ -95,6 +95,7 @@ prompt_templates   → Prompt 模板（role, stage, version, template_text, is_a
 - 不在客户端代码中暴露 `ANTHROPIC_API_KEY`，API 调用只在服务端
 - `data/app.db` 不得提交到 git
 - 不在生产代码中留 `console.log`
+- **禁止自行触发会调用 Claude API 的操作**（包括但不限于：curl 触发提取接口、直接运行提取服务、任何会发送请求到 Anthropic API 的代码路径）。Claude API 调用 = 真金白银，只有用户手动触发才允许。如果调试需要测试 API 调用，只改代码不跑测试，由用户决定何时触发。
 
 ---
 
