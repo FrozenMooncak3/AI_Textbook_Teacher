@@ -469,3 +469,24 @@
 
 **设计文档**：`docs/superpowers/specs/2026-03-28-claude-hooks-design.md`
 **实施计划**：`docs/superpowers/plans/2026-03-28-claude-hooks-automation.md`
+
+---
+
+## 2026-03-28 | Session Init + Skill Chaining + Retrospective
+
+**完成内容**：第三次 brainstorming 落地——session-init skill（上下文自动加载 + chain 路由）、retrospective skill（定期回顾）、6 个 skill chain 声明、CLAUDE.md 和 using-superpowers 更新。
+
+**具体操作**：
+- 新增 `session-init` skill：会话开始时自动读取项目状态/决策/日志/协议，评估当前位置，向用户汇报，注入 4 条 skill chain（Design/Execution/Dispatch/Closeout）
+- 新增 `retrospective` skill：手动触发，分析 journal/memory/git 历史找模式，产出记忆草稿 + skill 改进建议 + journal 清理建议
+- 6 个 skill 加 chain position 声明：brainstorming、writing-plans、executing-plans、verification-before-completion、structured-dispatch、requesting-code-review
+- `using-superpowers` 加 `<SESSION-START>` 触发 + 用户级 skill 精简为 3 个
+- `CLAUDE.md`「每次会话开始时」从手动读 4 文件改为调用 session-init（保留 fallback）
+- `pre-compact-check.sh` 加 session-init 重跑提醒
+
+**修改的文件**：
+- 新增：`.claude/skills/session-init/SKILL.md`、`.claude/skills/retrospective/SKILL.md`
+- 修改：`.claude/skills/using-superpowers/SKILL.md`、`.claude/skills/brainstorming/SKILL.md`、`.claude/skills/writing-plans/SKILL.md`、`.claude/skills/executing-plans/SKILL.md`、`.claude/skills/verification-before-completion/SKILL.md`、`.claude/skills/structured-dispatch/SKILL.md`、`.claude/skills/requesting-code-review/SKILL.md`、`CLAUDE.md`、`scripts/hooks/pre-compact-check.sh`
+
+**设计文档**：`docs/superpowers/specs/2026-03-28-session-init-retrospective-design.md`
+**实施计划**：`docs/superpowers/plans/2026-03-28-session-init-retrospective.md`

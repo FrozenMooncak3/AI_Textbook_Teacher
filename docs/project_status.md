@@ -17,7 +17,7 @@
 
 **Hook 自动化（已完成）**：4 个 hook 脚本 + settings.json + structured-dispatch skill + claudemd-check 更新
 
-**下一步**：第三次 brainstorming spec 已完成（session-init + skill chaining + retrospective），等用户 review spec 后进入 writing-plans 写实施计划，然后再进 M1
+**下一步**：第三次 brainstorming 实施完成（session-init + skill chaining + retrospective），准备进入 M1
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -89,3 +89,4 @@ M0 → M1 → M2 → M3 → M4 → M5
 | 2026-03-22 | M0 Task 0-5 完成（schema 重写 + prompt 模板 + bug 修复） |
 | 2026-03-22 | **M0 完成**：最终验证通过（8/8 checks） |
 | 2026-03-28 | **Hook 自动化完成**：4 个 hook + structured-dispatch skill + claudemd-check 更新 |
+| 2026-03-28 | **第三次 brainstorming 实施完成**：session-init skill + retrospective skill + 6 skill chain 声明 + CLAUDE.md/using-superpowers 更新 |

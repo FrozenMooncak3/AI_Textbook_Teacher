@@ -55,11 +55,11 @@ tags: [skills, codex, gemini, ccb, brainstorming]
 
 ### 当前状态
 
-- Spec 已通过 review（2 轮），已 commit + push
-- **下一步**：用户 review spec → 通过后跑 writing-plans 写实施计划
+- **已完成**：spec review 通过 → writing-plans 完成 → subagent-driven 执行完毕
+- 全部 7 个任务完成：2 个 skill 创建 + 8 个文件更新 + 1 个 hook 更新
 
 ## 待跟进
 
 - [issue:resolved] 重启后验证 Codex/Gemini 能否看到 skill list — 已确认可见（2026-03-28）
 - [decision:resolved] 第二次 brainstorming：Claude hook 自动化 — 已实施，commit 09aaaef
-- [decision:in_progress] 第三次 brainstorming：spec 完成，待 review + writing-plans
+- [decision:resolved] 第三次 brainstorming：全部实施完成（2026-03-28）
