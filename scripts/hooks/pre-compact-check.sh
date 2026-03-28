@@ -41,7 +41,10 @@ if [ "$STATUS_MOD" -eq 0 ] && [ "$CHANGELOG_MOD" -eq 0 ]; then
   OUTPUT="${OUTPUT}Neither project_status.md nor changelog.md modified in current changes.\n\n"
 fi
 
-# 5. Reset stop counter
+# 5. Remind to re-run session-init after compact
+OUTPUT="${OUTPUT}After compact, re-run session-init skill to restore context.\n"
+
+# 6. Reset stop counter
 echo "0" > ".claude/.stop-count" 2>/dev/null
 
 if [ -n "$OUTPUT" ]; then
