@@ -4,6 +4,17 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-03-28 | M1: 集成测试 Bug 修复
+
+- **Status endpoint 修复**: `GET /api/books/[bookId]/status` 缺少 `kp_extraction_status` 字段，前端无法追踪提取进度
+- **API 超时修复**: Claude API 客户端超时从 60s 提升到 180s，防止提取调用超时
+- **blockExtract 容错**: 每个 section 的提取加 try/catch，单个 section 失败不再中断整个 pipeline
+- **测试结果**: 提取 pipeline 可完整运行（Stage 0→1→2→DB 写入），但 Stage 1 JSON 解析成功率仅 20%（5 个小节中 4 个返回非法 JSON），需要进一步排查
+
+修改文件：`src/app/api/books/[bookId]/status/route.ts`, `src/lib/claude.ts`, `src/lib/services/kp-extraction-service.ts`
+
+---
+
 ## 2026-03-28 | M1: Extractor AI - 前端实现 (Tasks 4-5)
 
 - **T4: Module Map Page**: 新建 `src/app/books/[bookId]/module-map/page.tsx`，支持模块展示、KP 分组、类型勋章及状态轮询。

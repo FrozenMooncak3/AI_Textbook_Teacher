@@ -11,13 +11,17 @@
 
 **设计文稿**：`docs/superpowers/specs/2026-03-21-mvp-redesign-design.md`
 
-**当前里程碑**：M1 进行中——提取器 AI
+**当前里程碑**：M1 集成测试中——提取器 AI
 
 **实现计划**：`docs/superpowers/plans/2026-03-28-m1-extractor-ai.md`
 
 **M0（已完成）**：地基重建——19 张表 + prompt 模板系统 + bug 修复 + 最终验证通过
 
-**下一步**：Codex 执行 T0-T3（后端），Gemini 执行 T4-T5（前端），然后集成测试
+**T0-T5 已完成**：后端（Codex）+ 前端（Gemini）代码已合并并 review 通过
+
+**集成测试状态**：三阶段 KP 提取 pipeline 可运行，但 Stage 1 JSON 解析成功率低（5 个小节仅 1 个成功）。需要排查 prompt template 或 parseJSON 容错问题。
+
+**下一步**：派发 Codex 排查 Stage 1 JSON 解析失败原因 → 修复 → 重新测试
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -30,7 +34,7 @@
 | 里程碑 | 内容 | 状态 |
 |--------|------|------|
 | M0 | 地基重建：19 张表 + prompt 模板系统 + bug 修复 | **已完成**（2026-03-22） |
-| M1 | 提取器 AI：上传 PDF → 三阶段 KP 提取 → KP 表和模块地图写入 DB → 模块地图页面 | 未开始 |
+| M1 | 提取器 AI：上传 PDF → 三阶段 KP 提取 → KP 表和模块地图写入 DB → 模块地图页面 | **集成测试中** |
 | M2 | 教练 AI：读前指引 → 阅读（笔记+截图问答）→ Q&A（4 种题型+即时反馈）→ 学习笔记生成 | 未开始 |
 | M3 | 考官 AI：测试出题 → 盲测 → 评分 → 80% 过关 → 错题诊断 | 未开始 |
 | M4 | 复习系统：复习调度（3/7/15/30/60 天）→ 聚类出题 → P 值更新 | 未开始 |
