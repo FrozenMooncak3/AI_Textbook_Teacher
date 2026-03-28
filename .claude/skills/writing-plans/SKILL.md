@@ -143,3 +143,20 @@ After saving the plan, offer execution choice:
 **If Inline Execution chosen:**
 - **REQUIRED SUB-SKILL:** Use superpowers:executing-plans
 - Batch execution with checkpoints for review
+
+---
+
+## Prerequisites Check
+
+Before executing this skill, verify:
+- [ ] A spec file exists in `docs/superpowers/specs/` for the current work
+- If no spec exists, STOP and tell the user: "Implementation plans require a design spec first. Run /brainstorming to start the design process."
+
+## Chain Position
+
+This skill is **step 2** of the **Design Chain**:
+1. brainstorming
+2. **writing-plans** ← you are here
+3. _(user decides: dispatch or execute)_
+
+**Next step:** The chain ends here. Present the user with execution options (subagent-driven or inline). The user decides whether to dispatch to Codex/Gemini or execute directly.

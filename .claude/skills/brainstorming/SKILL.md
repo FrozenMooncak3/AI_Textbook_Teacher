@@ -162,3 +162,14 @@ A question about a UI topic is not automatically a visual question. "What does p
 
 If they agree to the companion, read the detailed guide before proceeding:
 `skills/brainstorming/visual-companion.md`
+
+---
+
+## Chain Position
+
+This skill is the **entry point** of the **Design Chain**:
+1. **brainstorming** ← you are here
+2. writing-plans
+3. _(user decides: dispatch or execute)_
+
+**Next step:** After user approves the spec, invoke `writing-plans` automatically. This is already specified in the checklist above — this note reinforces the chain.

@@ -137,3 +137,15 @@ From 24 failure memories:
 Run the command. Read the output. THEN claim the result.
 
 This is non-negotiable.
+
+---
+
+## Chain Position
+
+This skill is **step 2** of the **Execution Chain**:
+1. executing-plans
+2. **verification-before-completion** ← you are here
+3. claudemd-check
+
+**Next step:** After verification passes, invoke `claudemd-check` automatically.
+If verification fails, STOP. Report failures to the user. Do NOT proceed to claudemd-check until issues are resolved. The user decides whether to fix and retry or abandon.

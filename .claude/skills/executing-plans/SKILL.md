@@ -68,3 +68,20 @@ After all tasks complete and verified:
 - **superpowers:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
 - **superpowers:writing-plans** - Creates the plan this skill executes
 - **superpowers:finishing-a-development-branch** - Complete development after all tasks
+
+---
+
+## Prerequisites Check
+
+Before executing this skill, verify:
+- [ ] A plan file exists in `docs/superpowers/plans/` for the current work
+- If no plan exists, STOP and tell the user: "Execution requires an implementation plan. Run /brainstorming to start the design process, which will lead to a plan."
+
+## Chain Position
+
+This skill is **step 1** of the **Execution Chain**:
+1. **executing-plans** ← you are here
+2. verification-before-completion
+3. claudemd-check
+
+**Next step:** After all tasks complete, invoke `verification-before-completion` automatically.

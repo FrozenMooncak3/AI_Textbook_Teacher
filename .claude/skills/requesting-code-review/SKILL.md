@@ -103,3 +103,21 @@ You: [Fix progress indicators]
 - Request clarification
 
 See template at: requesting-code-review/code-reviewer.md
+
+---
+
+## Chain Position
+
+This skill appears in multiple chains:
+
+**Dispatch Chain** (step 3):
+1. structured-dispatch
+2. _(wait for agent)_
+3. **requesting-code-review** ← you are here
+4. claudemd-check
+
+**Closeout Chain** (step 1):
+1. **requesting-code-review** ← you are here
+2. claudemd-check
+
+**Next step:** After review is complete and issues are addressed, invoke `claudemd-check` automatically.

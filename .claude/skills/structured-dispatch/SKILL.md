@@ -62,3 +62,15 @@ What Claude will do after this task is done (review, next task, etc.).
 - Include enough context that the agent can work without asking questions.
 - Reference the plan file if one exists — the agent can read it.
 - Do NOT dispatch while the agent is actively working on another task.
+
+---
+
+## Chain Position
+
+This skill is **step 1** of the **Dispatch Chain**:
+1. **structured-dispatch** ← you are here
+2. _(wait for Codex/Gemini to complete)_
+3. requesting-code-review
+4. claudemd-check
+
+**Next step:** After dispatching, wait for the agent to complete. Once done, invoke `requesting-code-review` to review their work.
