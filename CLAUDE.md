@@ -6,10 +6,17 @@
 目标不是帮用户省时间，而是帮用户真正学扎实。
 
 ## 每次会话开始时
-1. 读 `docs/project_status.md` — 当前状态与下一步
-2. 读 `docs/decisions.md` — 已关闭的决策（不重新讨论）
-3. 读 `docs/journal/INDEX.md` — 会话日志索引（跟踪未解决事项和想法停车场）
-4. 读 `docs/ccb-protocol.md` — CCB 多模型协作操作规范
+调用 session-init skill（通过 Skill 工具）。它会自动完成：
+- 读取项目状态、决策日志、会话日志、CCB 协议
+- 检查 git 状态和未完成工作
+- 向用户汇报当前位置和建议下一步
+- 注入 skill chain 路由
+
+如果 session-init 不可用（如 skill 文件缺失），手动读取以下文件作为 fallback：
+1. `docs/project_status.md` — 当前状态与下一步
+2. `docs/decisions.md` — 已关闭的决策（不重新讨论）
+3. `docs/journal/INDEX.md` — 会话日志索引
+4. `docs/ccb-protocol.md` — CCB 多模型协作操作规范
 
 ## 想法与日志处理
 当用户在开发过程中提出新想法或重要 insight 时：
