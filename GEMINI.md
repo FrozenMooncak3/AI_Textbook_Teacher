@@ -47,14 +47,13 @@
 - `scripts/**` — 归 Codex
 - `docs/**`（除 `changelog.md` 追加外）
 - `CLAUDE.md`
-- `.agents/PLAN.md`
 
 ---
 
 ## 工作流程
 
-1. 读 `.agents/PLAN.md`，找到分配给你的任务
-2. 读 `.agents/API_CONTRACT.md`，确认后端接口格式（请求/响应结构）
+1. 读 `docs/project_status.md`，确认当前里程碑和待执行计划
+2. 读当前里程碑的实现计划（`docs/superpowers/plans/` 下对应文件），找到分配给自己的任务
 3. 实现功能、提交代码
 4. 完成后在 `docs/changelog.md` 追加一条记录（日期 + 做了什么 + 修改了哪些文件）
 
@@ -62,4 +61,6 @@
 
 ## Skill 使用
 
-每次会话开始时，先读 `.claude/skills/using-superpowers/SKILL.md` 并遵守其中的规则。
+每次 session 开始，先读 `.gemini/skills/using-superpowers/SKILL.md` 并遵守其规则。
+
+可用 skill 列表：coding-standards, frontend-patterns, security-review, systematic-debugging, test-driven-development, verification-before-completion

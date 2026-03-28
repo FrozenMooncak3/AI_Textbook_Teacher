@@ -5,9 +5,11 @@
 
 ---
 
-## Skill
+## Skill 使用
 
-每次会话开始，先读 `.claude/skills/using-superpowers/SKILL.md` 并遵守其规则。
+每次 session 开始，先读 `.codex/skills/using-superpowers/SKILL.md` 并遵守其规则。
+
+可用 skill 列表：coding-standards, api-design, api-contract, database-migrations, security-review, systematic-debugging, test-driven-development, verification-before-completion, debug-ocr
 
 ---
 
