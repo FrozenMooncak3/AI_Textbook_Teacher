@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db'
 
 interface BookStatus {
   parse_status: string
+  kp_extraction_status: string
   ocr_current_page: number
   ocr_total_pages: number
 }
@@ -19,7 +20,7 @@ export async function GET(
 
   const db = getDb()
   const book = db
-    .prepare('SELECT parse_status, ocr_current_page, ocr_total_pages FROM books WHERE id = ?')
+    .prepare('SELECT parse_status, kp_extraction_status, ocr_current_page, ocr_total_pages FROM books WHERE id = ?')
     .get(id) as BookStatus | undefined
 
   if (!book) {
@@ -35,6 +36,7 @@ export async function GET(
     ocrCurrentPage: book.ocr_current_page,
     ocrTotalPages: book.ocr_total_pages,
     parse_status: book.parse_status,
+    kp_extraction_status: book.kp_extraction_status,
     ocr_current_page: book.ocr_current_page,
     ocr_total_pages: book.ocr_total_pages,
   })
