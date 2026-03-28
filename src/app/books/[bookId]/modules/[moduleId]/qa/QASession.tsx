@@ -26,10 +26,12 @@ export default function QASession({
   moduleId,
   moduleTitle,
   bookId,
+  onComplete,
 }: {
   moduleId: number
   moduleTitle: string
   bookId: number
+  onComplete?: () => void
 }) {
   const [stage, setStage] = useState<Stage>('loading')
   const [questions, setQuestions] = useState<Question[]>([])

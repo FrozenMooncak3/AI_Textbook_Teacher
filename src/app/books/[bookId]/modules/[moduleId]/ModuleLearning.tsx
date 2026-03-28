@@ -1,7 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import QASession from './qa/QASession'
+
+// --- Types ---
+
+type LearningStatus = 'unstarted' | 'reading' | 'qa' | 'notes_generated' | 'completed'
 
 interface Module {
   id: number
@@ -11,7 +16,6 @@ interface Module {
   order_index: number
   kp_count: number
   learning_status: string
-  pass_status: string
 }
 
 interface Guide {
@@ -20,177 +24,331 @@ interface Guide {
   common_mistakes: string[]
 }
 
-type View = 'guide' | 'reading'
+interface ReadingNote {
+  id: number
+  content: string
+  page_number?: number
+}
+
+// --- Components ---
+
+const LoadingSpinner = () => (
+  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+)
 
 export default function ModuleLearning({
-  module_,
+  module,
   bookRawText,
   bookId,
 }: {
-  module_: Module
+  module: Module
   bookRawText: string
   bookId: number
 }) {
   const router = useRouter()
-  const [view, setView] = useState<View>('guide')
-  const [guide, setGuide] = useState<Guide | null>(null)
-  const [loadingGuide, setLoadingGuide] = useState(false)
-  const [error, setError] = useState('')
+  const [status, setStatus] = useState<LearningStatus>(module.learning_status as LearningStatus)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  async function loadGuide() {
-    setLoadingGuide(true)
-    setError('')
-
-    // 先尝试读缓存
-    const cached = await fetch(`/api/modules/${module_.id}/guide`)
-    if (cached.ok) {
-      const cachedData = await cached.json()
-      if (cachedData.guide) {
-        setGuide(cachedData.guide)
-        setLoadingGuide(false)
-        return
+  // ── 状态初始化 ───────────────────────────────────────────
+  useEffect(() => {
+    if (status === 'unstarted') {
+      const transitionToReading = async () => {
+        try {
+          const res = await fetch(`/api/modules/${module.id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ learning_status: 'reading' }),
+          })
+          if (res.ok) {
+            setStatus('reading')
+          }
+        } catch {
+          // silently fail, we'll try again if they refresh
+        }
       }
+      transitionToReading()
     }
+  }, [status, module.id])
 
-    // 无缓存则生成
-    const res = await fetch(`/api/modules/${module_.id}/guide`, { method: 'POST' })
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error ?? '生成失败，请重试')
-      setLoadingGuide(false)
-      return
+  // ── 阶段切换逻辑 ──────────────────────────────────────────
+  const handleStartQA = async () => {
+    setIsTransitioning(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/modules/${module.id}/generate-questions`, { method: 'POST' })
+      const result = await res.json()
+      if (result.success) {
+        setStatus('qa')
+      } else {
+        setError(result.error || 'Failed to generate questions')
+      }
+    } catch {
+      setError('Connection failed. Please try again.')
+    } finally {
+      setIsTransitioning(false)
     }
-    setGuide(data.guide)
-    setLoadingGuide(false)
   }
 
-  function handleStartReading() {
-    setView('reading')
+  const handleCompleteNotes = () => {
+    setStatus('notes_generated')
   }
 
-  async function handleFinishedReading() {
-    // 更新 learning_status 为 'qa'
-    await fetch(`/api/modules/${module_.id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ learning_status: 'qa' }),
-    })
-    router.push(`/books/${bookId}/modules/${module_.id}/qa`)
+  const handleFinalComplete = () => {
+    setStatus('completed')
   }
 
-  // ── 原文阅读视图 ──────────────────────────────────────────
-  if (view === 'reading') {
+  // ── 渲染视图 ──────────────────────────────────────────────
+  if (status === 'unstarted' || status === 'reading') {
     return (
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">原文阅读</h2>
-          <button
-            onClick={() => setView('guide')}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            ← 返回指引
-          </button>
-        </div>
+      <ReadingPhase 
+        module={module} 
+        bookRawText={bookRawText} 
+        onDone={handleStartQA}
+        isGenerating={isTransitioning}
+        error={error}
+      />
+    )
+  }
 
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6 max-h-[60vh] overflow-y-auto">
-          <pre className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-sans">
-            {bookRawText}
-          </pre>
-        </div>
+  if (status === 'qa') {
+    return (
+      <QASession 
+        moduleId={module.id} 
+        moduleTitle={module.title} 
+        bookId={bookId} 
+        onComplete={handleCompleteNotes}
+      />
+    )
+  }
 
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-amber-800 font-medium">阅读提示</p>
-          <p className="text-xs text-amber-700 mt-1">
-            请认真阅读原文后再进入 Q&A。阅读是必须步骤，无法跳过。
-          </p>
-        </div>
-
-        <button
-          onClick={handleFinishedReading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
+  if (status === 'notes_generated') {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+        <h2 className="text-xl font-bold text-slate-900 mb-4">学习笔记已生成</h2>
+        <p className="text-slate-600 mb-6">Task 8 将在这里实现笔记展示组件</p>
+        <button 
+          onClick={handleFinalComplete}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all"
         >
-          我读完了，开始 Q&A
+          查看笔记 (MVP 占位)
         </button>
       </div>
     )
   }
 
-  // ── 读前指引视图 ──────────────────────────────────────────
+  if (status === 'completed') {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center shadow-sm">
+        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">✓</div>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">恭喜完成！</h2>
+        <p className="text-slate-600 mb-8">你已经完成了模块《{module.title}》的学习。</p>
+        <button 
+          onClick={() => router.push(`/books/${bookId}/module-map`)}
+          className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-10 rounded-xl transition-all"
+        >
+          返回模块地图
+        </button>
+      </div>
+    )
+  }
+
+  return null
+}
+
+// ── Reading Phase Component ───────────────────────────────────
+
+function ReadingPhase({ 
+  module, 
+  bookRawText, 
+  onDone,
+  isGenerating,
+  error
+}: { 
+  module: Module
+  bookRawText: string 
+  onDone: () => void
+  isGenerating: boolean
+  error: string | null
+}) {
+  const [guide, setGuide] = useState<Guide | null>(null)
+  const [isGuideOpen, setIsGuideOpen] = useState(true)
+  const [notes, setNotes] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Load guide asynchronously
+  useEffect(() => {
+    const fetchGuide = async () => {
+      try {
+        const res = await fetch(`/api/modules/${module.id}/guide`, { method: 'POST' })
+        const data = await res.json()
+        if (data.guide) {
+          setGuide(data.guide)
+        }
+      } catch { /* ignore guide load failures */ }
+    }
+    fetchGuide()
+  }, [module.id])
+
+  // Load reading notes
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const res = await fetch(`/api/modules/${module.id}/reading-notes`)
+        const result = await res.json()
+        if (result.success && result.data.notes.length > 0) {
+          // Join multiple notes into one text area content for simplicity
+          setNotes(result.data.notes.map((n: ReadingNote) => n.content).join('\n\n'))
+        }
+      } catch { /* ignore */ }
+    }
+    fetchNotes()
+  }, [module.id])
+
+  const handleSaveNotes = async () => {
+    if (!notes.trim()) return
+    setIsSaving(true)
+    try {
+      await fetch(`/api/modules/${module.id}/reading-notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: notes }),
+      })
+    } catch { /* ignore */ }
+    finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">{module_.title}</h2>
-        <p className="text-sm text-gray-500">{module_.kp_count} 个知识点</p>
+    <div className="space-y-6">
+      {/* Guide Banner */}
+      {guide && (
+        <div className="bg-white rounded-2xl border border-blue-100 overflow-hidden shadow-sm shadow-blue-50">
+          <button 
+            onClick={() => setIsGuideOpen(!isGuideOpen)}
+            className="w-full px-6 py-4 flex items-center justify-between bg-blue-50/50 hover:bg-blue-50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">💡</span>
+              <span className="font-bold text-blue-900">读前指引：本模块学习目标</span>
+            </div>
+            <svg 
+              className={`w-5 h-5 text-blue-400 transition-transform ${isGuideOpen ? 'rotate-180' : ''}`} 
+              fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {isGuideOpen && (
+            <div className="p-6 space-y-6">
+              <div>
+                <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2">学完能做什么</p>
+                <p className="text-slate-700 leading-relaxed">{guide.goal}</p>
+              </div>
+              
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-3">核心重点</p>
+                  <ul className="space-y-2">
+                    {guide.focus_points.map((p, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-slate-600">
+                        <span className="text-emerald-400 font-bold shrink-0">·</span>
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-amber-500 uppercase tracking-widest mb-3">容易混淆</p>
+                  <ul className="space-y-2">
+                    {guide.common_mistakes.map((p, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-slate-600">
+                        <span className="text-amber-400 font-bold shrink-0">!</span>
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Reading Area */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <h3 className="font-bold text-slate-900 flex items-center gap-2">
+            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            教材原文
+          </h3>
+          <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter">Read Carefully</span>
+        </div>
+        <div className="p-8 max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+          <pre className="text-sm text-slate-700 leading-loose whitespace-pre-wrap font-sans">
+            {bookRawText}
+          </pre>
+        </div>
       </div>
 
-      {!guide && (
-        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center mb-6">
-          <p className="text-sm text-gray-500 mb-4">
-            在开始阅读前，AI 会为你生成读前指引，帮你明确学习目标和重点。
-          </p>
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">{error}</p>
-          )}
-          <button
-            onClick={loadGuide}
-            disabled={loadingGuide}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium px-6 py-2.5 rounded-lg text-sm transition-colors"
-          >
-            {loadingGuide ? 'AI 生成中...' : '生成读前指引'}
-          </button>
+      {/* Notes Area */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-slate-900 flex items-center gap-2">
+            <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            阅读笔记
+          </h3>
+          {isSaving && <div className="text-[10px] text-slate-400 animate-pulse">正在保存...</div>}
         </div>
-      )}
+        <textarea 
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={handleSaveNotes}
+          placeholder="在这里记录你的思考、疑问或重点..."
+          rows={4}
+          className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-300 resize-none bg-slate-50/30"
+        />
+        <p className="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          笔记将用于辅助 AI 出题，让练习更具针对性
+        </p>
+      </div>
 
-      {guide && (
-        <div className="space-y-4 mb-6">
-          {/* 学习目标 */}
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
-            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
-              学完能做什么
-            </p>
-            <p className="text-sm text-blue-900 leading-relaxed">{guide.goal}</p>
+      {/* CTA */}
+      <div className="pt-4">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 text-xs rounded-xl flex items-center gap-2">
+            <span>⚠️</span> {error}
           </div>
-
-          {/* 核心重点 */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              核心重点（阅读时重点关注）
-            </p>
-            <ul className="space-y-2">
-              {guide.focus_points.map((point, i) => (
-                <li key={i} className="flex gap-2 text-sm text-gray-700">
-                  <span className="text-blue-400 font-bold shrink-0">{i + 1}.</span>
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* 容易混淆 */}
-          <div className="bg-amber-50 border border-amber-100 rounded-xl p-5">
-            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-3">
-              容易混淆的地方
-            </p>
-            <ul className="space-y-2">
-              {guide.common_mistakes.map((mistake, i) => (
-                <li key={i} className="flex gap-2 text-sm text-amber-800">
-                  <span className="shrink-0">⚠</span>
-                  <span>{mistake}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {guide && (
-        <button
-          onClick={handleStartReading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
+        )}
+        <button 
+          onClick={onDone}
+          disabled={isGenerating}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-3 transform active:scale-[0.99]"
         >
-          开始阅读原文 →
+          {isGenerating ? (
+            <>
+              <LoadingSpinner />
+              <span>AI 正在分析知识点并出题...</span>
+            </>
+          ) : (
+            <>
+              <span>我读完了，进入 Q&A 练习</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </>
+          )}
         </button>
-      )}
+      </div>
     </div>
   )
 }
