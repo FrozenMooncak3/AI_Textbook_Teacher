@@ -122,6 +122,27 @@ Request body:
 }
 ```
 
+### `POST /api/modules/[moduleId]/generate-notes`
+
+Request body:
+
+```json
+{}
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "noteId": 1,
+    "content": "string",
+    "cached": true
+  }
+}
+```
+
 Response `200`:
 
 ```json
@@ -141,3 +162,4 @@ Response `200`:
 - [2026-03-28] [Codex] Added reading notes CRUD API contract for M2.
 - [2026-03-28] [Codex] Added Q&A question generation API contract for M2.
 - [2026-03-28] [Codex] Added Q&A instant feedback API contract for M2.
+- [2026-03-28] [Codex] Added study notes generation API contract for M2.
