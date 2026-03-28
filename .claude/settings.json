@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "bash scripts/hooks/file-boundary-guard.sh"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "bash scripts/hooks/post-edit-check.sh"
+      }
+    ],
+    "Stop": [
+      {
+        "command": "bash scripts/hooks/stop-counter.sh"
+      }
+    ],
+    "PreCompact": [
+      {
+        "command": "bash scripts/hooks/pre-compact-check.sh"
+      }
+    ]
+  }
+}

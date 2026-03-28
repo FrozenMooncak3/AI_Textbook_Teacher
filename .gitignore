@@ -47,3 +47,6 @@ next-env.d.ts
 
 # CCB runtime session files
 .ccb/.*-session
+
+# Claude Code hook runtime state
+.claude/.stop-count
