@@ -55,56 +55,66 @@ const SEED_TEMPLATES: TemplateSeed[] = [
   {
     role: 'extractor',
     stage: 'kp_extraction',
-    template_text: `浣犳槸涓€涓暀鏉愮煡璇嗙偣鎻愬彇涓撳銆?
-## 浠诲姟
-浠庝互涓嬫枃鏈潡涓彁鍙栫煡璇嗙偣锛圞nowledge Points, KP锛夈€?
-## 鎻愬彇瑙勫垯
+    template_text: `You are a textbook knowledge point extraction expert.
 
-### 1. 鍐呭鍒嗙被
-- 鎶€鏈唴瀹癸紙瀹氫箟銆佸叕寮忋€佽鍒欍€佸垽鏂爣鍑嗭級鈫?鎻愬彇涓虹嫭绔?KP
-- 涓句緥/妗堜緥锛堟煇鍏徃鏌愬勾鐨勬暟鎹級鈫?褰掑叆涓婁竴涓?KP 鐨?detailed_content锛屼笉鍗曠嫭鎻愬彇
-- 鏁呬簨/鑳屾櫙锛堝彊浜嬫€ф弿杩帮級鈫?鍙彁鍙栧叾涓殑瑙勫垯/鍘熷垯锛屼笉鎻愬彇鎯呰妭
+## Task
+Extract knowledge points (KPs) from the block below.
 
-### 2. KP 绮掑害鎺у埗
-- 澶锛歞escription 鍚?浠ュ強""鍖呮嫭X涓柟闈?"鍜? 鈫?蹇呴』鎷嗗垎涓哄涓?KP
-- 澶獎锛氬彧鏄煇鍏徃鏌愬勾鐨勫叿浣撴暟瀛楋紝鎹釜鎯呭涓嶉€傜敤 鈫?褰掑叆涓婁竴涓?KP 鐨勪緥瀛?
-- 鍒ゆ柇鏍囧噯锛氳繖涓?KP 鎹竴瀹跺叕鍙搞€佹崲涓€涓儏澧冭繕閫傜敤鍚楋紵閫傜敤 = 鐙珛 KP锛屼笉閫傜敤 = 渚嬪瓙
+## Rules
+- Return strict JSON only. No markdown, no explanation.
+- The entire response must be valid JSON.
+- Escape every double quote inside string values as \".
+- Do not use unescaped double quotes inside any string.
+- Keep each KP self-contained and concise.
+- If a source sentence contains quoted terms, rewrite them without raw quotes or escape them.
 
-### 3. KP 绫诲瀷锛堝繀椤绘爣娉ㄥ叾涓€锛?
-- position: 绔嬪満/瑙傜偣绫伙紙"XX 搴旇 YY"銆?濂界殑 XX 閫氬父鍏峰 YY"锛?
-- calculation: 璁＄畻绫伙紙蹇呴』鍚叕寮?+ 璁＄畻姝ラ + 娉ㄦ剰浜嬮」锛屼笁鑰呯己涓€涓嶅彲锛?
-- c1_judgment: C1 鍒ゆ柇绫伙紙鑳藉洖绛?鏄笉鏄?XX"鐨勪簨瀹炴€у垽鏂級
-- c2_evaluation: C2 璇勪及绫伙紙闇€鏉冭　澶氬洜绱犲仛鍒ゆ柇锛屽繀椤诲惈鐭涚浘淇″彿/姝ｅ弽涓ら潰锛?
-- definition: 瀹氫箟绫伙紙鏈/姒傚康鐨勭簿纭惈涔夛級
+### 1. Content categories
+- Technical content: definitions, formulas, rules, judgments -> separate KP.
+- Example/case detail -> fold into the previous KP's detailed_content.
+- Narrative/background -> keep only the governing rule or principle.
 
-### 4. detailed_content 瑕佹眰
-- 蹇呴』鑷冻锛坰elf-contained锛夛紝涓嶄緷璧栦笂涓嬫枃灏辫兘鐞嗚В鍜屽嚭棰?
-- 蹇呴』瓒冲璇︾粏锛屼綔涓哄嚭棰樼殑鍞竴渚濇嵁
-- 璁＄畻绫伙細蹇呴』鍖呭惈瀹屾暣鍏紡銆佽绠楁楠ゃ€佸崟浣嶃€佹敞鎰忎簨椤?
-- C2 璇勪及绫伙細蹇呴』鍖呭惈姝ｅ弽涓ら潰鐨勪俊鍙凤紙"涓€鏂归潰...鍙︿竴鏂归潰..."锛?
-- 濡傛灉鍘熸枃涓嶅瀹屾暣锛岀敤 [OCR 鍐呭涓嶅畬鏁碷 鏍囨敞
+### 2. KP granularity
+- Too broad -> split into multiple KPs.
+- Too narrow -> merge into the previous KP if the point only makes sense in context.
+- Ask: would this still be valid if applied to a different company or scenario?
 
-### 5. 璺ㄥ潡鏍囪
-濡傛灉鏂囨湰鍧楁湯灏剧殑鍐呭鏄庢樉鏈畬缁擄紙鍙ュ瓙鏂銆佸垪琛ㄦ湭缁撴潫銆佸叕寮忎笉瀹屾暣锛夛紝鏍囪 cross_block_risk = true
+### 3. KP types
+- position
+- calculation
+- c1_judgment
+- c2_evaluation
+- definition
 
-## 鎵€灞炲皬鑺?{section_name}
+### 4. detailed_content
+- Must be self-contained.
+- Must be specific enough to answer a question.
+- Calculations must include formulas, steps, units, and assumptions.
+- C2 evaluation must mention both sides of the contradiction.
+- If the source is incomplete, annotate with [OCR incomplete].
 
-## 鏂囨湰鍧?{text_block}
+### 5. Cross-block risk
+If the block appears unfinished, set cross_block_risk = true.
 
-## 涓婁竴涓潡鐨勬湯灏?KP锛堢敤浜庤法鍧楃画鎺ワ紝鑻ヤ负"鏃?鍒欏拷鐣ワ級
+## Section
+{section_name}
+
+## Block
+{text_block}
+
+## Previous tail
 {previous_block_tail}
 
-## 杈撳嚭瑕佹眰
-杩斿洖涓ユ牸 JSON锛屼笉瑕佹湁浠讳綍棰濆鏂囧瓧锛?
+## Output
+Return strict JSON only, with no extra text:
 {
   "knowledge_points": [
     {
-      "kp_code": "灏忚妭搴忓彿-KP搴忓彿锛堝 2.3-01锛?",
-      "section_name": "鎵€灞炲皬鑺傚悕",
-      "description": "涓€鍙ヨ瘽鎻忚堪锛屼笉瓒呰繃 25 瀛?",
+      "kp_code": "section-01",
+      "section_name": "section name",
+      "description": "one-sentence description",
       "type": "position|calculation|c1_judgment|c2_evaluation|definition",
       "importance": 1,
-      "detailed_content": "瀹屾暣鍑洪渚濇嵁锛岃嚜瓒冲唴瀹?,
+      "detailed_content": "complete evidence-based content with escaped quotes like \"fixed asset\"",
       "cross_block_risk": false,
       "ocr_quality": "good|uncertain|damaged"
     }

@@ -56,18 +56,70 @@ async function callClaude(prompt: string, maxTokens: number): Promise<string> {
   return textBlock.text
 }
 
+function repairLooseJSON(candidate: string): string {
+  let repaired = ''
+  let inString = false
+
+  for (let i = 0; i < candidate.length; i++) {
+    const char = candidate[i]
+
+    if (char === '\\') {
+      repaired += char
+      if (i + 1 < candidate.length) {
+        repaired += candidate[i + 1]
+        i += 1
+      }
+      continue
+    }
+
+    if (char === '"') {
+      if (!inString) {
+        inString = true
+        repaired += char
+        continue
+      }
+
+      let lookahead = i + 1
+      while (lookahead < candidate.length && /\s/.test(candidate[lookahead])) {
+        lookahead += 1
+      }
+
+      const nextChar = candidate[lookahead]
+      if (nextChar === ',' || nextChar === '}' || nextChar === ']' || nextChar === ':') {
+        inString = false
+        repaired += char
+      } else {
+        repaired += String.fromCharCode(92) + '"'
+      }
+      continue
+    }
+
+    repaired += char
+  }
+
+  return repaired
+}
+
 function parseJSON<T>(text: string, context: string): T {
   const fencedMatch = text.match(/```json\s*([\s\S]*?)```/i)
   const candidate = fencedMatch?.[1] ?? text.match(/\{[\s\S]*\}/)?.[0]
 
   if (!candidate) {
-    throw new SystemError(`${context}: 鏈湪 Claude 鍝嶅簲涓壘鍒?JSON`)
+    throw new SystemError(`${context}: Claude did not return JSON`)
   }
 
   try {
     return JSON.parse(candidate) as T
   } catch (error) {
-    throw new SystemError(`${context}: JSON 瑙ｆ瀽澶辫触`, error)
+    const repaired = repairLooseJSON(candidate)
+    try {
+      return JSON.parse(repaired) as T
+    } catch (repairError) {
+      throw new SystemError(
+        `${context}: JSON parse failed`,
+        repairError instanceof Error ? repairError : error
+      )
+    }
   }
 }
 
@@ -90,6 +142,7 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
     const end = Math.min(lines.length - 1, section.line_end)
     const blockLines = lines.slice(start, end + 1)
     const textBlock = blockLines.join('\n')
+    let rawResponse = ''
 
     if (!textBlock.trim()) {
       logAction('KP 鎻愬彇璺宠繃', `灏忚妭"${section.title}"鏂囨湰涓虹┖`, 'warn')
@@ -104,6 +157,7 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
 
     try {
       const response = await callClaude(prompt, 8_192)
+      rawResponse = response
       const result = parseJSON<Stage1Result>(response, `Stage 1: ${section.title}`)
 
       allKPs.push(...result.knowledge_points)
@@ -118,6 +172,13 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
         `灏忚妭"${section.title}"鎻愬彇澶辫触锛岃烦杩? ${err instanceof Error ? err.message : String(err)}`,
         'warn'
       )
+      if (rawResponse) {
+        logAction(
+          'KP raw response',
+          `Section "${section.title}" Claude returned first 500 chars: ${rawResponse.slice(0, 500)}`,
+          'warn',
+        )
+      }
     }
   }
 
