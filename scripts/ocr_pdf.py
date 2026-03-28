@@ -101,7 +101,10 @@ def extract_text_from_pdf(pdf_path: str, db_path: str, book_id: int) -> str:
     finally:
         doc.close()
 
-    return "\n\n".join(pages_text)
+    marked_parts: list[str] = []
+    for i, text in enumerate(pages_text):
+        marked_parts.append(f"--- PAGE {i + 1} ---\n{text}")
+    return "\n\n".join(marked_parts)
 
 
 def main() -> int:

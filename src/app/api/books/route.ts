@@ -1,4 +1,113 @@
-d":"25878e71-6d0c-4827-9f8f-6eb81e1707f0","type":"user","message":{"role":"user","content":[{"type":"text","text":"[Request interrupted by user]"}]},"uuid":"c93afde7-004d-4bf4-aaf8-6474f641e740","timestamp":"2026-03-22T03:23:47.437Z","userType":"external","entrypoint":"cli","cwd":"C:\\Users\\Sean\\ai-textbook-teacher","sessionId":"f97d44ac-8ffc-42bc-92e1-57ea0cbdb931","version":"2.1.81","gitBranch":"master","slug":"crispy-discovering-steele"}
-{"type":"file-history-snapshot","messageId":"8b4e205a-2f46-471d-9148-8deba427d4aa","snapshot":{"messageId":"8b4e205a-2f46-471d-9148-8deba427d4aa","trackedFileBackups":{"docs\\superpowers\\specs\\2026-03-22-error-handling-service-layer-design.md":{"backupFileName":"bd4c6786fb0a9d3d@v2","version":2,"backupTime":"2026-03-22T03:10:36.897Z"},"docs\\superpowers\\plans\\2026-03-22-m0-task0-error-handling-service-layer.md":{"backupFileName":"96493e00212a3c66@v2","version":2,"backupTime":"2026-03-22T03:19:16.086Z"},"src\\lib\\errors.ts":{"backupFileName":"7d18a9740610a971@v2","version":2,"backupTime":"2026-03-22T03:23:25.526Z"},"src\\lib\\handle-route.ts":{"backupFileName":"a041a226092c2543@v2","version":2,"backupTime":"2026-03-22T03:23:25.529Z"},"src\\lib\\services\\book-service.ts":{"backupFileName":"5769ed6dc899bab8@v2","version":2,"backupTime":"2026-03-22T03:23:25.532Z"},"src\\app\\api\\books\\route.ts":{"backupFileName":"ef55adbf190951a6@v2","version":2,"backupTime":"2026-03-22T03:23:25.535Z"},"AGENTS.md":{"backupFileName":"d73a091d3b39c00e@v2","version":2,"backupTime":"2026-03-22T03:23:25.538Z"}},"timestamp":"2026-03-22T03:24:16.085Z"},"isSnapshotUpdate":false}
-{"parentUuid":"c93afde7-004d-4bf4-aaf8-6474f641e740","isSidechain":false,"promptId":"98255842-43f3-4994-86a5-a8228b3bf53a","type":"user","message":{"role":"user","content":"所以现在base已经打好了？可以m0了？先别开始，git也push了？"},"uuid":"8b4e205a-2f46-471d-9148-8deba427d4aa","timestamp":"2026-03-22T03:24:16.084Z","permissionMode":"bypassPermissions","userType":"external","entrypoint":"cli","cwd":"C:\\Users\\Sean\\ai-textbook-teacher","sessionId":"f97d44ac-8ffc-42bc-92e1-57ea0cbdb931","version":"2.1.81","gitBranch":"master","slug":"crispy-discovering-steele"}
-{"parentUuid":"8b4e205a-2f46-471d-9148-8deba427d4aa","isSidechain":false,"message":{"model":"claude-opus-4-6","id":"msg_01UWUwHkQpMwcjeeYkQzTqiV","type":"message","role":"assistant","content":[{"type":"thinking","thinking":"","signature":"EtACCkYICxgCKkBobzWjP580iztHQhp4Oj7I+3f/LIHZLd4YGgP9Hf4MuYlN/4h9+lxRabBDoFrhpgszWjka0pq/lEyKAvQlKTTcEgxVqKKOTAF4AE/QQFwaDOJZug8/hH5/+ojlhSIwMD29NdWb01ZrucZQvBnPqmVs2etqaOK/3daUkMU7TSsn7PH8uTVqpU3nLLNCqg54KrcBoy5xAfDP6vk6G1L89QDwBvUvGmm47uLFpTsmU6mnzHZW/ri3zgqM+pZvDlwyQcLOP0+XjnVhTxAOhpstfZp0s2BJQRS2wr5r7FIXv0w0POGTo3pQ1wNzFyR5pFJ7tuCcRKqOEVolALg70X1DMZF9yhmk1wes+d+IFbcHHmQehWt8wEwlHYQOlWOzmX2Azt1G+Jt7PDye5Oapqb9/DftjtbahXA9QM/Og2VgaVWFY1pPfngbb2mN9GAE="}],"stop_reason":null,"stop_sequence":null,"usage":{"input_t
+import { NextRequest, NextResponse } from 'next/server'
+import { writeFile, mkdir } from 'fs/promises'
+import { spawn } from 'child_process'
+import { join } from 'path'
+import { getDb } from '@/lib/db'
+import { handleRoute } from '@/lib/handle-route'
+import { logAction } from '@/lib/log'
+import { bookService } from '@/lib/services/book-service'
+
+const UPLOADS_DIR = join(process.cwd(), 'data', 'uploads')
+
+export const GET = handleRoute(async () => {
+  const books = bookService.list()
+  return { data: books }
+})
+
+export async function POST(req: NextRequest) {
+  const formData = await req.formData()
+  const file = formData.get('file') as File | null
+  const title = formData.get('title') as string | null
+
+  if (!file) {
+    return NextResponse.json({ error: 'Missing file' }, { status: 400 })
+  }
+
+  if (!title?.trim()) {
+    return NextResponse.json({ error: 'Missing title' }, { status: 400 })
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!ext || !['pdf', 'txt'].includes(ext)) {
+    return NextResponse.json({ error: 'Unsupported file type' }, { status: 422 })
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const db = getDb()
+
+  logAction('book_upload_started', `file=${file.name}, title=${title}`)
+
+  if (ext === 'txt') {
+    const rawText = buffer.toString('utf-8').trim()
+    if (rawText.length < 100) {
+      logAction('book_upload_short_text', `chars=${rawText.length}`, 'warn')
+      return NextResponse.json({ error: 'Text file content is too short' }, { status: 422 })
+    }
+
+    const result = db
+      .prepare('INSERT INTO books (title, raw_text, parse_status) VALUES (?, ?, ?)')
+      .run(title.trim(), rawText, 'done')
+
+    logAction('book_upload_completed_txt', `bookId=${result.lastInsertRowid}, chars=${rawText.length}`)
+    return NextResponse.json({ bookId: result.lastInsertRowid }, { status: 201 })
+  }
+
+  const result = db
+    .prepare('INSERT INTO books (title, raw_text, parse_status) VALUES (?, ?, ?)')
+    .run(title.trim(), '', 'processing')
+  const bookId = result.lastInsertRowid as number
+
+  await mkdir(UPLOADS_DIR, { recursive: true })
+  const pdfPath = join(UPLOADS_DIR, `${bookId}.pdf`)
+  await writeFile(pdfPath, buffer)
+
+  const markOcrFailure = (details: string) => {
+    try {
+      db.prepare("UPDATE books SET parse_status='error' WHERE id = ?").run(bookId)
+    } catch {
+      // Ignore logging-path failures while surfacing OCR failures.
+    }
+    logAction('book_ocr_failed', `bookId=${bookId}, ${details}`, 'error')
+  }
+
+  const dbPath = join(process.cwd(), 'data', 'app.db')
+  const scriptPath = join(process.cwd(), 'scripts', 'ocr_pdf.py')
+  const pythonCommand = process.env.PYTHON_BIN ?? (process.platform === 'win32' ? 'python' : 'python3')
+
+  let child: ReturnType<typeof spawn>
+  try {
+    child = spawn(pythonCommand, [scriptPath, pdfPath, '--book-id', String(bookId), '--db-path', dbPath], {
+      cwd: process.cwd(),
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    })
+  } catch (error) {
+    markOcrFailure(`spawn exception: ${String(error)}`)
+    return NextResponse.json({ error: 'Failed to start OCR worker' }, { status: 500 })
+  }
+
+  let completed = false
+  let stderr = ''
+
+  const failOnce = (details: string) => {
+    if (completed) return
+    completed = true
+    markOcrFailure(details)
+  }
+
+  child.stdout?.on('data', () => {})
+  child.stderr?.on('data', (chunk: Buffer | string) => {
+    stderr = `${stderr}${chunk.toString()}`.slice(-4000)
+  })
+  child.on('error', (error) => {
+    failOnce(`spawn error: ${String(error)}`)
+  })
+  child.on('exit', (code, signal) => {
+    if (code === 0) return
+    const errorOutput = stderr.trim() || `signal=${signal ?? 'none'}`
+    failOnce(`exit code=${code ?? 'null'}, ${errorOutput}`)
+  })
+
+  logAction('book_ocr_started', `bookId=${bookId}, title=${title}`)
+  return NextResponse.json({ bookId, processing: true }, { status: 201 })
+}
