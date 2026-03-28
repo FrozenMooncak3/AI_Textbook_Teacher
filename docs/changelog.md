@@ -412,6 +412,29 @@
 
 ---
 
+## 2026-03-22 | M0 Task 6：最终验证通过
+
+**完成内容**：M0 地基重建全部完成。8 项验证检查全部通过。
+
+**验证清单**：
+1. App 启动无报错 ✅
+2. 19 张表存在（+ sqlite_sequence） ✅
+3. 11 个 prompt 模板已种子化 ✅
+4. 上传页面正常 ✅
+5. PDF 阅读器渲染正常 ✅
+6. OCR 进度条正常更新 ✅
+7. 截图 AI 返回有意义回答 ✅
+8. Prompt 模板渲染测试通过 ✅
+
+**附带发现**：验证过程中发现截图问 AI 的 5 项改进需求（自动解释不等提问、英文回答中文内容、无进度反馈、MD 渲染、进度条精度），已归入 M5 任务清单。语言模式系统想法已 park 到 journal。
+
+**修改的文件**：
+- 修改：`docs/project_status.md`（M0 关闭，里程碑对齐 spec）、`docs/changelog.md`
+- 新增：`docs/journal/2026-03-22-m0-verification.md`
+- 修改：`docs/journal/INDEX.md`
+
+---
+
 <!-- 后续每完成一个功能，在此处追加，格式如下：
 
 ## YYYY-MM-DD | Phase X：功能名称
@@ -426,3 +449,16 @@
 **备注**：[遇到的问题、临时方案、待优化点]
 
 -->
+
+## 2026-03-28 | Claude hooks automation
+
+**Completed**: Added the Claude Code hook scripts, project hook settings, and verification work for Tasks 1-6 and Task 9.
+
+**Files modified**:
+- Added: `scripts/hooks/file-boundary-guard.sh`
+- Added: `scripts/hooks/post-edit-check.sh`
+- Added: `scripts/hooks/stop-counter.sh`
+- Added: `scripts/hooks/pre-compact-check.sh`
+- Added: `.claude/settings.json`
+- Updated: `.gitignore`
+- Updated: `docs/changelog.md`

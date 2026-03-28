@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
+type UploadStatus = 'idle' | 'uploading' | 'redirecting'
+
 export default function UploadPage() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -10,7 +12,9 @@ export default function UploadPage() {
   const [title, setTitle] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState<UploadStatus>('idle')
+
+  const isPdf = file?.name.toLowerCase().endsWith('.pdf') ?? false
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0]
@@ -28,7 +32,7 @@ export default function UploadPage() {
     if (!file) { setError('请选择文件'); return }
     if (!title.trim()) { setError('请填写教材名称'); return }
 
-    setLoading(true)
+    setStatus('uploading')
     setError('')
 
     const formData = new FormData()
@@ -40,11 +44,42 @@ export default function UploadPage() {
 
     if (!res.ok) {
       setError(data.error ?? '上传失败，请重试')
-      setLoading(false)
+      setStatus('idle')
       return
     }
 
-    router.push(`/books/${data.bookId}`)
+    setStatus('redirecting')
+    router.push(`/books/${data.bookId}/reader`)
+  }
+
+  // 上传中 / 跳转中：替换整个表单，显示等待面板
+  if (status !== 'idle') {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 w-full max-w-md p-8">
+          <div className="text-center py-4">
+            <div className="flex justify-center mb-5">
+              <div className="w-10 h-10 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+
+            {status === 'uploading' ? (
+              <>
+                <p className="text-sm font-medium text-gray-800 mb-1">正在上传文件...</p>
+                <p className="text-xs text-gray-500 mb-3">{file?.name}</p>
+                {isPdf && (
+                  <p className="text-xs text-blue-700 bg-blue-50 rounded-lg px-3 py-2">
+                    PDF 上传完成后将自动进行文字识别（OCR）<br />
+                    大文件需要几分钟，请不要关闭页面
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm font-medium text-gray-800">上传成功，正在打开阅读器...</p>
+            )}
+          </div>
+        </div>
+      </main>
+    )
   }
 
   return (
@@ -95,6 +130,13 @@ export default function UploadPage() {
             />
           </div>
 
+          {/* PDF 预告提示：选了 PDF 就提前告知 OCR */}
+          {isPdf && (
+            <p className="text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+              PDF 上传后将自动识别文字（OCR），大文件需要几分钟
+            </p>
+          )}
+
           {/* 错误提示 */}
           {error && (
             <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
@@ -103,10 +145,9 @@ export default function UploadPage() {
           {/* 提交按钮 */}
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
           >
-            {loading ? '处理中...' : '开始学习'}
+            开始学习
           </button>
         </form>
       </div>

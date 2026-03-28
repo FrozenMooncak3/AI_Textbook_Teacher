@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(codex --version)",
+      "Bash(gemini --version)",
+      "Bash(npm install:*)",
+      "Bash(codex --help)",
+      "Bash(gemini --help)",
+      "Bash(echo $USERPROFILE)",
+      "Bash(env)",
+      "Bash(gcloud --version)",
+      "Bash(where gcloud:*)",
+      "Read(//d/已恢复/Users/Sean/ai-textbook-teacher/$APPDATA/**)",
+      "Read(//d/已恢复/Users/Sean/ai-textbook-teacher/$LOCALAPPDATA/**)",
+      "Bash(npm root:*)",
+      "Bash(find C:/Users/Administrator/AppData/Roaming/npm/node_modules/@google/ -name *.js -path */core/*)",
+      "Bash(export GOOGLE_GENAI_USE_GCA=true)",
+      "Bash(gemini --yolo -p \"say hello\")",
+      "Bash(export HTTP_PROXY=http://127.0.0.1:7897)",
+      "Bash(export HTTPS_PROXY=http://127.0.0.1:7897)",
+      "Bash(export http_proxy=http://127.0.0.1:7897)",
+      "Bash(export https_proxy=http://127.0.0.1:7897)",
+      "Bash(npm list:*)",
+      "WebSearch",
+      "Bash(export GOOGLE_CLOUD_PROJECT=awesome-nucleus-403711)",
+      "Bash(codex exec:*)",
+      "Bash(cd:*)"
+    ]
+  }
+}

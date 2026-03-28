@@ -40,6 +40,19 @@ export default function ModuleLearning({
   async function loadGuide() {
     setLoadingGuide(true)
     setError('')
+
+    // 先尝试读缓存
+    const cached = await fetch(`/api/modules/${module_.id}/guide`)
+    if (cached.ok) {
+      const cachedData = await cached.json()
+      if (cachedData.guide) {
+        setGuide(cachedData.guide)
+        setLoadingGuide(false)
+        return
+      }
+    }
+
+    // 无缓存则生成
     const res = await fetch(`/api/modules/${module_.id}/guide`, { method: 'POST' })
     const data = await res.json()
     if (!res.ok) {

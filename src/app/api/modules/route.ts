@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
 import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { logAction } from '@/lib/log'
 
 // POST /api/modules — 为指定书籍生成模块地图
 export async function POST(req: NextRequest) {
@@ -24,10 +25,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '模块已存在，不可重复生成' }, { status: 409 })
   }
 
+  logAction('生成模块地图', `bookId=${bookId}，教材：${book.title}`)
+
   const claude = getClaudeClient()
 
   // 文本过长时截断（100k 字符安全边界）
-  const text = book.raw_text.slice(0, 100000)
+  const text = book.raw_text.slice(0, 50000)
 
   const prompt = `你是一位专业的学习设计师，请将以下教材文本拆分为学习模块。
 
@@ -49,13 +52,6 @@ ${text}
       "title": "模块名称（对应小节名）",
       "summary": "核心技能描述：学完后能做什么具体判断（1-2句话）",
       "kp_count": 8,
-      "kp_breakdown": {
-        "位置类": 2,
-        "计算类": 2,
-        "C1判断类": 1,
-        "C2评估类": 2,
-        "定义类": 1
-      },
       "dependency": "无 / 依赖模块X的某知识点"
     }
   ]
@@ -63,7 +59,7 @@ ${text}
 
   const message = await claude.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: 4096,
+    max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],
   })
 
@@ -79,6 +75,7 @@ ${text}
     if (!jsonMatch) throw new Error('未找到 JSON')
     parsed = JSON.parse(jsonMatch[0])
   } catch {
+    logAction('模块生成解析失败', `stop_reason=${message.stop_reason} len=${rawContent.text.length} tail=${rawContent.text.slice(-100)}`, 'error')
     return NextResponse.json({ error: 'Claude 返回内容无法解析为 JSON' }, { status: 500 })
   }
 
@@ -97,6 +94,7 @@ ${text}
     .prepare('SELECT * FROM modules WHERE book_id = ? ORDER BY order_index')
     .all(bookId)
 
+  logAction('模块地图生成成功', `bookId=${bookId}，共 ${parsed.modules.length} 个模块`)
   return NextResponse.json({ modules }, { status: 201 })
 }
 

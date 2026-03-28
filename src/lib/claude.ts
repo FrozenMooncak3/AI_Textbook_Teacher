@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { HttpsProxyAgent } from 'https-proxy-agent'
+import { ProxyAgent, fetch as undiciFetch } from 'undici'
 
 let client: Anthropic | null = null
 
@@ -14,10 +14,14 @@ export function getClaudeClient(): Anthropic {
   const proxy = process.env.HTTPS_PROXY || process.env.https_proxy ||
                 process.env.HTTP_PROXY  || process.env.http_proxy
 
-  const options: ConstructorParameters<typeof Anthropic>[0] = { apiKey }
+  const options: ConstructorParameters<typeof Anthropic>[0] = {
+    apiKey,
+    timeout: 60_000,
+  }
 
   if (proxy) {
-    options.httpAgent = new HttpsProxyAgent(proxy)
+    const proxyAgent = new ProxyAgent(proxy)
+    options.fetch = (url, init) => undiciFetch(url as string, { ...init, dispatcher: proxyAgent } as Parameters<typeof undiciFetch>[1])
   }
 
   client = new Anthropic(options)

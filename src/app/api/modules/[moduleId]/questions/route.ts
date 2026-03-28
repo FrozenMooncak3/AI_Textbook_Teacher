@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
 import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { logAction } from '@/lib/log'
 
 interface Module {
   id: number
@@ -73,7 +74,8 @@ ${text}
 3. C2评估类题目须包含至少1个正面信号和1个负面信号
 4. 题目难度递进，从基础概念到综合应用
 
-请以严格 JSON 格式返回，不要有任何额外文字：
+请以严格 JSON 格式返回，不要有任何额外文字。
+重要：所有字段值内部不得出现英文双引号 "，如需强调词语请用【】或『』代替。
 {
   "questions": [
     {
@@ -86,7 +88,7 @@ ${text}
 
   const message = await claude.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: 4096,
+    max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],
   })
 
@@ -100,7 +102,9 @@ ${text}
     const jsonMatch = rawContent.text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('未找到 JSON')
     parsed = JSON.parse(jsonMatch[0])
-  } catch {
+  } catch (e) {
+    const err = e instanceof Error ? e.message : String(e)
+    logAction('QA出题解析失败', `err=${err} ||| tail=${rawContent.text.slice(-300)}`, 'error')
     return NextResponse.json({ error: 'Claude 返回内容无法解析' }, { status: 500 })
   }
 

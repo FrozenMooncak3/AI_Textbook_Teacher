@@ -102,7 +102,8 @@ ${qaList.map((q, i) => `
 - 粗心错误：偶发，非系统性错误
 - 概念混淆：把 A 误认为 B
 
-请以严格 JSON 格式返回，不要有任何额外文字：
+请以严格 JSON 格式返回，不要有任何额外文字。
+重要：所有字段值内部不得出现英文双引号 "，如需强调词语请用【】或『』代替：
 {
   "evaluations": [
     {
@@ -116,7 +117,7 @@ ${qaList.map((q, i) => `
 
   const message = await claude.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: 4096,
+    max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],
   })
 
