@@ -80,6 +80,38 @@ Response `200`:
 }
 ```
 
+### `POST /api/modules/[moduleId]/generate-questions`
+
+Request body:
+
+```json
+{}
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "questions": [
+      {
+        "id": 1,
+        "module_id": 1,
+        "kp_id": 1,
+        "question_type": "worked_example",
+        "question_text": "string",
+        "correct_answer": "string",
+        "scaffolding": "string",
+        "order_index": 1
+      }
+    ],
+    "cached": true
+  }
+}
+```
+
 ## Change Log
 
 - [2026-03-28] [Codex] Added reading notes CRUD API contract for M2.
+- [2026-03-28] [Codex] Added Q&A question generation API contract for M2.
