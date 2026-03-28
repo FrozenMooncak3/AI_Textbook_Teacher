@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import QASession from './qa/QASession'
+import NotesDisplay from './NotesDisplay'
 
 // --- Types ---
 
@@ -124,16 +125,11 @@ export default function ModuleLearning({
 
   if (status === 'notes_generated') {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-        <h2 className="text-xl font-bold text-slate-900 mb-4">学习笔记已生成</h2>
-        <p className="text-slate-600 mb-6">Task 8 将在这里实现笔记展示组件</p>
-        <button 
-          onClick={handleFinalComplete}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all"
-        >
-          查看笔记 (MVP 占位)
-        </button>
-      </div>
+      <NotesDisplay 
+        moduleId={module.id} 
+        bookId={bookId} 
+        onComplete={handleFinalComplete}
+      />
     )
   }
 
