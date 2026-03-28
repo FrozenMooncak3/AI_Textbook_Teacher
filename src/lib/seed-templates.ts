@@ -241,6 +241,33 @@ Return strict JSON only, with no extra text:
   },
 ]
 
+const COACH_PRE_READING_GUIDE_TEMPLATE = `你是一个学习教练。
+
+## 任务
+为以下模块生成读前指引。
+
+## 本模块知识点
+{kp_table}
+
+## 跨模块依赖
+{dependencies}
+
+## 输出要求
+返回严格 JSON，不要有任何额外文字：
+{
+  "goal": "学完这个模块能做什么——用一个具体的判断场景描述，1-2句话",
+  "focus_points": ["重点1", "重点2", "重点3"],
+  "common_mistakes": ["容易混淆的地方1", "容易混淆的地方2"]
+}`
+
+const preReadingGuideTemplate = SEED_TEMPLATES.find(
+  (template) => template.role === 'coach' && template.stage === 'pre_reading_guide'
+)
+
+if (preReadingGuideTemplate) {
+  preReadingGuideTemplate.template_text = COACH_PRE_READING_GUIDE_TEMPLATE
+}
+
 export function seedTemplates(): void {
   const db = getDb()
   const existing = db
@@ -270,6 +297,12 @@ export function seedTemplates(): void {
   const tx = db.transaction(() => {
     for (const t of SEED_TEMPLATES) {
       if (t.role === 'extractor') {
+        upsert.run(t.role, t.stage, t.template_text)
+      }
+    }
+
+    for (const t of SEED_TEMPLATES) {
+      if (t.role === 'coach') {
         upsert.run(t.role, t.stage, t.template_text)
       }
     }
