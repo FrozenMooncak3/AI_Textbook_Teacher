@@ -25,8 +25,41 @@ tags: [skills, codex, gemini, ccb, brainstorming]
 - Commit: `fafede3`
 - 调研文档：`docs/superpowers/specs/2026-03-28-repo-research-findings.md`
 
+## 第三次 brainstorming（2026-03-28 第二轮会话）
+
+### 评估结果
+
+| ID | 内容 | 决定 | 理由 |
+|----|------|------|------|
+| H6 | Skill reference 子目录 | **砍** | 领域知识已在 prompt 模板和 spec 里，reference 是重复真相源 |
+| H7 | 跨 skill 调用链 + 强制前置 | **做** | 融入 session-init，防跳步 + 自动串联 |
+| H8 | GitHub Action review | **砍** | 当前不走 PR 流程，已有 CCB review 机制 |
+| H9 | Session 持久化 | **做（改进版）** | 不另建系统，做"上下文加载器"串联现有机制 |
+| H10 | Instinct 持续学习 | **做（轻量版）** | 降级为手动 retrospective skill，不自动跑 |
+| H11 | 结构化 handoff | **已完成** | structured-dispatch skill |
+| H12 | allowed-tools 限制 | **砍** | 现有 hook 尚未充分验证，不加复杂度 |
+| H13 | Profile-based hook | **砍** | 同上 |
+| H14 | 持久化项目上下文 | **已有** | project_status.md |
+
+### 用户 insight
+
+- "Skill 太多了，记不住" — 需要减少用户面对的 skill 数量，只留 3 个入口级
+- H10 不要每次会话自动反思，太耗 token，做成手动 skill 定期跑
+- H9 现有机制不缺，缺的是"把它们串到一起的东西"
+
+### 设计产出
+
+- Spec: `docs/superpowers/specs/2026-03-28-session-init-retrospective-design.md`
+- 三个组件：session-init（H9+H7）、skill chain 声明（H7）、retrospective（H10）
+- 用户面向 skill 精简为 3 个：brainstorming、retrospective、claudemd-check
+
+### 当前状态
+
+- Spec 已通过 review（2 轮），已 commit + push
+- **下一步**：用户 review spec → 通过后跑 writing-plans 写实施计划
+
 ## 待跟进
 
-- [issue:open] 重启后验证 Codex/Gemini 能否看到 skill list；如不生效排查路径或格式问题
-- [decision:open] 第二次 brainstorming：Claude 自己的 skill 自动化 + hook 体系（H1-H5）
-- [decision:parked] 第三次 brainstorming：其他改进（H6-H14，含 GitHub Action、session 持久化、instinct 系统等）
+- [issue:resolved] 重启后验证 Codex/Gemini 能否看到 skill list — 已确认可见（2026-03-28）
+- [decision:resolved] 第二次 brainstorming：Claude hook 自动化 — 已实施，commit 09aaaef
+- [decision:in_progress] 第三次 brainstorming：spec 完成，待 review + writing-plans

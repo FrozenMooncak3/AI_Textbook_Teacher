@@ -3,11 +3,12 @@
 ## open（需要关注）
 
 ## in_progress（解决中）
+- [decision] 第三次 brainstorming：spec 已完成，待用户 review → 通过后跑 /writing-plans → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## parked（停车场）
 - [idea] 安装 UI/UX Pro Max Skill 给 Gemini（M2 开始前端改造时） → [2026-03-21-mvp-redesign.md](./2026-03-21-mvp-redesign.md)
 - [idea] 语言模式系统——自动切换 prompt 语言，多国语言版本（MVP 后） → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
-- [decision] 第三次 brainstorming：其他改进 H6-H14（GitHub Action、session 持久化、instinct 系统等） → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
+- [decision] 第三次 brainstorming 中被砍掉的项：H6/H8/H12/H13（评估后认为不需要）→ [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
 - [decision] 第二次 brainstorming：Claude hook 自动化（H1-H7）→ 已实施，commit 09aaaef → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
