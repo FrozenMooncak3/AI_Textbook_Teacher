@@ -49,6 +49,7 @@ export const GET = handleRoute(async (_req, context) => {
     cluster_count: number
     page_start: number | null
     page_end: number | null
+    learning_status: string
   }>
 
   const result: ModuleMapModule[] = modules.map((module) => {
@@ -83,6 +84,7 @@ export const GET = handleRoute(async (_req, context) => {
       cluster_count: module.cluster_count,
       page_start: module.page_start,
       page_end: module.page_end,
+      learning_status: module.learning_status,
       knowledge_points: knowledgePoints,
       clusters,
     }

@@ -25,7 +25,6 @@ interface Cluster {
   name: string
   kp_count: number
 }
-
 interface Module {
   id: number
   title: string
@@ -35,8 +34,37 @@ interface Module {
   cluster_count: number
   page_start: number
   page_end: number
+  learning_status: string
   knowledge_points: KnowledgePoint[]
   clusters: Cluster[]
+}
+
+// --- Components ---
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const labels: Record<string, string> = {
+    unstarted: '未开始',
+    reading: '正在阅读',
+    qa: 'Q&A 练习中',
+    notes_generated: '笔记已生成',
+    completed: '已完成',
+    testing: '测试中',
+  }
+
+  const styles: Record<string, string> = {
+    unstarted: 'bg-slate-100 text-slate-500 border-slate-200',
+    reading: 'bg-blue-50 text-blue-600 border-blue-100 animate-pulse',
+    qa: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    notes_generated: 'bg-purple-50 text-purple-600 border-purple-100',
+    completed: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    testing: 'bg-amber-50 text-amber-600 border-amber-100',
+  }
+
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${styles[status] || styles.unstarted}`}>
+      {labels[status] || status}
+    </span>
+  )
 }
 
 interface ModuleMapData {
@@ -301,6 +329,7 @@ export default function ModuleMapPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-0.5 rounded">MODULE {module.order_index}</span>
                     <span className="text-xs text-slate-400">P{module.page_start} - P{module.page_end}</span>
+                    <StatusBadge status={module.learning_status} />
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 truncate">{module.title}</h3>
                   <p className="text-sm text-slate-500 mt-1 line-clamp-1">{module.summary}</p>

@@ -106,6 +106,7 @@ export interface ModuleMapModule {
   cluster_count: number
   page_start: number | null
   page_end: number | null
+  learning_status: string
   knowledge_points: ModuleMapKP[]
   clusters: ModuleMapCluster[]
 }
