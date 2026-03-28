@@ -3,23 +3,54 @@
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "bash scripts/hooks/file-boundary-guard.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/hooks/file-boundary-guard.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/hooks/dispatch-guard.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "bash scripts/hooks/post-edit-check.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/hooks/post-edit-check.sh"
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "command": "bash scripts/hooks/stop-counter.sh"
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/hooks/stop-counter.sh"
+          }
+        ]
       }
     ],
     "PreCompact": [
       {
-        "command": "bash scripts/hooks/pre-compact-check.sh"
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/hooks/pre-compact-check.sh"
+          }
+        ]
       }
     ]
   }
