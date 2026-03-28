@@ -3,6 +3,10 @@ name: using-superpowers
 description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
 ---
 
+<SESSION-START>
+Before responding to the user's first message in a new session, you MUST invoke the session-init skill via the Skill tool. This loads project context, assesses where the user left off, and injects chain routing. After compact, re-invoke session-init to restore context.
+</SESSION-START>
+
 <SUBAGENT-STOP>
 If you were dispatched as a subagent to execute a specific task, skip this skill.
 </SUBAGENT-STOP>
@@ -109,6 +113,18 @@ When multiple skills could apply, use this order:
 **Flexible** (patterns): Adapt principles to context.
 
 The skill itself tells you which.
+
+## User-Facing Skills (the only 3 the user needs to know)
+
+| Skill | When to use | Command |
+|-------|------------|---------|
+| brainstorming | "I have an idea / I want to build X" | `/brainstorming` |
+| retrospective | "Let's review how things are going" | `/retrospective` |
+| claudemd-check | "Check compliance" (also auto-triggered before completion claims) | `/claudemd-check` |
+
+All other skills are **internal** — triggered automatically by skill chains or prerequisites. The user never needs to invoke them directly. If a user asks "what skills do I have?", list only these 3.
+
+Note: Claude Code's system-reminder will still list all installed skills. This table defines the *recommended workflow* — users can still manually invoke internal skills if they know what they're doing.
 
 ## User Instructions
 
