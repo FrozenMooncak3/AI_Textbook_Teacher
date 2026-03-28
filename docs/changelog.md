@@ -4,6 +4,18 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-03-28 | M1: Codex JSON 修复 + Status API Bug 发现
+
+- **Codex 修复（已合并）**: `repairLooseJSON()` 字符级 JSON 修复 + prompt 模板改为英文 + 严格 JSON 格式要求。Stage 1 JSON 解析成功率从 20% 提升到 100%（5/5 sections）
+- **提取结果**: 全 pipeline 跑通，38 KP + 7 聚类 + 2 模块写入 DB
+- **新发现 Bug**: `GET /api/books/[bookId]/status` 返回裸 JSON，前端 module-map 页面期望 `{ success: true, data: {...} }` 格式，导致页面永远显示"正在提取"
+- **已修复（Codex c10884f）**: status route 用 `handleRoute()` 重构，响应格式改为 `{ success: true, data: {...} }`；`src/lib/claude.ts` timeout 改为 300s
+- **M1 集成测试通过**: 前端 module-map 页面正常展示 38 KP + 2 模块
+
+修改文件：`src/app/api/books/[bookId]/status/route.ts`, `src/lib/claude.ts`, `src/lib/services/kp-extraction-service.ts`, `src/lib/seed-templates.ts`
+
+---
+
 ## 2026-03-28 | M1: 集成测试 Bug 修复
 
 - **Status endpoint 修复**: `GET /api/books/[bookId]/status` 缺少 `kp_extraction_status` 字段，前端无法追踪提取进度
