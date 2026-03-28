@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
 
-const VALID_STATUSES = ['unstarted', 'reading', 'qa', 'testing', 'completed']
+const VALID_STATUSES = ['unstarted', 'reading', 'qa', 'notes_generated', 'testing', 'completed']
 
 export async function PATCH(
   req: NextRequest,

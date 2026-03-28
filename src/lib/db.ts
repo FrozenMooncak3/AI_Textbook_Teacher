@@ -47,7 +47,8 @@ function initSchema(db: Database.Database): void {
       cluster_count   INTEGER NOT NULL DEFAULT 0,
       page_start      INTEGER,
       page_end        INTEGER,
-      learning_status TEXT    NOT NULL DEFAULT 'not_started',
+      learning_status TEXT    NOT NULL DEFAULT 'unstarted',
+      guide_json      TEXT,
       created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -229,6 +230,15 @@ function initSchema(db: Database.Database): void {
       UNIQUE(role, stage, version)
     );
   `)
+
+  // M2 migrations (safe to re-run)
+  try {
+    db.exec(`ALTER TABLE modules ADD COLUMN guide_json TEXT`)
+  } catch {
+    // Column already exists
+  }
+
+  db.exec(`UPDATE modules SET learning_status = 'unstarted' WHERE learning_status = 'not_started'`)
 
   seedTemplates()
 }

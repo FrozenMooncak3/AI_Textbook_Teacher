@@ -26,7 +26,7 @@ export const POST = handleRoute(async (_req, context) => {
 
   const firstModule = db
     .prepare(
-      "SELECT id FROM modules WHERE book_id = ? AND learning_status = 'not_started' ORDER BY order_index LIMIT 1"
+      "SELECT id FROM modules WHERE book_id = ? AND learning_status = 'unstarted' ORDER BY order_index LIMIT 1"
     )
     .get(id) as { id: number } | undefined
 
