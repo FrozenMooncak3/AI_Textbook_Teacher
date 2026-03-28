@@ -4,6 +4,49 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-03-28 | M2: Coach AI - 后端实现 (Tasks 0-5)
+
+- **T0: learning_status 修复**: `db.ts` 默认值 `not_started` → `unstarted`，添加 `guide_json` 列 + 迁移脚本
+- **T1: 阅读笔记 CRUD API**: `GET/POST/DELETE /api/modules/[moduleId]/reading-notes`，使用 `handleRoute`
+- **T2: Q&A 出题 API**: `POST /api/modules/[moduleId]/generate-questions`，读取 KP + 笔记 + 截图问答，调 `coach/qa_generation` 模板
+- **T3: Q&A 即时反馈 API**: `POST /api/modules/[moduleId]/qa-feedback`，调 `coach/qa_feedback` 模板
+- **T4: 学习笔记生成 API**: `POST /api/modules/[moduleId]/generate-notes`，调 `coach/note_generation` 模板
+- **T5: Guide 模板化重构**: `guide/route.ts` 从内联 prompt 切换到 `getPrompt('coach', 'pre_reading_guide')`
+
+修改文件：`src/lib/db.ts`, `src/app/api/modules/[moduleId]/status/route.ts`, `src/app/api/books/[bookId]/module-map/confirm/route.ts`, `src/app/api/modules/[moduleId]/guide/route.ts`, `src/lib/seed-templates.ts`
+新增文件：`src/app/api/modules/[moduleId]/reading-notes/route.ts`, `src/app/api/modules/[moduleId]/generate-questions/route.ts`, `src/app/api/modules/[moduleId]/qa-feedback/route.ts`, `src/app/api/modules/[moduleId]/generate-notes/route.ts`
+
+---
+
+## 2026-03-28 | M2: Coach AI - 前端实现 (Tasks 6-9)
+
+- **T6: Module Learning State Machine**: 重写 `ModuleLearning.tsx`，实现 `unstarted → reading → qa → notes_generated → completed` 状态机。
+- **T7: Instant Feedback Q&A**: 重写 `QASession.tsx`，支持逐题交互、即时 AI 反馈、脚手架提示及多种题型 UI 变体。
+- **T8: Study Notes Display**: 新建 `NotesDisplay.tsx`，渲染 AI 生成的学习总结笔记，支持模块终态确认。
+- **T9: Module Map Status**: 在模块地图中新增状态勋章显示，修复后端 API 遗漏的 `learning_status` 字段。
+
+修改文件：
+- `src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/page.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/qa/QASession.tsx`
+- `src/app/books/[bookId]/module-map/page.tsx`
+- `src/app/api/books/[bookId]/module-map/route.ts`
+- `src/lib/services/kp-extraction-types.ts`
+新增文件：
+- `src/app/books/[bookId]/modules/[moduleId]/NotesDisplay.tsx`
+
+---
+
+## 2026-03-28 | M1 完成：提取器 AI 里程碑正式关闭
+
+- M1 所有任务（T0-T5）已完成，集成测试全链路通过
+- 后端：三阶段 KP 提取 pipeline（structure scan → block extraction → quality validation）
+- 前端：module-map 页面展示 + reader 集成状态横幅
+- 验证结果：38 KP + 7 聚类 + 2 模块写入 DB，前端正常展示
+- 下一步：进入 M2（教练 AI）
+
+---
+
 ## 2026-03-28 | M1: Codex JSON 修复 + Status API Bug 发现
 
 - **Codex 修复（已合并）**: `repairLooseJSON()` 字符级 JSON 修复 + prompt 模板改为英文 + 严格 JSON 格式要求。Stage 1 JSON 解析成功率从 20% 提升到 100%（5/5 sections）
@@ -24,21 +67,6 @@
 - **测试结果**: 提取 pipeline 可完整运行（Stage 0→1→2→DB 写入），但 Stage 1 JSON 解析成功率仅 20%（5 个小节中 4 个返回非法 JSON），需要进一步排查
 
 修改文件：`src/app/api/books/[bookId]/status/route.ts`, `src/lib/claude.ts`, `src/lib/services/kp-extraction-service.ts`
-
----
-
-## 2026-03-28 | M1: Extractor AI - 前端实现 (Tasks 4-5)
-
-- **T4: Module Map Page**: 新建 `src/app/books/[bookId]/module-map/page.tsx`，支持模块展示、KP 分组、类型勋章及状态轮询。
-- **T5: Reader Integration**: 在 `PdfViewer.tsx` 中新增 KP 提取状态横幅，支持自动触发、进度跟踪及模块地图跳转。
-- **修复**: 
-    - 修正 `ocrStatus` 类型及判断逻辑（`completed` → `done`）。
-    - 移除所有 `console.error` 调用及未使用的变量，符合技术红线。
-    - 修复 `ModuleMapPage` 中统计数据的 TypeScript 类型推断错误。
-- **重构**: 移除阅读器内旧版 OCR 进度条，统一使用 KP 提取状态横幅。
-
-修改文件：`src/app/books/[bookId]/reader/PdfViewer.tsx`, `src/app/books/[bookId]/module-map/page.tsx`, `docs/changelog.md`
-新增文件：`src/app/books/[bookId]/module-map/page.tsx`
 
 ---
 
@@ -365,7 +393,7 @@
 
 **具体操作**：
 - 重写 `src/lib/db.ts` 的 `initSchema()`，用 19 张表的完整 SQL 替换旧建表逻辑
-- 删除旧表定义（questions, user_responses, review_tasks, notes）
+- 删除旧表 definition（questions, user_responses, review_tasks, notes）
 - 删除所有旧的 ALTER TABLE 迁移代码块
 - 新增表：knowledge_points, clusters, reading_notes, module_notes, qa_questions, qa_responses, test_papers, test_questions, test_responses, review_schedule, review_records, prompt_templates
 - 保留表（同结构或扩展）：books, modules, conversations, messages, highlights, logs, mistakes
@@ -535,3 +563,28 @@
 **修改文件**:
 - 新增: `src/lib/services/kp-extraction-types.ts`, `src/lib/services/kp-extraction-service.ts`, `src/app/api/books/[bookId]/extract/route.ts`, `src/app/api/books/[bookId]/module-map/route.ts`, `src/app/api/books/[bookId]/module-map/confirm/route.ts`, `src/app/api/books/[bookId]/module-map/regenerate/route.ts`
 - 修改: `src/app/api/books/route.ts`, `scripts/ocr_pdf.py`, `src/lib/db.ts`, `src/lib/prompt-templates.ts`, `src/lib/seed-templates.ts`, `src/lib/claude.ts`, `src/lib/mistakes.ts`, `src/app/api/books/[bookId]/status/route.ts`, `scripts/test-prompt-templates.ts`
+
+---
+
+## 2026-03-28 | M2: Coach AI - 后端实现 (Tasks 0-5)
+
+- **T0: 状态与 schema 对齐**: 统一 `learning_status` 为 `unstarted`，为 `modules` 增加 `guide_json`，补充安全 migration，并允许 `notes_generated` 状态流转。
+- **T1: Reading Notes API**: 新增 `GET/POST/DELETE /api/modules/[moduleId]/reading-notes`，使用 `handleRoute()` 返回统一 envelope。
+- **T2: Q&A Generation API**: 新增 `POST /api/modules/[moduleId]/generate-questions`，读取 KPs、阅读笔记、截图问答历史，走 `coach/qa_generation` 模板并写入 `qa_questions`。
+- **T3: Q&A Feedback API**: 新增 `POST /api/modules/[moduleId]/qa-feedback`，对单题答案调用 `coach/qa_feedback`，写入 `qa_responses`，并保留已答不可修改约束。
+- **T4: Study Notes API**: 新增 `POST /api/modules/[moduleId]/generate-notes`，汇总 KPs、阅读笔记、Q&A 结果，调用 `coach/note_generation`，写入 `module_notes` 并推进到 `notes_generated`。
+- **T5: Guide Template Refactor**: `guide` API 改为通过 `getPrompt('coach', 'pre_reading_guide', ...)` 取模板，`seedTemplates()` 对现有数据库补做 `coach` 模板 upsert。
+
+修改文件：
+- `src/lib/db.ts`
+- `src/lib/seed-templates.ts`
+- `src/app/api/modules/[moduleId]/status/route.ts`
+- `src/app/api/books/[bookId]/module-map/confirm/route.ts`
+- `src/app/api/modules/[moduleId]/guide/route.ts`
+- `.agents/API_CONTRACT.md`
+
+新增文件：
+- `src/app/api/modules/[moduleId]/reading-notes/route.ts`
+- `src/app/api/modules/[moduleId]/generate-questions/route.ts`
+- `src/app/api/modules/[moduleId]/qa-feedback/route.ts`
+- `src/app/api/modules/[moduleId]/generate-notes/route.ts`

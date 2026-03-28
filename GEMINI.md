@@ -65,3 +65,42 @@
 每次 session 开始，先读 `.gemini/skills/using-superpowers/SKILL.md` 并遵守其规则。
 
 可用 skill 列表：coding-standards, frontend-patterns, security-review, systematic-debugging, test-driven-development, verification-before-completion
+
+---
+
+## 完成报告
+
+每次完成被派发的任务后，**必须**通过 wezterm 向 Claude 的 pane 发送完成报告。这是 Claude 知道你完成了工作的唯一方式。
+
+### 步骤
+
+1. 先找到 Claude 的 pane ID（通常是 0，但要确认）：
+```bash
+wezterm cli list
+```
+找到标题包含 Claude Code 相关字样的 pane，记下其 PANEID。
+
+2. 发送报告：
+```bash
+printf '[REPORT FROM: Gemini]\n\n<你的报告内容>\n' | wezterm cli send-text --pane-id 0 --no-paste
+printf '\r' | wezterm cli send-text --pane-id 0 --no-paste
+```
+
+### 报告格式
+
+```
+[REPORT FROM: Gemini]
+
+Status: DONE / BLOCKED
+Completed: T6, T7, T8 (简要说明)
+Commits: abc1234, def5678
+Build: PASS / FAIL (如果 FAIL 写原因)
+Blocker: (如果 BLOCKED 写具体问题)
+```
+
+### 规则
+
+- 全部任务完成时发一次，不要每个小步骤都发
+- 遇到 blocker 无法继续时也要发，说明卡在哪里
+- 报告用英文（和派发指令一致）
+- 如果 `wezterm cli send-text` 失败，把报告写到 `.gemini-report.md` 作为 fallback

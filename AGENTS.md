@@ -145,6 +145,45 @@ prompt_templates   → Prompt 模板（role, stage, version, template_text, is_a
 
 ---
 
+## 完成报告
+
+每次完成被派发的任务后，**必须**通过 wezterm 向 Claude 的 pane 发送完成报告。这是 Claude 知道你完成了工作的唯一方式。
+
+### 步骤
+
+1. 先找到 Claude 的 pane ID（通常是 0，但要确认）：
+```bash
+wezterm cli list
+```
+找到标题包含 Claude Code 相关字样的 pane（如 `⠂` spinner 或包含 `session` 的标题），记下其 PANEID。
+
+2. 发送报告：
+```bash
+printf '[REPORT FROM: Codex]\n\n<你的报告内容>\n' | wezterm cli send-text --pane-id 0 --no-paste
+printf '\r' | wezterm cli send-text --pane-id 0 --no-paste
+```
+
+### 报告格式
+
+```
+[REPORT FROM: Codex]
+
+Status: DONE / BLOCKED
+Completed: T0, T1, T2 (简要说明)
+Commits: abc1234, def5678
+Build: PASS / FAIL (如果 FAIL 写原因)
+Blocker: (如果 BLOCKED 写具体问题)
+```
+
+### 规则
+
+- 全部任务完成时发一次，不要每个小步骤都发
+- 遇到 blocker 无法继续时也要发，说明卡在哪里
+- 报告用英文（和派发指令一致）
+- 如果 `wezterm cli send-text` 失败，把报告写到 `.codex-report.md` 作为 fallback
+
+---
+
 ## 上下文说明
 
 这是 CCB 多模型协作架构。Codex 由 Claude 通过 `/ask` 委派任务，每次会话是隔离的新上下文。本文件是 Codex 每次启动时读的唯一指令文件。
