@@ -102,15 +102,23 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
       previous_block_tail: previousTail,
     })
 
-    const response = await callClaude(prompt, 8_192)
-    const result = parseJSON<Stage1Result>(response, `Stage 1: ${section.title}`)
+    try {
+      const response = await callClaude(prompt, 8_192)
+      const result = parseJSON<Stage1Result>(response, `Stage 1: ${section.title}`)
 
-    allKPs.push(...result.knowledge_points)
+      allKPs.push(...result.knowledge_points)
 
-    const lastKP = result.knowledge_points[result.knowledge_points.length - 1]
-    previousTail = lastKP?.cross_block_risk ? JSON.stringify(lastKP) : '无'
+      const lastKP = result.knowledge_points[result.knowledge_points.length - 1]
+      previousTail = lastKP?.cross_block_risk ? JSON.stringify(lastKP) : '无'
 
-    logAction('KP 鎻愬彇', `灏忚妭"${section.title}"鎻愬彇鍒?${result.knowledge_points.length} 涓?KP`)
+      logAction('KP 鎻愬彇', `灏忚妭"${section.title}"鎻愬彇鍒?${result.knowledge_points.length} 涓?KP`)
+    } catch (err) {
+      logAction(
+        'KP 鎻愬彇澶辫触',
+        `灏忚妭"${section.title}"鎻愬彇澶辫触锛岃烦杩? ${err instanceof Error ? err.message : String(err)}`,
+        'warn'
+      )
+    }
   }
 
   return allKPs
