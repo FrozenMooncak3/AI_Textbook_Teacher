@@ -5,19 +5,21 @@
 
 ---
 
-## 当前状态（2026-03-22）
+## 当前状态（2026-03-28）
 
 **方向**：MVP 重新设计——教练核心 + PDF 阅读器 + 独立问答通道
 
 **设计文稿**：`docs/superpowers/specs/2026-03-21-mvp-redesign-design.md`
 
-**当前里程碑**：M0 已完成，准备进入 M1
+**当前里程碑**：M0 已完成，Hook 自动化已部署，准备进入 M1
 
 **M0（已完成）**：地基重建——19 张表 + prompt 模板系统 + bug 修复 + 最终验证通过
 
+**Hook 自动化（已完成）**：4 个 hook 脚本 + settings.json + structured-dispatch skill + claudemd-check 更新
+
 **下一步**：M1（提取器 AI——三阶段 KP 提取）
 
-**架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系
+**架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
 ---
 
@@ -86,3 +88,4 @@ M0 → M1 → M2 → M3 → M4 → M5
 | 2026-03-21 | 旧文件清理，文档体系精简 |
 | 2026-03-22 | M0 Task 0-5 完成（schema 重写 + prompt 模板 + bug 修复） |
 | 2026-03-22 | **M0 完成**：最终验证通过（8/8 checks） |
+| 2026-03-28 | **Hook 自动化完成**：4 个 hook + structured-dispatch skill + claudemd-check 更新 |

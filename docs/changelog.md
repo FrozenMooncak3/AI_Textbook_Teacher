@@ -450,15 +450,22 @@
 
 -->
 
-## 2026-03-28 | Claude hooks automation
+## 2026-03-28 | Claude Code Hook 自动化系统 + Skill 更新
 
-**Completed**: Added the Claude Code hook scripts, project hook settings, and verification work for Tasks 1-6 and Task 9.
+**完成内容**：第二次 brainstorming 落地——Claude Code hook 系统（H1-H7）+ 结构化派发 skill + claudemd-check 更新。
 
-**Files modified**:
-- Added: `scripts/hooks/file-boundary-guard.sh`
-- Added: `scripts/hooks/post-edit-check.sh`
-- Added: `scripts/hooks/stop-counter.sh`
-- Added: `scripts/hooks/pre-compact-check.sh`
-- Added: `.claude/settings.json`
-- Updated: `.gitignore`
-- Updated: `docs/changelog.md`
+**具体操作**：
+- H3: `file-boundary-guard.sh`（PreToolUse）— 编辑前拦截越界文件
+- H1+H2: `post-edit-check.sh`（PostToolUse）— 编辑后自动 typecheck + console.log 检测
+- H5+H6: `stop-counter.sh`（Stop）— 每 10 轮 git 状态检查，每 50 轮 compact 提醒
+- H7: `pre-compact-check.sh`（PreCompact）— compact 前合规检查（含文件边界审查）
+- H4: `structured-dispatch` skill — CCB 任务派发标准模板
+- `.claude/settings.json` — 4 个 hook 事件接线
+- `claudemd-check` skill 新增 Step 8（禁止事项全量检查）+ 更新输出格式
+
+**修改的文件**：
+- 新增：`scripts/hooks/file-boundary-guard.sh`、`scripts/hooks/post-edit-check.sh`、`scripts/hooks/stop-counter.sh`、`scripts/hooks/pre-compact-check.sh`、`.claude/settings.json`、`.claude/skills/structured-dispatch/SKILL.md`
+- 修改：`.claude/skills/claudemd-check/SKILL.md`、`.gitignore`
+
+**设计文档**：`docs/superpowers/specs/2026-03-28-claude-hooks-design.md`
+**实施计划**：`docs/superpowers/plans/2026-03-28-claude-hooks-automation.md`
