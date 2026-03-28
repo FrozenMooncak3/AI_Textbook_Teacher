@@ -11,7 +11,7 @@
 
 **设计文稿**：`docs/superpowers/specs/2026-03-21-mvp-redesign-design.md`
 
-**当前里程碑**：M1 集成测试中——提取器 AI
+**当前里程碑**：M1 集成测试通过——提取器 AI
 
 **实现计划**：`docs/superpowers/plans/2026-03-28-m1-extractor-ai.md`
 
