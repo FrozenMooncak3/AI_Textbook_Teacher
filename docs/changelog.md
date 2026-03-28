@@ -490,3 +490,12 @@
 
 **设计文档**：`docs/superpowers/specs/2026-03-28-session-init-retrospective-design.md`
 **实施计划**：`docs/superpowers/plans/2026-03-28-session-init-retrospective.md`
+---
+
+## 2026-03-28 | M1 Extractor AI 后端落地
+
+**完成内容**: 完成 M1 后端前 3 个任务，覆盖 OCR 页标记、增强 extractor prompt 模板、三阶段 KP 提取服务，以及 4 个 module map/extract API 路由。
+
+**修改文件**:
+- 新增: `src/lib/services/kp-extraction-types.ts`, `src/lib/services/kp-extraction-service.ts`, `src/app/api/books/[bookId]/extract/route.ts`, `src/app/api/books/[bookId]/module-map/route.ts`, `src/app/api/books/[bookId]/module-map/confirm/route.ts`, `src/app/api/books/[bookId]/module-map/regenerate/route.ts`
+- 修改: `src/app/api/books/route.ts`, `scripts/ocr_pdf.py`, `src/lib/db.ts`, `src/lib/prompt-templates.ts`, `src/lib/seed-templates.ts`, `src/lib/claude.ts`, `src/lib/mistakes.ts`, `src/app/api/books/[bookId]/status/route.ts`, `scripts/test-prompt-templates.ts`
