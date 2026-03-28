@@ -1,4 +1,4 @@
-import { getDb } from './db.ts'
+import { getDb } from './db'
 
 interface TemplateSeed {
   role: string
@@ -10,68 +10,224 @@ const SEED_TEMPLATES: TemplateSeed[] = [
   {
     role: 'extractor',
     stage: 'structure_scan',
-    template_text:
-      '你是一个教材知识点提取专家。\n\n## 任务\n对以下教材文本进行结构扫描，识别小节标题和页码范围。\n\n## 文本\n{ocr_text}\n\n## 输出要求\n返回 JSON: { "sections": [{ "title": "", "line_start": 0, "line_end": 0, "estimated_kp_count": 0 }] }',
+    template_text: `浣犳槸涓€涓暀鏉愮煡璇嗙偣鎻愬彇涓撳銆?
+## 浠诲姟
+瀵逛互涓嬫暀鏉?OCR 鏂囨湰杩涜缁撴瀯鎵弿銆傝瘑鍒墍鏈夊皬鑺傛爣棰樸€佽鍙疯寖鍥达紝骞跺缓璁ā鍧楀垎缁勩€?
+## 鎵弿瑙勫垯
+1. 璇嗗埆鎵€鏈変簩绾у拰涓夌骇鏍囬锛堥€氬父鏄?X.X 鎴?X.X.X 缂栧彿锛屾垨鍔犵矖/澶у啓鐨勬爣棰樿锛?
+2. 鏍囨敞姣忎釜灏忚妭鐨勮捣濮嬭鍙峰拰缁撴潫琛屽彿
+3. 浼拌姣忎釜灏忚妭鐨勭煡璇嗙偣鏁伴噺锛?5-15 涓?10 椤垫槸姝ｅ父瀵嗗害
+4. 灏嗗皬鑺傚垎缁勪负瀛︿範妯″潡锛岀‘淇濓細
+   - 姣忎釜妯″潡瑕嗙洊涓€涓畬鏁翠富棰?
+   - 妯″潡闂?KP 鏁伴噺宸窛涓嶈秴杩?2:1
+   - 妯″潡杈圭晫瀵归綈灏忚妭杈圭晫锛堜笉鍦ㄥ皬鑺備腑闂村垏鍓诧級
+5. 蹇界暐鐩綍椤点€佺増鏉冮〉銆佺储寮曢〉绛夐潪姝ｆ枃鍐呭
+6. 鏂囨湰涓殑 "--- PAGE N ---" 鏍囪琛ㄧず PDF 绗?N 椤电殑寮€濮嬶紝鐢ㄦ潵纭畾 page_start 鍜?page_end
+
+## 鏂囨湰锛堝惈琛屽彿锛?{ocr_text}
+
+## 杈撳嚭瑕佹眰
+杩斿洖涓ユ牸 JSON锛屼笉瑕佹湁浠讳綍棰濆鏂囧瓧銆俻age_start/page_end 浠?"--- PAGE N ---" 鏍囪涓彁鍙栵紝濡傛灉娌℃湁鏍囪鍒欏～ null锛?
+{
+  "sections": [
+    {
+      "title": "灏忚妭鏍囬",
+      "line_start": 0,
+      "line_end": 0,
+      "page_start": 1,
+      "page_end": 3,
+      "estimated_kp_count": 0,
+      "module_group": 1
+    }
+  ],
+  "modules": [
+    {
+      "group_id": 1,
+      "title": "妯″潡鍚嶇О锛堟鎷富棰橈紝涓嶆槸灏忚妭鍚嶆嫾鎺ワ級",
+      "sections": ["灏忚妭鏍囬1", "灏忚妭鏍囬2"],
+      "estimated_total_kp": 0,
+      "page_start": 1,
+      "page_end": 5
+    }
+  ]
+}`,
   },
   {
     role: 'extractor',
     stage: 'kp_extraction',
-    template_text:
-      '你是一个教材知识点提取专家。\n\n## 任务\n从以下文本块中提取知识点。\n\n## 提取规则\n{extraction_rules}\n\n## 文本块\n{text_block}\n\n## 已提取的 KP（上下文）\n{existing_kps}\n\n## 输出要求\n返回 JSON: { "knowledge_points": [{ "kp_code": "", "section_name": "", "description": "", "type": "", "importance": 1, "detailed_content": "", "cross_block_risk": false }] }',
+    template_text: `浣犳槸涓€涓暀鏉愮煡璇嗙偣鎻愬彇涓撳銆?
+## 浠诲姟
+浠庝互涓嬫枃鏈潡涓彁鍙栫煡璇嗙偣锛圞nowledge Points, KP锛夈€?
+## 鎻愬彇瑙勫垯
+
+### 1. 鍐呭鍒嗙被
+- 鎶€鏈唴瀹癸紙瀹氫箟銆佸叕寮忋€佽鍒欍€佸垽鏂爣鍑嗭級鈫?鎻愬彇涓虹嫭绔?KP
+- 涓句緥/妗堜緥锛堟煇鍏徃鏌愬勾鐨勬暟鎹級鈫?褰掑叆涓婁竴涓?KP 鐨?detailed_content锛屼笉鍗曠嫭鎻愬彇
+- 鏁呬簨/鑳屾櫙锛堝彊浜嬫€ф弿杩帮級鈫?鍙彁鍙栧叾涓殑瑙勫垯/鍘熷垯锛屼笉鎻愬彇鎯呰妭
+
+### 2. KP 绮掑害鎺у埗
+- 澶锛歞escription 鍚?浠ュ強""鍖呮嫭X涓柟闈?"鍜? 鈫?蹇呴』鎷嗗垎涓哄涓?KP
+- 澶獎锛氬彧鏄煇鍏徃鏌愬勾鐨勫叿浣撴暟瀛楋紝鎹釜鎯呭涓嶉€傜敤 鈫?褰掑叆涓婁竴涓?KP 鐨勪緥瀛?
+- 鍒ゆ柇鏍囧噯锛氳繖涓?KP 鎹竴瀹跺叕鍙搞€佹崲涓€涓儏澧冭繕閫傜敤鍚楋紵閫傜敤 = 鐙珛 KP锛屼笉閫傜敤 = 渚嬪瓙
+
+### 3. KP 绫诲瀷锛堝繀椤绘爣娉ㄥ叾涓€锛?
+- position: 绔嬪満/瑙傜偣绫伙紙"XX 搴旇 YY"銆?濂界殑 XX 閫氬父鍏峰 YY"锛?
+- calculation: 璁＄畻绫伙紙蹇呴』鍚叕寮?+ 璁＄畻姝ラ + 娉ㄦ剰浜嬮」锛屼笁鑰呯己涓€涓嶅彲锛?
+- c1_judgment: C1 鍒ゆ柇绫伙紙鑳藉洖绛?鏄笉鏄?XX"鐨勪簨瀹炴€у垽鏂級
+- c2_evaluation: C2 璇勪及绫伙紙闇€鏉冭　澶氬洜绱犲仛鍒ゆ柇锛屽繀椤诲惈鐭涚浘淇″彿/姝ｅ弽涓ら潰锛?
+- definition: 瀹氫箟绫伙紙鏈/姒傚康鐨勭簿纭惈涔夛級
+
+### 4. detailed_content 瑕佹眰
+- 蹇呴』鑷冻锛坰elf-contained锛夛紝涓嶄緷璧栦笂涓嬫枃灏辫兘鐞嗚В鍜屽嚭棰?
+- 蹇呴』瓒冲璇︾粏锛屼綔涓哄嚭棰樼殑鍞竴渚濇嵁
+- 璁＄畻绫伙細蹇呴』鍖呭惈瀹屾暣鍏紡銆佽绠楁楠ゃ€佸崟浣嶃€佹敞鎰忎簨椤?
+- C2 璇勪及绫伙細蹇呴』鍖呭惈姝ｅ弽涓ら潰鐨勪俊鍙凤紙"涓€鏂归潰...鍙︿竴鏂归潰..."锛?
+- 濡傛灉鍘熸枃涓嶅瀹屾暣锛岀敤 [OCR 鍐呭涓嶅畬鏁碷 鏍囨敞
+
+### 5. 璺ㄥ潡鏍囪
+濡傛灉鏂囨湰鍧楁湯灏剧殑鍐呭鏄庢樉鏈畬缁擄紙鍙ュ瓙鏂銆佸垪琛ㄦ湭缁撴潫銆佸叕寮忎笉瀹屾暣锛夛紝鏍囪 cross_block_risk = true
+
+## 鎵€灞炲皬鑺?{section_name}
+
+## 鏂囨湰鍧?{text_block}
+
+## 涓婁竴涓潡鐨勬湯灏?KP锛堢敤浜庤法鍧楃画鎺ワ紝鑻ヤ负"鏃?鍒欏拷鐣ワ級
+{previous_block_tail}
+
+## 杈撳嚭瑕佹眰
+杩斿洖涓ユ牸 JSON锛屼笉瑕佹湁浠讳綍棰濆鏂囧瓧锛?
+{
+  "knowledge_points": [
+    {
+      "kp_code": "灏忚妭搴忓彿-KP搴忓彿锛堝 2.3-01锛?",
+      "section_name": "鎵€灞炲皬鑺傚悕",
+      "description": "涓€鍙ヨ瘽鎻忚堪锛屼笉瓒呰繃 25 瀛?",
+      "type": "position|calculation|c1_judgment|c2_evaluation|definition",
+      "importance": 1,
+      "detailed_content": "瀹屾暣鍑洪渚濇嵁锛岃嚜瓒冲唴瀹?,
+      "cross_block_risk": false,
+      "ocr_quality": "good|uncertain|damaged"
+    }
+  ]
+}`,
   },
   {
     role: 'extractor',
     stage: 'quality_check',
-    template_text:
-      '你是一个知识点质量审核专家。\n\n## 任务\n检查以下 KP 表的质量。\n\n## KP 表\n{kp_table}\n\n## 质量门标准\n{quality_gates}\n\n## 输出要求\n返回 JSON: { "passed": true, "issues": [] }',
+    template_text: `浣犳槸涓€涓煡璇嗙偣璐ㄩ噺瀹℃牳涓撳銆?
+## 浠诲姟
+瀹℃牳 KP 鎻愬彇缁撴灉锛屾墽琛岃法鍧楃紳鍚堛€佸幓閲嶃€佽仛绫汇€佹ā鍧楀垎閰嶅拰璐ㄩ噺闂ㄦ鏌ャ€?
+
+## 瀹℃牳姝ラ
+
+### 1. 璺ㄥ潡缂濆悎
+- 鎵惧埌鎵€鏈?cross_block_risk = true 鐨?KP
+- 濡傛灉涓嬩竴涓?KP 鏄画鎺ュ唴瀹癸紙鎻忚堪鐩镐技銆佸悓涓€涓婚锛夛紝鍚堝苟涓轰竴涓?KP
+- 鍚堝苟鍚庣殑 kp_code 鐢ㄥ墠涓€涓?
+
+### 2. 鍘婚噸
+- 涓や釜 KP 鐨?鑰冩硶"瀹屽叏鐩稿悓锛堣兘鍑虹殑棰樹竴妯′竴鏍凤級鈫?鍚堝苟锛屼繚鐣?detailed_content 鏇磋缁嗙殑
+
+### 3. 鑱氱被
+- 涓婚鐩歌繎鐨?KP 褰掑叆鍚屼竴鑱氱被锛坈luster锛?
+- 姣忎釜鑱氱被 2-5 涓?KP
+- 鑱氱被鍚嶇О鐢?2-4 涓瓧姒傛嫭涓婚
+
+### 4. 妯″潡鍒嗛厤
+鏍规嵁浠ヤ笅妯″潡缁撴瀯锛屽皢姣忎釜 KP 鍒嗛厤鍒板搴?module_group锛?{module_structure}
+
+### 5. 璐ㄩ噺闂紙閫愭潯妫€鏌ワ紝鍏ㄩ儴閫氳繃鎵嶅悎鏍硷級
+1. 姣忎釜灏忚妭鑷冲皯鏈?1 涓?KP
+2. 璁＄畻绫?KP 鍏ㄩ儴鍖呭惈瀹屾暣鍏紡鍜屾楠?
+3. C2 璇勪及绫?KP 鍏ㄩ儴鍖呭惈鐭涚浘淇″彿锛堟鍙弽涓ら潰锛?
+4. 娌℃湁"澶"KP锛坉escription 瓒呰繃 25 瀛椾笖鍚涓嫭绔嬫蹇?鈫?闇€鎷嗗垎锛?
+5. OCR 鎹熷潖鍖哄煙宸叉爣娉?ocr_quality = "damaged" 鎴?"uncertain"
+6. 鎵€鏈?cross_block_risk KP 宸插鐞嗭紙鍚堝苟鎴栫‘璁ょ嫭绔嬶級
+7. 妯″潡闂?KP 鏁伴噺姣斾緥 鈮?2:1
+
+## 鍘熸 KP 鍒楄〃
+{kp_table}
+
+## 杈撳嚭瑕佹眰
+杩斿洖涓ユ牸 JSON锛屼笉瑕佹湁浠讳綍棰濆鏂囧瓧锛?
+{
+  "quality_gates": {
+    "all_sections_have_kp": true,
+    "calculation_kp_complete": true,
+    "c2_kp_have_signals": true,
+    "no_too_wide_kp": true,
+    "ocr_damaged_marked": true,
+    "cross_block_merged": true,
+    "module_ratio_ok": true
+  },
+  "issues": [
+    {
+      "kp_code": "2.3-01",
+      "issue": "闂鎻忚堪",
+      "suggestion": "淇寤鸿"
+    }
+  ],
+  "final_knowledge_points": [
+    {
+      "kp_code": "2.3-01",
+      "module_group": 1,
+      "cluster_name": "鑱氱被鍚?",
+      "section_name": "鎵€灞炲皬鑺?",
+      "description": "涓€鍙ヨ瘽鎻忚堪",
+      "type": "position|calculation|c1_judgment|c2_evaluation|definition",
+      "importance": 1,
+      "detailed_content": "瀹屾暣鑷冻鍐呭",
+      "ocr_quality": "good|uncertain|damaged"
+    }
+  ],
+  "clusters": [
+    {
+      "module_group": 1,
+      "name": "鑱氱被鍚?",
+      "kp_codes": ["2.3-01", "2.3-02"]
+    }
+  ]
+}`,
   },
   {
     role: 'coach',
     stage: 'pre_reading_guide',
-    template_text:
-      '你是一个学习教练。\n\n## 任务\n为以下模块生成读前指引。\n\n## 本模块知识点\n{kp_table}\n\n## 跨模块依赖\n{dependencies}\n\n## 输出要求\n返回 JSON: { "can_do_after": "", "key_points": [], "common_pitfalls": [] }',
+    template_text: '浣犳槸涓€涓涔犳暀缁冦€俓n\n## 浠诲姟\n涓轰互涓嬫ā鍧楃敓鎴愯鍓嶆寚寮曘€俓n\n## 鏈ā鍧楃煡璇嗙偣\n{kp_table}\n\n## 璺ㄦā鍧椾緷璧朶n{dependencies}\n\n## 杈撳嚭瑕佹眰\n杩斿洖 JSON: { "can_do_after": "", "key_points": [], "common_pitfalls": [] }',
   },
   {
     role: 'coach',
     stage: 'qa_generation',
-    template_text:
-      '你是一个教材学习教练。\n\n## 任务\n根据知识点表出 Q&A 练习题。\n\n## Q&A 规则\n{qa_rules}\n\n## 本模块知识点\n{kp_table}\n\n## 用户阅读笔记\n{user_notes}\n\n## 用户截图问答记录\n{user_qa_history}\n\n## 历史错题\n{past_mistakes}\n\n## 输出要求\n返回 JSON: { "questions": [{ "kp_id": 0, "type": "", "text": "", "correct_answer": "", "scaffolding": "" }] }',
+    template_text: '浣犳槸涓€涓暀鏉愬涔犳暀缁冦€俓n\n## 浠诲姟\n鏍规嵁鐭ヨ瘑鐐硅〃鍑?Q&A 缁冧範棰樸€俓n\n## Q&A 瑙勫垯\n{qa_rules}\n\n## 鏈ā鍧楃煡璇嗙偣\n{kp_table}\n\n## 鐢ㄦ埛闃呰绗旇\n{user_notes}\n\n## 鐢ㄦ埛鎴浘闂瓟璁板綍\n{user_qa_history}\n\n## 鍘嗗彶閿欓\n{past_mistakes}\n\n## 杈撳嚭瑕佹眰\n杩斿洖 JSON: { "questions": [{ "kp_id": 0, "type": "", "text": "", "correct_answer": "", "scaffolding": "" }] }',
   },
   {
     role: 'coach',
     stage: 'qa_feedback',
-    template_text:
-      '你是一个学习教练。\n\n## 任务\n评估学生回答并给出即时反馈。\n\n## 题目\n{question}\n\n## 正确答案\n{correct_answer}\n\n## 学生回答\n{user_answer}\n\n## 对应知识点\n{kp_detail}\n\n## 输出要求\n返回 JSON: { "is_correct": true, "score": 0, "feedback": "" }',
+    template_text: '浣犳槸涓€涓涔犳暀缁冦€俓n\n## 浠诲姟\n璇勪及瀛︾敓鍥炵瓟骞剁粰鍑哄嵆鏃跺弽棣堛€俓n\n## 棰樼洰\n{question}\n\n## 姝ｇ‘绛旀\n{correct_answer}\n\n## 瀛︾敓鍥炵瓟\n{user_answer}\n\n## 瀵瑰簲鐭ヨ瘑鐐筡n{kp_detail}\n\n## 杈撳嚭瑕佹眰\n杩斿洖 JSON: { "is_correct": true, "score": 0, "feedback": "" }',
   },
   {
     role: 'coach',
     stage: 'note_generation',
-    template_text:
-      '你是一个学习笔记生成专家。\n\n## 任务\n整合以下信息生成模块学习笔记。\n\n## 知识点表\n{kp_table}\n\n## 用户阅读笔记\n{user_notes}\n\n## Q&A 结果\n{qa_results}\n\n## 输出要求\n返回 Markdown 格式的学习笔记。',
+    template_text: '浣犳槸涓€涓涔犵瑪璁扮敓鎴愪笓瀹躲€俓n\n## 浠诲姟\n鏁村悎浠ヤ笅淇℃伅鐢熸垚妯″潡瀛︿範绗旇銆俓n\n## 鐭ヨ瘑鐐硅〃\n{kp_table}\n\n## 鐢ㄦ埛闃呰绗旇\n{user_notes}\n\n## Q&A 缁撴灉\n{qa_results}\n\n## 杈撳嚭瑕佹眰\n杩斿洖 Markdown 鏍煎紡鐨勫涔犵瑪璁般€?',
   },
   {
     role: 'examiner',
     stage: 'test_generation',
-    template_text:
-      '你是一个考试出题专家。\n\n## 任务\n根据知识点表出模块测试题。\n\n## 测试规则\n{test_rules}\n\n## 本模块知识点\n{kp_table}\n\n## 历史错题\n{past_mistakes}\n\n## 输出要求\n返回 JSON: { "questions": [{ "kp_id": 0, "type": "", "text": "", "options": [], "correct_answer": "", "explanation": "" }] }',
+    template_text: '浣犳槸涓€涓€冭瘯鍑洪涓撳銆俓n\n## 浠诲姟\n鏍规嵁鐭ヨ瘑鐐硅〃鍑烘ā鍧楁祴璇曢銆俓n\n## 娴嬭瘯瑙勫垯\n{test_rules}\n\n## 鏈ā鍧楃煡璇嗙偣\n{kp_table}\n\n## 鍘嗗彶閿欓\n{past_mistakes}\n\n## 杈撳嚭瑕佹眰\n杩斿洖 JSON: { "questions": [{ "kp_id": 0, "type": "", "text": "", "options": [], "correct_answer": "", "explanation": "" }] }',
   },
   {
     role: 'examiner',
     stage: 'test_scoring',
-    template_text:
-      '你是一个考试评分专家。\n\n## 任务\n评估学生测试答案。\n\n## 试卷\n{test_paper}\n\n## 学生答案\n{user_answers}\n\n## 输出要求\n返回 JSON: { "results": [{ "question_id": 0, "is_correct": true, "score": 0, "feedback": "", "error_type": null }], "total_score": 0, "pass_rate": 0, "is_passed": true }',
+    template_text: '浣犳槸涓€涓€冭瘯璇勫垎涓撳銆俓n\n## 浠诲姟\n璇勪及瀛︾敓娴嬭瘯绛旀銆俓n\n## 璇曞嵎\n{test_paper}\n\n## 瀛︾敓绛旀\n{user_answers}\n\n## 杈撳嚭瑕佹眰\n杩斿洖 JSON: { "results": [{ "question_id": 0, "is_correct": true, "score": 0, "feedback": "", "error_type": null }], "total_score": 0, "pass_rate": 0, "is_passed": true }',
   },
   {
     role: 'reviewer',
     stage: 'review_generation',
-    template_text:
-      '你是一个复习出题专家。\n\n## 任务\n根据聚类和 P 值出复习题。\n\n## 复习规则\n{review_rules}\n\n## 聚类及 P 值\n{clusters_with_p}\n\n## 对应知识点\n{kp_table}\n\n## 历史错题\n{past_mistakes}\n\n## 输出要求\n返回 JSON: { "questions": [{ "cluster_id": 0, "kp_id": 0, "type": "", "text": "", "options": [], "correct_answer": "", "explanation": "" }] }',
+    template_text: '浣犳槸涓€涓涔犲嚭棰樹笓瀹躲€俓n\n## 浠诲姟\n鏍规嵁鑱氱被鍜?P 鍊煎嚭澶嶄範棰樸€俓n\n## 澶嶄範瑙勫垯\n{review_rules}\n\n## 鑱氱被鍙?P 鍊糪n{clusters_with_p}\n\n## 瀵瑰簲鐭ヨ瘑鐐筡n{kp_table}\n\n## 鍘嗗彶閿欓\n{past_mistakes}\n\n## 杈撳嚭瑕佹眰\n杩斿洖 JSON: { "questions": [{ "cluster_id": 0, "kp_id": 0, "type": "", "text": "", "options": [], "correct_answer": "", "explanation": "" }] }',
   },
   {
     role: 'assistant',
     stage: 'screenshot_qa',
-    template_text:
-      '你是一个教材学习助手。用户在阅读 PDF 时截图了一段内容并提问。\n\n## 截图识别文本\n{screenshot_text}\n\n## 用户问题\n{user_question}\n\n## 之前的对话\n{conversation_history}\n\n## 要求\n用中文回答，解释清楚，如果涉及公式请写出完整步骤。',
+    template_text: '浣犳槸涓€涓暀鏉愬涔犲姪鎵嬨€傜敤鎴峰湪闃呰 PDF 鏃舵埅鍥句簡涓€娈靛唴瀹瑰苟鎻愰棶銆俓n\n## 鎴浘璇嗗埆鏂囨湰\n{screenshot_text}\n\n## 鐢ㄦ埛闂\n{user_question}\n\n## 涔嬪墠鐨勫璇?n{conversation_history}\n\n## 瑕佹眰\n鐢ㄤ腑鏂囧洖绛旓紝瑙ｉ噴娓呮锛屽鏋滄秹鍙婂叕寮忚鍐欏嚭瀹屾暣姝ラ銆?',
   },
 ]
 
@@ -80,15 +236,32 @@ export function seedTemplates(): void {
   const existing = db
     .prepare('SELECT COUNT(*) as count FROM prompt_templates')
     .get() as { count: number }
-  if (existing.count > 0) return
 
-  const insert = db.prepare(
-    'INSERT INTO prompt_templates (role, stage, version, template_text, is_active) VALUES (?, ?, 1, ?, 1)'
-  )
+  if (existing.count === 0) {
+    const insert = db.prepare(
+      'INSERT INTO prompt_templates (role, stage, version, template_text, is_active) VALUES (?, ?, 1, ?, 1)'
+    )
+
+    const tx = db.transaction(() => {
+      for (const t of SEED_TEMPLATES) {
+        insert.run(t.role, t.stage, t.template_text)
+      }
+    })
+    tx()
+    return
+  }
+
+  const upsert = db.prepare(`
+    INSERT INTO prompt_templates (role, stage, version, template_text, is_active)
+    VALUES (?, ?, 1, ?, 1)
+    ON CONFLICT(role, stage, version) DO UPDATE SET template_text = excluded.template_text
+  `)
 
   const tx = db.transaction(() => {
     for (const t of SEED_TEMPLATES) {
-      insert.run(t.role, t.stage, t.template_text)
+      if (t.role === 'extractor') {
+        upsert.run(t.role, t.stage, t.template_text)
+      }
     }
   })
   tx()

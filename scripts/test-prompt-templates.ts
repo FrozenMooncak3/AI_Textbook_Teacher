@@ -1,4 +1,4 @@
-import { renderTemplate } from '../src/lib/prompt-templates.ts'
+import { renderTemplate } from '../src/lib/prompt-templates'
 
 // Test 1: basic substitution
 const r1 = renderTemplate('Hello {name}, you have {count} items.', { name: 'Alice', count: '3' })

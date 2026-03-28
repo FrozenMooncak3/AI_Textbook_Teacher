@@ -21,7 +21,16 @@ export function getClaudeClient(): Anthropic {
 
   if (proxy) {
     const proxyAgent = new ProxyAgent(proxy)
-    options.fetch = (url, init) => undiciFetch(url as string, { ...init, dispatcher: proxyAgent } as Parameters<typeof undiciFetch>[1])
+    options.fetch = (async (url, init) => {
+      const response = await undiciFetch(
+        url as string,
+        {
+          ...(init ?? {}),
+          dispatcher: proxyAgent,
+        } as unknown as Parameters<typeof undiciFetch>[1]
+      )
+      return response as unknown as Response
+    }) as NonNullable<typeof options.fetch>
   }
 
   client = new Anthropic(options)
