@@ -48,6 +48,13 @@ interface InsertedQuestion {
   order_index: number
 }
 
+const VALID_TYPES = new Set([
+  'worked_example',
+  'scaffolded_mc',
+  'short_answer',
+  'comparison',
+])
+
 export const POST = handleRoute(async (_req, context) => {
   const { moduleId } = await context!.params
   const id = Number(moduleId)
@@ -201,10 +208,11 @@ export const POST = handleRoute(async (_req, context) => {
   const tx = db.transaction(() => {
     for (const [index, question] of generated.questions.entries()) {
       const kpId = kpIds.has(question.kp_id) ? question.kp_id : null
+      const questionType = VALID_TYPES.has(question.type) ? question.type : 'short_answer'
       const result = insert.run(
         id,
         kpId,
-        question.type,
+        questionType,
         question.text,
         question.correct_answer || null,
         question.scaffolding || null,
@@ -215,7 +223,7 @@ export const POST = handleRoute(async (_req, context) => {
         id: result.lastInsertRowid,
         module_id: id,
         kp_id: kpId,
-        question_type: question.type,
+        question_type: questionType,
         question_text: question.text,
         correct_answer: question.correct_answer,
         scaffolding: question.scaffolding,
