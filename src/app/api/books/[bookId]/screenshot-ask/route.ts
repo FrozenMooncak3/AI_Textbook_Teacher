@@ -3,8 +3,9 @@ import http from 'http'
 import { writeFile, unlink } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
+import { generateText } from 'ai'
 import { getDb } from '@/lib/db'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { getModel, timeout } from '@/lib/ai'
 import { logAction } from '@/lib/log'
 
 const OCR_SERVER_PORT = 9876
@@ -146,26 +147,23 @@ export async function POST(
   }
 
   const userPrompt = buildScreenshotPrompt(book.title, pageNumber, ocr)
+  const systemPrompt =
+    'You are a patient textbook tutor. Explain the selected screenshot clearly, focus on the visible content, and avoid claiming failure when the image contains usable information.'
 
-  const claude = getClaudeClient()
   let answer = ''
   try {
-    const message = await claude.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 1024,
-      system:
-        'You are a patient textbook tutor. Explain the selected screenshot clearly, focus on the visible content, and avoid claiming failure when the image contains usable information.',
+    const { text } = await generateText({
+      model: getModel(),
+      maxOutputTokens: 1024,
+      system: systemPrompt,
       messages: [
         {
           role: 'user',
           content: [
             {
               type: 'image',
-              source: {
-                type: 'base64',
-                media_type: 'image/png',
-                data: base64Data,
-              },
+              image: Buffer.from(base64Data, 'base64'),
+              mediaType: 'image/png',
             },
             {
               type: 'text',
@@ -174,12 +172,10 @@ export async function POST(
           ],
         },
       ],
+      abortSignal: AbortSignal.timeout(timeout),
     })
 
-    answer = message.content
-      .map((block) => (block.type === 'text' ? block.text : ''))
-      .filter(Boolean)
-      .join('\n\n')
+    answer = text
   } catch (error) {
     logAction('screenshot_ask_failed', String(error), 'error')
     return NextResponse.json({ error: 'AI service unavailable', code: 'AI_ERROR' }, { status: 500 })
