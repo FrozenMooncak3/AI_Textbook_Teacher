@@ -18,7 +18,7 @@
 - **API 层**：Next.js 15 API Routes（`src/app/api/**`）
 - **数据库**：SQLite + better-sqlite3，路径 `data/app.db`
 - **Python**：Python 3.11 + PaddleOCR（`scripts/**`）
-- **AI 调用**：Claude API（`src/lib/claude.ts`），模型 `claude-sonnet-4-6`
+- **AI 调用**：Vercel AI SDK（`src/lib/ai.ts`），通过 `AI_MODEL` 环境变量选择 provider 和模型（默认 `anthropic:claude-sonnet-4-6`）
 
 ---
 

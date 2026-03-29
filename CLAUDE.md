@@ -27,7 +27,7 @@
 
 ## 技术栈
 - **框架**: Next.js 15 (App Router) + React + Tailwind CSS
-- **AI**: Claude API，模型 `claude-sonnet-4-6`
+- **AI**: Vercel AI SDK（多模型），默认 `anthropic:claude-sonnet-4-6`，通过 `AI_MODEL` 环境变量切换 provider/模型
 - **数据库**: SQLite (`data/app.db`)，使用 `better-sqlite3`
 
 ## 产品不变量（任何功能实现都不得违反）

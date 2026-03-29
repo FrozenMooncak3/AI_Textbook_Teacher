@@ -11,19 +11,23 @@
 
 **设计文稿**：`docs/superpowers/specs/2026-03-21-mvp-redesign-design.md`
 
-**当前里程碑**：M2 教练 AI — 代码+修复全部完成，跳过集成测试
+**当前里程碑**：多模型抽象层 — 已完成
 
-**M2 进度**：后端 T0-T5 + 前端 T6-T9 全部完成。Code review 6 项修复（C1/C2/I1/I2/I3/I4+I5）全部完成并 push。补充了 GET qa-feedback 端点（commit 88be07d）使 I2 进度恢复功能可用。用户决定跳过 Claude API 集成测试，M2 视为功能完成。
+**最新完成**：Vercel AI SDK 集成。12 个 AI 调用点从 Anthropic SDK 迁移到 Vercel AI SDK，支持通过 `AI_MODEL` 环境变量切换任意 provider/模型。`src/lib/claude.ts` 已删除，替换为 `src/lib/ai.ts`。
 
-**实现计划**：`docs/superpowers/plans/2026-03-28-m2-coach-ai.md`
+**实现计划**：`docs/superpowers/plans/2026-03-29-multi-model-abstraction.md`
 
-**设计文稿**：`docs/superpowers/specs/2026-03-28-m2-coach-ai-design.md`
+**设计文稿**：`docs/superpowers/specs/2026-03-29-multi-model-abstraction-design.md`
+
+**M2（已完成）**：教练 AI — 全部代码 + review 修复完成。
+
+**M2 实现计划**：`docs/superpowers/plans/2026-03-28-m2-coach-ai.md`
 
 **M1（已完成）**：提取器 AI——上传 PDF → 三阶段 KP 提取 → 模块地图写入 DB → 前端展示。
 
 **M0（已完成）**：地基重建——19 张表 + prompt 模板系统 + bug 修复 + 最终验证通过
 
-**下一步**：进入 M3（考官 AI）或用户指定的新方向
+**下一步**：用 Gemini Flash 免费档 smoke test → 进入 M3（考官 AI）
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -77,7 +81,7 @@ M0 → M1 → M2 → M3 → M4 → M5
 - Phase 1 完整学习流程可运行（上传 → 模块 → Q&A → 测试 → 错题）
 - Phase 2 PDF 阅读器 + 截图问 AI 后端已完成
 - PaddleOCR 常驻 HTTP 服务（`scripts/ocr_server.py`）
-- Claude API 客户端（`src/lib/claude.ts`，含代理和超时保护）
+- Vercel AI SDK 多模型客户端（`src/lib/ai.ts`，支持 Anthropic/Google/OpenAI 兼容 provider）
 
 ---
 
@@ -97,3 +101,4 @@ M0 → M1 → M2 → M3 → M4 → M5
 | 2026-03-28 | **Hook 自动化完成**：4 个 hook + structured-dispatch skill + claudemd-check 更新 |
 | 2026-03-28 | **第三次 brainstorming 实施完成**：session-init skill + retrospective skill + 6 skill chain 声明 + CLAUDE.md/using-superpowers 更新 |
 | 2026-03-29 | **M2 完成**：教练 AI 全部代码 + review 修复完成，6 项 fix 已 push |
+| 2026-03-29 | **多模型抽象层完成**：Vercel AI SDK 集成，12 个调用点迁移，`AI_MODEL` 环境变量切换 |
