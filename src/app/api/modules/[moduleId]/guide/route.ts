@@ -97,7 +97,7 @@ export async function POST(
 
   const { text } = await generateText({
     model: getModel(),
-    maxOutputTokens: 1024,
+    maxOutputTokens: 4096,
     prompt,
     abortSignal: AbortSignal.timeout(timeout),
   })
