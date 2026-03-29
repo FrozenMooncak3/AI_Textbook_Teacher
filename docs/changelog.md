@@ -612,3 +612,30 @@
 **修改文件**:
 - `src/app/api/modules/[moduleId]/qa-feedback/route.ts`
 - `.agents/API_CONTRACT.md`
+
+---
+
+## 2026-03-29 | T0: Multi-Model Abstraction (Codex Tasks 0-6)
+
+**完成内容**: 引入 Vercel AI SDK provider registry，新增 `src/lib/ai.ts`，将 12 个 AI 调用点从硬编码 Anthropic SDK 迁移到统一的 `generateText()` 接口，支持通过 `AI_MODEL` 在 Anthropic / Google / OpenAI-compatible provider 间切换；删除 `src/lib/claude.ts`，补充 `.env.example` 并在本地 `.env.local` 设置默认 `AI_MODEL=anthropic:claude-sonnet-4-6`。
+
+**修改文件**:
+- `package.json`
+- `package-lock.json`
+- `src/lib/ai.ts`
+- `src/lib/services/kp-extraction-service.ts`
+- `src/app/api/modules/route.ts`
+- `src/app/api/modules/[moduleId]/qa-feedback/route.ts`
+- `src/app/api/modules/[moduleId]/generate-questions/route.ts`
+- `src/app/api/modules/[moduleId]/guide/route.ts`
+- `src/app/api/modules/[moduleId]/generate-notes/route.ts`
+- `src/app/api/modules/[moduleId]/evaluate/route.ts`
+- `src/app/api/modules/[moduleId]/test-questions/route.ts`
+- `src/app/api/modules/[moduleId]/questions/route.ts`
+- `src/app/api/modules/[moduleId]/test-evaluate/route.ts`
+- `src/app/api/conversations/[conversationId]/messages/route.ts`
+- `src/app/api/books/[bookId]/screenshot-ask/route.ts`
+- `.env.example`
+
+**删除文件**:
+- `src/lib/claude.ts`
