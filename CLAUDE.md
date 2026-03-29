@@ -90,7 +90,8 @@
 - 不确定时明说，不用技术自信掩盖判断模糊
 
 ## Skill 使用
-每次会话开始，先读 `.claude/skills/using-superpowers/SKILL.md` 并遵守其规则。
+每次会话开始，调用 session-init skill。它包含 CEO 仪表盘、运行规则和完整的 skill 使用手册。
+详见 `.claude/skills/session-init/SKILL.md`。
 
 ## 已关闭的决策
 详见 `docs/decisions.md`，不重新讨论。
