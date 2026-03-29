@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '@/lib/ai'
 
 interface Module {
   id: number
@@ -50,8 +51,7 @@ export async function GET(
     return NextResponse.json({ error: '教材不存在' }, { status: 404 })
   }
 
-  const claude = getClaudeClient()
-  const text = book.raw_text.slice(0, 100000)
+  const bookText = book.raw_text.slice(0, 100000)
 
   // 单选题数量基于 KP，最少 5 题
   const mcCount = Math.max(5, Math.round(module_.kp_count * 0.6))
@@ -64,7 +64,7 @@ export async function GET(
 知识点数量：${module_.kp_count} 个
 
 教材原文：
-${text}
+${bookText}
 
 请出以下题目：
 - 单选题：${mcCount} 道（每道 5 分，4 个选项 A/B/C/D）
@@ -109,16 +109,12 @@ ${text}
   ]
 }`
 
-  const message = await claude.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 6000,
-    messages: [{ role: 'user', content: prompt }],
+  const { text } = await generateText({
+    model: getModel(),
+    maxOutputTokens: 6000,
+    prompt,
+    abortSignal: AbortSignal.timeout(timeout),
   })
-
-  const rawContent = message.content[0]
-  if (rawContent.type !== 'text') {
-    return NextResponse.json({ error: 'Claude 返回格式异常' }, { status: 500 })
-  }
 
   let parsed: {
     questions: Array<{
@@ -130,7 +126,7 @@ ${text}
     }>
   }
   try {
-    const jsonMatch = rawContent.text.match(/\{[\s\S]*\}/)
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('未找到 JSON')
     parsed = JSON.parse(jsonMatch[0])
   } catch {

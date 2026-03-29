@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '@/lib/ai'
 import { logAction } from '@/lib/log'
 
 // POST /api/modules — 为指定书籍生成模块地图
@@ -27,17 +28,15 @@ export async function POST(req: NextRequest) {
 
   logAction('生成模块地图', `bookId=${bookId}，教材：${book.title}`)
 
-  const claude = getClaudeClient()
-
   // 文本过长时截断（100k 字符安全边界）
-  const text = book.raw_text.slice(0, 50000)
+  const bookText = book.raw_text.slice(0, 50000)
 
   const prompt = `你是一位专业的学习设计师，请将以下教材文本拆分为学习模块。
 
 教材名称：${book.title}
 
 教材内容：
-${text}
+${bookText}
 
 请按照以下规则拆分：
 1. 以书中的小节（二级/三级标题）为自然分割点，不按页数机械切割
@@ -57,25 +56,21 @@ ${text}
   ]
 }`
 
-  const message = await claude.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 8192,
-    messages: [{ role: 'user', content: prompt }],
+  const { text } = await generateText({
+    model: getModel(),
+    maxOutputTokens: 8192,
+    prompt,
+    abortSignal: AbortSignal.timeout(timeout),
   })
-
-  const rawContent = message.content[0]
-  if (rawContent.type !== 'text') {
-    return NextResponse.json({ error: 'Claude 返回格式异常' }, { status: 500 })
-  }
 
   let parsed: { modules: Array<{ title: string; summary: string; kp_count: number; dependency: string }> }
   try {
     // 提取 JSON（Claude 有时会在前后加 ```json 标记）
-    const jsonMatch = rawContent.text.match(/\{[\s\S]*\}/)
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('未找到 JSON')
     parsed = JSON.parse(jsonMatch[0])
   } catch {
-    logAction('模块生成解析失败', `stop_reason=${message.stop_reason} len=${rawContent.text.length} tail=${rawContent.text.slice(-100)}`, 'error')
+    logAction('模块生成解析失败', `len=${text.length} tail=${text.slice(-100)}`, 'error')
     return NextResponse.json({ error: 'Claude 返回内容无法解析为 JSON' }, { status: 500 })
   }
 

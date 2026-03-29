@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '@/lib/ai'
 import { recordMistakes } from '@/lib/mistakes'
 
 interface Question {
@@ -65,8 +66,6 @@ export async function POST(
     return NextResponse.json({ evaluations: scored })
   }
 
-  const claude = getClaudeClient()
-
   const qaList = questions.map((q) => {
     const resp = responses.find((r) => r.question_id === q.id)
     return {
@@ -115,16 +114,12 @@ ${qaList.map((q, i) => `
   ]
 }`
 
-  const message = await claude.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 8192,
-    messages: [{ role: 'user', content: prompt }],
+  const { text } = await generateText({
+    model: getModel(),
+    maxOutputTokens: 8192,
+    prompt,
+    abortSignal: AbortSignal.timeout(timeout),
   })
-
-  const rawContent = message.content[0]
-  if (rawContent.type !== 'text') {
-    return NextResponse.json({ error: 'Claude 返回格式异常' }, { status: 500 })
-  }
 
   let parsed: {
     evaluations: Array<{
@@ -135,7 +130,7 @@ ${qaList.map((q, i) => `
     }>
   }
   try {
-    const jsonMatch = rawContent.text.match(/\{[\s\S]*\}/)
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('未找到 JSON')
     parsed = JSON.parse(jsonMatch[0])
   } catch {

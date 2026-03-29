@@ -2,7 +2,8 @@ import { handleRoute } from '@/lib/handle-route'
 import { getDb } from '@/lib/db'
 import { UserError, SystemError } from '@/lib/errors'
 import { getPrompt } from '@/lib/prompt-templates'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '@/lib/ai'
 import { logAction } from '@/lib/log'
 
 interface QAQuestion {
@@ -123,28 +124,23 @@ export const POST = handleRoute(async (req, context) => {
     kp_detail: kpDetail,
   })
 
-  const claude = getClaudeClient()
-  const message = await claude.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: prompt }],
+  const { text } = await generateText({
+    model: getModel(),
+    maxOutputTokens: 1024,
+    prompt,
+    abortSignal: AbortSignal.timeout(timeout),
   })
-
-  const rawContent = message.content[0]
-  if (rawContent.type !== 'text') {
-    throw new SystemError('Claude returned non-text response')
-  }
 
   let feedback: FeedbackResult
   try {
-    const jsonMatch = rawContent.text.match(/\{[\s\S]*\}/)
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       throw new Error('No JSON found')
     }
 
     feedback = JSON.parse(jsonMatch[0]) as FeedbackResult
   } catch (err) {
-    logAction('QA feedback parse error', rawContent.text.slice(0, 300), 'error')
+    logAction('QA feedback parse error', text.slice(0, 300), 'error')
     throw new SystemError('Failed to parse feedback response', err)
   }
 

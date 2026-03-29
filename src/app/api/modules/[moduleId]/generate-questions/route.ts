@@ -2,7 +2,8 @@ import { handleRoute } from '@/lib/handle-route'
 import { getDb } from '@/lib/db'
 import { UserError, SystemError } from '@/lib/errors'
 import { getPrompt } from '@/lib/prompt-templates'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '@/lib/ai'
 import { logAction } from '@/lib/log'
 
 interface ModuleRow {
@@ -161,21 +162,16 @@ export const POST = handleRoute(async (_req, context) => {
     past_mistakes: '(No past mistakes - first learning cycle)',
   })
 
-  const claude = getClaudeClient()
-  const message = await claude.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 4096,
-    messages: [{ role: 'user', content: prompt }],
+  const { text } = await generateText({
+    model: getModel(),
+    maxOutputTokens: 4096,
+    prompt,
+    abortSignal: AbortSignal.timeout(timeout),
   })
-
-  const rawContent = message.content[0]
-  if (rawContent.type !== 'text') {
-    throw new SystemError('Claude returned non-text response')
-  }
 
   let generated: { questions: GeneratedQuestion[] }
   try {
-    const jsonMatch = rawContent.text.match(/\{[\s\S]*\}/)
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       throw new Error('No JSON found in response')
     }
@@ -185,7 +181,7 @@ export const POST = handleRoute(async (_req, context) => {
       throw new Error('Empty questions array')
     }
   } catch (err) {
-    logAction('Q&A generation parse error', rawContent.text.slice(0, 500), 'error')
+    logAction('Q&A generation parse error', text.slice(0, 500), 'error')
     throw new SystemError('Failed to parse Claude response for Q&A generation', err)
   }
 

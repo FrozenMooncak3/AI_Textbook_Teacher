@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '@/lib/ai'
 import { logAction } from '@/lib/log'
 
 interface Module {
@@ -52,8 +53,7 @@ export async function GET(
     return NextResponse.json({ error: '教材不存在' }, { status: 404 })
   }
 
-  const claude = getClaudeClient()
-  const text = book.raw_text.slice(0, 100000)
+  const bookText = book.raw_text.slice(0, 100000)
 
   // 题量根据 KP 数量决定（约 KP 数量的 0.8 倍，最少 3 题）
   const questionCount = Math.max(3, Math.round(module_.kp_count * 0.8))
@@ -66,7 +66,7 @@ export async function GET(
 知识点数量：${module_.kp_count} 个
 
 教材原文：
-${text}
+${bookText}
 
 请出 ${questionCount} 道 Q&A 练习题，要求：
 1. 覆盖位置类、计算类、C1判断类、C2评估类、定义类等不同知识点类型
@@ -86,25 +86,21 @@ ${text}
   ]
 }`
 
-  const message = await claude.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 8192,
-    messages: [{ role: 'user', content: prompt }],
+  const { text } = await generateText({
+    model: getModel(),
+    maxOutputTokens: 8192,
+    prompt,
+    abortSignal: AbortSignal.timeout(timeout),
   })
-
-  const rawContent = message.content[0]
-  if (rawContent.type !== 'text') {
-    return NextResponse.json({ error: 'Claude 返回格式异常' }, { status: 500 })
-  }
 
   let parsed: { questions: Array<{ prompt: string; answer_key: string; explanation: string }> }
   try {
-    const jsonMatch = rawContent.text.match(/\{[\s\S]*\}/)
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('未找到 JSON')
     parsed = JSON.parse(jsonMatch[0])
   } catch (e) {
     const err = e instanceof Error ? e.message : String(e)
-    logAction('QA出题解析失败', `err=${err} ||| tail=${rawContent.text.slice(-300)}`, 'error')
+    logAction('QA出题解析失败', `err=${err} ||| tail=${text.slice(-300)}`, 'error')
     return NextResponse.json({ error: 'Claude 返回内容无法解析' }, { status: 500 })
   }
 

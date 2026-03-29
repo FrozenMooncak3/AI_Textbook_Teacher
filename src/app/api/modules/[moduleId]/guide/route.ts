@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '@/lib/ai'
 import { logAction } from '@/lib/log'
 import { getPrompt } from '@/lib/prompt-templates'
 
@@ -94,29 +95,23 @@ export async function POST(
     dependencies: '(No cross-module dependencies in M2)',
   })
 
-  const claude = getClaudeClient()
-  const message = await claude.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: prompt }],
+  const { text } = await generateText({
+    model: getModel(),
+    maxOutputTokens: 1024,
+    prompt,
+    abortSignal: AbortSignal.timeout(timeout),
   })
-
-  const rawContent = message.content[0]
-  if (rawContent.type !== 'text') {
-    logAction('Guide generation failed', 'Claude returned non-text response', 'error')
-    return NextResponse.json({ error: 'Claude returned non-text response' }, { status: 500 })
-  }
 
   let guide: Guide
   try {
-    const jsonMatch = rawContent.text.match(/\{[\s\S]*\}/)
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       throw new Error('No JSON found')
     }
 
     guide = JSON.parse(jsonMatch[0]) as Guide
   } catch {
-    logAction('Guide parse failed', rawContent.text.slice(0, 200), 'error')
+    logAction('Guide parse failed', text.slice(0, 200), 'error')
     return NextResponse.json({ error: 'Claude response could not be parsed' }, { status: 500 })
   }
 

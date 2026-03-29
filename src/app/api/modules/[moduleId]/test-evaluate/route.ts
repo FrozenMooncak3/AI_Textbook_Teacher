@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '@/lib/ai'
 import { recordMistakes } from '@/lib/mistakes'
 
 interface Question {
@@ -66,8 +67,6 @@ export async function POST(
   }> = []
 
   if (openQuestions.length > 0) {
-    const claude = getClaudeClient()
-
     const prompt = `你是一位专业的考试评卷老师，请对以下开放题进行评分。
 
 ${openQuestions.map((q, i) => {
@@ -97,19 +96,15 @@ ${openQuestions.map((q, i) => {
   ]
 }`
 
-    const message = await claude.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }],
+    const { text } = await generateText({
+      model: getModel(),
+      maxOutputTokens: 2048,
+      prompt,
+      abortSignal: AbortSignal.timeout(timeout),
     })
 
-    const rawContent = message.content[0]
-    if (rawContent.type !== 'text') {
-      return NextResponse.json({ error: 'Claude 返回格式异常' }, { status: 500 })
-    }
-
     try {
-      const jsonMatch = rawContent.text.match(/\{[\s\S]*\}/)
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
       if (!jsonMatch) throw new Error('未找到 JSON')
       const parsed = JSON.parse(jsonMatch[0])
       openResults = parsed.results

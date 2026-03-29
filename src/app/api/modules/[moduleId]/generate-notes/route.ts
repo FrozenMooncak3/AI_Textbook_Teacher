@@ -1,8 +1,9 @@
 import { handleRoute } from '@/lib/handle-route'
 import { getDb } from '@/lib/db'
-import { UserError, SystemError } from '@/lib/errors'
+import { UserError } from '@/lib/errors'
 import { getPrompt } from '@/lib/prompt-templates'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '@/lib/ai'
 import { logAction } from '@/lib/log'
 
 interface ModuleRow {
@@ -127,19 +128,14 @@ export const POST = handleRoute(async (_req, context) => {
     qa_results: qaResultsText,
   })
 
-  const claude = getClaudeClient()
-  const message = await claude.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 4096,
-    messages: [{ role: 'user', content: prompt }],
+  const { text } = await generateText({
+    model: getModel(),
+    maxOutputTokens: 4096,
+    prompt,
+    abortSignal: AbortSignal.timeout(timeout),
   })
 
-  const rawContent = message.content[0]
-  if (rawContent.type !== 'text') {
-    throw new SystemError('Claude returned non-text response')
-  }
-
-  const noteContent = rawContent.text.trim()
+  const noteContent = text.trim()
   const kpCodes = kps.map((kp) => kp.kp_code)
   const generatedFrom = JSON.stringify({
     kp_codes: kpCodes,
