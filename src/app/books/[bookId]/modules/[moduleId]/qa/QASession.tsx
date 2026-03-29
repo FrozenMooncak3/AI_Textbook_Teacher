@@ -18,6 +18,7 @@ interface Feedback {
   is_correct: boolean
   score: number
   feedback: string
+  user_answer?: string // Existing answer for resume
 }
 
 const LoadingSpinner = () => (
@@ -27,35 +28,59 @@ const LoadingSpinner = () => (
 export default function QASession({
   moduleId,
   moduleTitle,
-  bookId,
   onComplete,
 }: {
   moduleId: number
   moduleTitle: string
-  bookId: number
   onComplete?: () => void
 }) {
   const [questions, setQuestions] = useState<Question[]>([])
+  const [responses, setResponses] = useState<Record<number, Feedback>>({})
   const [currentIdx, setCurrentIdx] = useState(0)
   const [currentAnswer, setCurrentAnswer] = useState('')
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // ── 加载/生成题目 ─────────────────────────────────────────
+  // ── 加载/生成题目 + 恢复进度 ─────────────────────────────────
   useEffect(() => {
     const initQA = async () => {
       setIsLoading(true)
       try {
-        const res = await fetch(`/api/modules/${moduleId}/generate-questions`, { method: 'POST' })
-        const result = await res.json()
-        if (result.success) {
-          setQuestions(result.data.questions)
-        } else {
-          setError(result.error || '无法生成题目')
+        // 1. 加载题目
+        const qRes = await fetch(`/api/modules/${moduleId}/generate-questions`, { method: 'POST' })
+        const qResult = await qRes.json()
+        if (!qResult.success) {
+          setError(qResult.error || '无法生成题目')
+          setIsLoading(false)
+          return
+        }
+        const fetchedQuestions = qResult.data.questions as Question[]
+        setQuestions(fetchedQuestions)
+
+        // 2. Fix I2: 尝试获取已有的回答以恢复进度
+        // 注意：由于后端 GET 接口可能在 Codex 的修复中新增，我们尝试调用
+        try {
+          const rRes = await fetch(`/api/modules/${moduleId}/qa-feedback`)
+          const rResult = await rRes.json()
+          if (rResult.success && rResult.data.responses) {
+            const existingResponses = rResult.data.responses as Record<number, Feedback>
+            setResponses(existingResponses)
+            
+            // 找到第一个未回答的题目索引
+            const firstUnanswered = fetchedQuestions.findIndex(q => !existingResponses[q.id])
+            if (firstUnanswered !== -1) {
+              setCurrentIdx(firstUnanswered)
+            } else {
+              // 全部已答完，直接到最后
+              setCurrentIdx(fetchedQuestions.length - 1)
+              setFeedback(existingResponses[fetchedQuestions[fetchedQuestions.length - 1].id])
+            }
+          }
+        } catch {
+          // 如果接口不存在或失败，静默失败，从第 0 题开始
         }
       } catch {
         setError('加载失败，请检查网络后重试')
@@ -80,7 +105,9 @@ export default function QASession({
       })
       const result = await res.json()
       if (result.success) {
-        setFeedback(result.data)
+        const newFeedback = result.data
+        setFeedback(newFeedback)
+        setResponses(prev => ({ ...prev, [question.id]: newFeedback }))
       } else {
         setError(result.error || '评分失败')
       }
@@ -98,22 +125,10 @@ export default function QASession({
     setCurrentIdx(currentIdx + 1)
   }
 
-  // ── 生成笔记并完成 ──────────────────────────────────────────
-  const handleFinalize = async () => {
-    setIsGeneratingNotes(true)
-    try {
-      const res = await fetch(`/api/modules/${moduleId}/generate-notes`, { method: 'POST' })
-      const result = await res.json()
-      if (result.success && onComplete) {
-        onComplete()
-      } else {
-        setError(result.error || '无法生成笔记')
-      }
-    } catch {
-      setError('生成笔记失败')
-    } finally {
-      setIsGeneratingNotes(false)
-    }
+  // ── 完成并继续 ──────────────────────────────────────────
+  const handleFinalize = () => {
+    // Fix I3: 移除重复的 generate-notes 调用，由父组件 NotesDisplay 负责
+    if (onComplete) onComplete()
   }
 
   // ── 渲染状态处理 ───────────────────────────────────────────
@@ -123,8 +138,8 @@ export default function QASession({
         <div className="flex justify-center mb-6">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
-        <h3 className="text-xl font-bold text-slate-900 mb-2">AI 正在根据你的笔记出题...</h3>
-        <p className="text-slate-500">这通常需要 10-20 秒，请稍候</p>
+        <h3 className="text-xl font-bold text-slate-900 mb-2">AI 正在准备你的 Q&A 练习...</h3>
+        <p className="text-slate-500">正在同步学习进度</p>
       </div>
     )
   }
@@ -148,6 +163,8 @@ export default function QASession({
   const question = questions[currentIdx]
   const isLast = currentIdx === questions.length - 1
   const progress = Math.round(((currentIdx) / questions.length) * 100)
+  const isAnswered = !!responses[question.id]
+  const currentFeedback = feedback || responses[question.id]
 
   return (
     <div className="space-y-6">
@@ -190,7 +207,7 @@ export default function QASession({
           </p>
 
           {/* Scaffolding Hint */}
-          {question.scaffolding && !feedback && (
+          {question.scaffolding && !currentFeedback && (
             <details className="mb-6 group">
               <summary className="text-sm text-blue-600 font-bold cursor-pointer hover:text-blue-700 list-none flex items-center gap-1">
                 <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -207,9 +224,9 @@ export default function QASession({
           {/* Answer Input */}
           <div className="space-y-4">
             <textarea 
-              value={currentAnswer}
+              value={isAnswered ? responses[question.id].user_answer || '(已提交)' : currentAnswer}
               onChange={(e) => { setCurrentAnswer(e.target.value); setError(null); }}
-              disabled={!!feedback || isSubmitting}
+              disabled={isAnswered || isSubmitting}
               placeholder="输入你的回答或分析过程..."
               rows={4}
               className="w-full border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-300 resize-none bg-slate-50/30 disabled:bg-slate-50 disabled:text-slate-500"
@@ -221,7 +238,7 @@ export default function QASession({
               </p>
             )}
 
-            {!feedback ? (
+            {!isAnswered ? (
               <button 
                 onClick={handleSubmit}
                 disabled={!currentAnswer.trim() || isSubmitting}
@@ -235,24 +252,24 @@ export default function QASession({
         </div>
 
         {/* Instant Feedback Area */}
-        {feedback && (
-          <div className={`p-8 border-t ${feedback.is_correct ? 'bg-emerald-50/30 border-emerald-100' : 'bg-amber-50/30 border-amber-100'}`}>
+        {currentFeedback && (
+          <div className={`p-8 border-t ${currentFeedback.is_correct ? 'bg-emerald-50/30 border-emerald-100' : 'bg-amber-50/30 border-amber-100'}`}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${feedback.is_correct ? 'bg-emerald-500' : 'bg-amber-500'}`}>
-                  {feedback.is_correct ? '✓' : '!'}
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${currentFeedback.is_correct ? 'bg-emerald-500' : 'bg-amber-500'}`}>
+                  {currentFeedback.is_correct ? '✓' : '!'}
                 </div>
                 <div>
-                  <h4 className={`font-bold ${feedback.is_correct ? 'text-emerald-900' : 'text-amber-900'}`}>
-                    {feedback.is_correct ? '正确' : '还可以改进'}
+                  <h4 className={`font-bold ${currentFeedback.is_correct ? 'text-emerald-900' : 'text-amber-900'}`}>
+                    {currentFeedback.is_correct ? '正确' : '还可以改进'}
                   </h4>
-                  <p className="text-xs text-slate-400">评分：{Math.round(feedback.score * 100)} / 100</p>
+                  <p className="text-xs text-slate-400">评分：{Math.round(currentFeedback.score * 100)} / 100</p>
                 </div>
               </div>
             </div>
             
             <div className="text-sm text-slate-700 leading-relaxed mb-6 whitespace-pre-wrap">
-              {feedback.feedback}
+              {currentFeedback.feedback}
             </div>
 
             {/* Navigation */}
@@ -269,11 +286,9 @@ export default function QASession({
             ) : (
               <button 
                 onClick={handleFinalize}
-                disabled={isGeneratingNotes}
-                className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3"
               >
-                {isGeneratingNotes ? <LoadingSpinner /> : null}
-                {isGeneratingNotes ? '正在生成总结笔记...' : '全部完成，生成学习笔记'}
+                全部完成，生成学习笔记
               </button>
             )}
           </div>

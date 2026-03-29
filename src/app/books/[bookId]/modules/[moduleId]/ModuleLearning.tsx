@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import QASession from './qa/QASession'
 import NotesDisplay from './NotesDisplay'
@@ -117,7 +117,6 @@ export default function ModuleLearning({
       <QASession 
         moduleId={module.id} 
         moduleTitle={module.title} 
-        bookId={bookId} 
         onComplete={handleCompleteNotes}
       />
     )
@@ -205,6 +204,17 @@ function ReadingPhase({
     if (!notes.trim()) return
     setIsSaving(true)
     try {
+      // Fix C1: Clear existing notes before saving new content to avoid duplicates
+      const res = await fetch(`/api/modules/${module.id}/reading-notes`)
+      const result = await res.json()
+      if (result.success && result.data.notes.length > 0) {
+        for (const note of result.data.notes) {
+          await fetch(`/api/modules/${module.id}/reading-notes?noteId=${note.id}`, {
+            method: 'DELETE'
+          })
+        }
+      }
+
       await fetch(`/api/modules/${module.id}/reading-notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

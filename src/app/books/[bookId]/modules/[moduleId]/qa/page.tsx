@@ -46,7 +46,7 @@ export default async function QAPage({
           <span className="text-gray-600">模块 {module_.order_index} Q&A</span>
         </div>
 
-        <QASession moduleId={module_.id} moduleTitle={module_.title} bookId={book.id} />
+        <QASession moduleId={module_.id} moduleTitle={module_.title} />
       </div>
     </main>
   )

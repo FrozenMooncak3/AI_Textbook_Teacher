@@ -4,6 +4,20 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-03-29 | M2: Coach AI - 前端修复 (Code Review Issues)
+
+- **Fix 1 (C1): 解决阅读笔记重复保存**: 优化 `ModuleLearning.tsx` 中的 `handleSaveNotes` 逻辑，在保存新内容前先获取并逐一删除该模块已有的 `reading_notes`。
+- **Fix 2 (I2): 实现 Q&A 进度恢复**: 改造 `QASession.tsx`，在加载题目后尝试获取 `qa_responses`（若后端支持），自动定位到首个未答题目并恢复已答题目的反馈状态。
+- **Fix 3 (I3): 移除重复的笔记生成调用**: 移除 `QASession.tsx` 中 `handleFinalize` 的 `generate-notes` fetch 调用，统一由 `NotesDisplay.tsx` 负责生成逻辑。
+- **Fix 4 (I4+I5): 清理未使用代码**: 移除 `ModuleLearning.tsx` 中未使用的 `useCallback`, `useRef` 以及 `QASession.tsx` 中未使用的 `bookId` 属性，同步更新相关页面调用。
+
+修改文件：
+- `src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/qa/QASession.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/qa/page.tsx`
+
+---
+
 ## 2026-03-28 | M2: Coach AI - 后端实现 (Tasks 0-5)
 
 - **T0: learning_status 修复**: `db.ts` 默认值 `not_started` → `unstarted`，添加 `guide_json` 列 + 迁移脚本
@@ -134,7 +148,7 @@
 **完成内容**：Phase 0 补充更新，反映今日讨论确认的决策变更。
 
 **具体操作**：
-- 推翻 PDF 处理旧决策：app 改为服务端自动处理文件转换，用户上传 PDF 即可
+- 推翻 PDF 处理旧决策：app 改为服务端自动处理文件转换，用户上传 PDF即可
 - 确认技术栈（Next.js / SQLite / Claude API / Tailwind）经用户讨论后正式锁定
 - CLAUDE.md 新增"与项目负责人的沟通协议"（高管技术汇报格式 + 可逆性判断框架）
 - CLAUDE.md 删除"禁止在 app 内处理 PDF"禁令
@@ -198,7 +212,7 @@
 
 **具体操作**：
 - 创建 `src/app/api/modules/[moduleId]/guide/route.ts`：生成读前指引
-- 创建 `src/app/api/modules/[moduleId]/status/route.ts`：PATCH 更新模块学习状态
+- 创建 `src/app/api/modules/[moduleId]/status/route.ts` : PATCH 更新模块学习状态
 - 创建 `src/app/books/[bookId]/modules/[moduleId]/page.tsx`：模块页面（Server Component）
 - 创建 `src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`：读前指引 + 原文视图（Client Component）
 
@@ -573,7 +587,7 @@
 - **T2: Q&A Generation API**: 新增 `POST /api/modules/[moduleId]/generate-questions`，读取 KPs、阅读笔记、截图问答历史，走 `coach/qa_generation` 模板并写入 `qa_questions`。
 - **T3: Q&A Feedback API**: 新增 `POST /api/modules/[moduleId]/qa-feedback`，对单题答案调用 `coach/qa_feedback`，写入 `qa_responses`，并保留已答不可修改约束。
 - **T4: Study Notes API**: 新增 `POST /api/modules/[moduleId]/generate-notes`，汇总 KPs、阅读笔记、Q&A 结果，调用 `coach/note_generation`，写入 `module_notes` 并推进到 `notes_generated`。
-- **T5: Guide Template Refactor**: `guide` API 改为通过 `getPrompt('coach', 'pre_reading_guide', ...)` 取模板，`seedTemplates()` 对现有数据库补做 `coach` 模板 upsert。
+- **T5: Guide Template Refactor**: `guide` API 改为通过 `getPrompt('coach', 'pre_reading_guide', ...)` 取模板，`seedTemplates()` 对现有数据库补做 `coach`模板 upsert。
 
 修改文件：
 - `src/lib/db.ts`
