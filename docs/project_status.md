@@ -13,7 +13,7 @@
 
 **当前里程碑**：Gemini Flash Smoke Test — 已完成
 
-**最新完成**：Gemini Flash 免费档 smoke test 通过。M2 完整流程（阅读→QA→笔记→完成）在 Gemini 2.5 Flash 下验证通过。修复了 3 个端点的 maxOutputTokens 过低问题（guide/generate-questions/generate-notes）。
+**最新完成**：Session-Init 升级 + Skill 治理。session-init 升级为 CEO 仪表盘（5 板块 + 详略自动判断 + session-wide 运行规则）；claudemd-check 新增 skill 合规审计；executing-plans 合并了 subagent-driven-development；删除 3 个冗余 skill（26→22）；CLAUDE.md 引用更新。
 
 **实现计划**：`docs/superpowers/plans/2026-03-29-multi-model-abstraction.md`
 
@@ -102,3 +102,4 @@ M0 → M1 → M2 → M3 → M4 → M5
 | 2026-03-28 | **第三次 brainstorming 实施完成**：session-init skill + retrospective skill + 6 skill chain 声明 + CLAUDE.md/using-superpowers 更新 |
 | 2026-03-29 | **M2 完成**：教练 AI 全部代码 + review 修复完成，6 项 fix 已 push |
 | 2026-03-29 | **多模型抽象层完成**：Vercel AI SDK 集成，12 个调用点迁移，`AI_MODEL` 环境变量切换 |
+| 2026-03-29 | **Session-Init 升级 + Skill 治理**：CEO 仪表盘、skill 合规审计、skill 合并/清理（26→22） |
