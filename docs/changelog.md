@@ -602,3 +602,13 @@
 - `src/app/api/modules/[moduleId]/generate-questions/route.ts`
 - `src/app/api/modules/[moduleId]/qa-feedback/route.ts`
 - `src/app/api/modules/[moduleId]/generate-notes/route.ts`
+
+---
+
+## 2026-03-29 | M2: Q&A Resume Support GET API
+
+**完成内容**: 为 `GET /api/modules/[moduleId]/qa-feedback` 补齐已答记录查询能力，供前端在重新进入 Q&A 会话时恢复进度；同步更新 API contract。
+
+**修改文件**:
+- `src/app/api/modules/[moduleId]/qa-feedback/route.ts`
+- `.agents/API_CONTRACT.md`

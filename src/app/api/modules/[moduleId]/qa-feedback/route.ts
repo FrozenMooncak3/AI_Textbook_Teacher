@@ -21,6 +21,54 @@ interface FeedbackResult {
   feedback: string
 }
 
+interface StoredFeedbackRow {
+  id: number
+  question_id: number
+  user_answer: string
+  is_correct: number | null
+  ai_feedback: string | null
+  score: number | null
+}
+
+interface StoredFeedback {
+  is_correct: boolean
+  score: number
+  feedback: string
+  user_answer: string
+}
+
+export const GET = handleRoute(async (_req, context) => {
+  const { moduleId } = await context!.params
+  const moduleNumericId = Number(moduleId)
+
+  if (!Number.isInteger(moduleNumericId) || moduleNumericId <= 0) {
+    throw new UserError('Invalid module ID', 'INVALID_ID', 400)
+  }
+
+  const db = getDb()
+  const responseRows = db
+    .prepare(`
+      SELECT qr.id, qr.question_id, qr.user_answer, qr.is_correct, qr.ai_feedback, qr.score
+      FROM qa_responses qr
+      JOIN qa_questions qq ON qr.question_id = qq.id
+      WHERE qq.module_id = ?
+    `)
+    .all(moduleNumericId) as StoredFeedbackRow[]
+
+  const responses = responseRows.reduce<Record<number, StoredFeedback>>((accumulator, row) => {
+    accumulator[row.question_id] = {
+      is_correct: Boolean(row.is_correct),
+      score: row.score ?? 0,
+      feedback: row.ai_feedback ?? '',
+      user_answer: row.user_answer,
+    }
+
+    return accumulator
+  }, {})
+
+  return { data: { responses } }
+})
+
 export const POST = handleRoute(async (req, context) => {
   const { moduleId } = await context!.params
   const moduleNumericId = Number(moduleId)

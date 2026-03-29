@@ -122,6 +122,26 @@ Request body:
 }
 ```
 
+### `GET /api/modules/[moduleId]/qa-feedback`
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "responses": {
+      "42": {
+        "is_correct": true,
+        "score": 0.9,
+        "feedback": "string",
+        "user_answer": "string"
+      }
+    }
+  }
+}
+```
+
 ### `POST /api/modules/[moduleId]/generate-notes`
 
 Request body:
@@ -163,3 +183,4 @@ Response `200`:
 - [2026-03-28] [Codex] Added Q&A question generation API contract for M2.
 - [2026-03-28] [Codex] Added Q&A instant feedback API contract for M2.
 - [2026-03-28] [Codex] Added study notes generation API contract for M2.
+- [2026-03-29] [Codex] Added GET contract for `/api/modules/[moduleId]/qa-feedback` so frontend can resume answered questions.
