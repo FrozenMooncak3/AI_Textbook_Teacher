@@ -11,9 +11,9 @@
 
 **设计文稿**：`docs/superpowers/specs/2026-03-21-mvp-redesign-design.md`
 
-**当前里程碑**：M2 教练 AI — Review 修复完成，待集成测试
+**当前里程碑**：M2 教练 AI — 代码+修复全部完成，跳过集成测试
 
-**M2 进度**：后端 T0-T5 + 前端 T6-T9 全部完成。Code review 发现的 C1/C2/I1/I2/I3 问题已全部修复并 push。
+**M2 进度**：后端 T0-T5 + 前端 T6-T9 全部完成。Code review 6 项修复（C1/C2/I1/I2/I3/I4+I5）全部完成并 push。补充了 GET qa-feedback 端点（commit 88be07d）使 I2 进度恢复功能可用。用户决定跳过 Claude API 集成测试，M2 视为功能完成。
 
 **实现计划**：`docs/superpowers/plans/2026-03-28-m2-coach-ai.md`
 
@@ -23,7 +23,7 @@
 
 **M0（已完成）**：地基重建——19 张表 + prompt 模板系统 + bug 修复 + 最终验证通过
 
-**下一步**：集成测试 → M2 关闭 → 进入 M3（考官 AI）
+**下一步**：进入 M3（考官 AI）或用户指定的新方向
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -37,7 +37,7 @@
 |--------|------|------|
 | M0 | 地基重建：19 张表 + prompt 模板系统 + bug 修复 | **已完成**（2026-03-22） |
 | M1 | 提取器 AI：上传 PDF → 三阶段 KP 提取 → KP 表和模块地图写入 DB → 模块地图页面 | **已完成**（2026-03-28） |
-| M2 | 教练 AI（核心）：读前指引 → 阅读（笔记+截图问答）→ Q&A（4 种题型+即时反馈+预生成）→ 学习笔记生成 | **修复完成，待集成测试** |
+| M2 | 教练 AI（核心）：读前指引 → 阅读（笔记+截图问答）→ Q&A（4 种题型+即时反馈+预生成）→ 学习笔记生成 | **已完成**（2026-03-29） |
 | M3 | 考官 AI：测试出题 → 盲测 → 评分 → 80% 过关 → 错题诊断 | 未开始 |
 | M4 | 复习系统：复习调度（3/7/15/30/60 天）→ 聚类出题 → P 值更新 → **Q&A 穿插 20% 历史复习题** | 未开始 |
 | M5 | 体验打磨：首页仪表盘 + 笔记查看/导出 + 截图问 AI 流程改造 + UI/UX 打磨 | 未开始 |
@@ -96,3 +96,4 @@ M0 → M1 → M2 → M3 → M4 → M5
 | 2026-03-22 | **M0 完成**：最终验证通过（8/8 checks） |
 | 2026-03-28 | **Hook 自动化完成**：4 个 hook + structured-dispatch skill + claudemd-check 更新 |
 | 2026-03-28 | **第三次 brainstorming 实施完成**：session-init skill + retrospective skill + 6 skill chain 声明 + CLAUDE.md/using-superpowers 更新 |
+| 2026-03-29 | **M2 完成**：教练 AI 全部代码 + review 修复完成，6 项 fix 已 push |
