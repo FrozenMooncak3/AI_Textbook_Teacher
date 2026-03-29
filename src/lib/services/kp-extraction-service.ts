@@ -1,4 +1,5 @@
-import { getClaudeClient, CLAUDE_MODEL } from '../claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '../ai'
 import { getDb } from '../db'
 import { SystemError } from '../errors'
 import { logAction } from '../log'
@@ -37,23 +38,15 @@ function buildStructureScanText(lines: string[]): string {
     .join('\n')
 }
 
-async function callClaude(prompt: string, maxTokens: number): Promise<string> {
-  const claude = getClaudeClient()
-  const message = await claude.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: maxTokens,
-    messages: [{ role: 'user', content: prompt }],
+async function callModel(prompt: string, maxOutputTokens: number): Promise<string> {
+  const { text } = await generateText({
+    model: getModel(),
+    maxOutputTokens,
+    prompt,
+    abortSignal: AbortSignal.timeout(timeout),
   })
 
-  const textBlock = message.content.find((block) => block.type === 'text') as
-    | { type: 'text'; text: string }
-    | undefined
-
-  if (!textBlock) {
-    throw new SystemError('Claude 杩斿洖闈炴枃鏈唴瀹?')
-  }
-
-  return textBlock.text
+  return text
 }
 
 function repairLooseJSON(candidate: string): string {
@@ -128,7 +121,7 @@ async function structureScan(rawText: string): Promise<Stage0Result> {
   const prompt = getPrompt('extractor', 'structure_scan', {
     ocr_text: buildStructureScanText(lines),
   })
-  const response = await callClaude(prompt, 4_096)
+  const response = await callModel(prompt, 4_096)
   return parseJSON<Stage0Result>(response, 'Stage 0')
 }
 
@@ -156,7 +149,7 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
     })
 
     try {
-      const response = await callClaude(prompt, 8_192)
+      const response = await callModel(prompt, 8_192)
       rawResponse = response
       const result = parseJSON<Stage1Result>(response, `Stage 1: ${section.title}`)
 
@@ -191,7 +184,7 @@ async function qualityCheck(rawKPs: RawKP[], modules: ModuleGroup[]): Promise<St
     module_structure: JSON.stringify(modules, null, 2),
   })
 
-  const response = await callClaude(prompt, 16_384)
+  const response = await callModel(prompt, 16_384)
   return parseJSON<Stage2Result>(response, 'Stage 2')
 }
 
