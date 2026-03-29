@@ -1,6 +1,6 @@
 ---
 name: session-init
-description: Context loader + chain router. Auto-invoked at session start and after compact. Loads project state, assesses position, briefs user, injects chain routing.
+description: CEO 仪表盘 + session-wide 运行规则 + skill 使用手册。Session 开始和 compact 后自动调用。
 ---
 
 <SUBAGENT-STOP>
@@ -9,7 +9,9 @@ If you were dispatched as a subagent to execute a specific task, skip this skill
 
 # Session Init
 
-Restore full project context at session start or after compact. Brief the user. Inject chain routing so the AI knows what comes next.
+启动项目上下文，输出 CEO 仪表盘，注入 session-wide 运行规则。
+
+---
 
 ## Step 1: Load Context (parallel reads)
 
@@ -28,63 +30,187 @@ Also run:
 | Command | What to extract |
 |---------|----------------|
 | `git log -10 --oneline` | Recent work |
+| `git log -1 --format=%ci` | Last commit timestamp (for detail level) |
 | `git status` | Uncommitted changes, unpushed commits |
+
+---
 
 ## Step 2: Assess Position
 
-Check for these signals to determine where the user left off:
+Check for these signals:
 
 | Signal | Meaning |
 |--------|---------|
 | Uncommitted changes exist | Work in progress, may need to commit |
 | Unpushed commits exist | Completed work not yet pushed |
-| Spec file exists in `docs/superpowers/specs/` without matching plan in `docs/superpowers/plans/` | Design done, needs implementation plan |
-| Plan file exists with unchecked `- [ ]` items | Execution in progress |
+| Spec file exists without matching plan | Design done, needs implementation plan |
+| Plan file has unchecked `- [ ]` items | Execution in progress |
 | journal INDEX has `open` items | Unresolved issues need attention |
-| project_status mentions "准备进入" or "未开始" for next milestone | Ready to start next milestone |
+| project_status mentions "未开始" for next milestone | Ready to start next milestone |
 
-## Step 3: Brief User
+**交叉分析**：扫描 journal INDEX 的 parked 项，检查每一条与当前里程碑的关联性。如果某条 parked 想法与当前或即将开始的里程碑相关，在仪表盘的"停车场扫描"中标出并给出建议（纳入 vs 继续停着）。
 
-Output a concise status in Chinese:
+---
+
+## Step 3: CEO 仪表盘
+
+**详略自动判断**：
+- 用 `git log -1 --format=%ci` 获取最后一次 commit 时间戳
+- 距上次 commit ≤ 1 天 且 commit 数 ≤ 3 → **精简版**（跳过"近期完成"，停车场只列相关项）
+- 距上次 commit > 1 天 或 commit 数 > 3 → **完整版**
+- 无 commit 时视为 > 1 天（完整版）
+
+输出格式（中文）：
 
 ```
-当前状态：[milestone] — [one-line summary]
-上次做到：[what was last completed]
-未完成：[open items, if any]
-建议下一步：[recommendation]
+═══ 项目仪表盘 ═══
+
+📊 项目进度
+  当前：[里程碑] — [状态]
+  已完成：M0 ✓ M1 ✓ ...
+  下一个：[里程碑]
+
+⚡ 需要你决策
+  1. [描述] — 推荐：[X]，理由：[一句话]
+  2. ...
+  （无待决事项时显示"无"）
+
+🅿️ 停车场扫描
+  与当前里程碑相关：
+    - [想法名] — 建议：纳入 [MX] / 继续停着，理由：...
+  其他停着的：N 条（无变化，不展开）
+
+⚠️ 风险/阻塞
+  - [描述]（无风险时显示"无"）
+
+✅ 近期完成（精简版跳过此板块）
+  - [git log 摘要，最多 3 条]
+
+═══════════════════
 ```
 
-Then ask: "要做什么？" and wait for the user's instruction.
+输出仪表盘后，问："要做什么？" 等待用户指令。
 
-## Step 4: Chain Routing (internal)
+---
 
-After the user gives an instruction, match it to one of these chains:
+## Step 4: Session-Wide 运行规则
 
-**Design Chain** — user wants to explore an idea, build something new, or brainstorm:
-1. brainstorming
-2. writing-plans
-3. _(user decides: dispatch or execute)_
+以下规则在 session-init 加载后全程生效，不需要用户提醒：
 
-**Execution Chain** — user wants to execute a plan (Claude's own tasks: docs, skills, config):
-1. executing-plans
-2. verification-before-completion
-3. claudemd-check
+### 规则 1: 自动派发
 
-**Dispatch Chain** — user wants to send a task to Codex or Gemini:
-1. structured-dispatch
-2. _(wait for Codex/Gemini to complete)_
-3. requesting-code-review
-4. claudemd-check
+当检测到需要给 Codex/Gemini 派任务时，自动按 structured-dispatch 模板执行：
+1. 填写完整模板
+2. 根据任务类型从 Step 6 的 Agent 参考 skill 表中选择推荐 skill
+3. 标注推荐档位（轻/标准/重，依据 ccb-protocol Section 3）
+4. 给用户看中文翻译
+5. 用户批准后发英文指令
 
-**Closeout Chain** — user wants to review and wrap up:
-1. requesting-code-review
-2. claudemd-check
+### 规则 2: 想法分流
 
-If the user's instruction doesn't match any chain, handle it normally — chains are guides, not constraints.
+用户提出新想法时，立刻判断去向并告知用户（不问"你觉得该放哪"）：
+- **纳入具体里程碑**（M3/M5/新里程碑）— 核心流程需要的、产品不完整没它不行的
+- **停车场** — 好想法，但不是当前阶段，存着等合适的时候
+- **丢掉** — 评估后觉得不值得做，说明理由
 
-## Does NOT
+判断后一句话告知结论和理由。
 
-- Auto-execute any skill (only loads context and advises)
-- Make decisions for the user
-- Read files outside the defined source list
-- Replace the user's explicit instructions with chain suggestions
+### 规则 3: Skill 自动触发
+
+| 触发条件 | 自动执行的 skill |
+|----------|-----------------|
+| 用户想做新功能/探索想法 | brainstorming → writing-plans |
+| 派发任务给 Codex/Gemini | structured-dispatch |
+| brainstorming 或重要讨论结束 | journal |
+| 声称完成/准备 commit | verification-before-completion → claudemd-check |
+| 用户告知 Codex/Gemini 完成任务 | requesting-code-review → claudemd-check |
+| 里程碑开始 | using-git-worktrees（创建隔离分支） |
+| 里程碑结束 | finishing-a-development-branch（分支收尾） |
+
+### 规则 4: 里程碑级 Git 隔离
+
+- 里程碑开始 → 强制创建 worktree/分支，所有开发在隔离分支上进行
+- 过程中 → structured-dispatch 每次派发指定目标分支，不允许直接在 master 上改
+- 里程碑结束 → 强制走分支收尾流程（review → merge/PR）
+
+**例外**：Claude 文件边界内的纯文档改动（`docs/**`、`CLAUDE.md` 等）可直接在 master 上 commit。代码相关的里程碑工作必须隔离。
+
+**异常处理**：worktree 创建失败时，停下来报告给用户，不得降级到 master 上直接开发。
+
+### 规则 5: Chain Routing
+
+用户给出指令后，匹配以下 chain：
+
+**Design Chain** — 探索想法、做新功能：
+1. brainstorming → 2. writing-plans → 3. 用户决定：dispatch 或 execute
+
+**Execution Chain** — 执行计划（Claude 自己的任务）：
+1. executing-plans → 2. verification-before-completion → 3. claudemd-check
+
+**Dispatch Chain** — 派发给 Codex/Gemini：
+1. structured-dispatch → 2. 等待完成 → 3. requesting-code-review → 4. claudemd-check
+
+**Closeout Chain** — 收尾：
+1. requesting-code-review → 2. claudemd-check
+
+不匹配任何 chain 时正常处理，chain 是指引不是约束。
+
+---
+
+## Step 5: Skill 使用手册
+
+### 核心流程 skill（session-init 管控）— 10 个
+
+| Skill | 职责 | 触发方式 |
+|-------|------|---------|
+| **session-init** | 开机 + CEO 仪表盘 + 运行规则 | session 开始 / compact 后自动 |
+| **claudemd-check** | 收尾合规审计（含 skill 合规） | 声称完成前自动 / `/claudemd-check` |
+| **brainstorming** | 需求讨论 → 设计 | 检测到新功能/想法时自动 / `/brainstorming` |
+| **writing-plans** | 写实施计划 | brainstorming 完成后自动 |
+| **structured-dispatch** | 派发任务给 Codex/Gemini | 检测到需要派发时自动 |
+| **requesting-code-review** | 审查 agent 提交的代码 | 用户告知 agent 完成后自动 |
+| **journal** | 记录想法/决策/待跟进 | brainstorming/重要讨论后自动 / `/journal` |
+| **verification-before-completion** | 完成前验证 | 声称完成前自动 |
+| **using-git-worktrees** | 里程碑级 Git 隔离 | 里程碑开始时自动 |
+| **finishing-a-development-branch** | 里程碑级分支收尾 | 里程碑结束时自动 |
+
+### Agent 参考 skill（structured-dispatch 推荐给 Codex/Gemini）— 7 个
+
+| Skill | 推荐场景 |
+|-------|---------|
+| **coding-standards** | 所有开发任务 |
+| **api-design** | API 端点开发 |
+| **frontend-patterns** | 前端组件开发 |
+| **test-driven-development** | 新功能 / bug 修复 |
+| **systematic-debugging** | bug 诊断 |
+| **security-review** | 认证 / 敏感数据处理 |
+| **database-migrations** | schema 变更 |
+
+### 低频工具 skill — 5 个
+
+| Skill | 用途 |
+|-------|------|
+| **receiving-code-review** | 收到外部 review 反馈时 |
+| **retrospective** | 定期回顾协作模式（`/retrospective`） |
+| **writing-skills** | 创建/编辑 skill |
+| **api-contract** | API 合约文档更新 |
+| **debug-ocr** | OCR 问题排查 |
+
+### 用户需要知道的命令（只有 3 个）
+
+| 命令 | 用途 |
+|------|------|
+| `/brainstorming` | 有新想法要讨论 |
+| `/retrospective` | 回顾协作模式 |
+| `/claudemd-check` | 手动跑合规检查 |
+
+其他 skill 全部自动触发，用户不需要手动调用。
+
+---
+
+## 行为契约
+
+- **主动执行**运行规则，不等用户提醒
+- **主动判断**想法分流，不问用户"该放哪"
+- **不替代用户做产品决策** — 需要决策的事列在仪表盘"需要你决策"板块，等用户拍板
+- **不在 Codex/Gemini 工作时打断它们** — 查进度只通过 git/文件，不碰它们的 session
