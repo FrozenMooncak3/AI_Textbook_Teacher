@@ -8,7 +8,7 @@
 
 ## 1. Problem
 
-The app is hardcoded to Claude via `src/lib/claude.ts`. 13 route files import `getClaudeClient` and `CLAUDE_MODEL` directly. This creates two problems:
+The app is hardcoded to Claude via `src/lib/claude.ts`. 12 files (11 routes + 1 service) import `getClaudeClient` and `CLAUDE_MODEL` directly. This creates two problems:
 
 1. **Testing is expensive** — Claude Sonnet costs ¥124/M tokens. Every dev test burns real money.
 2. **Vendor lock-in** — Cannot try cheaper or free models without rewriting every call site.
@@ -82,12 +82,13 @@ Exports:
 
 ### 3.5 Call Site Migration Pattern
 
-All 13 files follow the same mechanical transformation:
+12 files follow one of three migration patterns:
+
+**Pattern A — Single-turn text prompt (10 files)**
 
 ```typescript
-// BEFORE (Anthropic SDK)
+// BEFORE
 import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
-
 const claude = getClaudeClient()
 const message = await claude.messages.create({
   model: CLAUDE_MODEL,
@@ -96,10 +97,9 @@ const message = await claude.messages.create({
 })
 const rawText = message.content[0].type === 'text' ? message.content[0].text : ''
 
-// AFTER (Vercel AI SDK)
+// AFTER
 import { generateText } from 'ai'
 import { getModel } from '@/lib/ai'
-
 const { text } = await generateText({
   model: getModel(),
   maxTokens: 1024,
@@ -107,7 +107,56 @@ const { text } = await generateText({
 })
 ```
 
-Each file changes ~5-8 lines. The transformation is identical across all 13 files.
+**Pattern B — Multi-turn conversation with system prompt (`conversations/messages/route.ts`)**
+
+```typescript
+// BEFORE
+const message = await claude.messages.create({
+  model: CLAUDE_MODEL,
+  max_tokens: 2048,
+  system: systemPrompt,
+  messages: conversationHistory,  // [{role:'user',content:'...'}, {role:'assistant',content:'...'}]
+})
+
+// AFTER
+const { text } = await generateText({
+  model: getModel(),
+  maxTokens: 2048,
+  system: systemPrompt,
+  messages: conversationHistory,  // same format, Vercel AI SDK accepts this directly
+})
+```
+
+**Pattern C — Vision / image input (`screenshot-ask/route.ts`)**
+
+```typescript
+// BEFORE (Anthropic-specific image content block)
+const message = await claude.messages.create({
+  model: CLAUDE_MODEL,
+  max_tokens: 2048,
+  messages: [{ role: 'user', content: [
+    { type: 'image', source: { type: 'base64', media_type: 'image/png', data: base64Data } },
+    { type: 'text', text: userQuestion },
+  ]}],
+})
+
+// AFTER (Vercel AI SDK image format)
+const { text } = await generateText({
+  model: getModel(),
+  maxTokens: 2048,
+  messages: [{
+    role: 'user',
+    content: [
+      { type: 'image', image: Buffer.from(base64Data, 'base64'), mimeType: 'image/png' },
+      { type: 'text', text: userQuestion },
+    ],
+  }],
+})
+```
+
+Note: Not all models support vision. If `AI_MODEL` points to a text-only model, the screenshot-ask route will fail. This is acceptable for MVP — screenshot-ask is a separate feature from the coach flow.
+
+Each file changes ~5-8 lines.
 
 ### 3.6 Files to Modify
 
