@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
-import { getClaudeClient, CLAUDE_MODEL } from '@/lib/claude'
+import { generateText } from 'ai'
+import { getModel, timeout } from '@/lib/ai'
 import { logAction } from '@/lib/log'
 
 interface Conversation {
@@ -57,16 +58,18 @@ export async function POST(
 
   const book = db.prepare('SELECT title FROM books WHERE id = ?').get(conv.book_id) as { title: string } | undefined
   const bookTitle = book?.title ?? '教材'
+  const systemPrompt = `你是一位财务教材辅导老师，正在帮助学生理解《${bookTitle}》第${conv.page_number}页的内容。回答简洁清晰，重点突出。`
 
   let answer = ''
   try {
-    const resp = await getClaudeClient().messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 1024,
-      system: `你是一位财务教材辅导老师，正在帮助学生理解《${bookTitle}》第${conv.page_number}页的内容。回答简洁清晰，重点突出。`,
+    const { text } = await generateText({
+      model: getModel(),
+      maxOutputTokens: 1024,
+      system: systemPrompt,
       messages: claudeMessages,
+      abortSignal: AbortSignal.timeout(timeout),
     })
-    answer = resp.content[0].type === 'text' ? resp.content[0].text : ''
+    answer = text
   } catch (e) {
     logAction('追问AI失败', `conversationId=${convId}，${String(e)}`, 'error')
     return NextResponse.json({ error: 'AI 服务暂时不可用', code: 'AI_ERROR' }, { status: 500 })
