@@ -11,9 +11,9 @@
 
 **设计文稿**：`docs/superpowers/specs/2026-03-21-mvp-redesign-design.md`
 
-**当前里程碑**：Gemini Flash Smoke Test 中
+**当前里程碑**：Gemini Flash Smoke Test — 已完成
 
-**最新完成**：Gemini Flash 兼容性修复。Guide 和 Q&A 出题的 maxOutputTokens 过低导致 JSON 截断，已提升（guide 1024→4096, generate-questions 4096→16384）。Q&A 出题 + 即时反馈已验证通过，笔记生成待验证。
+**最新完成**：Gemini Flash 免费档 smoke test 通过。M2 完整流程（阅读→QA→笔记→完成）在 Gemini 2.5 Flash 下验证通过。修复了 3 个端点的 maxOutputTokens 过低问题（guide/generate-questions/generate-notes）。
 
 **实现计划**：`docs/superpowers/plans/2026-03-29-multi-model-abstraction.md`
 
@@ -27,7 +27,7 @@
 
 **M0（已完成）**：地基重建——19 张表 + prompt 模板系统 + bug 修复 + 最终验证通过
 
-**下一步**：继续 Gemini Flash smoke test（笔记生成 → 完整流程验证）→ 进入 M3（考官 AI）
+**下一步**：进入 M3（考官 AI：测试出题 → 盲测 → 评分 → 80% 过关 → 错题诊断）
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 

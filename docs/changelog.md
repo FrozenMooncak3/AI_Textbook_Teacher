@@ -4,6 +4,16 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-03-29 | Gemini Flash Smoke Test 通过
+
+- **M2 完整流程验证**：阅读 → Q&A（出题+即时反馈）→ 笔记生成 → 完成，在 Gemini 2.5 Flash 免费档下全部跑通
+- **笔记生成 token 修复**: generate-notes maxOutputTokens 4096→16384，修复中文笔记截断
+
+修改文件：
+- `src/app/api/modules/[moduleId]/generate-notes/route.ts`
+
+---
+
 ## 2026-03-29 | Gemini Flash 兼容性修复
 
 - **Token 限制提升**: Guide maxOutputTokens 1024→4096, Generate-questions 4096→16384，修复 Gemini Flash 输出截断导致的 JSON 解析失败

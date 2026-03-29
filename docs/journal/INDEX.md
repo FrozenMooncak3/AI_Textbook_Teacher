@@ -7,6 +7,8 @@
 ## parked（停车场）
 - [idea] 笔记+QA联动：阅读时写笔记 → AI生成结构化笔记 → QA侧边栏弹出要点边做边学 → [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
 - [idea] Session Init 全局报告：每次 init 产出 memory/journal/项目状态综合报告+CC见解，防止遗漏 parked 项 → [2026-03-29-session-init-report.md](./2026-03-29-session-init-report.md)
+- [idea] 测试结果 Dashboard：完成测试后展示成绩、错题分布、KP 掌握度等（归入 M5 首页仪表盘）→ [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
+- [idea] Wezterm 双向发送问题：所有角色互发消息都可能只粘贴不提交，需系统性修复 → [2026-03-29-wezterm-report-submit.md](./2026-03-29-wezterm-report-submit.md)
 - [idea] 安装 UI/UX Pro Max Skill 给 Gemini（M2 开始前端改造时） → [2026-03-21-mvp-redesign.md](./2026-03-21-mvp-redesign.md)
 - [idea] 语言模式系统——自动切换 prompt 语言，多国语言版本（MVP 后） → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
 - [decision] 第三次 brainstorming 中被砍掉的项：H6/H8/H12/H13（评估后认为不需要）→ [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
