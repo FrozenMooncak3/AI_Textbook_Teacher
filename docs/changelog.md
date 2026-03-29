@@ -4,6 +4,17 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-03-29 | Gemini Flash 兼容性修复
+
+- **Token 限制提升**: Guide maxOutputTokens 1024→4096, Generate-questions 4096→16384，修复 Gemini Flash 输出截断导致的 JSON 解析失败
+- **原因**: Gemini Flash 对中文内容输出更冗长，原有 token 上限按 Claude 的简洁输出设定，不适用于其他模型
+
+修改文件：
+- `src/app/api/modules/[moduleId]/guide/route.ts`
+- `src/app/api/modules/[moduleId]/generate-questions/route.ts`
+
+---
+
 ## 2026-03-29 | M2: Coach AI - 前端修复 (Code Review Issues)
 
 - **Fix 1 (C1): 解决阅读笔记重复保存**: 优化 `ModuleLearning.tsx` 中的 `handleSaveNotes` 逻辑，在保存新内容前先获取并逐一删除该模块已有的 `reading_notes`。
