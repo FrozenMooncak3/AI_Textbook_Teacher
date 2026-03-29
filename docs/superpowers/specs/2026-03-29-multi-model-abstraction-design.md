@@ -206,7 +206,7 @@ Different models respond differently to the same prompt. Switching from Claude t
 |------|-------|-----------|
 | T0: Install Vercel AI SDK + provider packages | Codex | None |
 | T1: Create `src/lib/ai.ts` with provider registry + getModel() | Codex | T0 |
-| T2: Migrate all 13 call sites from claude.ts to ai.ts | Codex | T1 |
+| T2: Migrate all 12 call sites from claude.ts to ai.ts | Codex | T1 |
 | T3: Delete `src/lib/claude.ts` | Codex | T2 |
 | T4: Update env config + docs | Claude | T2 |
 | T5: Smoke test with Gemini Flash (free) | User | T3 |
