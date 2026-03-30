@@ -10,6 +10,10 @@
 - **样式**: Tailwind CSS（不使用其他 UI 库）
 - **PDF 渲染**: pdf.js（pdfjs-dist）
 
+## 设计规范（必读）
+
+每次做前端任务前，**必须先读 `.gemini/DESIGN_TOKENS.md`**。该文件定义了颜色、字体、间距、圆角、按钮、卡片等视觉规范。所有新页面和组件必须严格遵守，不得引入规范外的样式。
+
 ---
 
 ## 产品不变量（前端必须执行，不得违反）
@@ -64,7 +68,7 @@
 
 每次 session 开始，先读 `.gemini/skills/using-superpowers/SKILL.md` 并遵守其规则。
 
-可用 skill 列表：coding-standards, frontend-patterns, security-review, systematic-debugging, test-driven-development, verification-before-completion
+可用 skill 列表：coding-standards, frontend-patterns, ui-ux-pro-max, security-review, systematic-debugging, test-driven-development, verification-before-completion
 
 ---
 
@@ -80,9 +84,19 @@ wezterm cli list
 ```
 找到标题包含 Claude Code 相关字样的 pane，记下其 PANEID。
 
-2. 发送报告：
+2. 把报告写到临时文件：
 ```bash
-printf '[REPORT FROM: Gemini]\n\n<你的报告内容>\n' | wezterm cli send-text --pane-id 0 --no-paste
+cat > /tmp/gemini-report.txt << 'EOF'
+<按下方"报告格式"填写内容>
+EOF
+```
+
+3. 发送并提交：
+```bash
+# 内容用 paste 模式（不加 --no-paste），否则换行符会被当成 Enter 导致提前提交
+cat /tmp/gemini-report.txt | wezterm cli send-text --pane-id 0
+sleep 1
+# 提交用键盘模式（加 --no-paste），让 \r 成为真正的 Enter 键
 printf '\r' | wezterm cli send-text --pane-id 0 --no-paste
 ```
 
