@@ -9,6 +9,11 @@
 - [idea] 测试结果 Dashboard：完成测试后展示成绩、错题分布、KP 掌握度等（归入 M5 首页仪表盘）→ [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
 - [idea] 错题本功能：接入 mistakes 表，展示错题+诊断+补救（归入 M5）→ [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
 - [idea] 学习计划定制（百词斩模式）：AI 预估学习时长+用户自定节奏（M5 后独立评估）→ [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
+- [idea] OCR 后生成思维导图（M5+）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
+- [idea] 笔记跳转原文（M5+）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
+- [idea] 右键选中多功能：做笔记、高亮等（需独立评估）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
+- [idea] 支持 PPT + 扫描版 PDF（独立里程碑）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
+- [idea] 优先面向扫描版 PDF 用户群体（商业策略，与扫描版支持一起评估）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - [idea] 语言模式系统——自动切换 prompt 语言，多国语言版本（MVP 后） → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
 - [decision] 第三次 brainstorming 中被砍掉的项：H6/H8/H12/H13（评估后认为不需要）→ [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
