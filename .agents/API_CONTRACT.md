@@ -2,7 +2,7 @@
 
 ## Response Envelope
 
-New M2 APIs use the `handleRoute()` envelope:
+All M2+ APIs use the `handleRoute()` envelope:
 
 ```json
 {
@@ -177,6 +177,141 @@ Response `200`:
 }
 ```
 
+### `POST /api/modules/[moduleId]/test/generate`
+
+Request body:
+
+```json
+{
+  "retake": false
+}
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "paper_id": 1,
+    "attempt_number": 1,
+    "questions": [
+      {
+        "id": 1,
+        "kp_id": 1,
+        "kp_ids": [1, 2],
+        "question_type": "single_choice",
+        "question_text": "string",
+        "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+        "order_index": 1
+      }
+    ],
+    "cached": true
+  }
+}
+```
+
+Note: `correct_answer` and `explanation` are NOT returned (blind test). `options` is `null` for non-single-choice types. `cached` is `true` when returning an existing unsubmitted paper.
+
+### `POST /api/modules/[moduleId]/test/submit`
+
+Request body:
+
+```json
+{
+  "paper_id": 1,
+  "answers": [
+    { "question_id": 1, "user_answer": "B" },
+    { "question_id": 2, "user_answer": "详细文字回答..." }
+  ]
+}
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "paper_id": 1,
+    "attempt_number": 1,
+    "total_score": 35,
+    "max_score": 45,
+    "pass_rate": 78,
+    "is_passed": false,
+    "results": [
+      {
+        "question_id": 1,
+        "question_type": "single_choice",
+        "question_text": "string",
+        "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+        "correct_answer": "B",
+        "explanation": "string",
+        "user_answer": "A",
+        "is_correct": false,
+        "score": 0,
+        "max_score": 5,
+        "feedback": "string",
+        "error_type": "confusion",
+        "remediation": "string"
+      }
+    ]
+  }
+}
+```
+
+Note: `pass_rate` is an integer 0-100 (percentage). `is_passed` is `true` when `pass_rate >= 80`. `error_type` is one of: `blind_spot`, `procedural`, `confusion`, `careless` (null for correct answers).
+
+### `GET /api/modules/[moduleId]/test`
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "learning_status": "testing",
+    "in_progress_paper_id": null,
+    "history": [
+      {
+        "paper_id": 1,
+        "attempt_number": 1,
+        "total_score": 35,
+        "pass_rate": 78,
+        "is_passed": false,
+        "created_at": "datetime"
+      }
+    ]
+  }
+}
+```
+
+### `GET /api/modules/[moduleId]/mistakes`
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "mistakes": [
+      {
+        "id": 1,
+        "kp_id": 1,
+        "kp_code": "C1.1",
+        "kp_description": "string",
+        "knowledge_point": "string",
+        "error_type": "blind_spot",
+        "source": "test",
+        "remediation": "string",
+        "is_resolved": false,
+        "created_at": "datetime"
+      }
+    ]
+  }
+}
+```
+
 ## Change Log
 
 - [2026-03-28] [Codex] Added reading notes CRUD API contract for M2.
@@ -184,3 +319,4 @@ Response `200`:
 - [2026-03-28] [Codex] Added Q&A instant feedback API contract for M2.
 - [2026-03-28] [Codex] Added study notes generation API contract for M2.
 - [2026-03-29] [Codex] Added GET contract for `/api/modules/[moduleId]/qa-feedback` so frontend can resume answered questions.
+- [2026-03-31] [Claude] Added M3 test generate, test submit, test status, and mistakes API contracts.
