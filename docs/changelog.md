@@ -672,3 +672,18 @@
 - `src/lib/seed-templates.ts`
 - `src/app/api/modules/[moduleId]/test/generate/route.ts`
 - `src/app/api/modules/[moduleId]/test/route.ts`
+
+---
+
+## 2026-03-31 | M3: Examiner AI Backend Batch 2
+
+**完成内容**: 为 M3 考官 AI 落地 batch 2 后端能力：新增 `POST /api/modules/[moduleId]/test/submit`，实现单选自动判分、主观题 AI 评分、错题诊断、服务端总分/通过率计算，以及事务内联写入 `test_responses` / `mistakes` 并在通过时更新模块状态；重写 `GET /api/modules/[moduleId]/mistakes` 以适配新 schema；删除旧 Phase 1 的 `test-questions` / `test-evaluate` 路由。
+
+**修改文件**:
+- `src/app/api/modules/[moduleId]/test/submit/route.ts`
+- `src/app/api/modules/[moduleId]/mistakes/route.ts`
+- `docs/changelog.md`
+
+**删除文件**:
+- `src/app/api/modules/[moduleId]/test-questions/route.ts`
+- `src/app/api/modules/[moduleId]/test-evaluate/route.ts`
