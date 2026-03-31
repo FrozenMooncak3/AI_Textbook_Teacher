@@ -279,7 +279,12 @@ Return strict JSON only, with no extra text:
 
 type 只能是：single_choice, c2_evaluation, calculation, essay
 单选题 options 为 4 个字符串数组，其他题型 options 为 null
-单选题 correct_answer 为单个字母（A/B/C/D），其他题型为完整答案文本`,
+单选题 correct_answer 为单个字母（A/B/C/D），其他题型为完整答案文本
+
+## 用户可见性规则
+- 题目文本、选项、correct_answer、explanation 都会直接展示给用户
+- 禁止在这些字段中引用知识点编号（如"KP-01""KP-s05-04"），用具体的知识点名称或内容替代
+- correct_answer 中如有计算步骤，用清晰的换行和缩进排版，不要用 Markdown 格式符号（如 ** 加粗）`,
   },
   {
     role: 'examiner',
@@ -325,7 +330,11 @@ type 只能是：single_choice, c2_evaluation, calculation, essay
 注意：
 - 对主观题：返回 is_correct, score, feedback, error_type, remediation
 - 对已判分的单选错题：只返回 error_type, feedback, remediation（score 和 is_correct 已由系统确定）
-- 正确的题目不需要返回`,
+- 正确的题目不需要返回
+
+## 用户可见性规则
+- feedback 和 remediation 会直接展示给用户
+- 禁止在这些字段中引用知识点编号（如"KP-01""KP-s05-04"），用具体的知识点名称或内容替代`,
   },
   {
     role: 'reviewer',

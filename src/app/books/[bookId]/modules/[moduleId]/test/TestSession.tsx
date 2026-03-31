@@ -431,30 +431,34 @@ export default function TestSession({
               <div className="p-6 space-y-4">
                 <p className="text-slate-900 font-medium text-sm leading-relaxed">{r.question_text}</p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Your Answer</span>
-                    <div className={`p-3 rounded-xl border text-sm ${
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">你的回答</span>
+                    <div className={`p-4 rounded-xl border text-sm whitespace-pre-wrap leading-relaxed ${
                       r.is_correct ? 'border-green-200 bg-green-50 text-green-900' : 'border-red-200 bg-red-50 text-red-900'
                     }`}>
                       {r.user_answer || '(空)'}
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Correct Answer</span>
-                    <div className="p-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-900 text-sm">
-                      {r.correct_answer}
+                  {!r.is_correct && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">正确答案</span>
+                      <div className="p-4 rounded-xl border border-blue-200 bg-blue-50 text-blue-900 text-sm whitespace-pre-wrap leading-relaxed">
+                        {r.correct_answer}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="space-y-2 pt-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Explanation & Feedback</span>
-                  <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-700 leading-relaxed border border-slate-100">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">解析</span>
+                  <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-700 leading-relaxed border border-slate-100 whitespace-pre-wrap">
                     {r.explanation}
-                    <div className="mt-3 pt-3 border-t border-slate-200 text-blue-700 font-medium">
-                      AI 评价：{r.feedback}
-                    </div>
+                    {r.feedback && (
+                      <div className="mt-3 pt-3 border-t border-slate-200 text-blue-700 font-medium">
+                        AI 评价：{r.feedback}
+                      </div>
+                    )}
                   </div>
                 </div>
 

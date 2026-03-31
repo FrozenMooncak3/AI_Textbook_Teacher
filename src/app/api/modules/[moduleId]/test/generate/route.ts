@@ -251,7 +251,7 @@ export const POST = handleRoute(async (req, context) => {
     throw new UserError('Module not found', 'NOT_FOUND', 404)
   }
 
-  if (module_.learning_status !== 'notes_generated' && module_.learning_status !== 'testing') {
+  if (module_.learning_status !== 'notes_generated' && module_.learning_status !== 'testing' && module_.learning_status !== 'completed') {
     throw new UserError(
       'Module must have completed notes generation before testing',
       'INVALID_STATUS',
