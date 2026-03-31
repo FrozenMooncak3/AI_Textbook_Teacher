@@ -238,6 +238,13 @@ function initSchema(db: Database.Database): void {
     // Column already exists
   }
 
+  // M3 migrations (safe to re-run)
+  try {
+    db.exec(`ALTER TABLE test_questions ADD COLUMN kp_ids TEXT`)
+  } catch {
+    // Column already exists
+  }
+
   db.exec(`UPDATE modules SET learning_status = 'unstarted' WHERE learning_status = 'not_started'`)
 
   seedTemplates()

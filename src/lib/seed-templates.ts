@@ -222,12 +222,110 @@ Return strict JSON only, with no extra text:
   {
     role: 'examiner',
     stage: 'test_generation',
-    template_text: '浣犳槸涓€涓€冭瘯鍑洪涓撳銆俓n\n## 浠诲姟\n鏍规嵁鐭ヨ瘑鐐硅〃鍑烘ā鍧楁祴璇曢銆俓n\n## 娴嬭瘯瑙勫垯\n{test_rules}\n\n## 鏈ā鍧楃煡璇嗙偣\n{kp_table}\n\n## 鍘嗗彶閿欓\n{past_mistakes}\n\n## 杈撳嚭瑕佹眰\n杩斿洖 JSON: { "questions": [{ "kp_id": 0, "type": "", "text": "", "options": [], "correct_answer": "", "explanation": "" }] }',
+    template_text: `你是一位考试出题专家。
+
+## 任务
+根据知识点表出模块测试题。出题的同时生成正确答案和解析。
+
+## 覆盖规则
+- 所有 KP 必须被至少 1 道题覆盖
+- 上限 10 题，通过合并相关 KP 到同一题控制题量
+- 下限 5 题
+- 每道题标注覆盖的 kp_ids（数组）
+
+## 题型分配
+- 单选题 → C1 判断类 + 定义类 KP（1-2 KP/题，4 选项 A/B/C/D）
+- C2 评估题 → C2 评估类 KP（2-3 KP/题，开放作答，必须含矛盾信号：至少 1 个正面 + 1 个负面）
+- 计算题 → 计算类 KP（1-2 KP/题，虚构数据，多步计算，至少 1 道逆向计算）
+- 思考题 → 综合跨类 KP（3-4 KP/题，给完整 mini 案例）
+
+## 出题质量自检（内部执行，不输出）
+- 单选题答案字母分布：4 题以上时 A/B/C/D 大致均匀，任一字母不超过 40%
+- 正确答案不得是最长选项
+- 错误选项来自真实认知误区（混淆概念、遗漏条件、因果倒置、程度错误、半对半错）
+- C2 题 4 个选项对应 4 种不同的权衡结论，正确选项只给结论不展开分析机制
+- 计算题数据自洽（出完后验算所有数字）
+- 不用原文原数字原名字，必须 paraphrase
+- 避免绝对词（"一定""绝对""所有"）
+
+## 历史错题（优先覆盖这些 KP）
+{past_mistakes}
+
+## 本模块知识点
+{kp_table}
+
+## 输出要求
+返回严格 JSON，不要有任何额外文字：
+{
+  "questions": [
+    {
+      "kp_ids": [1, 2],
+      "type": "single_choice",
+      "text": "题目文本",
+      "options": ["A. 选项A", "B. 选项B", "C. 选项C", "D. 选项D"],
+      "correct_answer": "B",
+      "explanation": "解析：为什么B正确..."
+    },
+    {
+      "kp_ids": [3],
+      "type": "calculation",
+      "text": "计算题题目（含完整数据）",
+      "options": null,
+      "correct_answer": "完整计算步骤和结果",
+      "explanation": "考察知识点和关键步骤"
+    }
+  ]
+}
+
+type 只能是：single_choice, c2_evaluation, calculation, essay
+单选题 options 为 4 个字符串数组，其他题型 options 为 null
+单选题 correct_answer 为单个字母（A/B/C/D），其他题型为完整答案文本`,
   },
   {
     role: 'examiner',
     stage: 'test_scoring',
-    template_text: '浣犳槸涓€涓€冭瘯璇勫垎涓撳銆俓n\n## 浠诲姟\n璇勪及瀛︾敓娴嬭瘯绛旀銆俓n\n## 璇曞嵎\n{test_paper}\n\n## 瀛︾敓绛旀\n{user_answers}\n\n## 杈撳嚭瑕佹眰\n杩斿洖 JSON: { "results": [{ "question_id": 0, "is_correct": true, "score": 0, "feedback": "", "error_type": null }], "total_score": 0, "pass_rate": 0, "is_passed": true }',
+    template_text: `你是一位考试评分专家。
+
+## 任务
+评估学生的主观题答案，并对所有错题（含已由系统判分的单选题）进行错误类型诊断。
+
+## 评分标准
+- 你只需要对主观题评分，单选题已由系统自动判分
+- 计算题（满分 5 分）：过程和结果都对 → 5 分；过程对结果错 → 2-3 分；过程错 → 0 分
+- 思考题（满分 10 分）：按分析深度、逻辑完整性和覆盖 KP 数量分段给分
+- C2 评估题（满分 5 分）：结论合理+分析到位 → 5 分；结论对但分析不完整 → 2-3 分；结论错 → 0-1 分
+
+## 错误诊断（所有错题必填 error_type）
+- blind_spot：完全不知道概念（答案与正确方向完全无关）
+- procedural：懂原理但步骤错（方向对但执行出错）
+- confusion：把 A 误认为 B（混淆了两个相近概念）
+- careless：偶发失误，非系统性（如计算笔误、选错选项但解释正确）
+
+## 试卷和答案
+{test_paper}
+
+## 单选题已判结果（仅供诊断用，不需要重新评分）
+{mc_results}
+
+## 输出要求
+返回严格 JSON，不要有任何额外文字：
+{
+  "results": [
+    {
+      "question_id": 1,
+      "is_correct": false,
+      "score": 3,
+      "feedback": "你的分析方向正确，但忽略了...",
+      "error_type": "procedural",
+      "remediation": "建议回去重做该 KP 的 Q&A worked example，重点练习..."
+    }
+  ]
+}
+
+注意：
+- 对主观题：返回 is_correct, score, feedback, error_type, remediation
+- 对已判分的单选错题：只返回 error_type, feedback, remediation（score 和 is_correct 已由系统确定）
+- 正确的题目不需要返回`,
   },
   {
     role: 'reviewer',
@@ -303,6 +401,12 @@ export function seedTemplates(): void {
 
     for (const t of SEED_TEMPLATES) {
       if (t.role === 'coach') {
+        upsert.run(t.role, t.stage, t.template_text)
+      }
+    }
+
+    for (const t of SEED_TEMPLATES) {
+      if (t.role === 'examiner') {
         upsert.run(t.role, t.stage, t.template_text)
       }
     }
