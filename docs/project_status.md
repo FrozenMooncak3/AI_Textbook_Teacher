@@ -17,9 +17,11 @@
 
 **M3 实现计划**：`docs/superpowers/plans/2026-03-31-m3-examiner-ai.md`
 
+**阻塞**：AI 调用在 Next.js Turbopack dev server 内超时（代理不生效），无法完成集成测试。详见 `docs/journal/2026-04-01-m3-integration-test.md`。
+
 **待办**：
-1. commit + push 前端代码（Gemini 产出 + Claude review 修复）
-2. 更新 API_CONTRACT.md（Task 9）
+1. 修复 Next.js 内 AI 调用代理问题（阻塞项）
+2. 集成测试通过后宣布 M3 完成
 3. 里程碑收尾后建立 Git worktree 隔离（M3 遗留问题，M4 起强制执行）
 
 **M2（已完成）**：教练 AI — 全部代码 + review 修复完成。

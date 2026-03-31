@@ -14,6 +14,7 @@
 - [idea] 右键选中多功能：做笔记、高亮等（需独立评估）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - [idea] 支持 PPT + 扫描版 PDF（独立里程碑）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - [idea] 优先面向扫描版 PDF 用户群体（商业策略，与扫描版支持一起评估）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
+- [blocked] M3 集成测试：AI 调用在 Next.js Turbopack 内超时，代理不生效 → [2026-04-01-m3-integration-test.md](./2026-04-01-m3-integration-test.md)
 - [idea] 语言模式系统——自动切换 prompt 语言，多国语言版本（MVP 后） → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
 - [decision] 第三次 brainstorming 中被砍掉的项：H6/H8/H12/H13（评估后认为不需要）→ [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
