@@ -660,3 +660,15 @@
 
 **删除文件**:
 - `src/lib/claude.ts`
+
+---
+
+## 2026-03-31 | M3: Examiner AI Backend Batch 1
+
+**完成内容**: 为 M3 考官 AI 落地 batch 1 后端能力：新增 `test_questions.kp_ids` 安全迁移；替换 examiner 的 `test_generation` / `test_scoring` prompt 模板并接入 seed upsert；新增 `POST /api/modules/[moduleId]/test/generate` 用于按模块 KP 生成测试卷（支持未提交试卷缓存与 retake 清理）；新增 `GET /api/modules/[moduleId]/test` 用于返回当前测试状态、进行中试卷和历史记录。
+
+**修改文件**:
+- `src/lib/db.ts`
+- `src/lib/seed-templates.ts`
+- `src/app/api/modules/[moduleId]/test/generate/route.ts`
+- `src/app/api/modules/[moduleId]/test/route.ts`
