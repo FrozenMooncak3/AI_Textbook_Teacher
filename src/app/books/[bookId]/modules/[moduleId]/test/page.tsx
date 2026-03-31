@@ -1,18 +1,17 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getDb } from '@/lib/db'
 import TestSession from './TestSession'
-
-interface Module {
-  id: number
-  book_id: number
-  title: string
-  order_index: number
-  pass_status: string
-}
 
 interface Book {
   id: number
   title: string
+}
+
+interface Module {
+  id: number
+  title: string
+  order_index: number
+  learning_status: string
 }
 
 export default async function TestPage({
@@ -30,27 +29,67 @@ export default async function TestPage({
   if (!book) notFound()
 
   const module_ = db
-    .prepare('SELECT id, book_id, title, order_index, pass_status FROM modules WHERE id = ? AND book_id = ?')
+    .prepare(`
+      SELECT id, title, order_index, learning_status 
+      FROM modules 
+      WHERE id = ? AND book_id = ?
+    `)
     .get(Number(moduleId), Number(bookId)) as Module | undefined
 
   if (!module_) notFound()
 
+  // 检查 learning_status: 只有 notes_generated, testing, completed 允许进入
+  const allowedStatuses = ['notes_generated', 'testing', 'completed']
+  if (!allowedStatuses.includes(module_.learning_status)) {
+    redirect(`/books/${bookId}`)
+  }
+
+  // 查询历史记录
+  interface TestPaperRow {
+    paper_id: number
+    attempt_number: number
+    total_score: number | null
+    pass_rate: number | null
+    is_passed: number
+    created_at: string
+  }
+
+  const history = db
+    .prepare(`
+      SELECT id as paper_id, attempt_number, total_score, pass_rate, is_passed, created_at
+      FROM test_papers
+      WHERE module_id = ?
+      ORDER BY attempt_number DESC
+    `)
+    .all(module_.id) as TestPaperRow[]
+
+  // 转换 is_passed 为 boolean
+  const formattedHistory = history.map(h => ({
+    ...h,
+    is_passed: Boolean(h.is_passed)
+  }))
+
+  const inProgressPaper = formattedHistory.find(h => h.total_score === null)
+
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-slate-50">
       <div className="max-w-2xl mx-auto px-4 py-10">
-        <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
-          <a href={`/books/${bookId}`} className="hover:text-gray-600 transition-colors">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-2 text-xs text-slate-400 mb-8" aria-label="Breadcrumb">
+          <a href={`/books/${bookId}`} className="hover:text-slate-600 transition-colors">
             {book.title}
           </a>
-          <span>/</span>
-          <span className="text-gray-600">模块 {module_.order_index} 测试</span>
-        </div>
+          <span className="text-slate-300">/</span>
+          <span className="text-slate-600 font-medium">模块 {module_.order_index} 测试</span>
+        </nav>
 
         <TestSession
           moduleId={module_.id}
           moduleTitle={module_.title}
           bookId={book.id}
-          alreadyPassed={module_.pass_status === 'passed'}
+          learningStatus={module_.learning_status}
+          initialHistory={formattedHistory}
+          inProgressPaperId={inProgressPaper?.paper_id || null}
         />
       </div>
     </main>

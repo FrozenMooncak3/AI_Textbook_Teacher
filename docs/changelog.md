@@ -687,3 +687,16 @@
 **删除文件**:
 - `src/app/api/modules/[moduleId]/test-questions/route.ts`
 - `src/app/api/modules/[moduleId]/test-evaluate/route.ts`
+
+---
+
+## 2026-03-31 | M3: Examiner AI Frontend
+
+**完成内容**: 重写测试页面和错题页面，适配 M3 新 API。TestSession 实现完整状态机（引导→生成→答题→提交→结果），单选 radio + 主观 textarea，80% 过关线醒目展示，3 次连续失败提示。错题页按已解决/未解决分组，error_type 颜色区分 + 补救建议。
+
+**修复**: pass_rate 进度条 bug（后端返回百分比整数，前端多乘了 100）；page.tsx 移除 TypeScript `any`。
+
+**修改文件**:
+- `src/app/books/[bookId]/modules/[moduleId]/test/page.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/test/TestSession.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/mistakes/page.tsx`

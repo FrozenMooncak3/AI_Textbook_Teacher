@@ -5,29 +5,30 @@
 
 ---
 
-## 当前状态（2026-03-29）
+## 当前状态（2026-03-31）
 
 **方向**：MVP 重新设计——教练核心 + PDF 阅读器 + 独立问答通道
 
-**设计文稿**：`docs/superpowers/specs/2026-03-21-mvp-redesign-design.md`
+**当前里程碑**：M3 考官 AI — 代码完成，待集成测试
 
-**当前里程碑**：Gemini Flash Smoke Test — 已完成
+**最新完成**：M3 全部代码（后端 6 tasks + 前端 2 tasks + review 修复）已 commit。后端：测试生成/提交/状态 API + 混合评分 + 错题诊断。前端：TestSession 状态机 + 错题页面。
 
-**最新完成**：Session-Init 升级 + Skill 治理。session-init 升级为 CEO 仪表盘（5 板块 + 详略自动判断 + session-wide 运行规则）；claudemd-check 新增 skill 合规审计；executing-plans 合并了 subagent-driven-development；删除 3 个冗余 skill（26→22）；CLAUDE.md 引用更新。
+**M3 设计文稿**：`docs/superpowers/specs/2026-03-31-m3-examiner-ai-design.md`
 
-**实现计划**：`docs/superpowers/plans/2026-03-29-multi-model-abstraction.md`
+**M3 实现计划**：`docs/superpowers/plans/2026-03-31-m3-examiner-ai.md`
 
-**设计文稿**：`docs/superpowers/specs/2026-03-29-multi-model-abstraction-design.md`
+**待办**：
+1. commit + push 前端代码（Gemini 产出 + Claude review 修复）
+2. 更新 API_CONTRACT.md（Task 9）
+3. 里程碑收尾后建立 Git worktree 隔离（M3 遗留问题，M4 起强制执行）
 
 **M2（已完成）**：教练 AI — 全部代码 + review 修复完成。
-
-**M2 实现计划**：`docs/superpowers/plans/2026-03-28-m2-coach-ai.md`
 
 **M1（已完成）**：提取器 AI——上传 PDF → 三阶段 KP 提取 → 模块地图写入 DB → 前端展示。
 
 **M0（已完成）**：地基重建——19 张表 + prompt 模板系统 + bug 修复 + 最终验证通过
 
-**下一步**：进入 M3（考官 AI：测试出题 → 盲测 → 评分 → 80% 过关 → 错题诊断）
+**下一步**：M3 收尾 → 进入 M4（复习系统）
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -42,7 +43,7 @@
 | M0 | 地基重建：19 张表 + prompt 模板系统 + bug 修复 | **已完成**（2026-03-22） |
 | M1 | 提取器 AI：上传 PDF → 三阶段 KP 提取 → KP 表和模块地图写入 DB → 模块地图页面 | **已完成**（2026-03-28） |
 | M2 | 教练 AI（核心）：读前指引 → 阅读（笔记+截图问答）→ Q&A（4 种题型+即时反馈+预生成）→ 学习笔记生成 | **已完成**（2026-03-29） |
-| M3 | 考官 AI：测试出题 → 盲测 → 评分 → 80% 过关 → 错题诊断 | 未开始 |
+| M3 | 考官 AI：测试出题 → 盲测 → 评分 → 80% 过关 → 错题诊断 | **代码完成**（2026-03-31） |
 | M4 | 复习系统：复习调度（3/7/15/30/60 天）→ 聚类出题 → P 值更新 → **Q&A 穿插 20% 历史复习题** | 未开始 |
 | M5 | 体验打磨：首页仪表盘 + 笔记查看/导出 + 截图问 AI 流程改造 + UI/UX 打磨 | 未开始 |
 
