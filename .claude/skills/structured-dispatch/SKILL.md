@@ -12,7 +12,7 @@ When dispatching tasks to Codex or Gemini, use this template to ensure the recei
 1. Discuss requirements with user in Chinese
 2. Fill in the template below in English
 3. Show Chinese translation to user for approval (per CCB protocol Section 2)
-4. User approves -> send English dispatch via CCB `ask codex/gemini "..."` command
+4. User approves -> write English dispatch to `.ccb/inbox/<target>/<NNN>-dispatch.md`, then send short wezterm notification
 
 ## Dispatch Template
 
@@ -62,6 +62,23 @@ What Claude will do after this task is done (review, next task, etc.).
 - Include enough context that the agent can work without asking questions.
 - Reference the plan file if one exists — the agent can read it.
 - Do NOT dispatch while the agent is actively working on another task.
+
+---
+
+## Send Procedure
+
+After user approves the dispatch:
+
+1. Determine next sequence number: `ls .ccb/inbox/<target>/` → max NNN + 1 (start from `001` if empty)
+2. Write the dispatch content (with frontmatter) to `.ccb/inbox/<target>/<NNN>-dispatch.md`
+3. Send short notification:
+   ```bash
+   echo "Read .ccb/inbox/<target>/<NNN>-dispatch.md and execute the task inside" | wezterm cli send-text --pane-id <target_pane> --no-paste
+   printf '\r' | wezterm cli send-text --pane-id <target_pane> --no-paste
+   ```
+4. Confirm to user: "已发送到 <target> inbox"
+
+Pane IDs: Claude=0, Codex=1, Gemini=2
 
 ---
 
