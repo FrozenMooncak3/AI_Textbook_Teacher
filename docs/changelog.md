@@ -4,6 +4,20 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-01 | M3 集成测试修复 — AI 代理 + JSON 解析
+
+- **Next.js Turbopack 代理修复**: `next.config.ts` 添加 `serverExternalPackages`（undici + AI SDK 全链），防止 Turbopack 打包破坏原生模块
+- **undici Response 流式兼容**: `ai.ts` 的 fetch wrapper 改为 `arrayBuffer()` 一次性读取再用全局 `Response` 重包装，修复 Turbopack 环境下流式读取截断
+- **thinking tokens 上限**: `maxOutputTokens` 从 16384 提升到 65536，避免 Gemini 2.5 Flash thinking tokens 挤占输出空间
+- **JSON 解析加固**: 剥离 markdown 代码块包裹；字符串内控制字符消毒（状态机区分结构性空白 vs 字符串内部）；单题验证失败跳过而非整体失败
+
+修改文件：
+- `next.config.ts` — serverExternalPackages 扩展
+- `src/lib/ai.ts` — fetch wrapper arrayBuffer 重包装
+- `src/app/api/modules/[moduleId]/test/generate/route.ts` — maxOutputTokens + parseGeneratedQuestions 加固 + 单题容错
+
+---
+
 ## 2026-03-29 | Gemini Flash Smoke Test 通过
 
 - **M2 完整流程验证**：阅读 → Q&A（出题+即时反馈）→ 笔记生成 → 完成，在 Gemini 2.5 Flash 免费档下全部跑通

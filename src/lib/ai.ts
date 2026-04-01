@@ -25,7 +25,14 @@ function getCustomFetch(): typeof globalThis.fetch | undefined {
       dispatcher: proxyAgent,
     } as Parameters<typeof undiciFetch>[1])
 
-    return response as unknown as Response
+    // Read full body then re-wrap with the global Response to avoid
+    // stream incompatibility between undici and Turbopack's polyfill.
+    const body = await response.arrayBuffer()
+    return new Response(body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+    })
   }) as typeof globalThis.fetch
 }
 

@@ -142,12 +142,44 @@ function formatPastMistakes(mistakes: MistakeRow[]): string {
 }
 
 function parseGeneratedQuestions(text: string): GeneratedQuestion[] {
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
+  // Strip markdown code fences before extracting JSON
+  let cleaned = text
+  const codeBlock = text.match(/```(?:json)?\s*\n([\s\S]*?)\n\s*```/)
+  if (codeBlock) {
+    cleaned = codeBlock[1]
+  }
+
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
   if (!jsonMatch) {
     throw new Error('No JSON object found in model response')
   }
 
-  const parsed = JSON.parse(jsonMatch[0]) as unknown
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(jsonMatch[0])
+  } catch {
+    // AI sometimes emits raw control characters inside JSON string values.
+    // Fix them only inside strings (between unescaped quotes), not in
+    // structural whitespace.
+    const raw = jsonMatch[0]
+    let fixed = ''
+    let inString = false
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i]
+      if (ch === '"' && (i === 0 || raw[i - 1] !== '\\')) {
+        inString = !inString
+        fixed += ch
+      } else if (inString && ch.charCodeAt(0) < 0x20) {
+        if (ch === '\n') fixed += '\\n'
+        else if (ch === '\r') fixed += '\\r'
+        else if (ch === '\t') fixed += '\\t'
+        // drop other control chars
+      } else {
+        fixed += ch
+      }
+    }
+    parsed = JSON.parse(fixed)
+  }
   if (parsed === null || typeof parsed !== 'object' || !('questions' in parsed)) {
     throw new Error('Missing questions field in model response')
   }
@@ -336,7 +368,7 @@ export const POST = handleRoute(async (req, context) => {
 
   const { text } = await generateText({
     model: getModel(),
-    maxOutputTokens: 16384,
+    maxOutputTokens: 65536,
     prompt,
     abortSignal: AbortSignal.timeout(timeout),
   })
@@ -373,8 +405,15 @@ export const POST = handleRoute(async (req, context) => {
       const paperResult = insertPaper.run(id, attemptNumber)
       paperId = Number(paperResult.lastInsertRowid)
 
+      let orderIndex = 0
       for (const [index, question] of generatedQuestions.entries()) {
-        const validated = validateQuestion(question, index, validKpIds)
+        let validated
+        try {
+          validated = validateQuestion(question, index, validKpIds)
+        } catch {
+          logAction('Skipping invalid question', `index=${index}, type=${question.type}`, 'warn')
+          continue
+        }
         const kpIdsJson = JSON.stringify(validated.kpIds)
         const optionsJson = validated.options === null ? null : JSON.stringify(validated.options)
         const result = insertQuestion.run(
@@ -386,7 +425,7 @@ export const POST = handleRoute(async (req, context) => {
           optionsJson,
           validated.correctAnswer,
           validated.explanation,
-          index + 1
+          orderIndex + 1
         )
 
         questionResponses.push({
@@ -396,8 +435,13 @@ export const POST = handleRoute(async (req, context) => {
           question_type: validated.type,
           question_text: validated.text,
           options: validated.options,
-          order_index: index + 1,
+          order_index: orderIndex + 1,
         })
+        orderIndex++
+      }
+
+      if (questionResponses.length === 0) {
+        throw new Error('No valid questions generated')
       }
 
       if (module_.learning_status === 'notes_generated') {
