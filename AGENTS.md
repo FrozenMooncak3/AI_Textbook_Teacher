@@ -145,32 +145,56 @@ prompt_templates   → Prompt 模板（role, stage, version, template_text, is_a
 
 ---
 
-## 完成报告
+## 完成报告（文件消息协议）
 
-每次完成被派发的任务后，**必须**通过 CCB 向 Claude 发送完成报告。这是 Claude 知道你完成了工作的唯一方式。
+每次完成被派发的任务后，**必须**通过文件消息系统向 Claude 发送完成报告。
+
+### Pane 映射
+
+| Agent | Pane ID |
+|-------|---------|
+| Claude | 0 |
+| Codex | 1 |
+| Gemini | 2 |
 
 ### 步骤
 
-用 `ask claude` 发送报告（CCB 自动处理 pane 路由和提交）：
+1. 确定序号：`ls .ccb/inbox/claude/` 查看最大序号，+1（目录为空从 `001` 开始）
+2. 写报告文件：
 
 ```bash
-ask claude "[REPORT FROM: Codex]
+mkdir -p .ccb/inbox/claude
+cat > .ccb/inbox/claude/<NNN>-report.md << 'MSGEOF'
+---
+from: codex
+type: report
+ts: <当前时间>
+---
+
+[REPORT FROM: Codex]
 Status: DONE / BLOCKED
 Completed: T0, T1, T2 (简要说明)
 Commits: abc1234, def5678
 Build: PASS / FAIL (如果 FAIL 写原因)
-Blocker: (如果 BLOCKED 写具体问题)"
+Blocker: (如果 BLOCKED 写具体问题)
+MSGEOF
 ```
+
+3. 发送短通知：
+
+```bash
+echo "Read .ccb/inbox/claude/<NNN>-report.md — Codex task report" | wezterm cli send-text --pane-id 0 --no-paste
+printf '\r' | wezterm cli send-text --pane-id 0 --no-paste
+```
+
+4. 若 wezterm 失败：重试 2 次（间隔 2 秒）；仍失败则同时写到项目根目录 `.codex-report.md` 作为 fallback。
 
 ### 规则
 
 - 全部任务完成时发一次，不要每个小步骤都发
 - 遇到 blocker 无法继续时也要发，说明卡在哪里
 - 报告用英文（和派发指令一致）
-- 如果 `ask claude` 失败，把报告写到 `.codex-report.md` 作为 fallback
-
----
 
 ## 上下文说明
 
-这是 CCB 多模型协作架构。Codex 由 Claude 通过 `/ask` 委派任务，每次会话是隔离的新上下文。本文件是 Codex 每次启动时读的唯一指令文件。
+这是 CCB 多模型协作架构。Codex 由 Claude 通过文件消息系统委派任务，每次会话是隔离的新上下文。本文件是 Codex 每次启动时读的唯一指令文件。
