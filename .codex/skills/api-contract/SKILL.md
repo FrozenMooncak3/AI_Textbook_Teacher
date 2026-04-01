@@ -29,5 +29,5 @@ description: 新增或修改 API 接口时，更新 .agents/API_CONTRACT.md
 `[日期] [Codex/Gemini] 新增/修改了什么接口`
 
 ## 通知流程
-- Codex 新增接口后 → Claude 通过 /ask gemini 通知前端
-- Gemini 发现需要新接口 → Claude 通过 /ask codex 委派后端实现
+- Codex 新增接口后 → Claude 通过文件消息系统通知 Gemini（写入 `.ccb/inbox/gemini/`）
+- Gemini 发现需要新接口 → Claude 通过文件消息系统委派 Codex（写入 `.ccb/inbox/codex/`）
