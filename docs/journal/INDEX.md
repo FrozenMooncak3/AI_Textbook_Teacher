@@ -3,6 +3,7 @@
 ## open（需要关注）
 
 ## in_progress（解决中）
+- [infra] CCB 迁移到 Claude Code Bridge v5.2.9：已安装+配置，待重启 WezTerm 验证 → [2026-04-01-ccb-migration.md](./2026-04-01-ccb-migration.md)
 
 ## parked（停车场）
 - [idea] 笔记+QA联动：阅读时写笔记 → AI生成结构化笔记 → QA侧边栏弹出要点边做边学 → [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)

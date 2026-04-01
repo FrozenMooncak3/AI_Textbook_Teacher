@@ -5,6 +5,30 @@
 
 ---
 
+## 0. 通信基础设施
+
+项目使用 **Claude Code Bridge (CCB) v5.2.9** 管理多 AI 协作。
+
+**启动**：WezTerm 启动时自动运行 `ccb -a -r codex gemini`，CCB 创建三栏布局。
+
+**通信命令**（在 Claude pane 中执行）：
+
+| 命令 | 用途 |
+|------|------|
+| `ask codex "message"` | 向 Codex 发送任务/消息 |
+| `ask gemini "message"` | 向 Gemini 发送任务/消息 |
+| `ccb-ping codex` | 检查 Codex 连通性 |
+| `ccb-ping gemini` | 检查 Gemini 连通性 |
+| `pend codex` | 查看 Codex 最新回复 |
+| `pend gemini` | 查看 Gemini 最新回复 |
+
+**异步规则**：`ask` 提交后，如果输出包含 `[CCB_ASYNC_SUBMITTED`：
+1. 回复一行 `Codex processing...` 或 `Gemini processing...`
+2. **立即结束本轮** — 不再调用任何工具
+3. 不 poll、不 sleep、不 pend — 等用户或 completion hook 送回结果
+
+---
+
 ## 1. 语言规则
 
 - 派发指令给 Codex / Gemini 时一律使用**英文**

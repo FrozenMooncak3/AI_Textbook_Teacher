@@ -74,42 +74,19 @@
 
 ## 完成报告
 
-每次完成被派发的任务后，**必须**通过 wezterm 向 Claude 的 pane 发送完成报告。这是 Claude 知道你完成了工作的唯一方式。
+每次完成被派发的任务后，**必须**通过 CCB 向 Claude 发送完成报告。这是 Claude 知道你完成了工作的唯一方式。
 
 ### 步骤
 
-1. 先找到 Claude 的 pane ID（通常是 0，但要确认）：
+用 `ask claude` 发送报告（CCB 自动处理 pane 路由和提交）：
+
 ```bash
-wezterm cli list
-```
-找到标题包含 Claude Code 相关字样的 pane，记下其 PANEID。
-
-2. 把报告写到临时文件：
-```bash
-cat > /tmp/gemini-report.txt << 'EOF'
-<按下方"报告格式"填写内容>
-EOF
-```
-
-3. 发送并提交：
-```bash
-# 内容用 paste 模式（不加 --no-paste），否则换行符会被当成 Enter 导致提前提交
-cat /tmp/gemini-report.txt | wezterm cli send-text --pane-id 0
-sleep 1
-# 提交用键盘模式（加 --no-paste），让 \r 成为真正的 Enter 键
-printf '\r' | wezterm cli send-text --pane-id 0 --no-paste
-```
-
-### 报告格式
-
-```
-[REPORT FROM: Gemini]
-
+ask claude "[REPORT FROM: Gemini]
 Status: DONE / BLOCKED
 Completed: T6, T7, T8 (简要说明)
 Commits: abc1234, def5678
 Build: PASS / FAIL (如果 FAIL 写原因)
-Blocker: (如果 BLOCKED 写具体问题)
+Blocker: (如果 BLOCKED 写具体问题)"
 ```
 
 ### 规则
@@ -117,4 +94,4 @@ Blocker: (如果 BLOCKED 写具体问题)
 - 全部任务完成时发一次，不要每个小步骤都发
 - 遇到 blocker 无法继续时也要发，说明卡在哪里
 - 报告用英文（和派发指令一致）
-- 如果 `wezterm cli send-text` 失败，把报告写到 `.gemini-report.md` 作为 fallback
+- 如果 `ask claude` 失败，把报告写到 `.gemini-report.md` 作为 fallback

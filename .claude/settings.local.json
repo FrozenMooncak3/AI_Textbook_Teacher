@@ -25,7 +25,13 @@
       "WebSearch",
       "Bash(export GOOGLE_CLOUD_PROJECT=awesome-nucleus-403711)",
       "Bash(codex exec:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(taskkill //f //im node.exe)",
+      "Bash(rm -f \"d:\\\\已恢复\\\\Users\\\\Sean\\\\ai-textbook-teacher\\\\.next\\\\dev\\\\lock\")",
+      "Bash(curl -s http://localhost:3000 -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s http://localhost:3000 -o /dev/null -w \"HTTP %{http_code}\")",
+      "Bash(node -e \":*)",
+      "Bash(node --env-file=.env.local -e \":*)"
     ]
   }
 }

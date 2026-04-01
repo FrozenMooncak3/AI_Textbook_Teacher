@@ -12,7 +12,7 @@ When dispatching tasks to Codex or Gemini, use this template to ensure the recei
 1. Discuss requirements with user in Chinese
 2. Fill in the template below in English
 3. Show Chinese translation to user for approval (per CCB protocol Section 2)
-4. User approves -> send English dispatch via wezterm pane
+4. User approves -> send English dispatch via CCB `ask codex/gemini "..."` command
 
 ## Dispatch Template
 
