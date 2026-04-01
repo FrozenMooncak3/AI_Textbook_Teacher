@@ -14,11 +14,11 @@
 - [idea] 右键选中多功能：做笔记、高亮等（需独立评估）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - [idea] 支持 PPT + 扫描版 PDF（独立里程碑）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - [idea] 优先面向扫描版 PDF 用户群体（商业策略，与扫描版支持一起评估）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
-- [blocked] M3 集成测试：AI 调用在 Next.js Turbopack 内超时，代理不生效 → [2026-04-01-m3-integration-test.md](./2026-04-01-m3-integration-test.md)
 - [idea] 语言模式系统——自动切换 prompt 语言，多国语言版本（MVP 后） → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
 - [decision] 第三次 brainstorming 中被砍掉的项：H6/H8/H12/H13（评估后认为不需要）→ [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [blocked→resolved] M3 集成测试：4 层修复（代理+流式+token+JSON 解析），commit deb82c5（2026-04-01）→ [2026-04-01-m3-integration-test.md](./2026-04-01-m3-integration-test.md)
 - [idea] UI/UX Pro Max Skill → 已安装给 Gemini，适配 Next.js+Tailwind（2026-03-30）→ [2026-03-21-mvp-redesign.md](./2026-03-21-mvp-redesign.md)
 - [idea] Wezterm 双向发送问题 → 已修复：内容用 paste 模式，提交用键盘模式（2026-03-30）→ [2026-03-29-wezterm-report-submit.md](./2026-03-29-wezterm-report-submit.md)
 - [idea] Session Init 全局报告 → 升级为 CEO 仪表盘 + skill 治理（2026-03-29）→ [2026-03-29-session-init-report.md](./2026-03-29-session-init-report.md)

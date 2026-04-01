@@ -136,6 +136,7 @@ Check for these signals:
 | 用户告知 Codex/Gemini 完成任务 | requesting-code-review → claudemd-check |
 | 里程碑开始 | using-git-worktrees（创建隔离分支） |
 | 里程碑结束 | finishing-a-development-branch（分支收尾） |
+| 同一问题修复失败 ≥2 次 | systematic-debugging（强制走诊断流程，禁止继续猜） |
 
 ### 规则 4: 里程碑级 Git 隔离
 
