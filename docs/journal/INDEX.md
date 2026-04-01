@@ -3,7 +3,6 @@
 ## open（需要关注）
 
 ## in_progress（解决中）
-- [infra] CCB 迁移到 Claude Code Bridge v5.2.9：已安装+配置，待重启 WezTerm 验证 → [2026-04-01-ccb-migration.md](./2026-04-01-ccb-migration.md)
 
 ## parked（停车场）
 - [idea] 笔记+QA联动：阅读时写笔记 → AI生成结构化笔记 → QA侧边栏弹出要点边做边学 → [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
@@ -19,6 +18,7 @@
 - [decision] 第三次 brainstorming 中被砍掉的项：H6/H8/H12/H13（评估后认为不需要）→ [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [infra] CCB 迁移到 Claude Code Bridge v5.2.9：验证通过，ask/ping 双向通信正常（2026-04-02）→ [2026-04-01-ccb-migration.md](./2026-04-01-ccb-migration.md)
 - [blocked→resolved] M3 集成测试：4 层修复（代理+流式+token+JSON 解析），commit deb82c5（2026-04-01）→ [2026-04-01-m3-integration-test.md](./2026-04-01-m3-integration-test.md)
 - [idea] UI/UX Pro Max Skill → 已安装给 Gemini，适配 Next.js+Tailwind（2026-03-30）→ [2026-03-21-mvp-redesign.md](./2026-03-21-mvp-redesign.md)
 - [idea] Wezterm 双向发送问题 → 已修复：内容用 paste 模式，提交用键盘模式（2026-03-30）→ [2026-03-29-wezterm-report-submit.md](./2026-03-29-wezterm-report-submit.md)
