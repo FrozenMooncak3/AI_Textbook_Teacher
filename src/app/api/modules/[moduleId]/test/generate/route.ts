@@ -71,6 +71,16 @@ const VALID_TYPES = new Set<QuestionType>([
   'essay',
 ])
 
+const QUESTION_TYPE_PRIORITY: Record<string, number> = {
+  single_choice: 0,
+  multiple_choice: 1,
+  c2_evaluation: 1,
+  short_answer: 2,
+  calculation: 2,
+  open_ended: 3,
+  essay: 3,
+}
+
 function parseRequestBody(body: unknown): { retake: boolean } {
   if (body === null || body === undefined) {
     return { retake: false }
@@ -190,6 +200,22 @@ function parseGeneratedQuestions(text: string): GeneratedQuestion[] {
   }
 
   return questions as GeneratedQuestion[]
+}
+
+function sortGeneratedQuestions(questions: GeneratedQuestion[]): GeneratedQuestion[] {
+  return questions
+    .map((question, index) => ({ question, index }))
+    .sort((left, right) => {
+      const leftPriority = QUESTION_TYPE_PRIORITY[left.question.type] ?? Number.MAX_SAFE_INTEGER
+      const rightPriority = QUESTION_TYPE_PRIORITY[right.question.type] ?? Number.MAX_SAFE_INTEGER
+
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority
+      }
+
+      return left.index - right.index
+    })
+    .map(({ question }) => question)
 }
 
 function validateQuestion(
@@ -375,7 +401,7 @@ export const POST = handleRoute(async (req, context) => {
 
   let generatedQuestions: GeneratedQuestion[]
   try {
-    generatedQuestions = parseGeneratedQuestions(text)
+    generatedQuestions = sortGeneratedQuestions(parseGeneratedQuestions(text))
   } catch (error) {
     logAction('Test generation parse error', text.slice(0, 500), 'error')
     throw new SystemError('Failed to parse AI response for test generation', error)
