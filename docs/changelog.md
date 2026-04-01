@@ -4,6 +4,19 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-01 | 前端：AI 评价 Markdown 渲染
+
+- **MarkdownRenderer 组件**: 新增 `src/components/MarkdownRenderer.tsx`，使用 `react-markdown` 统一渲染 AI 反馈内容，严格遵循 `DESIGN_TOKENS.md` 视觉规范（slate 色系、rounded-xl、leading-relaxed）。
+- **Q&A 评价渲染**: 改造 `QASession.tsx`，将即时反馈区域的纯文本渲染替换为 Markdown 渲染，支持加粗、列表、代码块等格式。
+- **测试结果反馈渲染**: 改造 `TestSession.tsx`，将逐题反馈中的"解析"、"AI 评价"、"补救建议"全部替换为 Markdown 渲染，移除原有的 `whitespace-pre-wrap` 限制。
+
+修改文件：
+- `src/components/MarkdownRenderer.tsx` — 新增组件
+- `src/app/books/[bookId]/modules/[moduleId]/qa/QASession.tsx` — 接入 Markdown
+- `src/app/books/[bookId]/modules/[moduleId]/test/TestSession.tsx` — 接入 Markdown
+
+---
+
 ## 2026-04-01 | M3 集成测试修复 — AI 代理 + JSON 解析
 
 - **Next.js Turbopack 代理修复**: `next.config.ts` 添加 `serverExternalPackages`（undici + AI SDK 全链），防止 Turbopack 打包破坏原生模块

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import MarkdownRenderer from '@/components/MarkdownRenderer'
 
 // --- Types ---
 
@@ -268,8 +269,8 @@ export default function QASession({
               </div>
             </div>
             
-            <div className="text-sm text-slate-700 leading-relaxed mb-6 whitespace-pre-wrap">
-              {currentFeedback.feedback}
+            <div className="text-sm text-slate-700 leading-relaxed mb-6">
+              <MarkdownRenderer content={currentFeedback.feedback} />
             </div>
 
             {/* Navigation */}

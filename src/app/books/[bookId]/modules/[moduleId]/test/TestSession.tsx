@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import MarkdownRenderer from '@/components/MarkdownRenderer'
 
 interface TestQuestion {
   id: number
@@ -452,11 +453,12 @@ export default function TestSession({
 
                 <div className="space-y-2 pt-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">解析</span>
-                  <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-700 leading-relaxed border border-slate-100 whitespace-pre-wrap">
-                    {r.explanation}
+                  <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-700 leading-relaxed border border-slate-100">
+                    <MarkdownRenderer content={r.explanation} />
                     {r.feedback && (
                       <div className="mt-3 pt-3 border-t border-slate-200 text-blue-700 font-medium">
-                        AI 评价：{r.feedback}
+                        <div className="text-[10px] font-black text-blue-600/50 uppercase tracking-widest mb-1">AI 评价</div>
+                        <MarkdownRenderer content={r.feedback} />
                       </div>
                     )}
                   </div>
@@ -465,7 +467,7 @@ export default function TestSession({
                 {!r.is_correct && r.remediation && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                     <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest block mb-1">Remediation Advice</span>
-                    <p className="text-sm text-amber-800 leading-relaxed">{r.remediation}</p>
+                    <MarkdownRenderer content={r.remediation} className="text-amber-800" />
                   </div>
                 )}
               </div>
