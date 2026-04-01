@@ -50,3 +50,8 @@ next-env.d.ts
 
 # Claude Code hook runtime state
 .claude/.stop-count
+
+# CCB inbox messages (runtime, not committed)
+.ccb/inbox/**
+!.ccb/inbox/*/
+!.ccb/inbox/*/.gitkeep
