@@ -7,25 +7,61 @@
 
 ## 0. 通信基础设施
 
-项目使用 **Claude Code Bridge (CCB) v5.2.9** 管理多 AI 协作。
+项目使用**文件消息系统**管理多 AI 协作。所有通信走"写文件 + 短通知"，不使用 `ask` 命令。
 
-**启动**：WezTerm 启动时自动运行 `ccb -a -r codex gemini`，CCB 创建三栏布局。
+### 目录结构
 
-**通信命令**（在 Claude pane 中执行）：
+```
+.ccb/inbox/
+  claude/     ← Codex、Gemini 写给 Claude 的消息
+  codex/      ← Claude 写给 Codex 的消息
+  gemini/     ← Claude 写给 Gemini 的消息
+```
 
-| 命令 | 用途 |
-|------|------|
-| `ask codex "message"` | 向 Codex 发送任务/消息 |
-| `ask gemini "message"` | 向 Gemini 发送任务/消息 |
-| `ccb-ping codex` | 检查 Codex 连通性 |
-| `ccb-ping gemini` | 检查 Gemini 连通性 |
-| `pend codex` | 查看 Codex 最新回复 |
-| `pend gemini` | 查看 Gemini 最新回复 |
+### 消息文件格式
 
-**异步规则**：`ask` 提交后，如果输出包含 `[CCB_ASYNC_SUBMITTED`：
-1. 回复一行 `Codex processing...` 或 `Gemini processing...`
-2. **立即结束本轮** — 不再调用任何工具
-3. 不 poll、不 sleep、不 pend — 等用户或 completion hook 送回结果
+文件命名：`<NNN>-<type>.md`，序号三位递增，type 为消息类型（dispatch / report / question / notify）。
+
+```markdown
+---
+from: claude | codex | gemini
+type: dispatch | report | question | notify
+ts: 2026-04-02T01:00
+---
+
+（正文内容，markdown 格式，长度不限）
+```
+
+### 发送流程（所有 agent 通用）
+
+1. `mkdir -p .ccb/inbox/<target>` — 确保目标 inbox 存在
+2. 写消息文件到 `.ccb/inbox/<target>/<NNN>-<type>.md`
+3. 发送短通知：
+   ```bash
+   echo "Read .ccb/inbox/<target>/<NNN>-<type>.md and execute the task inside" | wezterm cli send-text --pane-id <target_pane> --no-paste
+   ```
+4. 发送 Enter：
+   ```bash
+   printf '\r' | wezterm cli send-text --pane-id <target_pane> --no-paste
+   ```
+
+### Pane 映射
+
+| Agent | Pane ID |
+|-------|---------|
+| Claude | 0 |
+| Codex | 1 |
+| Gemini | 2 |
+
+由 `.wezterm.lua` 三栏布局决定。若布局变化，同步更新指令文件。
+
+### 序号管理
+
+发送方写入前，扫描目标 inbox 目录中已有文件的最大序号，+1 作为新序号。目录为空时从 `001` 开始。
+
+### 生命周期
+
+消息在 inbox 中持续积累，里程碑结束时统一清理。清理操作由 Claude 在里程碑收尾流程中执行。
 
 ---
 
@@ -37,7 +73,8 @@
 
 ## 2. 任务派发流程
 
-- **派发前必须给用户看中文翻译**，用户批准后再发英文指令
+- **派发前必须给用户看中文翻译**，用户批准后再写英文指令到 inbox
+- Claude 写入 `.ccb/inbox/<target>/<NNN>-dispatch.md`，然后发短通知
 - **不在 Codex / Gemini 执行任务时往他们的 session 发消息**——会打断正在执行的任务
 - 要查进度只通过 `git diff` / `git log` / 读文件，不碰他们的 session
 - 等用户主动告知完成后再介入 review
