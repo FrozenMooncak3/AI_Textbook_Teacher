@@ -32,6 +32,8 @@ Also run:
 | `git log -10 --oneline` | Recent work |
 | `git log -1 --format=%ci` | Last commit timestamp (for detail level) |
 | `git status` | Uncommitted changes, unpushed commits |
+| `ls .ccb/inbox/claude/ 2>/dev/null` | Unread messages from Codex/Gemini (completion reports, questions) |
+| `ls .codex-report.md .gemini-report.md 2>/dev/null` | Fallback reports (wezterm notification failed) |
 
 ---
 
@@ -47,13 +49,15 @@ Check for these signals:
 | Plan file has unchecked `- [ ]` items | Execution in progress |
 | journal INDEX has `open` items | Unresolved issues need attention |
 | project_status mentions "未开始" for next milestone | Ready to start next milestone |
+| Files in `.ccb/inbox/claude/` | Unread messages — check for completion reports or blockers |
+| `.codex-report.md` or `.gemini-report.md` exists | Fallback report — wezterm notification failed, read and process |
 
 **停车场深度扫描**：逐条读取 journal INDEX 中每个 parked 项的**完整 journal 文件**（不只看标题），按以下三个维度检查：
 
 | 维度 | 检查方法 | 示例 |
 |------|---------|------|
 | **触发条件到期** | parked 项写了"XX 时做"→ 检查该条件是否已满足或过期 | "M2 开始时装 skill"→ M2 已完成 → 已过期，必须拉出 |
-| **基础设施影响** | 该项是否影响 CCB 派发、开发工具链、测试流程等横切关注点 | Wezterm 发送失败 → 影响所有后续派发 → 必须拉出 |
+| **基础设施影响** | 该项是否影响 CCB 派发、开发工具链、测试流程等横切关注点 | 文件消息发送失败 → 影响所有后续派发 → 必须拉出 |
 | **功能关联** | 该项是否与当前/即将开始的里程碑功能直接相关 | 测试 Dashboard → 和 M3 考官相关但非核心 → 可继续停着 |
 
 命中前两个维度的项必须在仪表盘中标出并给出"立即处理"建议，不能以"继续停着"敷衍。第三个维度按关联强度判断纳入 vs 继续停。
