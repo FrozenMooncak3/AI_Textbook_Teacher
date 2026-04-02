@@ -1,6 +1,7 @@
 # Journal Index
 
 ## open（需要关注）
+- [bug] M4 集成测试：2 个 bug — 出题验证过严（只出 2 题）+ respond 评分 token 截断（2026-04-03）→ [2026-04-03-m4-integration-test.md](./2026-04-03-m4-integration-test.md)
 
 ## in_progress（解决中）
 

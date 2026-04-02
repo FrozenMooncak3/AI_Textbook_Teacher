@@ -13,13 +13,15 @@
 
 **最新完成**：M4 全部 8 个任务。复习系统完整实现：5 轮间隔调度（3/7/15/30/60 天）、按 P 值分配出题、QA 模式逐题 AI 反馈、P 值动态更新、跳级规则、错题记录（source='review'）、复习会话前端、首页待复习按钮。
 
-**已知质量问题**：无
+**已知质量问题**：2 个 bug（详见 `docs/journal/2026-04-03-m4-integration-test.md`）
+1. 出题验证过严：非选择题 options 非 null 时整题跳过，导致实际出题不足
+2. respond 评分 maxOutputTokens=1024 太小，Gemini Flash thinking tokens 挤占导致 JSON 截断
 
 **待办**：
-1. M4 分支合并到 master（finishing-a-development-branch）
+1. 修复 M4 两个集成测试 bug
 2. 进入 M5（体验打磨）brainstorming
 
-**下一步**：M4 分支收尾 → M5 brainstorming
+**下一步**：修复 M4 bug → M5 brainstorming
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
