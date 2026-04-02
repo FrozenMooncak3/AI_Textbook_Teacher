@@ -234,6 +234,63 @@ export const POST = handleRoute(async (req, context) => {
 
     if (isPassed) {
       db.prepare('UPDATE modules SET learning_status = ? WHERE id = ?').run('completed', id)
+
+      const existingSchedule = db.prepare(
+        'SELECT id FROM review_schedule WHERE module_id = ? AND review_round = 1'
+      ).get(id) as { id: number } | undefined
+
+      if (!existingSchedule) {
+        db.prepare(
+          "INSERT INTO review_schedule (module_id, review_round, due_date, status) VALUES (?, 1, date('now', '+3 days'), 'pending')"
+        ).run(id)
+      }
+
+      const clusterResults = db.prepare(`
+        SELECT
+          kp.cluster_id,
+          COUNT(*) as total,
+          SUM(CASE WHEN tr.is_correct = 1 THEN 1 ELSE 0 END) as correct
+        FROM test_questions tq
+        JOIN knowledge_points kp ON tq.kp_id = kp.id
+        JOIN test_responses tr ON tr.question_id = tq.id
+        WHERE tq.paper_id = ?
+        GROUP BY kp.cluster_id
+      `).all(body.paper_id) as Array<{
+        cluster_id: number | null
+        total: number
+        correct: number | null
+      }>
+
+      for (const clusterResult of clusterResults) {
+        if (clusterResult.cluster_id === null) continue
+
+        const cluster = db.prepare(
+          'SELECT current_p_value, consecutive_correct FROM clusters WHERE id = ?'
+        ).get(clusterResult.cluster_id) as
+          | { current_p_value: number; consecutive_correct: number }
+          | undefined
+
+        if (!cluster) continue
+
+        const correctCount = clusterResult.correct ?? 0
+
+        if (correctCount === clusterResult.total) {
+          const newConsecutive = cluster.consecutive_correct + 1
+          const newPValue = newConsecutive >= 2
+            ? Math.min(cluster.current_p_value + 1, 5)
+            : cluster.current_p_value
+
+          db.prepare(
+            'UPDATE clusters SET consecutive_correct = ?, current_p_value = ? WHERE id = ?'
+          ).run(newConsecutive, newPValue, clusterResult.cluster_id)
+          continue
+        }
+
+        const newPValue = Math.max(cluster.current_p_value - 1, 1)
+        db.prepare(
+          'UPDATE clusters SET consecutive_correct = 0, current_p_value = ? WHERE id = ?'
+        ).run(newPValue, clusterResult.cluster_id)
+      }
     }
   })
 
