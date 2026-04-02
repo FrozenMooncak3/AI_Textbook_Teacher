@@ -1,6 +1,7 @@
 # Journal Index
 
 ## open（需要关注）
+- [audit] M3→M4 代码审计：6 个接入问题，3 个纳入 M3.5（2026-04-02）→ [2026-04-02-m3-to-m4-code-audit.md](./2026-04-02-m3-to-m4-code-audit.md)
 
 ## in_progress（解决中）
 
