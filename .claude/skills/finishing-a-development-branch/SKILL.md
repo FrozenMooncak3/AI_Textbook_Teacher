@@ -149,14 +149,26 @@ git worktree remove <worktree-path>
 
 **For Option 3:** Keep worktree.
 
+### Step 6: Cleanup CCB Inbox
+
+**Always run at milestone end (all options).**
+
+Delete all message files from every inbox directory:
+
+```bash
+rm -f .ccb/inbox/claude/*.md .ccb/inbox/codex/*.md .ccb/inbox/gemini/*.md
+```
+
+This resets message sequence numbers to `001` for the next milestone.
+
 ## Quick Reference
 
-| Option | Merge | Push | Keep Worktree | Cleanup Branch |
-|--------|-------|------|---------------|----------------|
-| 1. Merge locally | ✓ | - | - | ✓ |
-| 2. Create PR | - | ✓ | ✓ | - |
-| 3. Keep as-is | - | - | ✓ | - |
-| 4. Discard | - | - | - | ✓ (force) |
+| Option | Merge | Push | Keep Worktree | Cleanup Branch | Cleanup CCB Inbox |
+|--------|-------|------|---------------|----------------|-------------------|
+| 1. Merge locally | ✓ | - | - | ✓ | ✓ |
+| 2. Create PR | - | ✓ | ✓ | - | ✓ |
+| 3. Keep as-is | - | - | ✓ | - | ✓ |
+| 4. Discard | - | - | - | ✓ (force) | ✓ |
 
 ## Common Mistakes
 

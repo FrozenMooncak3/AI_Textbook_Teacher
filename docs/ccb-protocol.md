@@ -56,7 +56,15 @@ ts: 2026-04-02T01:00
 
 ### 生命周期
 
-消息在 inbox 中持续积累，里程碑结束时统一清理。清理操作由 Claude 在里程碑收尾流程中执行。
+消息在 inbox 中持续积累，里程碑结束时统一清理。清理操作由 Claude 在里程碑收尾流程（`finishing-a-development-branch` skill）中执行。
+
+**清理命令**（清空所有 inbox 目录中的消息文件）：
+
+```bash
+rm -f .ccb/inbox/claude/*.md .ccb/inbox/codex/*.md .ccb/inbox/gemini/*.md
+```
+
+清理后序号从 `001` 重新开始。
 
 ---
 
