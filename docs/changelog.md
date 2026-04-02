@@ -779,3 +779,13 @@
 - `src/app/books/[bookId]/modules/[moduleId]/test/page.tsx`
 - `src/app/books/[bookId]/modules/[moduleId]/test/TestSession.tsx`
 - `src/app/books/[bookId]/modules/[moduleId]/mistakes/page.tsx`
+
+---
+
+## 2026-04-02 | M4: Review Session Completion API
+
+**完成内容**: 新增 `POST /api/review/[scheduleId]/complete`，在单个事务内完成复习会话收尾：校验题目已全部作答、按 cluster 汇总正确率、更新 P 值与 `last_review_result`、写入 `review_records`、按跳级规则创建下一轮 `review_schedule`，并将当前 schedule 标记为 completed。
+
+**修改文件**:
+- `src/app/api/review/[scheduleId]/complete/route.ts`
+- `.agents/API_CONTRACT.md`

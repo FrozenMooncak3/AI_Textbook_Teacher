@@ -312,6 +312,135 @@ Response `200`:
 }
 ```
 
+### `GET /api/review/due`
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "reviews": [
+      {
+        "schedule_id": 1,
+        "module_id": 1,
+        "module_title": "string",
+        "book_id": 1,
+        "book_title": "string",
+        "review_round": 1,
+        "due_date": "2026-04-02"
+      }
+    ]
+  }
+}
+```
+
+### `POST /api/review/[scheduleId]/generate`
+
+Request body:
+
+```json
+{}
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "total_questions": 8,
+    "current_index": 1,
+    "question": {
+      "id": 1,
+      "type": "single_choice",
+      "text": "string",
+      "options": ["A. ...", "B. ...", "C. ...", "D. ..."]
+    }
+  }
+}
+```
+
+Resume response when all stored questions are already answered:
+
+```json
+{
+  "success": true,
+  "data": {
+    "total_questions": 8,
+    "current_index": 8,
+    "all_answered": true
+  }
+}
+```
+
+### `POST /api/review/[scheduleId]/respond`
+
+Request body:
+
+```json
+{
+  "question_id": 1,
+  "user_answer": "string"
+}
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "is_correct": true,
+    "score": 1,
+    "ai_feedback": "string",
+    "has_next": true,
+    "next_question": {
+      "id": 2,
+      "type": "essay",
+      "text": "string",
+      "options": null
+    }
+  }
+}
+```
+
+### `POST /api/review/[scheduleId]/complete`
+
+Request body:
+
+```json
+{}
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "total_questions": 8,
+      "correct_count": 6,
+      "accuracy": 0.75,
+      "clusters": [
+        {
+          "name": "string",
+          "correct": 3,
+          "total": 4
+        }
+      ]
+    },
+    "next_review": {
+      "round": 2,
+      "due_date": "2026-04-09"
+    }
+  }
+}
+```
+
+When review round 5 is completed and no further schedule is created, `next_review` is `null`.
+
 ## Change Log
 
 - [2026-03-28] [Codex] Added reading notes CRUD API contract for M2.
@@ -320,3 +449,4 @@ Response `200`:
 - [2026-03-28] [Codex] Added study notes generation API contract for M2.
 - [2026-03-29] [Codex] Added GET contract for `/api/modules/[moduleId]/qa-feedback` so frontend can resume answered questions.
 - [2026-03-31] [Claude] Added M3 test generate, test submit, test status, and mistakes API contracts.
+- [2026-04-02] [Codex] Added M4 review API contracts for due, generate, respond, and complete endpoints.
