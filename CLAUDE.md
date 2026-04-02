@@ -62,24 +62,11 @@
 - `docs/changelog.md` — 变更日志
 - `docs/journal/` — 会话日志（想法、决策推理、待跟进）
 
-## 里程碑启动前置检查（强制）
-
-每个里程碑的 brainstorming **开始前**，必须先做代码审计：
-
-1. **读现有代码**：DB schema、相关 API、前端组件、prompt 模板——不是读文档，是读 `src/` 实际代码
-2. **对比 spec**：新里程碑的 spec 定义 vs 代码现状，逐项核对
-3. **输出差异报告**：已有什么可以直接用、什么需要调整、什么完全缺失、什么有冲突
-4. **记录为 journal**：报告写入 `docs/journal/`，作为 brainstorming 的输入
-
-**为什么**：代码量越大，里程碑间的接入错位越难发现。不做审计就开始设计，会基于错误假设做方案。M3→M4 就发现了 6 个问题（测试通过不触发复习调度、prompt 模板乱码、schema 冗余等）。
-
-**触发时机**：brainstorming skill 检测到是里程碑级工作时，自动执行审计再进入设计讨论。
-
 ## 禁止事项
 - 禁止引入多用户 / 登录 / 注册系统
 - 禁止添加 MVP 范围外的功能（社区、个性化推荐、游戏化等）
 - 禁止未经确认就修改产品不变量
-- 禁止在未更新 `docs/project_status.md` 和 `docs/changelog.md` 的情况下声称任务完成
+- 禁止在未更新 `docs/project_status.md`、`docs/changelog.md` 和 `docs/architecture.md` 的情况下声称任务完成
 
 ## 与项目负责人的沟通协议
 

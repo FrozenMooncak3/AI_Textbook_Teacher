@@ -23,6 +23,7 @@ Read ALL of these in parallel:
 | `docs/decisions.md` | Closed decisions (don't re-discuss) |
 | `docs/journal/INDEX.md` | Open/in-progress items, parked ideas |
 | `docs/ccb-protocol.md` | Collaboration rules |
+| `docs/architecture.md` | System overview + interface contracts (check ⚠️ markers) |
 | MEMORY.md | Already in context (auto-loaded) — note user preferences and feedback |
 
 Also run:
@@ -138,8 +139,7 @@ Check for these signals:
 | brainstorming 或重要讨论结束 | journal |
 | 声称完成/准备 commit | verification-before-completion → claudemd-check |
 | 用户告知 Codex/Gemini 完成任务 | requesting-code-review → claudemd-check |
-| 里程碑开始（brainstorming 前） | 代码审计（规则 6）→ journal 记录 |
-| 里程碑开始（brainstorming 后） | using-git-worktrees（创建隔离分支） |
+| 里程碑开始 | using-git-worktrees（创建隔离分支） |
 | 里程碑结束 | finishing-a-development-branch（分支收尾） |
 | 同一问题修复失败 ≥2 次 | systematic-debugging（强制走诊断流程，禁止继续猜） |
 
@@ -152,19 +152,6 @@ Check for these signals:
 **例外**：Claude 文件边界内的纯文档改动（`docs/**`、`CLAUDE.md` 等）可直接在 master 上 commit。代码相关的里程碑工作必须隔离。
 
 **异常处理**：worktree 创建失败时，停下来报告给用户，不得降级到 master 上直接开发。
-
-### 规则 6: 里程碑启动代码审计
-
-里程碑级 brainstorming **开始前**，强制执行代码审计：
-
-1. 读 DB schema（`src/lib/db.ts`）、相关 API routes、前端组件、prompt 模板
-2. 对比新里程碑 spec 定义，逐项核对：已有 / 需改 / 缺失 / 冲突
-3. 输出差异报告，写入 `docs/journal/` 作为 brainstorming 输入
-4. 差异报告中的"需改"项可能产出一个过渡里程碑（如 M3.5）
-
-**为什么**：代码量增长后，里程碑间的接入假设会过期。不审计就设计 = 基于错误假设做方案。
-
-**判断标准**：brainstorming 时如果用户说"进入 MX"或"做下一个里程碑"，视为里程碑级工作，触发审计。普通功能讨论不触发。
 
 ### 规则 5: Chain Routing
 
