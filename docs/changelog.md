@@ -812,6 +812,15 @@
 
 ---
 
+## 2026-04-03 | M4: Review Generate Output Budget Hotfix
+
+**完成内容**: 将 `POST /api/review/[scheduleId]/generate` 的 `maxOutputTokens` 从 `4096` 提升到 `65536`，避免 Gemini Flash 因 thinking tokens 占用预算导致 JSON 在流中被截断。
+
+**修改文件**:
+- `src/app/api/review/[scheduleId]/generate/route.ts`
+
+---
+
 ## 2026-04-02 | M4: Review Session Completion API
 
 **完成内容**: 新增 `POST /api/review/[scheduleId]/complete`，在单个事务内完成复习会话收尾：校验题目已全部作答、按 cluster 汇总正确率、更新 P 值与 `last_review_result`、写入 `review_records`、按跳级规则创建下一轮 `review_schedule`，并将当前 schedule 标记为 completed。

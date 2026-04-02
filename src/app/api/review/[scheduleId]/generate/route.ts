@@ -468,7 +468,7 @@ export const POST = handleRoute(async (_req, context) => {
 
   const { text } = await generateText({
     model: getModel(),
-    maxOutputTokens: 4096,
+    maxOutputTokens: 65536,
     prompt,
     abortSignal: AbortSignal.timeout(timeout),
   })
