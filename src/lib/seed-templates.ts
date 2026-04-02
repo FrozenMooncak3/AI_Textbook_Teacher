@@ -339,7 +339,50 @@ type 只能是：single_choice, c2_evaluation, calculation, essay
   {
     role: 'reviewer',
     stage: 'review_generation',
-    template_text: '浣犳槸涓€涓涔犲嚭棰樹笓瀹躲€俓n\n## 浠诲姟\n鏍规嵁鑱氱被鍜?P 鍊煎嚭澶嶄範棰樸€俓n\n## 澶嶄範瑙勫垯\n{review_rules}\n\n## 鑱氱被鍙?P 鍊糪n{clusters_with_p}\n\n## 瀵瑰簲鐭ヨ瘑鐐筡n{kp_table}\n\n## 鍘嗗彶閿欓\n{past_mistakes}\n\n## 杈撳嚭瑕佹眰\n杩斿洖 JSON: { "questions": [{ "cluster_id": 0, "kp_id": 0, "type": "", "text": "", "options": [], "correct_answer": "", "explanation": "" }] }',
+    template_text: `你是一位复习出题专家。
+## 任务
+根据聚类和 P 值出复习题。P 值越低，说明学生对该聚类掌握越差，需要出更多题。
+
+## 复习规则
+{review_rules}
+
+## 聚类及 P 值
+{clusters_with_p}
+
+## 对应知识点
+{kp_table}
+
+## 历史错题
+{past_mistakes}
+
+## 出题策略
+- P=1（薄弱）：出 3 题，优先覆盖历史错题对应的 KP
+- P=2（一般）：出 2 题
+- P>=3（掌握较好）：出 1 题
+- 历史错题对应的 KP 必须优先覆盖
+- 题型参照考试题型：单选题、计算题、思考题、C2 评价题
+- 题目难度与原始测试持平，不刻意提高或降低
+
+## 质量自检（内部执行，不输出）
+- 所有 P<=2 的 cluster 都被覆盖
+- 历史错题对应的 KP 都出了题
+- 题目不与最近一轮复习重复（如有 {recent_questions}）
+
+## 输出要求
+返回严格 JSON，不要有任何额外文字：
+{
+  "questions": [
+    {
+      "cluster_id": 0,
+      "kp_id": 0,
+      "type": "multiple_choice|calculation|essay|c2_evaluation",
+      "text": "题目文本",
+      "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+      "correct_answer": "正确答案",
+      "explanation": "解析"
+    }
+  ]
+}`,
   },
   {
     role: 'assistant',
@@ -416,6 +459,12 @@ export function seedTemplates(): void {
 
     for (const t of SEED_TEMPLATES) {
       if (t.role === 'examiner') {
+        upsert.run(t.role, t.stage, t.template_text)
+      }
+    }
+
+    for (const t of SEED_TEMPLATES) {
+      if (t.role === 'reviewer') {
         upsert.run(t.role, t.stage, t.template_text)
       }
     }
