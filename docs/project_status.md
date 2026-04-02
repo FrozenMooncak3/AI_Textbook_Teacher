@@ -9,25 +9,17 @@
 
 **方向**：MVP 重新设计——教练核心 + PDF 阅读器 + 独立问答通道
 
-**当前里程碑**：M3.5 里程碑衔接修复 — 未开始
+**当前里程碑**：M3.5 里程碑衔接修复 — **已完成**（2026-04-02）
 
-**最新完成**：架构地图系统（2026-04-02）。新建 `docs/architecture.md`（两层：系统总图 + 接口契约），CLAUDE.md 禁止事项已包含 architecture.md 更新要求，session-init 已加入读取。
-
-**M3→M4 代码审计**：`docs/journal/2026-04-02-m3-to-m4-code-audit.md`（6 个接入问题，3 个纳入 M3.5）
-
-**M3.5 任务**：
-1. M3.5-T1: 测试通过后创建 review_schedule + 更新 cluster P 值（后端）
-2. M3.5-T2: 评估 clusters.next_review_date 去留（schema 决策）
-3. M3.5-T3: 重写 reviewer prompt 模板（后端）
+**最新完成**：M3.5 全部 3 个任务（2026-04-02）。测试通过后自动创建复习调度 + 更新 cluster P 值；删除冗余字段 clusters.next_review_date；reviewer prompt 模板重写为正常中文。
 
 **已知质量问题**：无
 
 **待办**：
-1. M3.5 brainstorming + 计划
-2. 建立 Git worktree 隔离工作流（M3 遗留问题，M4 起强制执行）
-3. 进入 M4（复习系统）
+1. 建立 Git worktree 隔离工作流（M3 遗留问题，M4 起强制执行）
+2. 进入 M4（复习系统）brainstorming
 
-**下一步**：M3.5 brainstorming
+**下一步**：M4 brainstorming
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -43,7 +35,7 @@
 | M1 | 提取器 AI：上传 PDF → 三阶段 KP 提取 → KP 表和模块地图写入 DB → 模块地图页面 | **已完成**（2026-03-28） |
 | M2 | 教练 AI（核心）：读前指引 → 阅读（笔记+截图问答）→ Q&A（4 种题型+即时反馈+预生成）→ 学习笔记生成 | **已完成**（2026-03-29） |
 | M3 | 考官 AI：测试出题 → 盲测 → 评分 → 80% 过关 → 错题诊断 | **已完成**（2026-04-01） |
-| M3.5 | 里程碑衔接修复：测试→复习调度触发 + schema 清理 + reviewer prompt 重写 | 未开始 |
+| M3.5 | 里程碑衔接修复：测试→复习调度触发 + schema 清理 + reviewer prompt 重写 | **已完成**（2026-04-02） |
 | M4 | 复习系统：复习调度（3/7/15/30/60 天）→ 聚类出题 → P 值更新 | 未开始 |
 | M5 | 体验打磨：首页仪表盘 + 笔记查看/导出 + 截图问 AI 流程改造 + UI/UX 打磨 | 未开始 |
 

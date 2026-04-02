@@ -82,10 +82,9 @@ unstarted → reading → qa → notes_generated → testing → completed
 
 ### 测试 → 复习
 
-- ⚠️ 测试通过设 learning_status='completed'，但不创建 review_schedule、不更新 cluster P 值
-- ⚠️ clusters.next_review_date 存在但无代码使用，与 review_schedule.due_date 语义冗余
-- clusters.current_p_value 默认 2，无代码修改它
-- clusters.consecutive_correct 默认 0，无代码修改它
+- 测试通过（≥80%）时：设 learning_status='completed' + 创建 review_schedule（round=1, due=today+3天）+ 按 cluster 更新 P 值
+- P 值更新规则：cluster 内全对 → consecutive_correct+1（连对≥2 则 P+1，上限 5）；有错 → consecutive_correct=0, P-1（下限 1）
+- 复习调度在 review_schedule 表（module 级），clusters 表不存储调度日期
 
 ### 错题流转
 
@@ -98,4 +97,4 @@ unstarted → reading → qa → notes_generated → testing → completed
 - seed-templates.ts 种子化：extractor×3, coach×4, examiner×2, reviewer×1, assistant×1
 - extractor 模板是乱码 UTF-8，但功能正常（创建时就是这样写的）
 - examiner 模板已用正常中文重写（M3）
-- ⚠️ reviewer 模板是乱码 UTF-8，M4 前需要重写
+- reviewer 模板已用正常中文重写（M3.5），含 P 值出题策略和 {recent_questions} 去重占位符

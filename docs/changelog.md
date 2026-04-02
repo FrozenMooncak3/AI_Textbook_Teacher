@@ -4,6 +4,20 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-02 | M3.5：里程碑衔接修复
+
+- **测试通过触发复习调度**：`test/submit` 通过（≥80%）时自动创建 `review_schedule`（round=1, due=today+3天）+ 按 cluster 更新 P 值（全对涨、有错降，bounds 1-5）
+- **删除冗余字段**：`clusters.next_review_date` 已删除，复习调度统一走 `review_schedule.due_date`
+- **reviewer prompt 重写**：乱码 UTF-8 模板替换为正常中文，含 P 值出题策略 + `{recent_questions}` 去重占位符，已加入 seedTemplates upsert 循环
+
+修改文件：
+- `src/app/api/modules/[moduleId]/test/submit/route.ts` — 追加复习调度 + P 值更新
+- `src/lib/db.ts` — 删除 next_review_date + migration
+- `src/lib/seed-templates.ts` — 重写模板 + upsert 循环扩展
+- `docs/architecture.md` — 移除 3 个 ⚠️ 标记，更新接口契约
+
+---
+
 ## 2026-04-02 | 基础设施：架构地图系统
 
 - **`docs/architecture.md` 新建**：两层架构文档——第一层系统总图（页面、API、DB 表、AI 角色、学习状态流），第二层接口契约（跨模块依赖 + ⚠️ 标记已知断裂点）
