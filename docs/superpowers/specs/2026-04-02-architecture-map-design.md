@@ -35,7 +35,7 @@ M3→M4 代码审计发现 6 个接入问题（测试不触发复习调度、pro
 - 按数据流方向组织（提取→学习→测试→复习→错题流转→prompt 模板）
 - 每条记录一个跨模块依赖："A 做了什么 → B 依赖什么"
 - `⚠️` 标记标注已知断裂点（里程碑审计时的重点）
-- 里程碑修复后去掉标记并更新描述
+- 断裂点修复后：由 Claude 在 code review 通过时去掉 `⚠️` 并更新描述（和 project_status 更新同步，不需要额外步骤）
 
 ### 不记录什么
 
@@ -55,11 +55,15 @@ CLAUDE.md 已有规则：
 扩展为：
 > "禁止在未更新 `project_status.md`、`changelog.md` 和 `architecture.md` 的情况下声称任务完成"
 
-`claudemd-check` 已会检查 CLAUDE.md 中的所有规则，自动覆盖。
+`claudemd-check` 会检查 CLAUDE.md 中的规则。该 skill 动态读取 CLAUDE.md 内容做合规检查，不是硬编码清单，所以新增规则后自动覆盖。
 
 ### 里程碑开始时：强制读取
 
 session-init Step 1 的读取列表加一行 `docs/architecture.md`。brainstorming 做里程碑级工作时，接口契约中的 `⚠️` 标记即为审计重点。
+
+### Codex/Gemini 不需要改指令文件
+
+Codex/Gemini 通过 Claude 的 dispatch 指令获得上下文（structured-dispatch 模板会包含相关接口信息），不需要自己读 architecture.md。
 
 ## 4. 改动清单
 
@@ -74,4 +78,7 @@ session-init Step 1 的读取列表加一行 `docs/architecture.md`。brainstorm
 1. `docs/architecture.md` 存在且内容与当前代码库一致
 2. CLAUDE.md 的"禁止事项"中包含 architecture.md
 3. session-init 在 session 开始时读取 architecture.md
-4. 接口契约中 M3→M4 的 3 个已知断裂点标有 `⚠️`
+4. 接口契约中以下 3 个已知断裂点标有 `⚠️`：
+   - 测试通过不创建 review_schedule、不更新 cluster P 值
+   - clusters.next_review_date 与 review_schedule.due_date 冗余
+   - reviewer prompt 模板是乱码 UTF-8
