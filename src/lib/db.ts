@@ -107,7 +107,6 @@ function initSchema(db: Database.Database): void {
       current_p_value      INTEGER NOT NULL DEFAULT 2,
       last_review_result   TEXT,
       consecutive_correct  INTEGER NOT NULL DEFAULT 0,
-      next_review_date     TEXT,
       created_at           TEXT    NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -243,6 +242,13 @@ function initSchema(db: Database.Database): void {
     db.exec(`ALTER TABLE test_questions ADD COLUMN kp_ids TEXT`)
   } catch {
     // Column already exists
+  }
+
+  // M3.5 migrations (safe to re-run)
+  try {
+    db.exec(`ALTER TABLE clusters DROP COLUMN next_review_date`)
+  } catch {
+    // Column already dropped or never existed
   }
 
   db.exec(`UPDATE modules SET learning_status = 'unstarted' WHERE learning_status = 'not_started'`)
