@@ -341,10 +341,17 @@ type 只能是：single_choice, c2_evaluation, calculation, essay
     stage: 'review_generation',
     template_text: `你是一位复习出题专家。
 ## 任务
-根据聚类和 P 值出复习题。P 值越低，说明学生对该聚类掌握越差，需要出更多题。
+根据聚类和 P 值出复习题。P 值越高，说明学生对该聚类掌握越差，需要出更多题。
 
 ## 复习规则
-{review_rules}
+- P=1（已掌握）：出 1 题
+- P=2（正常基线）：出 2 题
+- P=3（有错题）：出 3 题，优先覆盖历史错题对应的 KP
+- P=4（反复错）：出 4 题，优先覆盖历史错题对应的 KP
+- 总题数上限：{max_questions} 题。如果按 P 值分配超过上限，等比缩减但每聚类至少 1 题
+- 历史错题对应的 KP 必须优先覆盖
+- 题型：single_choice, c2_evaluation, calculation, essay
+- 题目难度与原始测试持平
 
 ## 聚类及 P 值
 {clusters_with_p}
@@ -355,18 +362,13 @@ type 只能是：single_choice, c2_evaluation, calculation, essay
 ## 历史错题
 {past_mistakes}
 
-## 出题策略
-- P=1（薄弱）：出 3 题，优先覆盖历史错题对应的 KP
-- P=2（一般）：出 2 题
-- P>=3（掌握较好）：出 1 题
-- 历史错题对应的 KP 必须优先覆盖
-- 题型参照考试题型：单选题、计算题、思考题、C2 评价题
-- 题目难度与原始测试持平，不刻意提高或降低
+## 最近一轮复习题（避免重复）
+{recent_questions}
 
 ## 质量自检（内部执行，不输出）
-- 所有 P<=2 的 cluster 都被覆盖
+- 所有 P>=2 的 cluster 都被覆盖
 - 历史错题对应的 KP 都出了题
-- 题目不与最近一轮复习重复（如有 {recent_questions}）
+- 题目不与上面列出的最近一轮复习重复
 
 ## 输出要求
 返回严格 JSON，不要有任何额外文字：
@@ -375,13 +377,48 @@ type 只能是：single_choice, c2_evaluation, calculation, essay
     {
       "cluster_id": 0,
       "kp_id": 0,
-      "type": "multiple_choice|calculation|essay|c2_evaluation",
+      "type": "single_choice|calculation|essay|c2_evaluation",
       "text": "题目文本",
       "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
       "correct_answer": "正确答案",
       "explanation": "解析"
     }
   ]
+}`,
+  },
+  {
+    role: 'reviewer',
+    stage: 'review_scoring',
+    template_text: `你是一位复习评分专家。根据题目、参考答案和学生回答，给出评分和反馈。
+## 题目
+{question_text}
+
+## 参考答案
+{correct_answer}
+
+## 出题解析
+{explanation}
+
+## 相关知识点
+{kp_content}
+
+## 学生回答
+{user_answer}
+
+## 评分规则
+- 判断是否正确（允许表述不同但意思正确）
+- 如果错误，诊断错误类型：blind_spot（知识盲点）/ procedural（程序性失误）/ confusion（概念混淆）/ careless（粗心）
+- 反馈和补救建议用中文，直接面向学生
+- 禁止引用知识点编号（如 "KP-01"），用具体的知识点名称或内容
+
+## 输出要求
+返回严格 JSON，不要有任何额外文字：
+{
+  "is_correct": true,
+  "score": 1.0,
+  "error_type": null,
+  "feedback": "反馈文本",
+  "remediation": null
 }`,
   },
   {
