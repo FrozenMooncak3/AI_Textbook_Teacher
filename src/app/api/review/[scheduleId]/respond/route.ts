@@ -5,8 +5,10 @@ import { UserError, SystemError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
 import { getPrompt } from '@/lib/prompt-templates'
-
-type QuestionType = 'single_choice' | 'c2_evaluation' | 'calculation' | 'essay'
+import {
+  REVIEW_SCORING_MAX_OUTPUT_TOKENS,
+  type ReviewQuestionType as QuestionType,
+} from '@/lib/review-question-utils'
 
 interface ReviewQuestionRow {
   id: number
@@ -209,7 +211,7 @@ export const POST = handleRoute(async (req, context) => {
 
   const { text } = await generateText({
     model: getModel(),
-    maxOutputTokens: 1024,
+    maxOutputTokens: REVIEW_SCORING_MAX_OUTPUT_TOKENS,
     prompt,
     abortSignal: AbortSignal.timeout(timeout),
   })

@@ -5,8 +5,12 @@ import { UserError, SystemError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
 import { getPrompt } from '@/lib/prompt-templates'
-
-type QuestionType = 'single_choice' | 'c2_evaluation' | 'calculation' | 'essay'
+import {
+  type GeneratedReviewQuestion,
+  type ReviewKnowledgePointRow as KnowledgePointRow,
+  type ReviewQuestionType as QuestionType,
+  validateGeneratedReviewQuestion,
+} from '@/lib/review-question-utils'
 
 interface ScheduleRow {
   id: number
@@ -39,15 +43,6 @@ interface AllocationRow {
   count: number
 }
 
-interface KnowledgePointRow {
-  id: number
-  kp_code: string
-  description: string
-  type: string
-  detailed_content: string
-  cluster_id: number | null
-}
-
 interface MistakeRow {
   kp_id: number | null
   knowledge_point: string | null
@@ -59,16 +54,6 @@ interface PreviousQuestionRow {
   question_text: string
 }
 
-interface GeneratedQuestion {
-  cluster_id: number
-  kp_id: number
-  type: string
-  text: string
-  options: string[] | null
-  correct_answer: string
-  explanation: string
-}
-
 interface StoredQuestionResponse {
   id: number
   type: QuestionType
@@ -77,13 +62,6 @@ interface StoredQuestionResponse {
 }
 
 const MAX_QUESTIONS = 10
-
-const VALID_TYPES = new Set<QuestionType>([
-  'single_choice',
-  'c2_evaluation',
-  'calculation',
-  'essay',
-])
 
 function parseScheduleId(value: string): number {
   const id = Number(value)
@@ -202,7 +180,7 @@ function formatRecentQuestions(questions: PreviousQuestionRow[]): string {
   return questions.map((question) => `- ${question.question_text}`).join('\n')
 }
 
-function parseGeneratedQuestions(text: string): GeneratedQuestion[] {
+function parseGeneratedQuestions(text: string): GeneratedReviewQuestion[] {
   let cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '')
   const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
   if (!jsonMatch) {
@@ -248,102 +226,7 @@ function parseGeneratedQuestions(text: string): GeneratedQuestion[] {
     throw new SystemError('Empty questions array from reviewer', text.slice(0, 300))
   }
 
-  return questions as GeneratedQuestion[]
-}
-
-function validateGeneratedQuestion(
-  question: GeneratedQuestion,
-  index: number,
-  clusterIds: Set<number>,
-  knowledgePoints: Map<number, KnowledgePointRow>
-): {
-  clusterId: number
-  kpId: number
-  type: QuestionType
-  text: string
-  options: string[] | null
-  correctAnswer: string
-  explanation: string
-} {
-  if (!Number.isInteger(question.cluster_id) || !clusterIds.has(question.cluster_id)) {
-    throw new Error(`Question ${index + 1} has invalid cluster_id`)
-  }
-
-  if (!Number.isInteger(question.kp_id)) {
-    throw new Error(`Question ${index + 1} has invalid kp_id`)
-  }
-
-  const kp = knowledgePoints.get(question.kp_id)
-  if (!kp) {
-    throw new Error(`Question ${index + 1} references unknown kp_id`)
-  }
-
-  if (kp.cluster_id !== question.cluster_id) {
-    throw new Error(`Question ${index + 1} kp_id/cluster_id mismatch`)
-  }
-
-  if (!VALID_TYPES.has(question.type as QuestionType)) {
-    throw new Error(`Question ${index + 1} has invalid type`)
-  }
-
-  const text = typeof question.text === 'string' ? question.text.trim() : ''
-  const correctAnswer = typeof question.correct_answer === 'string'
-    ? question.correct_answer.trim()
-    : ''
-  const explanation = typeof question.explanation === 'string'
-    ? question.explanation.trim()
-    : ''
-
-  if (!text || !correctAnswer || !explanation) {
-    throw new Error(`Question ${index + 1} is missing required fields`)
-  }
-
-  const type = question.type as QuestionType
-  if (type === 'single_choice') {
-    if (!Array.isArray(question.options) || question.options.length !== 4) {
-      throw new Error(`Question ${index + 1} must include 4 options`)
-    }
-
-    const options = question.options.map((option) => {
-      if (typeof option !== 'string') {
-        throw new Error(`Question ${index + 1} has non-string options`)
-      }
-
-      return option.trim()
-    })
-
-    if (options.some((option) => option.length === 0)) {
-      throw new Error(`Question ${index + 1} has empty options`)
-    }
-
-    if (!['A', 'B', 'C', 'D'].includes(correctAnswer)) {
-      throw new Error(`Question ${index + 1} has invalid single-choice answer`)
-    }
-
-    return {
-      clusterId: question.cluster_id,
-      kpId: question.kp_id,
-      type,
-      text,
-      options,
-      correctAnswer,
-      explanation,
-    }
-  }
-
-  if (question.options !== null) {
-    throw new Error(`Question ${index + 1} must have null options`)
-  }
-
-  return {
-    clusterId: question.cluster_id,
-    kpId: question.kp_id,
-    type,
-    text,
-    options: null,
-    correctAnswer,
-    explanation,
-  }
+  return questions as GeneratedReviewQuestion[]
 }
 
 export const POST = handleRoute(async (_req, context) => {
@@ -473,7 +356,7 @@ export const POST = handleRoute(async (_req, context) => {
     abortSignal: AbortSignal.timeout(timeout),
   })
 
-  let generatedQuestions: GeneratedQuestion[]
+  let generatedQuestions: GeneratedReviewQuestion[]
   try {
     generatedQuestions = parseGeneratedQuestions(text)
   } catch (error) {
@@ -505,7 +388,7 @@ export const POST = handleRoute(async (_req, context) => {
       for (const [index, question] of generatedQuestions.entries()) {
         let validated
         try {
-          validated = validateGeneratedQuestion(question, index, clusterIds, knowledgePoints)
+          validated = validateGeneratedReviewQuestion(question, index, clusterIds, knowledgePoints)
         } catch (error) {
           logAction('Skipping invalid review question', String(error), 'warn')
           continue

@@ -4,6 +4,21 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-03 | M4：Review 系统 Bug 修复
+
+- **复习出题验证放宽**：抽出 `review-question-utils`，非单选题即使 AI 返回噪声 `options` 也会归一化为 `null` 后继续入库，不再整题跳过；单选题仍保持 4 个选项的严格校验。
+- **复习评分预算提升**：`POST /api/review/[scheduleId]/respond` 改为使用 `8192` 的最小输出预算常量，避免 Gemini Flash 因 thinking tokens 挤占预算导致 JSON 截断。
+- **回归脚本补齐**：新增 Node 测试脚本覆盖 validator 行为和 review scoring 输出预算，作为这两个 M4 bug 的回归保护。
+
+修改文件：
+- `src/lib/review-question-utils.ts` — 新增复习题目 validator + scoring token 常量
+- `src/app/api/review/[scheduleId]/generate/route.ts` — 改为复用共享 validator，非单选题 options 噪声不再导致跳题
+- `src/app/api/review/[scheduleId]/respond/route.ts` — scoring 输出预算提升到 8192
+- `scripts/test-review-route-fixes.mjs` — 新增回归脚本
+- `docs/changelog.md` — 本条记录
+
+---
+
 ## 2026-04-02 | M4：复习系统
 
 - **P 值方向修正**：低=好（1=已掌握，4=最弱），范围 1-4。test/submit P 值初始化简化为全对→P=2，有错→P=3
