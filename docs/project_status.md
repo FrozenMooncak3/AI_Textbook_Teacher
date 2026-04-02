@@ -5,21 +5,19 @@
 
 ---
 
-## 当前状态（2026-04-01）
+## 当前状态（2026-04-02）
 
 **方向**：MVP 重新设计——教练核心 + PDF 阅读器 + 独立问答通道
 
 **当前里程碑**：M3 考官 AI — 已完成（集成测试通过）
 
-**最新完成**：M3 集成测试通过。修复了 4 层阻塞问题：Next.js Turbopack 代理不通、undici Response 流式不兼容、thinking tokens 撞上限、AI 返回 JSON 解析（markdown 包裹 + 控制字符 + 单题容错）。
+**最新完成**：CCB 文件消息系统上线（2026-04-02）。替代不稳定的 `ask` 命令，所有 agent 通信走 `.ccb/inbox/` 文件 + 短通知。双向通信已验证通过（Claude↔Codex、Claude↔Gemini）。
 
 **M3 设计文稿**：`docs/superpowers/specs/2026-03-31-m3-examiner-ai-design.md`
 
 **M3 实现计划**：`docs/superpowers/plans/2026-03-31-m3-examiner-ai.md`
 
-**已知质量问题（非阻塞，待后续修复）**：
-1. 题目顺序：思考题在前选择题在后，应按难度从简到难排序
-2. MD 格式泄露：AI 生成的文本含 `**加粗**` 等 markdown 标记，前端未渲染
+**已知质量问题**：无（题目排序和 Markdown 渲染已在 commit b6c2487、d3d85b2 中修复）
 
 **待办**：
 1. 建立 Git worktree 隔离工作流（M3 遗留问题，M4 起强制执行）
@@ -31,7 +29,7 @@
 
 **M0（已完成）**：地基重建——19 张表 + prompt 模板系统 + bug 修复 + 最终验证通过
 
-**下一步**：M3 收尾 → 进入 M4（复习系统）
+**下一步**：进入 M4（复习系统）
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 

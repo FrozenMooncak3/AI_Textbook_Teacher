@@ -36,14 +36,9 @@ ts: 2026-04-02T01:00
 
 1. `mkdir -p .ccb/inbox/<target>` — 确保目标 inbox 存在
 2. 写消息文件到 `.ccb/inbox/<target>/<NNN>-<type>.md`
-3. 发送短通知：
-   ```bash
-   echo "Read .ccb/inbox/<target>/<NNN>-<type>.md and execute the task inside" | wezterm cli send-text --pane-id <target_pane> --no-paste
-   ```
-4. 发送 Enter：
-   ```bash
-   printf '\r' | wezterm cli send-text --pane-id <target_pane> --no-paste
-   ```
+3. 发送短通知（一条命令，嵌入回车）：
+   - **Bash**（Claude 使用）：`echo "Read .ccb/inbox/<target>/<NNN>-<type>.md and execute" | wezterm cli send-text --pane-id <target_pane> --no-paste && printf '\r' | wezterm cli send-text --pane-id <target_pane> --no-paste`
+   - **PowerShell**（Codex/Gemini 使用）：`wezterm cli send-text --pane-id <target_pane> --no-paste "Read .ccb/inbox/<target>/<NNN>-<type>.md and execute``r"`
 
 ### Pane 映射
 

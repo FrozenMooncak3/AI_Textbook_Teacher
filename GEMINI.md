@@ -107,11 +107,10 @@ Blocker: (如果 BLOCKED 写具体问题)
 MSGEOF
 ```
 
-3. 发送短通知：
+3. 发送短通知（PowerShell 语法，嵌入 `` `r `` 作为回车）：
 
-```bash
-echo "Read .ccb/inbox/claude/<NNN>-report.md — Gemini task report" | wezterm cli send-text --pane-id 0 --no-paste
-printf '\r' | wezterm cli send-text --pane-id 0 --no-paste
+```powershell
+wezterm cli send-text --pane-id 0 --no-paste "Read .ccb/inbox/claude/<NNN>-report.md — Gemini task report`r"
 ```
 
 4. 若 wezterm 失败：重试 2 次（间隔 2 秒）；仍失败则同时写到项目根目录 `.gemini-report.md` 作为 fallback。

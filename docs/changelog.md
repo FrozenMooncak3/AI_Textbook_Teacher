@@ -4,6 +4,26 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-02 | 基础设施：CCB 文件消息系统
+
+- **替代 `ask` 命令**：所有 Claude↔Codex↔Gemini 通信改为"写文件到 `.ccb/inbox/` + 短 wezterm 通知"。解决了 `ask` 异步长消息静默失败的问题。
+- **双向通信验证通过**：Claude→Codex、Claude→Gemini、Codex→Claude、Gemini→Claude 全部测试成功。
+- **PowerShell 兼容**：Codex/Gemini 使用 `wezterm cli send-text --pane-id N --no-paste "msg\`r"` 位置参数形式发送通知。
+
+修改文件：
+- `docs/ccb-protocol.md` — 通信基础设施重写
+- `AGENTS.md` — 完成报告改为文件消息协议
+- `GEMINI.md` — 同上
+- `.claude/skills/structured-dispatch/SKILL.md` — 派发流程更新
+- `.claude/skills/session-init/SKILL.md` — 新增 inbox 扫描
+- `.claude/skills/api-contract/SKILL.md` — 通知流程更新
+- `.codex/skills/api-contract/SKILL.md` — 同上
+- `.gitignore` — 新增 `.ccb/inbox/**` 忽略规则
+- `docs/superpowers/specs/2026-04-02-ccb-file-messaging-design.md` — 设计文稿
+- `docs/superpowers/plans/2026-04-02-ccb-file-messaging.md` — 实施计划
+
+---
+
 ## 2026-04-01 | 前端：AI 评价 Markdown 渲染
 
 - **MarkdownRenderer 组件**: 新增 `src/components/MarkdownRenderer.tsx`，使用 `react-markdown` 统一渲染 AI 反馈内容，严格遵循 `DESIGN_TOKENS.md` 视觉规范（slate 色系、rounded-xl、leading-relaxed）。
