@@ -218,6 +218,32 @@ function initSchema(db: Database.Database): void {
       created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS review_questions (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      schedule_id     INTEGER NOT NULL REFERENCES review_schedule(id) ON DELETE CASCADE,
+      module_id       INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+      cluster_id      INTEGER NOT NULL REFERENCES clusters(id),
+      kp_id           INTEGER REFERENCES knowledge_points(id),
+      question_type   TEXT    NOT NULL CHECK(question_type IN ('single_choice','c2_evaluation','calculation','essay')),
+      question_text   TEXT    NOT NULL,
+      options         TEXT,
+      correct_answer  TEXT    NOT NULL,
+      explanation     TEXT,
+      order_index     INTEGER NOT NULL,
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS review_responses (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      question_id     INTEGER NOT NULL REFERENCES review_questions(id) ON DELETE CASCADE,
+      user_answer     TEXT    NOT NULL,
+      is_correct      INTEGER,
+      score           REAL,
+      ai_feedback     TEXT,
+      error_type      TEXT,
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS prompt_templates (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       role          TEXT    NOT NULL,
@@ -249,6 +275,13 @@ function initSchema(db: Database.Database): void {
     db.exec(`ALTER TABLE clusters DROP COLUMN next_review_date`)
   } catch {
     // Column already dropped or never existed
+  }
+
+  // M4 migration: reset P-values to correct direction (low=good, range 1-4)
+  try {
+    db.exec(`UPDATE clusters SET current_p_value = 2, consecutive_correct = 0, last_review_result = NULL`)
+  } catch {
+    // Table might not exist yet on fresh DB
   }
 
   db.exec(`UPDATE modules SET learning_status = 'unstarted' WHERE learning_status = 'not_started'`)

@@ -10,7 +10,7 @@
 ### 页面
 
 ```
-/ (首页：书目列表)
+/ (首页：书目列表 + 待复习按钮)
 ├── /upload (上传 PDF)
 ├── /logs (系统日志)
 └── /books/[bookId]
@@ -21,6 +21,7 @@
         ├── / (模块学习：指引→阅读→QA→笔记)
         ├── /qa (QA session)
         ├── /test (测试 session)
+        ├── /review?scheduleId=X (复习 session)
         └── /mistakes (错题页)
 ```
 
@@ -32,19 +33,21 @@ books/[bookId]/     — extract, status, pdf, module-map(+confirm/regenerate), s
 modules/            — list
 modules/[moduleId]/ — status, guide, generate-questions, qa-feedback, questions, reading-notes,
                       generate-notes, evaluate, test/generate, test/submit, test/, mistakes
+review/due          — GET 待复习列表
+review/[scheduleId]/ — generate, respond, complete
 qa/[questionId]/    — respond
 conversations/      — messages
 logs/               — 系统日志
 ```
 
-### DB 表（19 张）
+### DB 表（21 张）
 
 | 分类 | 表 |
 |------|----|
 | 用户数据 | books, modules, conversations, messages, highlights, reading_notes, module_notes |
 | 学习数据 | knowledge_points, clusters, qa_questions, qa_responses |
 | 测试数据 | test_papers, test_questions, test_responses, mistakes |
-| 复习数据 | review_schedule, review_records |
+| 复习数据 | review_schedule, review_records, review_questions, review_responses |
 | 系统数据 | prompt_templates, logs |
 
 ### AI 角色（5 个）
@@ -82,19 +85,32 @@ unstarted → reading → qa → notes_generated → testing → completed
 
 ### 测试 → 复习
 
-- 测试通过（≥80%）时：设 learning_status='completed' + 创建 review_schedule（round=1, due=today+3天）+ 按 cluster 更新 P 值
-- P 值更新规则：cluster 内全对 → consecutive_correct+1（连对≥2 则 P+1，上限 5）；有错 → consecutive_correct=0, P-1（下限 1）
+- 测试通过（≥80%）时：设 learning_status='completed' + 创建 review_schedule（round=1, due=today+3天）+ 简单初始化 P 值（全对→P=2，有错→P=3）
+- P 值方向：低=好（1=已掌握，4=最弱），范围 1-4
 - 复习调度在 review_schedule 表（module 级），clusters 表不存储调度日期
+
+### 复习系统（M4）
+
+- **调度**：5 轮间隔 3/7/15/30/60 天，review_schedule 按 module 管理
+- **出题**：generate 端点按 cluster P 值分配题量（P=题数，上限 10，等比缩减但每聚类至少 1 题），支持幂等重试（已有题直接返回下一道未答题）
+- **答题**：respond 端点调用 reviewer AI 评分（review_scoring prompt），写 review_responses；答错写 mistakes（source='review'）
+- **完成**：complete 端点汇总 cluster 结果，更新 P 值：
+  - 全对 → P = max(1, P-1)，consecutive_correct += 1
+  - 连续错（上轮也错）→ P = min(4, P+1)，consecutive_correct = 0
+  - 首次错 → P 不变，consecutive_correct = 0
+- **P=1 跳级**：所有 cluster P=1 且 consecutive_correct ≥ 3 → 跳过一个间隔级别
+- **复习记录**：review_records 存每次每 cluster 的 p_value_before/after
+- **前端**：ReviewSession 组件（QA 模式），首页 ReviewButton 显示待复习列表
 
 ### 错题流转
 
 - mistakes 表 source 字段支持 'test'|'qa'|'review' 三个来源
-- 当前只有 test/submit 写入（source='test'），qa 和 review 来源未实现
+- test/submit 写入（source='test'），review/respond 写入（source='review'），qa 来源未实现
 - mistakes.kp_id 关联 knowledge_points，用于出题时优先覆盖
 
 ### prompt 模板
 
-- seed-templates.ts 种子化：extractor×3, coach×4, examiner×2, reviewer×1, assistant×1
+- seed-templates.ts 种子化：extractor×3, coach×4, examiner×2, reviewer×2, assistant×1
 - extractor 模板是乱码 UTF-8，但功能正常（创建时就是这样写的）
 - examiner 模板已用正常中文重写（M3）
-- reviewer 模板已用正常中文重写（M3.5），含 P 值出题策略和 {recent_questions} 去重占位符
+- reviewer 模板：review_generation（出题）+ review_scoring（评分），均为正常中文（M4）

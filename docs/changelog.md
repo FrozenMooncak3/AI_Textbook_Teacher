@@ -4,6 +4,36 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-02 | M4：复习系统
+
+- **P 值方向修正**：低=好（1=已掌握，4=最弱），范围 1-4。test/submit P 值初始化简化为全对→P=2，有错→P=3
+- **新增 2 张表**：review_questions（复习题目，含 cluster_id/kp_id/正确答案/解析）、review_responses（答题记录+AI反馈+错误类型）
+- **reviewer prompt 升级**：review_generation 修正 P 值方向 + 加 {max_questions}/{recent_questions}；新增 review_scoring 评分模板
+- **GET /api/review/due**：查询 status='pending' 且 due_date ≤ today 的复习调度
+- **POST /api/review/[scheduleId]/generate**：按 cluster P 值分配题量（P=题数，上限 10，等比缩减），幂等（已有题返回下一道未答题），防御性 JSON 解析
+- **POST /api/review/[scheduleId]/respond**：逐题 AI 评分（review_scoring prompt），写 review_responses，答错写 mistakes（source='review'，含 error_type/remediation）
+- **POST /api/review/[scheduleId]/complete**：汇总 cluster 结果，P 值更新（全对→P-1，连错→P+1，首错→不变），P=1 跳级规则，创建下一轮调度，写 review_records
+- **复习会话前端**：ReviewSession 组件（QA 模式：intro→答题→反馈→完成），支持 4 种题型，AI 反馈 Markdown 渲染，进度条，完成页含集群掌握情况
+- **首页待复习按钮**：ReviewButton 组件，amber 风格，展开显示待复习模块列表
+
+修改文件：
+- `src/lib/db.ts` — 新增 review_questions/review_responses 表 + P 值 reset migration
+- `src/lib/seed-templates.ts` — 修正 review_generation + 新增 review_scoring
+- `src/app/api/modules/[moduleId]/test/submit/route.ts` — P 值初始化简化
+- `src/app/api/review/due/route.ts` — 新建
+- `src/app/api/review/[scheduleId]/generate/route.ts` — 新建
+- `src/app/api/review/[scheduleId]/respond/route.ts` — 新建
+- `src/app/api/review/[scheduleId]/complete/route.ts` — 新建
+- `src/app/books/[bookId]/modules/[moduleId]/review/page.tsx` — 新建
+- `src/app/books/[bookId]/modules/[moduleId]/review/ReviewSession.tsx` — 新建
+- `src/app/ReviewButton.tsx` — 新建
+- `src/app/page.tsx` — 集成 ReviewButton
+- `docs/architecture.md` — 更新系统总图 + 新增复习系统契约
+- `docs/project_status.md` — M4 标记完成
+- `docs/changelog.md` — 本条记录
+
+---
+
 ## 2026-04-02 | M3.5：里程碑衔接修复
 
 - **测试通过触发复习调度**：`test/submit` 通过（≥80%）时自动创建 `review_schedule`（round=1, due=today+3天）+ 按 cluster 更新 P 值（全对涨、有错降，bounds 1-5）
@@ -779,3 +809,13 @@
 - `src/app/books/[bookId]/modules/[moduleId]/test/page.tsx`
 - `src/app/books/[bookId]/modules/[moduleId]/test/TestSession.tsx`
 - `src/app/books/[bookId]/modules/[moduleId]/mistakes/page.tsx`
+
+---
+
+## 2026-04-02 | M4: Review Session Completion API
+
+**完成内容**: 新增 `POST /api/review/[scheduleId]/complete`，在单个事务内完成复习会话收尾：校验题目已全部作答、按 cluster 汇总正确率、更新 P 值与 `last_review_result`、写入 `review_records`、按跳级规则创建下一轮 `review_schedule`，并将当前 schedule 标记为 completed。
+
+**修改文件**:
+- `src/app/api/review/[scheduleId]/complete/route.ts`
+- `.agents/API_CONTRACT.md`

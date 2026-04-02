@@ -1,4 +1,5 @@
 import { getDb } from '@/lib/db'
+import ReviewButton from './ReviewButton'
 
 interface Book {
   id: number
@@ -29,6 +30,8 @@ export default function Home() {
           + 上传新教材
         </a>
 
+        <ReviewButton />
+
         {books.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
             <p className="text-sm text-gray-400">还没有教材，先上传一本吧</p>
@@ -52,3 +55,4 @@ export default function Home() {
     </main>
   )
 }
+

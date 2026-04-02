@@ -264,31 +264,15 @@ export const POST = handleRoute(async (req, context) => {
       for (const clusterResult of clusterResults) {
         if (clusterResult.cluster_id === null) continue
 
-        const cluster = db.prepare(
-          'SELECT current_p_value, consecutive_correct FROM clusters WHERE id = ?'
-        ).get(clusterResult.cluster_id) as
-          | { current_p_value: number; consecutive_correct: number }
-          | undefined
-
-        if (!cluster) continue
-
         const correctCount = clusterResult.correct ?? 0
+        const allCorrect = correctCount === clusterResult.total
 
-        if (correctCount === clusterResult.total) {
-          const newConsecutive = cluster.consecutive_correct + 1
-          const newPValue = newConsecutive >= 2
-            ? Math.min(cluster.current_p_value + 1, 5)
-            : cluster.current_p_value
+        // Simple initialization: P=2 (baseline) if all correct, P=3 (has errors) if any wrong.
+        // consecutive_correct and last_review_result are managed by the review flow.
+        const newPValue = allCorrect ? 2 : 3
 
-          db.prepare(
-            'UPDATE clusters SET consecutive_correct = ?, current_p_value = ? WHERE id = ?'
-          ).run(newConsecutive, newPValue, clusterResult.cluster_id)
-          continue
-        }
-
-        const newPValue = Math.max(cluster.current_p_value - 1, 1)
         db.prepare(
-          'UPDATE clusters SET consecutive_correct = 0, current_p_value = ? WHERE id = ?'
+          'UPDATE clusters SET current_p_value = ? WHERE id = ?'
         ).run(newPValue, clusterResult.cluster_id)
       }
     }
