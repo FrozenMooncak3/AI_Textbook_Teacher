@@ -29,6 +29,8 @@ export interface ValidatedReviewQuestion {
   explanation: string
 }
 
+export type ReviewMistakeErrorType = 'blind_spot' | 'procedural' | 'confusion' | 'careless'
+
 export const REVIEW_SCORING_MAX_OUTPUT_TOKENS = 8192
 
 const VALID_REVIEW_QUESTION_TYPES = new Set<ReviewQuestionType>([
@@ -37,6 +39,60 @@ const VALID_REVIEW_QUESTION_TYPES = new Set<ReviewQuestionType>([
   'calculation',
   'essay',
 ])
+
+const VALID_REVIEW_ERROR_TYPES = new Set<ReviewMistakeErrorType>([
+  'blind_spot',
+  'procedural',
+  'confusion',
+  'careless',
+])
+
+export function normalizeReviewErrorType(errorType: string | null | undefined): ReviewMistakeErrorType {
+  if (!errorType) {
+    return 'confusion'
+  }
+
+  const normalized = errorType.trim().toLowerCase()
+  if (VALID_REVIEW_ERROR_TYPES.has(normalized as ReviewMistakeErrorType)) {
+    return normalized as ReviewMistakeErrorType
+  }
+
+  if (
+    normalized.includes('confus') ||
+    normalized.includes('mix') ||
+    normalized.includes('concept')
+  ) {
+    return 'confusion'
+  }
+
+  if (
+    normalized.includes('blind') ||
+    normalized.includes('gap') ||
+    normalized.includes('knowledge') ||
+    normalized.includes('missing')
+  ) {
+    return 'blind_spot'
+  }
+
+  if (
+    normalized.includes('proced') ||
+    normalized.includes('step') ||
+    normalized.includes('calculation') ||
+    normalized.includes('process')
+  ) {
+    return 'procedural'
+  }
+
+  if (
+    normalized.includes('careless') ||
+    normalized.includes('slip') ||
+    normalized.includes('typo')
+  ) {
+    return 'careless'
+  }
+
+  return 'confusion'
+}
 
 export function validateGeneratedReviewQuestion(
   question: GeneratedReviewQuestion,

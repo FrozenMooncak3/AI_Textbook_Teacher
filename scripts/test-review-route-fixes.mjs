@@ -91,3 +91,27 @@ test('review scoring output budget meets the minimum standard', () => {
     'review scoring output budget must be at least 8192'
   )
 })
+
+test('review error_type normalizer helper exists', () => {
+  assert.ok(
+    reviewUtils && typeof reviewUtils.normalizeReviewErrorType === 'function',
+    'normalizeReviewErrorType helper must exist'
+  )
+})
+
+test('review error_type normalizer keeps valid values', () => {
+  assert.equal(reviewUtils?.normalizeReviewErrorType('careless'), 'careless')
+})
+
+test('review error_type normalizer maps concept_confusion to confusion', () => {
+  assert.equal(reviewUtils?.normalizeReviewErrorType('concept_confusion'), 'confusion')
+})
+
+test('review error_type normalizer maps knowledge_gap to blind_spot', () => {
+  assert.equal(reviewUtils?.normalizeReviewErrorType('knowledge_gap'), 'blind_spot')
+})
+
+test('review error_type normalizer defaults unknown values to confusion', () => {
+  assert.equal(reviewUtils?.normalizeReviewErrorType('totally_new_label'), 'confusion')
+  assert.equal(reviewUtils?.normalizeReviewErrorType(null), 'confusion')
+})

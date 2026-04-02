@@ -6,7 +6,9 @@ import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
 import { getPrompt } from '@/lib/prompt-templates'
 import {
+  normalizeReviewErrorType,
   REVIEW_SCORING_MAX_OUTPUT_TOKENS,
+  type ReviewMistakeErrorType,
   type ReviewQuestionType as QuestionType,
 } from '@/lib/review-question-utils'
 
@@ -237,6 +239,7 @@ export const POST = handleRoute(async (req, context) => {
   )
 
   if (!feedback.is_correct) {
+    const normalizedErrorType: ReviewMistakeErrorType = normalizeReviewErrorType(feedback.error_type)
     const schedule = db.prepare(`
       SELECT module_id
       FROM review_schedule
@@ -255,7 +258,7 @@ export const POST = handleRoute(async (req, context) => {
       schedule.module_id,
       question.kp_id,
       knowledgePointLabel,
-      feedback.error_type ?? 'blind_spot',
+      normalizedErrorType,
       feedback.remediation
     )
   }

@@ -4,6 +4,20 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-03 | M4：Review error_type 防御性归一化
+
+- **错因标签归一化**：新增 `normalizeReviewErrorType()`，将 reviewer 返回的自由文本错因收敛到 `blind_spot / procedural / confusion / careless` 四个数据库允许值；合法值原样保留，模糊匹配失败时默认落到 `confusion`。
+- **mistakes 写入兜底**：`POST /api/review/[scheduleId]/respond` 在答错时先归一化 `error_type` 再写 `mistakes`，避免因 AI 返回如 `concept_confusion`、`knowledge_gap` 之类标签触发表约束错误。
+- **回归脚本扩展**：补充 error_type helper 存在性、合法值保留、模糊匹配和默认分支测试。
+
+修改文件：
+- `src/lib/review-question-utils.ts` — 新增 review mistake error_type 归一化工具
+- `src/app/api/review/[scheduleId]/respond/route.ts` — mistakes 写入前使用归一化 error_type
+- `scripts/test-review-route-fixes.mjs` — 新增 error_type 归一化回归覆盖
+- `docs/changelog.md` — 本条记录
+
+---
+
 ## 2026-04-03 | M4：Review 系统 Bug 修复
 
 - **复习出题验证放宽**：抽出 `review-question-utils`，非单选题即使 AI 返回噪声 `options` 也会归一化为 `null` 后继续入库，不再整题跳过；单选题仍保持 4 个选项的严格校验。
