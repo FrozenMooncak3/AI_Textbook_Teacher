@@ -1,7 +1,6 @@
 # Journal Index
 
 ## open（需要关注）
-- [audit] M3→M4 代码审计：6 个接入问题，3 个纳入 M3.5（2026-04-02）→ [2026-04-02-m3-to-m4-code-audit.md](./2026-04-02-m3-to-m4-code-audit.md)
 
 ## in_progress（解决中）
 
@@ -19,6 +18,7 @@
 - [decision] 第三次 brainstorming 中被砍掉的项：H6/H8/H12/H13（评估后认为不需要）→ [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [audit] M3→M4 代码审计：6 个问题全部分流，3 个修复于 M3.5，剩余 3 个归入 M4（2026-04-02）→ [2026-04-02-m3-to-m4-code-audit.md](./2026-04-02-m3-to-m4-code-audit.md)
 - [infra] CCB 文件消息系统：替代 ask 命令，双向通信验证通过（2026-04-02）→ [2026-04-02-ccb-file-messaging.md](./2026-04-02-ccb-file-messaging.md)
 - [infra] CCB 迁移到 Claude Code Bridge v5.2.9：验证通过，ask/ping 双向通信正常（2026-04-02）→ [2026-04-01-ccb-migration.md](./2026-04-01-ccb-migration.md)
 - [blocked→resolved] M3 集成测试：4 层修复（代理+流式+token+JSON 解析），commit deb82c5（2026-04-01）→ [2026-04-01-m3-integration-test.md](./2026-04-01-m3-integration-test.md)
