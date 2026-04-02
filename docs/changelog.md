@@ -4,6 +4,24 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-02 | 基础设施：架构地图系统
+
+- **`docs/architecture.md` 新建**：两层架构文档——第一层系统总图（页面、API、DB 表、AI 角色、学习状态流），第二层接口契约（跨模块依赖 + ⚠️ 标记已知断裂点）
+- **CLAUDE.md 禁止事项扩展**：里程碑完成时必须同步更新 `architecture.md`
+- **session-init 读取列表扩展**：Step 1 新增 `docs/architecture.md` 读取
+- **CCB 里程碑收尾清理**：`finishing-a-development-branch` 新增 Step 6 清理 `.ccb/inbox/`；`ccb-protocol.md` 新增 cleanup 命令
+
+修改文件：
+- `docs/architecture.md` — 新建
+- `CLAUDE.md` — 禁止事项扩展
+- `.claude/skills/session-init/SKILL.md` — 读取列表扩展
+- `.claude/skills/finishing-a-development-branch/SKILL.md` — 新增 Step 6
+- `docs/ccb-protocol.md` — lifecycle cleanup 扩展
+- `docs/superpowers/specs/2026-04-02-architecture-map-design.md` — 设计文稿
+- `docs/superpowers/plans/2026-04-02-architecture-map.md` — 实施计划
+
+---
+
 ## 2026-04-02 | 基础设施：CCB 文件消息系统
 
 - **替代 `ask` 命令**：所有 Claude↔Codex↔Gemini 通信改为"写文件到 `.ccb/inbox/` + 短 wezterm 通知"。解决了 `ask` 异步长消息静默失败的问题。

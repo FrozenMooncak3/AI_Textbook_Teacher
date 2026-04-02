@@ -11,9 +11,9 @@
 
 **当前里程碑**：M3.5 里程碑衔接修复 — 未开始
 
-**最新完成**：M3→M4 代码审计（2026-04-02）。首次执行"里程碑启动代码审计"流程，发现 6 个接入问题，其中 3 个需在 M4 之前修复。
+**最新完成**：架构地图系统（2026-04-02）。新建 `docs/architecture.md`（两层：系统总图 + 接口契约），CLAUDE.md 禁止事项已包含 architecture.md 更新要求，session-init 已加入读取。
 
-**M3.5 审计报告**：`docs/journal/2026-04-02-m3-to-m4-code-audit.md`
+**M3→M4 代码审计**：`docs/journal/2026-04-02-m3-to-m4-code-audit.md`（6 个接入问题，3 个纳入 M3.5）
 
 **M3.5 任务**：
 1. M3.5-T1: 测试通过后创建 review_schedule + 更新 cluster P 值（后端）
