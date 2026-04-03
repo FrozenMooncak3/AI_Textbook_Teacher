@@ -23,6 +23,7 @@
 
 ### 交互 / UX
 - **T1** QA/复习时旁边可以看原文 → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
+- **T2** 模块阅读选文字问AI（选中文字→提问→AI回答，复用screenshot-ask第二步）→ [2026-04-03-module-text-ask-ai.md](./2026-04-03-module-text-ask-ai.md)
 - **T2** 笔记跳转原文 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - **T2** 右键选中多功能：做笔记、高亮等 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - **T2** 学习计划定制（百词斩模式）：AI 预估时长+用户自定节奏 → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
