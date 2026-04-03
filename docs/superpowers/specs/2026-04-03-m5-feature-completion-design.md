@@ -99,20 +99,27 @@
 
 **向后兼容**：旧的"只传 image 自动解释"模式不再支持。前端必须先调 screenshot-ocr 拿到文字，再调 screenshot-ask 传三个参数。破坏性变更，但只有内部前端调用。
 
+**注意**：当前 screenshot-ask 响应包含 `extractedText` 字段（OCR 结果），新流程中 OCR 已由 screenshot-ocr 返回，screenshot-ask 响应移除 `extractedText`。前端 `AiChatDialog.tsx` 需同步停止读取该字段。
+
 ### 2.4 Prompt 变更
 
 当前 `screenshot-ask/route.ts` 中有硬编码的 `buildScreenshotPrompt()` 和 `systemPrompt`，**未使用** prompt 模板系统。需要两步修改：
 
-1. **route.ts**：移除硬编码 prompt，改用 `getPrompt('assistant', 'screenshot_qa')` 调用模板系统
-2. **seed-templates.ts**：更新 assistant 模板内容为：
+1. **route.ts**：移除硬编码的 `buildScreenshotPrompt()` 和 `systemPrompt`，改为：
+   - 系统 prompt 直接写在 route.ts 中（简短的角色定义，不需要模板化）：
+     ```
+     你是一个教材学习助手。用户会给你一段教材内容（文字+截图），并提出问题。
+     规则：
+     1. 只根据提供的内容回答，不要编造内容之外的信息
+     2. 用与教材内容相同的语言回答（中文内容用中文，英文内容用英文）
+     3. 回答要清晰、有条理，使用 Markdown 格式
+     ```
+   - 用户 prompt 调用 `getPrompt('assistant', 'screenshot_qa', { screenshot_text, user_question, conversation_history })`
 
-```
-你是一个教材学习助手。用户会给你一段教材内容（文字+截图），并提出问题。
-规则：
-1. 只根据提供的内容回答，不要编造内容之外的信息
-2. 用与教材内容相同的语言回答（中文内容用中文，英文内容用英文）
-3. 回答要清晰、有条理，使用 Markdown 格式
-```
+2. **seed-templates.ts**：更新 assistant/screenshot_qa 模板的用户 prompt 部分：
+   - 保留 `{screenshot_text}`、`{user_question}`、`{conversation_history}` 占位符
+   - 移除写死的 "Explain the passage" 指令
+   - 改为：「以下是教材内容：\n{screenshot_text}\n\n用户的问题：{user_question}\n\n{conversation_history}」
 
 ### 2.5 前端变更
 
@@ -329,8 +336,7 @@ interface AIResponseProps {
       "userAnswer": "用户答案",
       "correctAnswer": "正确答案",
       "errorType": "blind_spot",
-      "diagnosis": "AI 诊断文本",
-      "remedy": "AI 补救建议",
+      "remediation": "AI 诊断 + 补救建议",
       "source": "test",
       "kpTitle": "关联知识点名称",
       "createdAt": "2026-04-01T10:00:00"
@@ -365,8 +371,8 @@ ALTER TABLE mistakes ADD COLUMN correct_answer TEXT;
 ### 6.3 UI
 
 - 顶部：错题总数 + 过滤栏（模块下拉、错误类型标签、来源标签）
-- 列表：每张错题卡片展示题目、用户答案 vs 正确答案、错误类型标签、AI 诊断和补救建议
-- 诊断和补救用 `<AIResponse>` 组件渲染 Markdown
+- 列表：每张错题卡片展示题目、用户答案 vs 正确答案、错误类型标签、remediation（AI 诊断+补救建议）
+- remediation 用 `<AIResponse>` 组件渲染 Markdown
 - 按时间倒序排列
 
 ---
