@@ -10,13 +10,15 @@
 ### 页面
 
 ```
-/ (首页：书目列表 + 待复习按钮)
+/ (首页：书目列表 + 待复习按钮 + 仪表盘入口)
 ├── /upload (上传 PDF)
 ├── /logs (系统日志)
 └── /books/[bookId]
-    ├── / (书详情)
-    ├── /reader (PDF 阅读器 + 截图问 AI)
+    ├── / (书详情 + 仪表盘入口)
+    ├── /reader (PDF 阅读器 + 截图问 AI：OCR→提问→回答两步流程)
     ├── /module-map (模块地图)
+    ├── /dashboard (学习仪表盘：进度/复习/测试/错题四宫格)
+    ├── /mistakes (书级错题诊断本：多维筛选)
     └── /modules/[moduleId]
         ├── / (模块学习：指引→阅读→QA→笔记)
         ├── /qa (QA session)
@@ -29,7 +31,7 @@
 
 ```
 books/              — list/create
-books/[bookId]/     — extract, status, pdf, module-map(+confirm/regenerate), screenshot-ask, notes, highlights, toc
+books/[bookId]/     — extract, status, pdf, module-map(+confirm/regenerate), screenshot-ocr, screenshot-ask, notes, highlights, toc, dashboard, mistakes
 modules/            — list
 modules/[moduleId]/ — status, guide, generate-questions, qa-feedback, questions, reading-notes,
                       generate-notes, evaluate, test/generate, test/submit, test/, mistakes
@@ -117,3 +119,25 @@ unstarted → reading → qa → notes_generated → testing → completed
 - extractor 模板是乱码 UTF-8，但功能正常（创建时就是这样写的）
 - examiner 模板已用正常中文重写（M3）
 - reviewer 模板：review_generation（出题）+ review_scoring（评分），均为正常中文（M4）
+- assistant/screenshot_qa 模板已修复为干净中文，变量：{screenshot_text}, {user_question}, {conversation_history}（M5）
+
+### 截图问 AI（M5 改造）
+
+- **两步流程**：Step 1 调 screenshot-ocr 获取文字 → Step 2 用户输入问题 → screenshot-ask 拼图+文字+问题发给 AI
+- screenshot-ocr：`POST /api/books/[bookId]/screenshot-ocr` → `{ data: { text, confidence } }`
+- screenshot-ask：`POST /api/books/[bookId]/screenshot-ask`，接收 `{ image, text, question }`，系统 prompt 硬编码在 route.ts，用户 prompt 通过 `getPrompt('assistant', 'screenshot_qa', ...)` 生成
+- AI 调用使用 multipart message（image + text）支持视觉输入
+- 响应：`{ data: { conversationId, answer } }`
+
+### 仪表盘与书级错题（M5）
+
+- **Dashboard API**：`GET /api/books/[bookId]/dashboard` → 聚合 book/modules/reviewsDue/recentTests/mistakesSummary
+- **Mistakes API**：`GET /api/books/[bookId]/mistakes?module=&errorType=&source=` → 带筛选的错题列表 + 汇总
+- mistakes 表新增 3 列（M5）：question_text, user_answer, correct_answer（均可空 TEXT）
+- test/submit 和 review/respond 写 mistakes 时同时填充这 3 列
+
+### AI 文本渲染（M5）
+
+- 所有 AI 生成文本统一使用 `<AIResponse>` 组件渲染（react-markdown + remark-gfm + Tailwind Typography）
+- 覆盖范围：QA 反馈、测试评分、复习反馈、截图问答、读前指引、学习笔记、模块摘要、错题诊断
+- MarkdownRenderer 已删除，不再使用

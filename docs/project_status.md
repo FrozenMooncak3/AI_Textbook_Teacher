@@ -9,14 +9,15 @@
 
 **方向**：MVP 重新设计——教练核心 + PDF 阅读器 + 独立问答通道
 
-**当前里程碑**：M4 复习系统 — **已完成**（2026-04-02），bug 修复完成（2026-04-03）
+**当前里程碑**：M5 功能补完 — **已完成**（2026-04-03）
 
-**最新完成**：M4 milestone-audit 执行完毕——验证 architecture.md 与 M4 代码一致，补全 1 处缺漏（error_type 约束）。守护体系两道关卡已就绪。
+**最新完成**：M5 全部 9 个任务完成。截图问 AI 两步流程改造、AIResponse Markdown 渲染全覆盖、正确答案/解析展示、学习仪表盘、书级错题诊断本。
 
 **待办**：
-1. 进入 M5（体验打磨）brainstorming
+1. M5 milestone-audit
+2. 进入 M5.5（体验增强）brainstorming
 
-**下一步**：M5 brainstorming
+**下一步**：M5 milestone-audit → M5.5 brainstorming
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -34,17 +35,22 @@
 | M3 | 考官 AI：测试出题 → 盲测 → 评分 → 80% 过关 → 错题诊断 | **已完成**（2026-04-01） |
 | M3.5 | 里程碑衔接修复：测试→复习调度触发 + schema 清理 + reviewer prompt 重写 | **已完成**（2026-04-02） |
 | M4 | 复习系统：复习调度（3/7/15/30/60 天）→ 聚类出题 → P 值更新 → 前端复习会话 | **已完成**（2026-04-02） |
-| M5 | 体验打磨：首页仪表盘 + 笔记查看/导出 + 截图问 AI 流程改造 + UI/UX 打磨 | 未开始 |
+| M5 | 功能补完：截图问 AI 两步流程 + AIResponse Markdown 渲染 + 正确答案展示 + 仪表盘 + 错题诊断 | **已完成**（2026-04-03） |
+| M5.5 | 体验增强：导航 sidebar + 笔记导出 + 模块内文字选取问 AI + UI/UX 打磨 | 未开始 |
 
-### M5 已知任务（来自 M0 验证观察）
+### M5 完成内容
 
-| 编号 | 任务 | 类型 |
+| 任务 | 描述 | 状态 |
 |------|------|------|
-| M5-T1 | 截图问 AI 流程拆分：OCR 识别（Step 1）→ 用户提问（Step 2）→ AI 回答（Step 3），不再自动解释 | 功能修正 |
-| M5-T2 | 截图问 AI 语言匹配：AI 用内容语言回答（中文内容→中文回答），prompt 改为中文 | 功能修正 |
-| M5-T3 | 截图处理进度反馈：分阶段显示「识别中...」→「文字已识别」→「AI 思考中...」 | UX |
-| M5-T4 | AI 回复 Markdown 渲染（react-markdown 或类似方案） | UX |
-| M5-T5 | OCR 进度条精度优化 | UX |
+| T1 | Schema migration: mistakes 表 + screenshot_qa 模板修复 | ✅ |
+| T2 | AIResponse 组件 + react-markdown 依赖 | ✅ |
+| T3 | 截图问 AI API 拆分（screenshot-ocr + screenshot-ask 重写） | ✅ |
+| T4 | 正确答案/解析：review/respond + test/submit 返回值增强 | ✅ |
+| T5 | Dashboard + Mistakes 后端 API | ✅ |
+| T6 | AiChatDialog 前端两步流程 | ✅ |
+| T7 | ReviewSession/TestSession 正确答案展示 + AIResponse 迁移 | ✅ |
+| T8 | Dashboard + Mistakes 前端页面 | ✅ |
+| T9 | AIResponse 全站 rollout | ✅ |
 
 ### 依赖关系
 
