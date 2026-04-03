@@ -14,6 +14,15 @@ When dispatching tasks to Codex or Gemini, use this template to ensure the recei
 3. Show Chinese translation to user for approval (per CCB protocol Section 2)
 4. User approves -> write English dispatch to `.ccb/inbox/<target>/<NNN>-dispatch.md`, then send short wezterm notification
 
+## Pre-Dispatch: Check Interface Contracts
+
+Before filling the template, read `docs/architecture.md` Section "接口契约" and identify:
+1. Any cross-module dependencies relevant to this task (e.g. "提取→学习" if the task touches KP data)
+2. Any `⚠️` markers that this task might encounter or need to work around
+3. Include these dependencies in the **Context** section of the dispatch so the agent knows the interface assumptions
+
+This is critical — milestone interface breakage is our #1 source of bugs.
+
 ## Dispatch Template
 
 Fill in all sections. If a section is not applicable, write "N/A" with a reason.

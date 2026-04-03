@@ -46,6 +46,12 @@ Use Task tool with superpowers:code-reviewer type, fill template at `code-review
 - Note Minor issues for later
 - Push back if reviewer is wrong (with reasoning)
 
+**4. Update architecture contracts:**
+After review passes, check `docs/architecture.md` for:
+- Any `⚠️` breakpoint markers that this work resolved → remove the marker and update the description
+- Any new cross-module dependencies introduced by this work → add them to the interface contracts
+This keeps the architecture map current and prevents stale breakpoint markers from accumulating.
+
 ## Example
 
 ```

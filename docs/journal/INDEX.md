@@ -1,24 +1,48 @@
 # Journal Index
 
 ## open（需要关注）
-- [bug] M4 集成测试：2 个 bug — 出题验证过严（只出 2 题）+ respond 评分 token 截断（2026-04-03）→ [2026-04-03-m4-integration-test.md](./2026-04-03-m4-integration-test.md)
+（无）
 
 ## in_progress（解决中）
 
 ## parked（停车场）
-- [idea] 笔记+QA联动：阅读时写笔记 → AI生成结构化笔记 → QA侧边栏弹出要点边做边学 → [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
-- [idea] 测试结果 Dashboard：完成测试后展示成绩、错题分布、KP 掌握度等（归入 M5 首页仪表盘）→ [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
-- [idea] 错题本功能：接入 mistakes 表，展示错题+诊断+补救（归入 M5）→ [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
-- [idea] 学习计划定制（百词斩模式）：AI 预估学习时长+用户自定节奏（M5 后独立评估）→ [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
-- [idea] OCR 后生成思维导图（M5+）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
-- [idea] 笔记跳转原文（M5+）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
-- [idea] 右键选中多功能：做笔记、高亮等（需独立评估）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
-- [idea] 支持 PPT + 扫描版 PDF（独立里程碑）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
-- [idea] 优先面向扫描版 PDF 用户群体（商业策略，与扫描版支持一起评估）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
-- [idea] 语言模式系统——自动切换 prompt 语言，多国语言版本（MVP 后） → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
-- [decision] 第三次 brainstorming 中被砍掉的项：H6/H8/H12/H13（评估后认为不需要）→ [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
+
+> Tier 说明：T1 = M5 必做，直接影响核心体验 | T2 = M5 或独立里程碑评估 | T3 = MVP 后再议
+
+### AI / Prompt
+- **T1** 评分后显示正确答案 + 预生成答案解析（提速）→ [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
+- **T2** 复习出题 KP 覆盖率——cluster 内 KP 轮换或改为 KP 粒度出题 → [2026-04-03-review-kp-coverage.md](./2026-04-03-review-kp-coverage.md)
+
+### 功能
+- **T1** 错题本功能：接入 mistakes 表，展示错题+诊断+补救 → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
+- **T1** 测试结果 Dashboard：成绩、错题分布、KP 掌握度（归入 M5 首页仪表盘）→ [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
+- **T2** Dashboard 日历视图——学习/复习时间表 → [2026-04-03-dashboard-calendar.md](./2026-04-03-dashboard-calendar.md)
+- **T2** 笔记+QA 联动：阅读写笔记 → AI 结构化 → QA 侧边栏弹要点 → [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
+- **T3** OCR 后生成思维导图 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
+- **T3** 渐进 Hint 系统（浅提示→跳原文→解析，subscription 分级）→ [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
+
+### 交互 / UX
+- **T1** QA/复习时旁边可以看原文 → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
+- **T2** 笔记跳转原文 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
+- **T2** 右键选中多功能：做笔记、高亮等 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
+- **T2** 学习计划定制（百词斩模式）：AI 预估时长+用户自定节奏 → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
+
+### 基础设施
+- **T2** 支持 PPT + 扫描版 PDF（独立里程碑）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
+- **T3** 语言模式系统——自动切换 prompt 语言，多国语言版本 → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
+
+### 商业
+- **T2** Subscription 分级（hint access levels 等付费功能区分）→ [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
+- **T2** 优先面向扫描版 PDF 用户群体 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
+
+### 工程流程
+- **T2** milestone-audit skill——里程碑结束时结构化审计接口契约 → [2026-04-03-milestone-audit-skill.md](./2026-04-03-milestone-audit-skill.md)
+
+### 已决策归档
+- [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [bug:resolved] M4 集成测试 2 bug 已修复（commit f54baf0）：验证放宽 + token 预算提升（2026-04-03）→ [2026-04-03-m4-integration-test.md](./2026-04-03-m4-integration-test.md)
 - [audit] M3→M4 代码审计：6 个问题全部分流，3 个修复于 M3.5，剩余 3 个归入 M4（2026-04-02）→ [2026-04-02-m3-to-m4-code-audit.md](./2026-04-02-m3-to-m4-code-audit.md)
 - [infra] CCB 文件消息系统：替代 ask 命令，双向通信验证通过（2026-04-02）→ [2026-04-02-ccb-file-messaging.md](./2026-04-02-ccb-file-messaging.md)
 - [infra] CCB 迁移到 Claude Code Bridge v5.2.9：验证通过，ask/ping 双向通信正常（2026-04-02）→ [2026-04-01-ccb-migration.md](./2026-04-01-ccb-migration.md)

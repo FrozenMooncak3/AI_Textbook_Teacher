@@ -113,6 +113,11 @@ prompt_templates   → Prompt 模板（role, stage, version, template_text, is_a
 
 ## 编码规范（M0 起所有新代码必须遵守）
 
+### AI 调用
+- 所有 AI 调用的 `maxOutputTokens` 最低 **8192**
+- 生成类任务（出题、笔记生成等）使用 **65536**
+- 原因：Gemini Flash 的 thinking tokens 算在 output budget 内，低于 8192 几乎必然导致 JSON 截断
+
 ### 错误处理
 - 用户输入错误：`throw new UserError(message, code, statusCode)`（从 `@/lib/errors` 导入）
 - 系统错误（AI/DB/IO）：`throw new SystemError(message, originalError)`
