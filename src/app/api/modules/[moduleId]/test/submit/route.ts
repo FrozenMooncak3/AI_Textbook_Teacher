@@ -211,20 +211,27 @@ export const POST = handleRoute(async (req, context) => {
     }
 
     const insertMistake = db.prepare(`
-      INSERT INTO mistakes (module_id, kp_id, knowledge_point, error_type, source, remediation)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO mistakes (
+        module_id, kp_id, knowledge_point, error_type, source, remediation,
+        question_text, user_answer, correct_answer
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     for (const r of allResults) {
       if (r.is_correct) continue
       const q = questions.find((qu) => qu.id === r.question_id)!
       const kpIdsArr: number[] = q.kp_ids ? JSON.parse(q.kp_ids) : []
+      const userAnswer = body.answers.find((a) => a.question_id === q.id)
       insertMistake.run(
         id,
         q.kp_id ?? kpIdsArr[0] ?? null,
         q.question_text.slice(0, 200),
         r.error_type ?? 'blind_spot',
         'test',
-        r.remediation ?? null
+        r.remediation ?? null,
+        q.question_text,
+        userAnswer?.user_answer ?? '',
+        q.correct_answer ?? null
       )
     }
 

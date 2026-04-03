@@ -252,14 +252,20 @@ export const POST = handleRoute(async (req, context) => {
 
     const knowledgePointLabel = kp ? kp.description : question.question_text.slice(0, 50)
     db.prepare(`
-      INSERT INTO mistakes (module_id, kp_id, knowledge_point, error_type, source, remediation, is_resolved)
-      VALUES (?, ?, ?, ?, 'review', ?, 0)
+      INSERT INTO mistakes (
+        module_id, kp_id, knowledge_point, error_type, source, remediation, is_resolved,
+        question_text, user_answer, correct_answer
+      )
+      VALUES (?, ?, ?, ?, 'review', ?, 0, ?, ?, ?)
     `).run(
       schedule.module_id,
       question.kp_id,
       knowledgePointLabel,
       normalizedErrorType,
-      feedback.remediation
+      feedback.remediation,
+      question.question_text,
+      userAnswer,
+      question.correct_answer
     )
   }
 
@@ -282,6 +288,8 @@ export const POST = handleRoute(async (req, context) => {
       is_correct: feedback.is_correct,
       score: feedback.score,
       ai_feedback: feedback.feedback,
+      correct_answer: question.correct_answer,
+      explanation: question.explanation,
       has_next: Boolean(nextQuestion),
       next_question: formatNextQuestion(nextQuestion),
     },
