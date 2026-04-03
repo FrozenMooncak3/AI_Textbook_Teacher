@@ -14,10 +14,9 @@
 **最新完成**：M5 全部 9 个任务完成。截图问 AI 两步流程改造、AIResponse Markdown 渲染全覆盖、正确答案/解析展示、学习仪表盘、书级错题诊断本。
 
 **待办**：
-1. M5 milestone-audit
-2. 进入 M5.5（体验增强）brainstorming
+1. 进入 M5.5（体验增强）brainstorming
 
-**下一步**：M5 milestone-audit → M5.5 brainstorming
+**下一步**：M5.5 brainstorming
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
