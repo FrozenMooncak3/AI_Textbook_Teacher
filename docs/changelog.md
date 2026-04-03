@@ -4,6 +4,29 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-03 | 工程流程：architecture.md 守护体系
+
+- **milestone-audit skill**：里程碑收尾时按改动范围定向审计 architecture.md（6 类检查 + 报告格式），确保下个里程碑 brainstorming 基于准确的系统现状设计。
+- **brainstorming 深度 review**：spec review 从冷 subagent 替换为带完整项目上下文的 agent，检查接口一致性/改动清单完整性/数据流连通/跨模块副作用/内部一致性 5 个维度。
+- **Closeout Chain 扩展**：requesting-code-review → milestone-audit → claudemd-check → finishing-a-development-branch。
+- **CLAUDE.md 强化**：新增"架构地图"段落 + 禁止事项加"不得跳过 milestone-audit"。
+- **claudemd-check 强化**：Step 3 扩展检查 architecture.md + 新增里程碑审计检查项。
+- **brainstorming 强化**：Step 1 改为 5 项明确读取列表 + HARD-GATE（发现不一致先修 architecture.md）。
+
+修改文件：
+- `.claude/skills/milestone-audit/SKILL.md` — 新建
+- `.claude/skills/brainstorming/SKILL.md` — 读取列表 + HARD-GATE + review loop 重写
+- `.claude/skills/brainstorming/spec-document-reviewer-prompt.md` — 深度 review agent 模板重写
+- `.claude/skills/claudemd-check/SKILL.md` — 加检查项
+- `.claude/skills/session-init/SKILL.md` — 触发表 + chain + skill 表
+- `.claude/skills/requesting-code-review/SKILL.md` — Chain Position 同步
+- `CLAUDE.md` — 架构地图段落 + 禁止事项
+- `docs/journal/INDEX.md` — milestone-audit 从 parked 移到 resolved
+- `docs/superpowers/specs/2026-04-03-milestone-audit-design.md` — 设计文稿
+- `docs/superpowers/plans/2026-04-03-milestone-audit-plan.md` — 实施计划
+
+---
+
 ## 2026-04-03 | M4：Review error_type 防御性归一化
 
 - **错因标签归一化**：新增 `normalizeReviewErrorType()`，将 reviewer 返回的自由文本错因收敛到 `blind_spot / procedural / confusion / careless` 四个数据库允许值；合法值原样保留，模糊匹配失败时默认落到 `confusion`。

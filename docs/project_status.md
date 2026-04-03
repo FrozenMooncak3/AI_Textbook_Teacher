@@ -11,7 +11,7 @@
 
 **当前里程碑**：M4 复习系统 — **已完成**（2026-04-02），bug 修复完成（2026-04-03）
 
-**最新完成**：M4 集成测试 3 个 bug 全部修复：出题验证放宽（非选择题 options 噪声归一化）、评分 token 预算提升（8192）、error_type 防御性解析（模糊匹配 + 默认值）。复习流程端到端验证通过（8 题生成 + 评分 + P 值更新 + 错题记录 + 下轮调度）。
+**最新完成**：architecture.md 守护体系——新建 milestone-audit skill（里程碑收尾全量验证）+ brainstorming 深度 review agent（替换冷 subagent）+ CLAUDE.md/session-init/claudemd-check 多处强化。两道关卡闭环：closeout 时全量验证 + brainstorming 时二次确认。
 
 **待办**：
 1. 进入 M5（体验打磨）brainstorming
