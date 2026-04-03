@@ -41,6 +41,7 @@
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [audit] M4 milestone-audit 通过：1 处缺漏已补（error_type 约束），architecture.md 与代码一致（2026-04-03）→ [2026-04-03-m4-milestone-audit.md](./2026-04-03-m4-milestone-audit.md)
 - [infra:resolved] milestone-audit skill 已实现——architecture.md 守护体系（两道关卡闭环）（2026-04-03）→ [2026-04-03-milestone-audit-skill.md](./2026-04-03-milestone-audit-skill.md)
 - [bug:resolved] M4 集成测试 2 bug 已修复（commit f54baf0）：验证放宽 + token 预算提升（2026-04-03）→ [2026-04-03-m4-integration-test.md](./2026-04-03-m4-integration-test.md)
 - [audit] M3→M4 代码审计：6 个问题全部分流，3 个修复于 M3.5，剩余 3 个归入 M4（2026-04-02）→ [2026-04-02-m3-to-m4-code-audit.md](./2026-04-02-m3-to-m4-code-audit.md)

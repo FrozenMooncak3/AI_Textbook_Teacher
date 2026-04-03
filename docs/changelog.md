@@ -4,6 +4,20 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-03 | M4 milestone-audit 执行
+
+- 对 M4 复习系统执行 milestone-audit，验证 architecture.md 与代码一致性
+- 审计 5 个类别（页面/API/DB/AI 角色/状态流）全部一致
+- 发现 1 处缺漏：错题流转 error_type 约束未文档化（4 个合法值 + test/submit 缺归一化）
+- 已补全 architecture.md 错题流转 section，标注 ⚠️
+
+修改文件：
+- `docs/architecture.md` — 补充 error_type 约束 + ⚠️ 标记
+- `docs/journal/2026-04-03-m4-milestone-audit.md` — 审计报告
+- `docs/journal/INDEX.md` — 新增审计条目
+
+---
+
 ## 2026-04-03 | 工程流程：architecture.md 守护体系
 
 - **milestone-audit skill**：里程碑收尾时按改动范围定向审计 architecture.md（6 类检查 + 报告格式），确保下个里程碑 brainstorming 基于准确的系统现状设计。

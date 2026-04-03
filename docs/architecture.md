@@ -107,6 +107,9 @@ unstarted → reading → qa → notes_generated → testing → completed
 - mistakes 表 source 字段支持 'test'|'qa'|'review' 三个来源
 - test/submit 写入（source='test'），review/respond 写入（source='review'），qa 来源未实现
 - mistakes.kp_id 关联 knowledge_points，用于出题时优先覆盖
+- mistakes.error_type 只允许 4 个值：blind_spot / procedural / confusion / careless
+  - review/respond 使用 `normalizeReviewErrorType()` 做模糊归一化（M4 bug fix）
+  - ⚠️ test/submit 只做空值兜底（`?? 'blind_spot'`），未归一化——examiner AI 返回非标准值会直接入库
 
 ### prompt 模板
 

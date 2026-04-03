@@ -11,7 +11,7 @@
 
 **当前里程碑**：M4 复习系统 — **已完成**（2026-04-02），bug 修复完成（2026-04-03）
 
-**最新完成**：architecture.md 守护体系——新建 milestone-audit skill（里程碑收尾全量验证）+ brainstorming 深度 review agent（替换冷 subagent）+ CLAUDE.md/session-init/claudemd-check 多处强化。两道关卡闭环：closeout 时全量验证 + brainstorming 时二次确认。
+**最新完成**：M4 milestone-audit 执行完毕——验证 architecture.md 与 M4 代码一致，补全 1 处缺漏（error_type 约束）。守护体系两道关卡已就绪。
 
 **待办**：
 1. 进入 M5（体验打磨）brainstorming
