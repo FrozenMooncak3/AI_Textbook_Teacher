@@ -40,14 +40,17 @@ export default function Home() {
           <div className="space-y-3">
             <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">我的教材</p>
             {books.map((book) => (
-              <a
-                key={book.id}
-                href={`/books/${book.id}`}
-                className="block bg-white rounded-xl border border-gray-200 px-5 py-4 hover:border-blue-300 transition-colors"
-              >
-                <p className="text-sm font-medium text-gray-900">{book.title}</p>
-                <p className="text-xs text-gray-400 mt-1">{book.created_at.slice(0, 10)}</p>
-              </a>
+              <div key={book.id} className="block bg-white rounded-xl border border-gray-200 hover:border-blue-300 transition-colors overflow-hidden">
+                <a href={`/books/${book.id}`} className="block px-5 py-4">
+                  <p className="text-sm font-medium text-gray-900">{book.title}</p>
+                  <p className="text-xs text-gray-400 mt-1">{book.created_at.slice(0, 10)}</p>
+                </a>
+                <div className="px-5 py-2 bg-gray-50 border-t border-gray-100 flex justify-end">
+                  <a href={`/books/${book.id}/dashboard`} className="text-xs font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest">
+                    学习仪表盘 &rarr;
+                  </a>
+                </div>
+              </div>
             ))}
           </div>
         )}

@@ -43,12 +43,20 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
             <p className="text-xs text-gray-400 mb-1">教材</p>
             <h1 className="text-2xl font-semibold text-gray-900">{book.title}</h1>
           </div>
-          <a
-            href={`/books/${book.id}/reader`}
-            className="shrink-0 text-sm text-blue-600 hover:text-blue-800 border border-blue-200 hover:border-blue-400 rounded-lg px-3 py-1.5 transition-colors mt-1"
-          >
-            阅读原文
-          </a>
+          <div className="flex gap-2 mt-1">
+            <a
+              href={`/books/${book.id}/dashboard`}
+              className="shrink-0 text-sm text-gray-600 hover:text-gray-800 border border-gray-200 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              仪表盘
+            </a>
+            <a
+              href={`/books/${book.id}/reader`}
+              className="shrink-0 text-sm text-blue-600 hover:text-blue-800 border border-blue-200 hover:border-blue-400 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              阅读原文
+            </a>
+          </div>
         </div>
 
         {book.parse_status === 'processing' ? (
