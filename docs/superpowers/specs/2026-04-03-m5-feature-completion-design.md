@@ -31,7 +31,7 @@
 
 ### 数据库
 
-无 schema 变更。所有数据已存在于现有表中。
+需要 1 处 schema 变更：mistakes 表增加 `question_text`、`user_answer`、`correct_answer` 三列（见 Section 6.2）。
 
 ---
 
@@ -81,6 +81,7 @@
 请求（改）：
 ```json
 {
+  "image": "base64 encoded image",
   "text": "OCR 识别出的文字",
   "question": "用户的问题"
 }
@@ -94,16 +95,24 @@
 }
 ```
 
-逻辑：不再接收 image，改为接收 text + question。用 text 作为上下文、question 作为用户问题调 AI。
+逻辑：接收 image + text + question。AI 同时看到原始截图（处理图表/公式等视觉内容）和 OCR 文字（提供可搜索的文本上下文），回答用户的具体问题。
 
-**向后兼容**：旧的 image 参数不再支持。前端必须先调 screenshot-ocr 拿到文字，再调 screenshot-ask。这是破坏性变更，但只有内部前端调用，无外部消费者。
+**向后兼容**：旧的"只传 image 自动解释"模式不再支持。前端必须先调 screenshot-ocr 拿到文字，再调 screenshot-ask 传三个参数。破坏性变更，但只有内部前端调用。
 
-### 2.4 Prompt 模板变更
+### 2.4 Prompt 变更
 
-修改 `seed-templates.ts` 中 assistant 类型的 prompt 模板：
-- 语言改为中文
-- 添加指令：「请用与原文相同的语言回答。如果原文是中文，用中文回答；如果是英文，用英文回答。」
-- 移除写死的 "Explain the passage" 指令，改为使用用户传入的 question
+当前 `screenshot-ask/route.ts` 中有硬编码的 `buildScreenshotPrompt()` 和 `systemPrompt`，**未使用** prompt 模板系统。需要两步修改：
+
+1. **route.ts**：移除硬编码 prompt，改用 `getPrompt('assistant', 'screenshot_qa')` 调用模板系统
+2. **seed-templates.ts**：更新 assistant 模板内容为：
+
+```
+你是一个教材学习助手。用户会给你一段教材内容（文字+截图），并提出问题。
+规则：
+1. 只根据提供的内容回答，不要编造内容之外的信息
+2. 用与教材内容相同的语言回答（中文内容用中文，英文内容用英文）
+3. 回答要清晰、有条理，使用 Markdown 格式
+```
 
 ### 2.5 前端变更
 
@@ -162,27 +171,33 @@ interface AIResponseProps {
 
 - 复习：`review_questions` 表有 `correct_answer` 和 `explanation` 字段，出题时 AI 生成并写入
 - 测试：`test_questions` 表有类似字段
-- 但 respond/submit API 返回的反馈中不包含这些字段，前端无法展示
+- **测试 submit API 已经返回** `correct_answer` 和 `explanation`（在 results 数组中），只需前端展示
+- **复习 respond API 未返回**这些字段，需要后端修改
 
 ### 4.2 变更
 
 **复习 respond API**（`POST /api/review/[scheduleId]/respond`）：
 
-响应增加字段：
+响应增加字段（注意：实际响应使用 `data` 信封，字段名为 `ai_feedback` 而非 `feedback`）：
 ```json
 {
-  "score": 8,
-  "feedback": "AI 反馈...",
-  "correct_answer": "正确答案文本",
-  "explanation": "答案解析文本"
+  "data": {
+    "is_correct": true,
+    "score": 8,
+    "ai_feedback": "AI 反馈...",
+    "correct_answer": "正确答案文本",
+    "explanation": "答案解析文本",
+    "has_next": true,
+    "next_question": { ... }
+  }
 }
 ```
 
-实现：respond 逻辑中，在返回 AI 评分反馈的同时，从 review_questions 表查出 correct_answer 和 explanation 一并返回。
+实现：respond 逻辑中，从 review_questions 表查出 correct_answer 和 explanation，加入响应。
 
 **测试 submit API**（`POST /api/modules/[moduleId]/test/submit`）：
 
-同理，在返回评分结果时，每题附带 correct_answer 和 explanation。
+**无需后端修改**——已返回 correct_answer 和 explanation。只需前端读取并展示。
 
 ### 4.3 前端变更
 
@@ -331,6 +346,22 @@ interface AIResponseProps {
 
 实现：JOIN mistakes + knowledge_points + modules 表，按 bookId（通过 modules.book_id）过滤。
 
+### 6.4 Schema 变更
+
+mistakes 表新增 3 列：
+
+```sql
+ALTER TABLE mistakes ADD COLUMN question_text TEXT;
+ALTER TABLE mistakes ADD COLUMN user_answer TEXT;
+ALTER TABLE mistakes ADD COLUMN correct_answer TEXT;
+```
+
+均为可空（已有数据不受影响）。新写入的错题必须填充这三个字段。
+
+**写入时机**（修改现有 INSERT 逻辑）：
+- `test/submit`（source='test'）：从 test_questions + test_responses 获取题目、用户答案、正确答案
+- `review/respond`（source='review'）：从 review_questions + 用户提交的答案获取
+
 ### 6.3 UI
 
 - 顶部：错题总数 + 过滤栏（模块下拉、错误类型标签、来源标签）
@@ -357,11 +388,13 @@ interface AIResponseProps {
 
 | 文件 | 角色 | 变更 |
 |------|------|------|
-| `src/app/api/books/[bookId]/screenshot-ask/route.ts` | Codex | 改为接收 text+question，不再接收 image |
-| `src/app/api/review/[scheduleId]/respond/route.ts` | Codex | 响应增加 correct_answer + explanation |
-| `src/app/api/modules/[moduleId]/test/submit/route.ts` | Codex | 响应增加 correct_answer + explanation |
+| `src/app/api/books/[bookId]/screenshot-ask/route.ts` | Codex | 改为接收 image+text+question，移除硬编码 prompt，改用 getPrompt() |
+| `src/app/api/review/[scheduleId]/respond/route.ts` | Codex | 响应增加 correct_answer + explanation；mistakes INSERT 增加三字段 |
+| `src/app/api/modules/[moduleId]/test/submit/route.ts` | Codex | mistakes INSERT 增加 question_text/user_answer/correct_answer 三字段 |
 | `src/lib/prompt-templates/seed-templates.ts` | Codex | assistant prompt 改中文 + 语言匹配指令 |
-| `src/app/books/[bookId]/reader/` 相关组件 | Gemini | 截图流程改两步状态机 |
+| `src/lib/db.ts` | Codex | mistakes 表 schema 增加 3 列 |
+| `src/app/books/[bookId]/reader/AiChatDialog.tsx` | Gemini | 截图流程改两步状态机（核心组件） |
+| `src/app/books/[bookId]/reader/page.tsx` | Gemini | 配合 AiChatDialog 改动 |
 | `src/app/page.tsx` | Gemini | 书目卡片加仪表盘入口 |
 | 所有 AI 输出展示组件 | Gemini | 替换为 AIResponse 组件 |
 
@@ -392,8 +425,9 @@ books/[bookId]/mistakes         (新)
 
 ### 修改的接口契约
 
-- screenshot-ask：入参从 image 改为 text+question
+- screenshot-ask：入参改为 image+text+question（三参数），hardcoded prompt 迁移到模板系统
 - review/respond：响应增加 correct_answer + explanation
-- test/submit：响应增加 correct_answer + explanation
+- test/submit：无响应变更（已返回），但 mistakes INSERT 增加三字段
+- mistakes 表：新增 question_text, user_answer, correct_answer 三列
 
 里程碑完成后需同步更新 architecture.md 中的系统总图（页面、API 组）和接口契约。
