@@ -1034,3 +1034,13 @@
 - `src/app/api/books/[bookId]/mistakes/route.ts`
 - `scripts/test-m5-task5.mjs`
 - `.agents/API_CONTRACT.md`
+
+---
+
+## 2026-04-03 | M5 Hotfix: Screenshot Ask Teaching Prompt
+
+**完成内容**: 重写 `SCREENSHOT_ASK_SYSTEM_PROMPT`，将截图问答助手从“只复述截图内容”调整为“以教材内容为基础并结合专业知识讲清楚为什么”，允许在教材说明不足时补充必要背景知识，同时保留同语种回答、Markdown 格式和按问题复杂度控制展开程度的要求。
+
+**修改文件**:
+- `src/app/api/books/[bookId]/screenshot-ask/route.ts`
+- `scripts/test-m5-screenshot-prompt-hotfix.mjs`
