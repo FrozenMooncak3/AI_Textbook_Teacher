@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import AIResponse from '@/components/AIResponse'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -14,64 +15,95 @@ interface Props {
   onClose: () => void
 }
 
+type FlowState = 'ocr_processing' | 'text_ready' | 'asking' | 'answered' | 'error'
+
 export default function AiChatDialog({
   bookId,
   imageBase64,
   pageNumber,
   onClose,
 }: Props) {
+  const [flowState, setFlowState] = useState<FlowState>('ocr_processing')
   const [messages, setMessages] = useState<Message[]>([])
-  const [extractedText, setExtractedText] = useState('')
+  const [ocrText, setOcrText] = useState('')
   const [conversationId, setConversationId] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  // 首次发送截图到 API
+  // 第一步：截图 OCR (on mount)
   useEffect(() => {
     let cancelled = false
 
-    async function ask() {
+    async function doOcr() {
       try {
-        const res = await fetch(`/api/books/${bookId}/screenshot-ask`, {
+        const res = await fetch(`/api/books/${bookId}/screenshot-ocr`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64, pageNumber }),
+          body: JSON.stringify({ imageBase64 }),
         })
 
+        const json = await res.json()
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}))
-          throw new Error(data.error || '请求失败')
+          throw new Error(json.error || 'OCR 识别失败')
         }
 
-        const data = await res.json()
         if (cancelled) return
 
-        setConversationId(data.conversationId)
-        setExtractedText(data.extractedText)
-        setMessages([{ role: 'assistant', content: data.answer }])
+        setOcrText(json.data.text)
+        setFlowState('text_ready')
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : '截图识别失败')
+          setFlowState('error')
         }
-      } finally {
-        if (!cancelled) setLoading(false)
       }
     }
 
-    ask()
+    doOcr()
     return () => { cancelled = true }
-  }, [bookId, imageBase64, pageNumber])
+  }, [bookId, imageBase64])
 
-  // 滚动到底部
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  // 第二步：用户提问 (on submit)
+  const handleAsk = async () => {
+    const question = input.trim()
+    if (!question || sending) return
 
-  // 追问
+    setInput('')
+    setSending(true)
+    setFlowState('asking')
+    setMessages([{ role: 'user', content: question }])
+
+    try {
+      const res = await fetch(`/api/books/${bookId}/screenshot-ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: imageBase64,
+          text: ocrText,
+          question: question
+        }),
+      })
+
+      const json = await res.json()
+      if (!res.ok) {
+        throw new Error(json.error || '请求失败')
+      }
+
+      setConversationId(json.data.conversationId)
+      setMessages(prev => [...prev, { role: 'assistant', content: json.data.answer }])
+      setFlowState('answered')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '请求失败')
+      setFlowState('error')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  // 追问 (follow-up)
   const sendFollowUp = useCallback(async () => {
     const text = input.trim()
     if (!text || !conversationId || sending) return
@@ -87,13 +119,12 @@ export default function AiChatDialog({
         body: JSON.stringify({ message: text }),
       })
 
+      const json = await res.json()
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || '追问失败')
+        throw new Error(json.error || '追问失败')
       }
 
-      const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.answer }])
+      setMessages(prev => [...prev, { role: 'assistant', content: json.data.answer }])
     } catch (e) {
       setMessages(prev => [
         ...prev,
@@ -105,12 +136,21 @@ export default function AiChatDialog({
     }
   }, [input, conversationId, sending])
 
+  // 滚动到底部
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, flowState])
+
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      sendFollowUp()
+      if (flowState === 'text_ready') {
+        handleAsk()
+      } else if (flowState === 'answered') {
+        sendFollowUp()
+      }
     }
-  }, [sendFollowUp])
+  }, [flowState, handleAsk, sendFollowUp])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -140,10 +180,10 @@ export default function AiChatDialog({
 
         {/* 消息区域 */}
         <div className="flex-1 overflow-auto px-4 py-3 space-y-3 min-h-0">
-          {loading && (
+          {flowState === 'ocr_processing' && (
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-              正在识别并分析…
+              识别中…
             </div>
           )}
 
@@ -151,9 +191,9 @@ export default function AiChatDialog({
             <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</div>
           )}
 
-          {extractedText && (
+          {ocrText && (
             <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2">
-              <span className="font-medium text-gray-500">识别文字：</span>{extractedText}
+              <span className="font-medium text-gray-500">识别文字：</span>{ocrText}
             </div>
           )}
 
@@ -163,15 +203,26 @@ export default function AiChatDialog({
                 className={
                   msg.role === 'user'
                     ? 'bg-blue-50 text-blue-900 rounded-lg px-3 py-2 text-sm max-w-[85%]'
-                    : 'text-gray-800 text-sm leading-relaxed whitespace-pre-wrap'
+                    : 'text-gray-800 text-sm leading-relaxed'
                 }
               >
-                {msg.content}
+                {msg.role === 'assistant' ? (
+                  <AIResponse content={msg.content} />
+                ) : (
+                  msg.content
+                )}
               </div>
             </div>
           ))}
 
-          {sending && (
+          {(flowState === 'asking' || sending) && flowState !== 'answered' && (
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <div className="w-3 h-3 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+              AI 思考中…
+            </div>
+          )}
+
+          {flowState === 'answered' && sending && (
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <div className="w-3 h-3 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
               思考中…
@@ -182,7 +233,7 @@ export default function AiChatDialog({
         </div>
 
         {/* 输入区域 */}
-        {conversationId && !error && (
+        {(flowState === 'text_ready' || flowState === 'asking' || flowState === 'answered') && !error && (
           <div className="border-t border-gray-100 px-4 py-3">
             <div className="flex gap-2">
               <textarea
@@ -190,12 +241,13 @@ export default function AiChatDialog({
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={onKeyDown}
-                placeholder="追问…"
+                placeholder={flowState === 'text_ready' ? "向 AI 提问这个片段…" : "追问…"}
                 rows={1}
                 className="flex-1 resize-none border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                disabled={sending}
               />
               <button
-                onClick={sendFollowUp}
+                onClick={flowState === 'text_ready' ? handleAsk : sendFollowUp}
                 disabled={!input.trim() || sending}
                 className="shrink-0 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors"
               >

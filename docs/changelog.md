@@ -36,6 +36,20 @@
 
 ---
 
+## 2026-04-03 | M5：截图问 AI 流程重构
+
+- **重写 AiChatDialog**: 将截图问 AI 流程从"挂载即自动解释"改为两步走：OCR 识别 → 用户提问 → AI 回答。
+- **状态机管理**: 引入 `ocr_processing | text_ready | asking | answered` 状态机，优化交互体验。
+- **OCR 优先**: 挂载后首先调用 `/api/books/{bookId}/screenshot-ocr` 进行文字识别并展示。
+- **Markdown 渲染**: 接入 `<AIResponse>` 组件，使 AI 的回答支持 Markdown 格式（标题、列表、表格等）。
+- **API 适配**: 适配后端 `handleRoute` 包装后的 `{ success, data }` 响应格式，移除已废弃的 `extractedText` 字段处理。
+- **持续对话**: 修复并保留了基于 `conversationId` 的追问功能。
+
+修改文件：
+- `src/app/books/[bookId]/reader/AiChatDialog.tsx` — 核心逻辑重写
+
+---
+
 ## 2026-04-03 | M5：AIResponse 组件与 Markdown 渲染统一化
 
 - **新增 AIResponse 组件**: 创建 `src/components/AIResponse.tsx`，集成 `react-markdown` 和 `remark-gfm`，使用 `@tailwindcss/typography` 的 `prose` 类实现标准化的 AI 内容渲染。
@@ -941,3 +955,13 @@
 **修改文件**:
 - `src/app/api/review/[scheduleId]/complete/route.ts`
 - `.agents/API_CONTRACT.md`
+---
+
+## 2026-04-03 | M5: Review/Test Mistake Payload Completion
+
+**完成内容**: 补全 `POST /api/review/[scheduleId]/respond` 的返回字段，新增 `correct_answer` 与 `explanation`；同时更新 review/test 两条错题写入路径，把 `question_text`、`user_answer`、`correct_answer` 一并写入 `mistakes`，使 M5-T1 新增列在后续接口中得到实际填充。
+
+**修改文件**:
+- `src/app/api/review/[scheduleId]/respond/route.ts`
+- `src/app/api/modules/[moduleId]/test/submit/route.ts`
+- `scripts/test-m5-task4.mjs`
