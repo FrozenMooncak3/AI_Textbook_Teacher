@@ -134,12 +134,20 @@ digraph brainstorming {
 - Use elements-of-style:writing-clearly-and-concisely skill if available
 - Commit the design document to git
 
-**Spec Review Loop:**
+**Spec Deep Review Loop:**
 After writing the spec document:
 
-1. Dispatch spec-document-reviewer subagent (see spec-document-reviewer-prompt.md)
-2. If Issues Found: fix, re-dispatch, repeat until Approved
-3. If loop exceeds 3 iterations, surface to human for guidance
+1. **Build the agent prompt** using the template in `spec-document-reviewer-prompt.md`:
+   - Identify all source files in the spec's change list
+   - Identify relevant architecture.md interface contracts
+   - Fill the template with these file paths
+2. **Dispatch a general-purpose Agent** with the constructed prompt. The agent reads the spec + architecture.md + related source code, then reviews against 5 dimensions (interface consistency, change list completeness, data flow, cross-module side effects, internal consistency).
+3. **Process the result together with user:**
+   - Critical issues → must fix, re-dispatch agent
+   - Important issues → show to user, user decides
+   - Minor only → list but don't block
+   - APPROVED → proceed to user review gate
+4. If loop exceeds 3 iterations, surface to human for guidance
 
 **User Review Gate:**
 After the spec review loop passes, ask the user to review the written spec before proceeding:
