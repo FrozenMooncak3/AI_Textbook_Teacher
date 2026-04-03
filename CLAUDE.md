@@ -30,6 +30,10 @@
 - **AI**: Vercel AI SDK（多模型），默认 `anthropic:claude-sonnet-4-6`，通过 `AI_MODEL` 环境变量切换 provider/模型
 - **数据库**: SQLite (`data/app.db`)，使用 `better-sqlite3`
 
+## 架构地图
+`docs/architecture.md` 是系统现状的唯一真相源。所有里程碑设计必须基于它，不得凭记忆假设。
+任何改动代码结构的工作完成后，必须同步更新。
+
 ## 产品不变量（任何功能实现都不得违反）
 1. **用户必须读完原文才能进入 Q&A**，不能提供跳过按钮
 2. **Q&A 已答的题不可修改**，只能继续向前
@@ -67,6 +71,7 @@
 - 禁止添加 MVP 范围外的功能（社区、个性化推荐、游戏化等）
 - 禁止未经确认就修改产品不变量
 - 禁止在未更新 `docs/project_status.md`、`docs/changelog.md` 和 `docs/architecture.md` 的情况下声称任务完成
+- 禁止在里程碑收尾时跳过 milestone-audit（architecture.md 全量验证）
 
 ## 与项目负责人的沟通协议
 

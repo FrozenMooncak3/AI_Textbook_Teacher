@@ -15,7 +15,7 @@ description: CLAUDE.md 合规自检。自动触发：每次声称任务完成、
    找到「每次会话开始时」部分，提取所有必读文件。检查本次会话是否已读过每一个。未读的立即读取。
 
 3. **检查：任务完成更新**
-   读 `docs/project_status.md` 和 `docs/changelog.md`，确认最后一条记录覆盖了本次工作。
+   读 `docs/project_status.md`、`docs/changelog.md` 和 `docs/architecture.md`，确认最后一条记录覆盖了本次工作。如果本次工作涉及页面、API、数据库、AI 角色或跨模块接口变化，architecture.md 必须已同步更新。
 
 4. **检查：Git 状态**
    运行 `git status` 和 `git log origin/master..HEAD --oneline`。
@@ -41,7 +41,10 @@ description: CLAUDE.md 合规自检。自动触发：每次声称任务完成、
 9. **检查：沟通协议**（仅在本次涉及技术选项汇报时）
    找到「沟通协议」部分，检查是否遵守了汇报格式。
 
-10. **检查：Skill 合规**
+10. **检查：milestone-audit（仅里程碑收尾时）**
+    如果本次会话涉及里程碑收尾，检查 `docs/journal/` 中是否有对应的 `m<N>-milestone-audit.md` 审计记录。没有则报 ✗ 并要求先执行 milestone-audit skill。
+
+11. **检查：Skill 合规**
     读 session-init 的运行规则（Step 4），回顾本次 session 实际发生的事件，逐条检查是否遵守。只审计实际发生的事，未发生的跳过。检查依据是 session-init 的运行规则，不硬编码——规则变了，审计自动跟着变。
 
 ## 输出格式
@@ -56,6 +59,7 @@ CLAUDE.md 自检完成
 ✓/✗ 产品不变量：未违反 / 违反第 X 条
 ✓/✗ 技术红线：未违反 / 违反 X
 ⚠/✓ 沟通协议：本次无技术汇报，跳过 / 已遵守
+✓/✗ 架构审计：已完成 milestone-audit / 非里程碑收尾，跳过
 ✓/✗ Skill 合规：
   - 派发任务：走了完整流程 / 未派发，跳过
   - 想法分流：已分流 N 条 / 无新想法，跳过

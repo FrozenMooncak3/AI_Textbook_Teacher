@@ -124,6 +124,8 @@ This skill appears in multiple chains:
 
 **Closeout Chain** (step 1):
 1. **requesting-code-review** ← you are here
-2. claudemd-check
+2. milestone-audit
+3. claudemd-check
+4. finishing-a-development-branch
 
 **Next step:** After review is complete and issues are addressed, invoke `claudemd-check` automatically.

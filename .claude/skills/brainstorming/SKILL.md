@@ -21,7 +21,7 @@ Every project goes through this process. A todo list, a single-function utility,
 
 You MUST create a task for each of these items and complete them in order:
 
-1. **Explore project context** — check files, docs, recent commits
+1. **Explore project context** — read the mandatory file list below, verify architecture.md accuracy
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
@@ -30,6 +30,24 @@ You MUST create a task for each of these items and complete them in order:
 7. **Spec review loop** — dispatch spec-document-reviewer subagent with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
 8. **User reviews written spec** — ask user to review the spec file before proceeding
 9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+
+## Mandatory Read List (Milestone-Level Work)
+
+For milestone-level brainstorming, "explore project context" means reading these specific files:
+
+| File | Why |
+|------|-----|
+| `docs/architecture.md` | System state — pages, APIs, DB tables, AI roles, interface contracts, ⚠️ markers |
+| `docs/project_status.md` | Current progress, completed milestones, next step |
+| `docs/journal/INDEX.md` | Parked ideas that might be relevant to this milestone |
+| Previous milestone's spec (if any) | Prior design decisions |
+| Related source code | architecture.md tells you which files matter — read them to confirm contracts are still accurate |
+
+The first 4 are always read. The 5th is targeted based on architecture.md interface contracts.
+
+<HARD-GATE>
+For milestone-level work: if architecture.md and code are inconsistent, fix architecture.md FIRST before proceeding with design. Do not design on top of stale assumptions.
+</HARD-GATE>
 
 ## Process Flow
 

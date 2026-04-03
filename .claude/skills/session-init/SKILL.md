@@ -147,19 +147,15 @@ Check for these signals:
 | 声称完成/准备 commit | verification-before-completion → claudemd-check |
 | 用户告知 Codex/Gemini 完成任务 | requesting-code-review → claudemd-check |
 | 里程碑开始 | using-git-worktrees（创建隔离分支） |
-| 里程碑结束 | finishing-a-development-branch（分支收尾） |
+| 里程碑结束 | milestone-audit → finishing-a-development-branch |
 | 同一问题修复失败 ≥2 次 | systematic-debugging（强制走诊断流程，禁止继续猜） |
 | 用户说"停车场" | 规则 2 停车场入库流程（分类→定级→写入→确认） |
 
-### 规则 4: 里程碑级 Git 隔离
+### 规则 4: Git 管理
 
-- 里程碑开始 → 强制创建 worktree/分支，所有开发在隔离分支上进行
-- 过程中 → structured-dispatch 每次派发指定目标分支，不允许直接在 master 上改
-- 里程碑结束 → 强制走分支收尾流程（review → merge/PR）
-
-**例外**：Claude 文件边界内的纯文档改动（`docs/**`、`CLAUDE.md` 等）可直接在 master 上 commit。代码相关的里程碑工作必须隔离。
-
-**异常处理**：worktree 创建失败时，停下来报告给用户，不得降级到 master 上直接开发。
+- 当前阶段直接在 master 上开发（单人 + CCB 串行派发，出问题 git revert 即可）
+- Worktree/分支隔离为**可选**，不强制。适用场景：多条开发线并行、高风险重构
+- 每次 dispatch 后 Codex/Gemini commit + push，保持 master 可回退
 
 ### 规则 5: Chain Routing
 
@@ -175,7 +171,7 @@ Check for these signals:
 1. structured-dispatch → 2. 等待完成 → 3. requesting-code-review → 4. claudemd-check
 
 **Closeout Chain** — 收尾：
-1. requesting-code-review → 2. claudemd-check
+1. requesting-code-review → 2. milestone-audit → 3. claudemd-check → 4. finishing-a-development-branch
 
 不匹配任何 chain 时正常处理，chain 是指引不是约束。
 
@@ -183,7 +179,7 @@ Check for these signals:
 
 ## Step 5: Skill 使用手册
 
-### 核心流程 skill（session-init 管控）— 10 个
+### 核心流程 skill（session-init 管控）— 11 个
 
 | Skill | 职责 | 触发方式 |
 |-------|------|---------|
@@ -196,6 +192,7 @@ Check for these signals:
 | **journal** | 记录想法/决策/待跟进 | brainstorming/重要讨论后自动 / `/journal` |
 | **verification-before-completion** | 完成前验证 | 声称完成前自动 |
 | **using-git-worktrees** | 里程碑级 Git 隔离 | 里程碑开始时自动 |
+| **milestone-audit** | 里程碑收尾 architecture.md 全量验证 | 里程碑结束时自动 |
 | **finishing-a-development-branch** | 里程碑级分支收尾 | 里程碑结束时自动 |
 
 ### Agent 参考 skill（structured-dispatch 推荐给 Codex/Gemini）— 7 个
