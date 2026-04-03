@@ -19,6 +19,23 @@
 
 ---
 
+## 2026-04-03 | M5：截图问 AI API 拆分
+
+- **新增 OCR-only 接口**：创建 `POST /api/books/[bookId]/screenshot-ocr`，只负责接收截图、调用 PaddleOCR 服务并返回 `{ text, confidence }`，不再混入 AI 回答逻辑。
+- **重写 screenshot-ask**：`POST /api/books/[bookId]/screenshot-ask` 改为接收 `{ image, text, question }`，切换到 `handleRoute()` 包装，响应变为 `{ success: true, data: { conversationId, answer } }`，并移除旧的 `extractedText` 字段。
+- **prompt 模板接入**：移除 route 内硬编码用户 prompt，改为通过 `getPrompt('assistant', 'screenshot_qa', ...)` 生成提问上下文；系统 prompt 改为中文，并保留视觉输入给模型处理图表/公式。
+- **共享 OCR 工具**：抽出 `src/lib/screenshot-ocr.ts` 复用 OCR 请求和 base64 归一化逻辑，避免新旧路由重复实现。
+- **回归脚本**：新增 `scripts/test-m5-task3.mjs`，覆盖新路由存在性、handleRoute 包装、prompt 模板调用、共享 OCR utility 和响应形态。
+
+修改文件：
+- `src/lib/screenshot-ocr.ts` — 新增共享 OCR 工具
+- `src/app/api/books/[bookId]/screenshot-ocr/route.ts` — 新增 OCR-only 路由
+- `src/app/api/books/[bookId]/screenshot-ask/route.ts` — 改为两步流程中的 AI 提问路由
+- `scripts/test-m5-task3.mjs` — 新增 M5-T3 回归脚本
+- `docs/changelog.md` — 本条记录
+
+---
+
 ## 2026-04-03 | M5：AIResponse 组件与 Markdown 渲染统一化
 
 - **新增 AIResponse 组件**: 创建 `src/components/AIResponse.tsx`，集成 `react-markdown` 和 `remark-gfm`，使用 `@tailwindcss/typography` 的 `prose` 类实现标准化的 AI 内容渲染。

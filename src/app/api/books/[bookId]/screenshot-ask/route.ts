@@ -1,168 +1,96 @@
-import { NextRequest, NextResponse } from 'next/server'
-import http from 'http'
-import { writeFile, unlink } from 'fs/promises'
-import { tmpdir } from 'os'
-import { join } from 'path'
+import { NextRequest } from 'next/server'
 import { generateText } from 'ai'
 import { getDb } from '@/lib/db'
 import { getModel, timeout } from '@/lib/ai'
+import { UserError, SystemError } from '@/lib/errors'
+import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
+import { getPrompt } from '@/lib/prompt-templates'
+import { normalizeBase64Image } from '@/lib/screenshot-ocr'
 
-const OCR_SERVER_PORT = 9876
+interface BookRow {
+  id: number
+}
 
-interface OcrResult {
+interface ScreenshotAskBody {
+  image?: unknown
+  text?: unknown
+  question?: unknown
+  pageNumber?: unknown
+}
+
+function parseBookId(value: string): number {
+  const bookId = Number(value)
+  if (!Number.isInteger(bookId) || bookId <= 0) {
+    throw new UserError('Invalid book ID', 'INVALID_ID', 400)
+  }
+
+  return bookId
+}
+
+function parseBody(body: unknown): {
+  image: string
   text: string
-  confidence: number
-}
-
-async function ocrImage(imagePath: string): Promise<OcrResult> {
-  try {
-    const result = await new Promise<OcrResult>((resolve, reject) => {
-      const postData = JSON.stringify({ image_path: imagePath })
-      const req = http.request(
-        {
-          hostname: '127.0.0.1',
-          port: OCR_SERVER_PORT,
-          path: '/ocr',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(postData),
-          },
-          timeout: 60_000,
-        },
-        (res) => {
-          let data = ''
-          res.on('data', (chunk: Buffer) => {
-            data += chunk.toString()
-          })
-          res.on('end', () => {
-            try {
-              const json = JSON.parse(data) as { text?: string; confidence?: number; error?: string }
-              if (res.statusCode !== 200 || json.error) {
-                logAction('screenshot_ocr_failed', `${imagePath}: ${json.error ?? `HTTP ${res.statusCode}`}`, 'error')
-                resolve({ text: '', confidence: 0 })
-                return
-              }
-
-              resolve({
-                text: json.text ?? '',
-                confidence: typeof json.confidence === 'number' ? json.confidence : 0,
-              })
-            } catch {
-              logAction('screenshot_ocr_failed', `${imagePath}: invalid OCR response`, 'error')
-              resolve({ text: '', confidence: 0 })
-            }
-          })
-        }
-      )
-
-      req.on('error', (error) => reject(error))
-      req.on('timeout', () => {
-        req.destroy()
-        reject(new Error('OCR request timed out'))
-      })
-      req.write(postData)
-      req.end()
-    })
-
-    return result
-  } catch (error) {
-    logAction('screenshot_ocr_failed', `${imagePath}: ${String(error)}`, 'error')
-    return { text: '', confidence: 0 }
-  }
-}
-
-function isUsefulOcrText(text: string, confidence: number): boolean {
-  const normalized = text.trim()
-  if (!normalized || normalized.includes('�')) {
-    return false
+  question: string
+  pageNumber: number
+} {
+  if (body === null || typeof body !== 'object') {
+    throw new UserError('Invalid request body', 'INVALID_BODY', 400)
   }
 
-  return confidence >= 0.5 || normalized.length >= 24
-}
+  const parsed = body as ScreenshotAskBody
+  const image = typeof parsed.image === 'string' ? normalizeBase64Image(parsed.image) : ''
+  const text = typeof parsed.text === 'string' ? parsed.text.trim() : ''
+  const question = typeof parsed.question === 'string' ? parsed.question.trim() : ''
+  const pageNumber = typeof parsed.pageNumber === 'number' && Number.isInteger(parsed.pageNumber)
+    ? parsed.pageNumber
+    : 0
 
-function buildScreenshotPrompt(title: string, pageNumber: number, ocr: OcrResult): string {
-  if (isUsefulOcrText(ocr.text, ocr.confidence)) {
-    return [
-      `You are helping a student read "${title}" on page ${pageNumber}.`,
-      'Use the screenshot image as the primary source of truth.',
-      'The OCR text below is supplemental context and may contain mistakes.',
-      `OCR text:\n${ocr.text}`,
-      'Explain the passage, identify the main concept, and point out what the student should focus on.',
-    ].join('\n\n')
+  if (!image || !question) {
+    throw new UserError('image and question are required', 'MISSING_FIELDS', 400)
   }
 
-  return [
-    `You are helping a student read "${title}" on page ${pageNumber}.`,
-    'Use the screenshot image itself as the source of truth.',
-    'The OCR result was empty or unreliable, so do not say that the image cannot be recognized.',
-    'Instead, explain what is visible in the screenshot, summarize the likely topic, and call out any terms or formulas you can identify.',
-  ].join('\n\n')
+  return { image, text, question, pageNumber }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ bookId: string }> }
-) {
-  const { bookId } = await params
-  const id = Number(bookId)
-  if (Number.isNaN(id)) {
-    return NextResponse.json({ error: 'Invalid book ID', code: 'INVALID_ID' }, { status: 400 })
-  }
+const SCREENSHOT_ASK_SYSTEM_PROMPT = `你是一个教材学习助手。用户会给你一段教材内容（文字+截图），并提出问题。
+规则：
+1. 只根据提供的内容回答，不要编造内容之外的信息
+2. 用与教材内容相同的语言回答（中文内容用中文，英文内容用英文）
+3. 回答要清晰、有条理，使用 Markdown 格式`
 
+export const POST = handleRoute(async (req: NextRequest, context) => {
+  const { bookId: rawBookId } = await context!.params
+  const bookId = parseBookId(rawBookId)
   const db = getDb()
-  const book = db.prepare('SELECT id, title FROM books WHERE id = ?').get(id) as { id: number; title: string } | undefined
+
+  const book = db.prepare('SELECT id FROM books WHERE id = ?').get(bookId) as BookRow | undefined
   if (!book) {
-    return NextResponse.json({ error: 'Book not found', code: 'NOT_FOUND' }, { status: 404 })
+    throw new UserError('Book not found', 'NOT_FOUND', 404)
   }
 
-  let body: { imageBase64?: string; pageNumber?: number }
-  try {
-    body = await req.json()
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body', code: 'INVALID_BODY' }, { status: 400 })
-  }
+  const body = parseBody(await req.json())
+  logAction('screenshot_ask_started', `bookId=${bookId}, page=${body.pageNumber}`)
 
-  const { imageBase64, pageNumber } = body
-  if (!imageBase64 || typeof pageNumber !== 'number') {
-    return NextResponse.json({ error: 'Missing imageBase64 or pageNumber', code: 'MISSING_FIELDS' }, { status: 400 })
-  }
-
-  logAction('screenshot_ask_started', `bookId=${id}, page=${pageNumber}`)
-
-  const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '')
-  const tmpPath = join(tmpdir(), `screenshot_${Date.now()}.png`)
-  await writeFile(tmpPath, Buffer.from(base64Data, 'base64'))
-
-  const ocr = await ocrImage(tmpPath)
-  await unlink(tmpPath).catch(() => {})
-
-  if (!isUsefulOcrText(ocr.text, ocr.confidence)) {
-    logAction(
-      'screenshot_ocr_low_confidence',
-      `bookId=${id}, page=${pageNumber}, confidence=${ocr.confidence.toFixed(2)}, chars=${ocr.text.trim().length}`,
-      'warn'
-    )
-  }
-
-  const userPrompt = buildScreenshotPrompt(book.title, pageNumber, ocr)
-  const systemPrompt =
-    'You are a patient textbook tutor. Explain the selected screenshot clearly, focus on the visible content, and avoid claiming failure when the image contains usable information.'
+  const userPrompt = getPrompt('assistant', 'screenshot_qa', {
+    screenshot_text: body.text || '(无文字识别结果)',
+    user_question: body.question,
+    conversation_history: '',
+  })
 
   let answer = ''
   try {
-    const { text } = await generateText({
+    const result = await generateText({
       model: getModel(),
-      maxOutputTokens: 1024,
-      system: systemPrompt,
+      maxOutputTokens: 8192,
+      system: SCREENSHOT_ASK_SYSTEM_PROMPT,
       messages: [
         {
           role: 'user',
           content: [
             {
               type: 'image',
-              image: Buffer.from(base64Data, 'base64'),
+              image: Buffer.from(body.image, 'base64'),
               mediaType: 'image/png',
             },
             {
@@ -175,21 +103,34 @@ export async function POST(
       abortSignal: AbortSignal.timeout(timeout),
     })
 
-    answer = text
+    answer = result.text
   } catch (error) {
     logAction('screenshot_ask_failed', String(error), 'error')
-    return NextResponse.json({ error: 'AI service unavailable', code: 'AI_ERROR' }, { status: 500 })
+    throw new SystemError('AI service unavailable', error)
   }
 
-  const conv = db
+  const conversation = db
     .prepare('INSERT INTO conversations (book_id, page_number, screenshot_text) VALUES (?, ?, ?)')
-    .run(id, pageNumber, ocr.text)
-  const conversationId = conv.lastInsertRowid as number
+    .run(bookId, body.pageNumber, body.text)
+  const conversationId = Number(conversation.lastInsertRowid)
 
-  db.prepare('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)').run(conversationId, 'user', userPrompt)
-  db.prepare('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)').run(conversationId, 'assistant', answer)
+  db.prepare('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)').run(
+    conversationId,
+    'user',
+    body.question
+  )
+  db.prepare('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)').run(
+    conversationId,
+    'assistant',
+    answer
+  )
 
-  logAction('screenshot_ask_completed', `bookId=${id}, conversationId=${conversationId}`)
+  logAction('screenshot_ask_completed', `bookId=${bookId}, conversationId=${conversationId}`)
 
-  return NextResponse.json({ conversationId, extractedText: ocr.text, answer })
-}
+  return {
+    data: {
+      conversationId,
+      answer,
+    },
+  }
+})
