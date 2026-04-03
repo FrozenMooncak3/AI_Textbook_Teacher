@@ -71,6 +71,7 @@ What Claude will do after this task is done (review, next task, etc.).
 - Include enough context that the agent can work without asking questions.
 - Reference the plan file if one exists — the agent can read it.
 - Do NOT dispatch while the agent is actively working on another task.
+- If the task involves modifying docs/ files (changelog.md, project_status.md, etc.), include explicit instruction: **"Edit only the relevant section. Do NOT rewrite the entire file."** Gemini has a pattern of overwriting entire files when it struggles with partial edits.
 
 ---
 

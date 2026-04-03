@@ -22,7 +22,7 @@
 - **T1** QA/复习时旁边可以看原文 → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
 - **T1** 全局缺导航：所有页面没有返回键，需导航 sidebar + 面包屑 → [2026-04-03-m5-testing-ux.md](./2026-04-03-m5-testing-ux.md)
 - **T1** PDF 阅读器太弱：替换为成熟库（react-pdf-viewer 等），补齐缩放/搜索/书签 → [2026-04-03-m5-testing-ux.md](./2026-04-03-m5-testing-ux.md)
-- **T2** 大 PDF 分块提取：230K+ 字符文本需分块处理才能 KP 提取 → [2026-04-03-m5-testing-ux.md](./2026-04-03-m5-testing-ux.md)
+- **T1** 大 PDF 分块提取：230K+ 字符文本需分块处理才能 KP 提取（369 页真实教材无法使用）→ [2026-04-03-m5-testing-ux.md](./2026-04-03-m5-testing-ux.md)
 - **T2** 模块阅读选文字问AI（选中文字→提问→AI回答，复用screenshot-ask第二步）→ [2026-04-03-module-text-ask-ai.md](./2026-04-03-module-text-ask-ai.md)
 - **T2** 笔记跳转原文 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - **T2** 右键选中多功能：做笔记、高亮等 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
