@@ -4,6 +4,21 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-03 | M5：AIResponse 组件与 Markdown 渲染统一化
+
+- **新增 AIResponse 组件**: 创建 `src/components/AIResponse.tsx`，集成 `react-markdown` 和 `remark-gfm`，使用 `@tailwindcss/typography` 的 `prose` 类实现标准化的 AI 内容渲染。
+- **集成 Typography 插件**: 在 `src/app/globals.css` 中引入 `@plugin "@tailwindcss/typography"`，适配 Tailwind v4 架构。
+- **依赖更新**: 安装 `remark-gfm` 和 `@tailwindcss/typography` 依赖。
+- **验证与清理**: 在 `src/app/page.tsx` 中进行了组件渲染验证，确认支持标题、表格、加粗、代码块和列表，验证通过后已清理测试代码。
+
+修改文件：
+- `src/components/AIResponse.tsx` — 新增组件
+- `src/app/globals.css` — 引入 typography 插件 (Tailwind v4)
+- `package.json` — 新增依赖
+- `docs/changelog.md` — 本条记录
+
+---
+
 ## 2026-04-03 | M4 milestone-audit 执行
 
 - 对 M4 复习系统执行 milestone-audit，验证 architecture.md 与代码一致性

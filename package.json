@@ -12,6 +12,7 @@
     "@ai-sdk/google": "^3.0.53",
     "@ai-sdk/openai": "^3.0.48",
     "@anthropic-ai/sdk": "^0.78.0",
+    "@tailwindcss/typography": "^0.5.19",
     "ai": "^6.0.141",
     "better-sqlite3": "^12.8.0",
     "https-proxy-agent": "^8.0.0",
@@ -22,6 +23,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "undici": "^7.24.3"
   },
   "devDependencies": {
