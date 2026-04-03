@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
+import AIResponse from '@/components/AIResponse'
 
 interface Mistake {
   id: number
@@ -184,9 +185,9 @@ function MistakeCard({ mistake }: { mistake: Mistake }) {
             </p>
           )}
           {mistake.kp_description && (
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-              {mistake.kp_description}
-            </p>
+            <div className="text-xs text-slate-500 mt-2 leading-relaxed">
+              <AIResponse content={mistake.kp_description} />
+            </div>
           )}
         </div>
 
@@ -194,9 +195,9 @@ function MistakeCard({ mistake }: { mistake: Mistake }) {
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs font-bold text-blue-700 uppercase tracking-widest">补救方案</span>
           </div>
-          <p className="text-sm text-slate-700 leading-relaxed">
-            {mistake.remediation}
-          </p>
+          <div className="text-sm text-slate-700 leading-relaxed">
+            <AIResponse content={mistake.remediation} />
+          </div>
         </div>
       </div>
     </div>

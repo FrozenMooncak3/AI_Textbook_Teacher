@@ -221,9 +221,9 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
 
                   {/* Question */}
                   <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                    <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                      {m.questionText}
-                    </p>
+                    <div className="text-sm text-gray-700 leading-relaxed font-medium">
+                      <AIResponse content={m.questionText} />
+                    </div>
                   </div>
 
                   {/* Answers Comparison */}
@@ -236,8 +236,8 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
                     </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">正确答案</label>
-                      <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-sm text-emerald-900 font-medium whitespace-pre-wrap min-h-[60px]">
-                        {m.correctAnswer || '(待录入)'}
+                      <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-sm text-emerald-900 font-medium min-h-[60px]">
+                        <AIResponse content={m.correctAnswer || '(待录入)'} />
                       </div>
                     </div>
                   </div>

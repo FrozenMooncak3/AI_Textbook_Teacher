@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import AIResponse from '@/components/AIResponse'
 
 interface NotesData {
   noteId: number
@@ -113,11 +114,7 @@ export default function NotesDisplay({
       {/* Note Content */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-8 md:p-12">
-          <div className="prose prose-slate max-w-none">
-            <div className="whitespace-pre-wrap text-slate-700 leading-loose font-sans text-base">
-              {notes?.content}
-            </div>
-          </div>
+          <AIResponse content={notes?.content || ''} />
         </div>
         
         <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">

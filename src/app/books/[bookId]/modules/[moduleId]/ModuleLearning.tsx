@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import QASession from './qa/QASession'
 import NotesDisplay from './NotesDisplay'
+import AIResponse from '@/components/AIResponse'
 
 // --- Types ---
 
@@ -251,7 +252,9 @@ function ReadingPhase({
             <div className="p-6 space-y-6">
               <div>
                 <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2">学完能做什么</p>
-                <p className="text-slate-700 leading-relaxed">{guide.goal}</p>
+                <div className="text-slate-700 leading-relaxed">
+                  <AIResponse content={guide.goal} />
+                </div>
               </div>
               
               <div className="grid sm:grid-cols-2 gap-6">
@@ -261,7 +264,7 @@ function ReadingPhase({
                     {guide.focus_points.map((p, i) => (
                       <li key={i} className="flex gap-2 text-sm text-slate-600">
                         <span className="text-emerald-400 font-bold shrink-0">·</span>
-                        {p}
+                        <AIResponse content={p} />
                       </li>
                     ))}
                   </ul>
@@ -272,7 +275,7 @@ function ReadingPhase({
                     {guide.common_mistakes.map((p, i) => (
                       <li key={i} className="flex gap-2 text-sm text-slate-600">
                         <span className="text-amber-400 font-bold shrink-0">!</span>
-                        {p}
+                        <AIResponse content={p} />
                       </li>
                     ))}
                   </ul>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import AIResponse from '@/components/AIResponse'
 
 interface Module {
   id: number
@@ -104,7 +105,9 @@ export default function ModuleMap({ bookId, modules: initialModules }: Props) {
                   <span className={`text-xs font-medium ${pass.color}`}>{pass.label}</span>
                 </div>
                 <h3 className="font-medium text-gray-900 text-sm mb-1">{mod.title}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">{mod.summary}</p>
+                <div className="text-xs text-gray-500 leading-relaxed">
+                  <AIResponse content={mod.summary} />
+                </div>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-xs text-gray-400">{mod.kp_count} 个知识点</p>
