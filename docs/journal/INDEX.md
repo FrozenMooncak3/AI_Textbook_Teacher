@@ -7,15 +7,12 @@
 
 ## parked（停车场）
 
-> Tier 说明：T1 = M5 必做，直接影响核心体验 | T2 = M5 或独立里程碑评估 | T3 = MVP 后再议
+> Tier 说明：T1 = M5.5 必做 | T2 = 独立里程碑评估 | T3 = MVP 后再议
 
 ### AI / Prompt
-- **T1** 评分后显示正确答案 + 预生成答案解析（提速）→ [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
 - **T2** 复习出题 KP 覆盖率——cluster 内 KP 轮换或改为 KP 粒度出题 → [2026-04-03-review-kp-coverage.md](./2026-04-03-review-kp-coverage.md)
 
 ### 功能
-- **T1** 错题本功能：接入 mistakes 表，展示错题+诊断+补救 → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
-- **T1** 测试结果 Dashboard：成绩、错题分布、KP 掌握度（归入 M5 首页仪表盘）→ [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
 - **T2** Dashboard 日历视图——学习/复习时间表 → [2026-04-03-dashboard-calendar.md](./2026-04-03-dashboard-calendar.md)
 - **T2** 笔记+QA 联动：阅读写笔记 → AI 结构化 → QA 侧边栏弹要点 → [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
 - **T3** OCR 后生成思维导图 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
@@ -42,6 +39,10 @@
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [audit] M5 milestone-audit 通过：architecture.md 与代码一致，3 条新契约已文档化，⚠️ test/submit error_type 未变（2026-04-03）→ [2026-04-03-m5-milestone-audit.md](./2026-04-03-m5-milestone-audit.md)
+- [M5完成] 评分后显示正确答案：T4/T7 实现（review/respond + test/submit 返回 correct_answer/explanation，前端展示）（2026-04-03）
+- [M5完成] 错题本功能：T5/T8 实现（书级 mistakes API + 多维筛选前端页面）（2026-04-03）
+- [M5完成] 测试 Dashboard：T5/T8 实现（dashboard API + 四宫格仪表盘页面）（2026-04-03）
 - [audit] M4 milestone-audit 通过：1 处缺漏已补（error_type 约束），architecture.md 与代码一致（2026-04-03）→ [2026-04-03-m4-milestone-audit.md](./2026-04-03-m4-milestone-audit.md)
 - [infra:resolved] milestone-audit skill 已实现——architecture.md 守护体系（两道关卡闭环）（2026-04-03）→ [2026-04-03-milestone-audit-skill.md](./2026-04-03-milestone-audit-skill.md)
 - [bug:resolved] M4 集成测试 2 bug 已修复（commit f54baf0）：验证放宽 + token 预算提升（2026-04-03）→ [2026-04-03-m4-integration-test.md](./2026-04-03-m4-integration-test.md)
