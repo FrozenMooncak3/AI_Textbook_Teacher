@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import MarkdownRenderer from '@/components/MarkdownRenderer'
+import AIResponse from '@/components/AIResponse'
 
 // --- Types ---
 
@@ -203,9 +203,9 @@ export default function QASession({
         </div>
         
         <div className="p-8">
-          <p className="text-lg text-slate-900 leading-relaxed font-medium mb-6">
-            {question.question_text}
-          </p>
+          <div className="text-lg text-slate-900 leading-relaxed font-medium mb-6">
+            <AIResponse content={question.question_text} />
+          </div>
 
           {/* Scaffolding Hint */}
           {question.scaffolding && !currentFeedback && (
@@ -217,7 +217,7 @@ export default function QASession({
                 需要一点提示吗？
               </summary>
               <div className="mt-3 p-4 bg-blue-50 rounded-xl text-sm text-blue-800 leading-relaxed border border-blue-100">
-                {question.scaffolding}
+                <AIResponse content={question.scaffolding} />
               </div>
             </details>
           )}
@@ -270,7 +270,7 @@ export default function QASession({
             </div>
             
             <div className="text-sm text-slate-700 leading-relaxed mb-6">
-              <MarkdownRenderer content={currentFeedback.feedback} />
+              <AIResponse content={currentFeedback.feedback} />
             </div>
 
             {/* Navigation */}
@@ -281,7 +281,7 @@ export default function QASession({
               >
                 下一题
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="14 5l7 7m0 0l-7 7m7-7H3" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </button>
             ) : (

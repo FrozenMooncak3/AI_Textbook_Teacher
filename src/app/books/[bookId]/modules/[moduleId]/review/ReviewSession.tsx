@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import MarkdownRenderer from '@/components/MarkdownRenderer'
+import AIResponse from '@/components/AIResponse'
 import Link from 'next/link'
 
 // --- Types ---
@@ -17,6 +17,8 @@ interface Feedback {
   is_correct: boolean
   score: number
   ai_feedback: string
+  correct_answer?: string
+  explanation?: string
   has_next: boolean
   next_question: Question | null
 }
@@ -281,7 +283,7 @@ export default function ReviewSession({
         
         <div className="p-8">
           <div className="text-lg text-slate-900 leading-relaxed font-medium mb-8">
-            <MarkdownRenderer content={question.text} />
+            <AIResponse content={question.text} />
           </div>
 
           {/* Answer Area */}
@@ -357,9 +359,25 @@ export default function ReviewSession({
               </div>
             </div>
             
-            <div className="text-sm text-slate-700 leading-relaxed mb-8">
-              <MarkdownRenderer content={feedback.ai_feedback} />
+            <div className="text-sm text-slate-700 leading-relaxed mb-6">
+              <AIResponse content={feedback.ai_feedback} />
             </div>
+
+            {/* Correct answer block */}
+            {feedback.correct_answer && (
+              <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">正确答案</p>
+                <AIResponse content={feedback.correct_answer} />
+              </div>
+            )}
+
+            {/* Explanation block */}
+            {feedback.explanation && (
+              <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-8">
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">解析</p>
+                <AIResponse content={feedback.explanation} />
+              </div>
+            )}
 
             <button 
               onClick={handleNext}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import MarkdownRenderer from '@/components/MarkdownRenderer'
+import AIResponse from '@/components/AIResponse'
 
 interface TestQuestion {
   id: number
@@ -296,9 +296,9 @@ export default function TestSession({
                 </span>
               </div>
               
-              <p className="text-slate-900 font-medium mb-6 leading-relaxed whitespace-pre-wrap">
-                {q.question_text}
-              </p>
+              <div className="text-slate-900 font-medium mb-6 leading-relaxed whitespace-pre-wrap">
+                <AIResponse content={q.question_text} />
+              </div>
 
               {q.question_type === 'single_choice' && q.options ? (
                 <div className="space-y-3">
@@ -430,7 +430,9 @@ export default function TestSession({
               </div>
 
               <div className="p-6 space-y-4">
-                <p className="text-slate-900 font-medium text-sm leading-relaxed">{r.question_text}</p>
+                <div className="text-slate-900 font-medium text-sm leading-relaxed whitespace-pre-wrap">
+                  <AIResponse content={r.question_text} />
+                </div>
                 
                 <div className="space-y-4">
                   <div className="space-y-1">
@@ -441,11 +443,13 @@ export default function TestSession({
                       {r.user_answer || '(空)'}
                     </div>
                   </div>
-                  {!r.is_correct && (
+
+                  {/* Correct answer block */}
+                  {r.correct_answer && (
                     <div className="space-y-1">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">正确答案</span>
-                      <div className="p-4 rounded-xl border border-blue-200 bg-blue-50 text-blue-900 text-sm whitespace-pre-wrap leading-relaxed">
-                        {r.correct_answer}
+                      <div className="mt-1 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <AIResponse content={r.correct_answer} />
                       </div>
                     </div>
                   )}
@@ -453,12 +457,12 @@ export default function TestSession({
 
                 <div className="space-y-2 pt-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">解析</span>
-                  <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-700 leading-relaxed border border-slate-100">
-                    <MarkdownRenderer content={r.explanation} />
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 text-sm text-slate-700 leading-relaxed border border-blue-200 dark:border-blue-800">
+                    <AIResponse content={r.explanation} />
                     {r.feedback && (
-                      <div className="mt-3 pt-3 border-t border-slate-200 text-blue-700 font-medium">
+                      <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800 text-blue-700 font-medium">
                         <div className="text-[10px] font-black text-blue-600/50 uppercase tracking-widest mb-1">AI 评价</div>
-                        <MarkdownRenderer content={r.feedback} />
+                        <AIResponse content={r.feedback} />
                       </div>
                     )}
                   </div>
@@ -467,7 +471,7 @@ export default function TestSession({
                 {!r.is_correct && r.remediation && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                     <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest block mb-1">Remediation Advice</span>
-                    <MarkdownRenderer content={r.remediation} className="text-amber-800" />
+                    <AIResponse content={r.remediation} className="text-amber-800" />
                   </div>
                 )}
               </div>

@@ -36,6 +36,19 @@
 
 ---
 
+## 2026-04-03 | M5：复习与测试结果展示优化
+
+- **复习结果增强**: 在 `ReviewSession.tsx` 中新增"正确答案"与"解析"区块，在 AI 评价后展示，帮助用户快速纠错。
+- **测试结果增强**: 在 `TestSession.tsx` 的逐题反馈中，为所有题目（无论对错）增加"正确答案"与"解析"展示。
+- **UI 组件统一**: 全面移除 `MarkdownRenderer`，改用基于 Tailwind Typography 的 `AIResponse` 组件渲染题目、评价与解析，确保视觉风格一致。
+- **视觉风格**: 正确答案采用绿色（green-50）背景，解析采用蓝色（blue-50）背景，层次分明。
+
+修改文件：
+- `src/app/books/[bookId]/modules/[moduleId]/review/ReviewSession.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/test/TestSession.tsx`
+
+---
+
 ## 2026-04-03 | M5：截图问 AI 流程重构
 
 - **重写 AiChatDialog**: 将截图问 AI 流程从"挂载即自动解释"改为两步走：OCR 识别 → 用户提问 → AI 回答。
