@@ -4,6 +4,21 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-03 | M5：Mistakes schema 扩展 + screenshot assistant 模板修复
+
+- **mistakes 表迁移**：为 `mistakes` 补充 `question_text`、`user_answer`、`correct_answer` 三个可空列，为后续错题本展示题干、作答和标准答案做准备。
+- **assistant 模板修复**：将 `assistant/screenshot_qa` 的乱码 UTF-8 模板替换为干净中文文本，并保留 `{screenshot_text}`、`{user_question}`、`{conversation_history}` 三个运行时变量。
+- **seed upsert 补齐**：`seedTemplates()` 现会对已有数据库中的 `assistant` 角色模板做 upsert，避免旧库继续保留乱码模板。
+- **回归脚本**：新增 `scripts/test-m5-task1.mjs`，覆盖三条 migration、模板正文和 assistant upsert 分支。
+
+修改文件：
+- `src/lib/db.ts` — 新增 3 条 mistakes ALTER TABLE migration
+- `src/lib/seed-templates.ts` — 修复 screenshot_qa 模板并补 assistant upsert
+- `scripts/test-m5-task1.mjs` — 新增 M5-T1 回归脚本
+- `docs/changelog.md` — 本条记录
+
+---
+
 ## 2026-04-03 | M5：AIResponse 组件与 Markdown 渲染统一化
 
 - **新增 AIResponse 组件**: 创建 `src/components/AIResponse.tsx`，集成 `react-markdown` 和 `remark-gfm`，使用 `@tailwindcss/typography` 的 `prose` 类实现标准化的 AI 内容渲染。

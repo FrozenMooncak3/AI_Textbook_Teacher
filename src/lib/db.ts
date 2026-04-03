@@ -277,6 +277,24 @@ function initSchema(db: Database.Database): void {
     // Column already dropped or never existed
   }
 
+  try {
+    db.exec(`ALTER TABLE mistakes ADD COLUMN question_text TEXT`)
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    db.exec(`ALTER TABLE mistakes ADD COLUMN user_answer TEXT`)
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    db.exec(`ALTER TABLE mistakes ADD COLUMN correct_answer TEXT`)
+  } catch {
+    // Column already exists
+  }
+
   // M4 migration: reset P-values to correct direction (low=good, range 1-4)
   try {
     db.exec(`UPDATE clusters SET current_p_value = 2, consecutive_correct = 0, last_review_result = NULL`)

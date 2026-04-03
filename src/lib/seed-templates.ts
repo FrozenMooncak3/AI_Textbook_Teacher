@@ -424,7 +424,7 @@ type 只能是：single_choice, c2_evaluation, calculation, essay
   {
     role: 'assistant',
     stage: 'screenshot_qa',
-    template_text: '浣犳槸涓€涓暀鏉愬涔犲姪鎵嬨€傜敤鎴峰湪闃呰 PDF 鏃舵埅鍥句簡涓€娈靛唴瀹瑰苟鎻愰棶銆俓n\n## 鎴浘璇嗗埆鏂囨湰\n{screenshot_text}\n\n## 鐢ㄦ埛闂\n{user_question}\n\n## 涔嬪墠鐨勫璇?n{conversation_history}\n\n## 瑕佹眰\n鐢ㄤ腑鏂囧洖绛旓紝瑙ｉ噴娓呮锛屽鏋滄秹鍙婂叕寮忚鍐欏嚭瀹屾暣姝ラ銆?',
+    template_text: '以下是教材内容：\n{screenshot_text}\n\n用户的问题：{user_question}\n\n{conversation_history}',
   },
 ]
 
@@ -502,6 +502,12 @@ export function seedTemplates(): void {
 
     for (const t of SEED_TEMPLATES) {
       if (t.role === 'reviewer') {
+        upsert.run(t.role, t.stage, t.template_text)
+      }
+    }
+
+    for (const t of SEED_TEMPLATES) {
+      if (t.role === 'assistant') {
         upsert.run(t.role, t.stage, t.template_text)
       }
     }
