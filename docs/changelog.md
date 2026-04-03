@@ -4,6 +4,16 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-03 | M5 热修复：截图问 AI 系统 prompt 重写
+
+- **问题**：系统 prompt 规定"只根据提供的内容回答"，导致 AI 变成复读机，无法解释教材没写明的"为什么"。
+- **修复**：重写 `SCREENSHOT_ASK_SYSTEM_PROMPT`，改为以教材为基础、结合自身知识解释概念，像老师一样教学生。
+
+修改文件：
+- `src/app/api/books/[bookId]/screenshot-ask/route.ts` — 重写系统 prompt
+
+---
+
 ## 2026-04-03 | M5：AI 生成内容 Markdown 渲染全覆盖
 
 - **全量迁移至 AIResponse**：审计全站 AI 生成内容，确保所有动态生成文本均使用 `<AIResponse>` 组件进行 Markdown 渲染。
