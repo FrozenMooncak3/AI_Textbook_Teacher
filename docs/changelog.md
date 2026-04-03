@@ -978,3 +978,15 @@
 - `src/app/api/review/[scheduleId]/respond/route.ts`
 - `src/app/api/modules/[moduleId]/test/submit/route.ts`
 - `scripts/test-m5-task4.mjs`
+
+---
+
+## 2026-04-03 | M5: Dashboard Aggregate API + Book Mistakes API
+
+**完成内容**: 新增 `GET /api/books/[bookId]/dashboard`，聚合书籍级学习进度、待复习、最近测试和错题分布；新增 `GET /api/books/[bookId]/mistakes`，支持按 `module`、`errorType`、`source` 过滤书级错题列表，并返回整本书范围的汇总统计。同步更新 `.agents/API_CONTRACT.md`，补齐新接口契约并修正 review respond 返回字段。
+
+**修改文件**:
+- `src/app/api/books/[bookId]/dashboard/route.ts`
+- `src/app/api/books/[bookId]/mistakes/route.ts`
+- `scripts/test-m5-task5.mjs`
+- `.agents/API_CONTRACT.md`

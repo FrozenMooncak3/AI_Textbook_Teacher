@@ -394,6 +394,8 @@ Response `200`:
     "is_correct": true,
     "score": 1,
     "ai_feedback": "string",
+    "correct_answer": "string",
+    "explanation": "string",
     "has_next": true,
     "next_question": {
       "id": 2,
@@ -441,6 +443,115 @@ Response `200`:
 
 When review round 5 is completed and no further schedule is created, `next_review` is `null`.
 
+### `GET /api/books/[bookId]/dashboard`
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "book": {
+      "id": 1,
+      "title": "string",
+      "totalModules": 10,
+      "completedModules": 6
+    },
+    "modules": [
+      {
+        "id": 1,
+        "title": "string",
+        "orderIndex": 1,
+        "learningStatus": "completed",
+        "qaProgress": {
+          "total": 8,
+          "answered": 8
+        },
+        "testScore": 85,
+        "testPassed": true
+      }
+    ],
+    "reviewsDue": [
+      {
+        "scheduleId": 1,
+        "moduleId": 1,
+        "moduleTitle": "string",
+        "dueDate": "2026-04-05",
+        "round": 2,
+        "isOverdue": false
+      }
+    ],
+    "recentTests": [
+      {
+        "moduleId": 1,
+        "moduleTitle": "string",
+        "score": 85,
+        "passed": true,
+        "completedAt": "datetime"
+      }
+    ],
+    "mistakesSummary": {
+      "total": 12,
+      "byType": {
+        "blind_spot": 4,
+        "procedural": 3,
+        "confusion": 3,
+        "careless": 2
+      }
+    }
+  }
+}
+```
+
+### `GET /api/books/[bookId]/mistakes`
+
+Query params:
+
+- `module=1` optional module filter
+- `errorType=blind_spot` optional error type filter
+- `source=test` optional source filter
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "mistakes": [
+      {
+        "id": 1,
+        "moduleId": 1,
+        "moduleTitle": "string",
+        "questionText": "string",
+        "userAnswer": "string",
+        "correctAnswer": "string",
+        "errorType": "blind_spot",
+        "remediation": "string",
+        "source": "test",
+        "kpTitle": "string",
+        "createdAt": "datetime"
+      }
+    ],
+    "summary": {
+      "total": 12,
+      "byType": {
+        "blind_spot": 4,
+        "procedural": 3,
+        "confusion": 3,
+        "careless": 2
+      },
+      "byModule": [
+        {
+          "moduleId": 1,
+          "moduleTitle": "string",
+          "count": 5
+        }
+      ]
+    }
+  }
+}
+```
+
 ## Change Log
 
 - [2026-03-28] [Codex] Added reading notes CRUD API contract for M2.
@@ -450,3 +561,4 @@ When review round 5 is completed and no further schedule is created, `next_revie
 - [2026-03-29] [Codex] Added GET contract for `/api/modules/[moduleId]/qa-feedback` so frontend can resume answered questions.
 - [2026-03-31] [Claude] Added M3 test generate, test submit, test status, and mistakes API contracts.
 - [2026-04-02] [Codex] Added M4 review API contracts for due, generate, respond, and complete endpoints.
+- [2026-04-03] [Codex] Added book-level dashboard and mistakes API contracts, and updated review respond response fields.
