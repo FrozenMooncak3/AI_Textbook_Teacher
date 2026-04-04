@@ -67,13 +67,13 @@ git diff {BASE_SHA}..{HEAD_SHA}
 
 ### Issues
 
-#### Critical (Must Fix)
+#### Blocking (Must Fix)
 [Bugs, security issues, data loss risks, broken functionality]
 
-#### Important (Should Fix)
+#### Advisory (Should Fix)
 [Architecture problems, missing features, poor error handling, test gaps]
 
-#### Minor (Nice to Have)
+#### Informational (Note)
 [Code style, optimization opportunities, documentation improvements]
 
 **For each issue:**
@@ -117,7 +117,7 @@ git diff {BASE_SHA}..{HEAD_SHA}
 
 ### Issues
 
-#### Important
+#### Advisory
 1. **Missing help text in CLI wrapper**
    - File: index-conversations:1-31
    - Issue: No --help flag, users won't discover --concurrency
@@ -128,7 +128,7 @@ git diff {BASE_SHA}..{HEAD_SHA}
    - Issue: Invalid dates silently return no results
    - Fix: Validate ISO format, throw error with example
 
-#### Minor
+#### Informational
 1. **Progress indicators**
    - File: indexer.ts:130
    - Issue: No "X of Y" counter for long operations

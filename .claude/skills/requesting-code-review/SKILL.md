@@ -9,10 +9,20 @@ Dispatch superpowers:code-reviewer subagent to catch issues before they cascade.
 
 **Core principle:** Review early, review often.
 
+## Review Levels
+
+When called by task-execution, the review level is pre-determined. When used standalone, choose based on scope:
+
+| Level | When | What |
+|-------|------|------|
+| **Full Review** | >2 files, new API/component, interface contracts touched | Subagent spec compliance + Claude quality pass |
+| **Spot Check** | 1-2 files, known pattern | Claude reads diff directly, no subagent |
+| **Auto-Pass** | Rename/format/text-only changes | Build verification only (`npm run build`) |
+
 ## When to Request Review
 
 **Mandatory:**
-- After each task in subagent-driven development
+- After each task in plan execution (level determined by task-execution)
 - After completing major feature
 - Before merge to main
 
@@ -114,18 +124,6 @@ See template at: requesting-code-review/code-reviewer.md
 
 ## Chain Position
 
-This skill appears in multiple chains:
+This skill is now inlined as a sub-procedure by **task-execution**. When task-execution is active, this skill's review flow is triggered as Phase 3 of the task loop. The review level (Full/Spot Check/Auto-Pass) is determined by task-execution.
 
-**Dispatch Chain** (step 3):
-1. structured-dispatch
-2. _(wait for agent)_
-3. **requesting-code-review** ← you are here
-4. claudemd-check
-
-**Closeout Chain** (step 1):
-1. **requesting-code-review** ← you are here
-2. milestone-audit
-3. claudemd-check
-4. finishing-a-development-branch
-
-**Next step:** After review is complete and issues are addressed, invoke `claudemd-check` automatically.
+When used standalone (outside task-execution), invoke `claudemd-check` after review is complete.
