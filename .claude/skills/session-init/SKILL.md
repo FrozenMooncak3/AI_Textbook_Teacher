@@ -142,10 +142,10 @@ Check for these signals:
 | 触发条件 | 自动执行的 skill |
 |----------|-----------------|
 | 用户想做新功能/探索想法 | brainstorming → writing-plans |
-| 派发任务给 Codex/Gemini | structured-dispatch |
+| 执行计划中的任务 | task-execution（统筹 dispatch + review + retry） |
 | brainstorming 或重要讨论结束 | journal |
 | 声称完成/准备 commit | verification-before-completion → claudemd-check |
-| 用户告知 Codex/Gemini 完成任务 | requesting-code-review → claudemd-check |
+| 用户告知 agent 完成任务 | task-execution（进入 review phase） |
 | 里程碑开始 | using-git-worktrees（创建隔离分支） |
 | 里程碑结束 | milestone-audit → finishing-a-development-branch |
 | 同一问题修复失败 ≥2 次 | systematic-debugging（强制走诊断流程，禁止继续猜） |
@@ -162,16 +162,13 @@ Check for these signals:
 用户给出指令后，匹配以下 chain：
 
 **Design Chain** — 探索想法、做新功能：
-1. brainstorming → 2. writing-plans → 3. 用户决定：dispatch 或 execute
+1. brainstorming → 2. writing-plans → 3. task-execution
 
-**Execution Chain** — 执行计划（Claude 自己的任务）：
-1. executing-plans → 2. verification-before-completion → 3. claudemd-check
-
-**Dispatch Chain** — 派发给 Codex/Gemini：
-1. structured-dispatch → 2. 等待完成 → 3. requesting-code-review → 4. claudemd-check
+**Execution Chain** — 执行计划（dispatch 给 Codex/Gemini）：
+1. task-execution（内部管 dispatch + review + retry 全流程）→ 2. verification-before-completion → 3. claudemd-check
 
 **Closeout Chain** — 收尾：
-1. requesting-code-review → 2. milestone-audit → 3. claudemd-check → 4. finishing-a-development-branch
+1. milestone-audit → 2. claudemd-check → 3. finishing-a-development-branch
 
 不匹配任何 chain 时正常处理，chain 是指引不是约束。
 
@@ -187,11 +184,11 @@ Check for these signals:
 | **claudemd-check** | 收尾合规审计（含 skill 合规） | 声称完成前自动 / `/claudemd-check` |
 | **brainstorming** | 需求讨论 → 设计 | 检测到新功能/想法时自动 / `/brainstorming` |
 | **writing-plans** | 写实施计划 | brainstorming 完成后自动 |
-| **structured-dispatch** | 派发任务给 Codex/Gemini | 检测到需要派发时自动 |
-| **requesting-code-review** | 审查 agent 提交的代码 | 用户告知 agent 完成后自动 |
+| **task-execution** | 计划执行引擎（dispatch→review→retry→close 全自动） | 有计划要执行时自动 / 用户说"执行" |
+| **structured-dispatch** | 派发模板（被 task-execution 内联调用） | 由 task-execution 触发 |
+| **requesting-code-review** | 代码审查（被 task-execution 内联调用） | 由 task-execution 触发 |
 | **journal** | 记录想法/决策/待跟进 | brainstorming/重要讨论后自动 / `/journal` |
 | **verification-before-completion** | 完成前验证 | 声称完成前自动 |
-| **using-git-worktrees** | 里程碑级 Git 隔离 | 里程碑开始时自动 |
 | **milestone-audit** | 里程碑收尾 architecture.md 全量验证 | 里程碑结束时自动 |
 | **finishing-a-development-branch** | 里程碑级分支收尾 | 里程碑结束时自动 |
 

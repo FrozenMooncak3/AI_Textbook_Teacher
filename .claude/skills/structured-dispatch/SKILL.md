@@ -94,10 +94,10 @@ Pane IDs: Claude=0, Codex=1, Gemini=2
 
 ## Chain Position
 
-This skill is **step 1** of the **Dispatch Chain**:
-1. **structured-dispatch** ← you are here
-2. _(wait for Codex/Gemini to complete)_
-3. requesting-code-review
-4. claudemd-check
+This skill is now inlined as a sub-procedure by **task-execution**. When task-execution is active, this skill's dispatch flow is followed as Phase 1 of the task loop.
 
-**Next step:** After dispatching, wait for the agent to complete. Once done, invoke `requesting-code-review` to review their work.
+When used standalone (outside task-execution), wait for the agent to complete, then invoke `requesting-code-review`.
+
+## Model Tier
+
+Always use highest tier (Codex: gpt-5.4 high / Gemini: gemini-2.5-pro). The Tier field in the dispatch template is no longer needed. See CCB protocol Section 3 for reference only.

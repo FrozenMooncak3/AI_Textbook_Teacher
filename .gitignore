@@ -51,6 +51,9 @@ next-env.d.ts
 # CCB runtime session files
 .ccb/.*-session
 
+# CCB task ledger (runtime state, not committed)
+.ccb/task-ledger.json
+
 # Claude Code hook runtime state
 .claude/.stop-count
 
