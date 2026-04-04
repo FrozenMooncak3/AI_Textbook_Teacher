@@ -1,7 +1,7 @@
 # Journal Index
 
 ## open（需要关注）
-（无）
+- [bug] M5.5 验收：test_ch1_2 显示 PDF 处理失败（实际有 PDF）+ 读财报模块地图白屏（TXT 上传）→ [2026-04-04-m5.5-user-testing.md](./2026-04-04-m5.5-user-testing.md)
 
 ## in_progress（解决中）
 
