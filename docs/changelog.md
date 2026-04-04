@@ -4,6 +4,16 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-04 | M5.5：交互体验优化 (Task 6)
+
+- **截图对话框键盘支持**: 为 `AiChatDialog.tsx` 添加了全局 ESC 键监听，支持用户通过键盘快捷键快速关闭截图 AI 对话框。
+- **资源清理**: 确保键盘监听器在组件卸载时正确移除，防止内存泄漏。
+
+修改文件：
+- `src/app/books/[bookId]/reader/AiChatDialog.tsx`
+
+---
+
 ## 2026-04-04 | M5.5：LoadingState 组件与全站加载状态标准化 (Task 5)
 
 - **新增 LoadingState 组件**: 创建 `src/components/LoadingState.tsx`，支持两种模式：

@@ -66,6 +66,15 @@ export default function AiChatDialog({
     return () => { cancelled = true }
   }, [bookId, imageBase64])
 
+  // ESC key to close dialog
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [onClose])
+
   // 第二步：用户提问 (on submit)
   const handleAsk = async () => {
     const question = input.trim()
