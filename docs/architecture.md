@@ -10,11 +10,11 @@
 ### 页面
 
 ```
-/ (首页：书目列表 + 待复习按钮 + 仪表盘入口)
+/ (首页：书目列表 + 待复习按钮)
 ├── /upload (上传 PDF)
 ├── /logs (系统日志)
 └── /books/[bookId]
-    ├── / (书详情 + 仪表盘入口)
+    ├── / (书详情：ProcessingPoller 或 ModuleMap)
     ├── /reader (PDF 阅读器 + 截图问 AI：OCR→提问→回答两步流程)
     ├── /module-map (模块地图)
     ├── /dashboard (学习仪表盘：进度/复习/测试/错题四宫格)
@@ -25,6 +25,19 @@
         ├── /test (测试 session)
         ├── /review?scheduleId=X (复习 session)
         └── /mistakes (错题页)
+
+App Shell (M5.5):
+├── src/app/layout.tsx → 包裹 SidebarLayout
+├── src/components/sidebar/SidebarProvider.tsx → 侧栏状态 Context（展开/折叠/移动端）
+├── src/components/sidebar/Sidebar.tsx → 三层路由感知导航（全局→书→模块）
+├── src/components/sidebar/SidebarLayout.tsx → flex h-screen: sidebar + main(flex-1 overflow-auto)
+├── src/components/sidebar/SidebarToggle.tsx → 移动端汉堡菜单 + 桌面端折叠按钮
+├── src/components/LoadingState.tsx → 共享加载组件（stage 模式 / progress 模式）
+├── src/app/error.tsx → 根级错误边界
+├── src/app/books/[bookId]/error.tsx → 书级错误边界
+├── src/app/books/[bookId]/modules/[moduleId]/error.tsx → 模块级错误边界
+├── src/app/books/[bookId]/layout.tsx → 书级 layout（薄包装）
+└── src/app/not-found.tsx → 全局 404 页面
 ```
 
 ### API 组
@@ -110,8 +123,8 @@ unstarted → reading → qa → notes_generated → testing → completed
 - test/submit 写入（source='test'），review/respond 写入（source='review'），qa 来源未实现
 - mistakes.kp_id 关联 knowledge_points，用于出题时优先覆盖
 - mistakes.error_type 只允许 4 个值：blind_spot / procedural / confusion / careless
-  - review/respond 使用 `normalizeReviewErrorType()` 做模糊归一化（M4 bug fix）
-  - ⚠️ test/submit 只做空值兜底（`?? 'blind_spot'`），未归一化——examiner AI 返回非标准值会直接入库
+  - review/respond 和 test/submit 均使用 `normalizeReviewErrorType()` 做模糊归一化
+  - normalizeReviewErrorType 位于 `src/lib/review-question-utils.ts`，null/unknown 默认返回 'confusion'
 
 ### prompt 模板
 
@@ -141,3 +154,20 @@ unstarted → reading → qa → notes_generated → testing → completed
 - 所有 AI 生成文本统一使用 `<AIResponse>` 组件渲染（react-markdown + remark-gfm + Tailwind Typography）
 - 覆盖范围：QA 反馈、测试评分、复习反馈、截图问答、读前指引、学习笔记、模块摘要、错题诊断
 - MarkdownRenderer 已删除，不再使用
+
+### App Shell 与导航（M5.5）
+
+- **侧栏导航**：SidebarLayout 包裹 root layout，`flex h-screen overflow-hidden`。侧栏固定左侧，内容区 `flex-1 overflow-auto` 独立滚动
+- **三层导航**：L1 全局（首页/上传）→ L2 书级（阅读/地图/仪表盘/错题）→ L3 模块级（学习/QA/测试/错题），路由感知自动展开
+- **移动端**：< 1024px 侧栏隐藏，汉堡菜单触发 overlay。ESC / backdrop 关闭
+- **折叠状态**：localStorage 持久化，折叠时显示图标 + hover tooltip
+- **页面布局**：所有页面使用 `min-h-full`（不再使用 `min-h-screen`），唯一 `h-screen` 在 SidebarLayout
+- **错误边界**：三级 error.tsx（根/书/模块）+ not-found.tsx，捕获所有未处理异常，显示中文友好提示
+- **LoadingState**：共享加载组件，stage 模式（spinner + 描述文字）和 progress 模式（进度条），替代所有页面级裸 spinner
+
+### 上传自动化流程（M5.5）
+
+- **ProcessingPoller 三阶段**：OCR 进度条（真实页码）→ 自动触发 KP 提取 → router.refresh 显示模块地图
+- **关键修复**：API 响应需 `json.data` 解包（handleRoute wrapper），kp_extraction_status 值为 `completed`/`failed`
+- 处理 409 ALREADY_COMPLETED / ALREADY_PROCESSING 边界情况
+- 上传后零手动点击：PDF → OCR → KP 提取 → 模块地图全自动
