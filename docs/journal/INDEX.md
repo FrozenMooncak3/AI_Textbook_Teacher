@@ -38,7 +38,7 @@
 - **T2** 优先面向扫描版 PDF 用户群体 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 
 ### 工程流程
-- **T1** 执行任务 skill——双层 review + fix 循环 + 自动派发下一个任务 → [2026-04-04-execution-skill.md](./2026-04-04-execution-skill.md)
+- **T1**🔴 执行任务 skill——双层 review + fix 循环 + 自动派发 + 调研 PM 方法论 → [2026-04-04-execution-skill.md](./2026-04-04-execution-skill.md)
 
 ### 已决策归档
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)

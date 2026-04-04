@@ -41,6 +41,12 @@ dispatch → 等完成报告 → 双层 review（subagent + Claude）
 - 复杂度中等：主要是流程编排，不是技术难题
 - 可逆性：容易反悔，skill 随时可改
 
+## 调研方向（2026-04-04 用户补充）
+
+1. **项目管理执行方法论**：本质上是 human-in-the-loop CI pipeline（stage → gate → stage），可参考 CI/CD 编排模式
+2. **现有 skill 生态**：找现成的 task runner / execution loop 类 skill 参考，避免从零设计
+3. **瓶颈分析**：唯一无法自动化的是"等待完成"（需用户通知），其余步骤（dispatch 生成、review 触发、fix 派发、下一任务）全部可 skill 化
+
 ## 处置
 
-parked T1（M5.5 期间做）。M5.5 本身就是最好的试验场——7 个任务正在走 dispatch → review 流程，做完后总结经验写 skill。
+parked T1（用户标注 T0 级优先）。M5.5 本身就是最好的试验场——7 个任务正在走 dispatch → review 流程，做完后总结经验 + 调研 PM 方法论 + 找参考 skill，然后正式 brainstorm。
