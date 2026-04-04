@@ -76,7 +76,7 @@ export default function ModuleMap({ bookId, modules: initialModules }: Props) {
           disabled={generating}
           className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium px-6 py-2.5 rounded-lg text-sm transition-colors"
         >
-          {generating ? 'AI 分析中，请稍候...' : '生成模块地图'}
+          {generating ? 'AI 分析中，请稍候...' : '手动重新生成模块地图'}
         </button>
       </div>
     )
