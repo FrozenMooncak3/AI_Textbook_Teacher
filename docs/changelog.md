@@ -11,18 +11,22 @@
   - **全局层**: 提供主页、上传教材等全局入口。
   - **教材层**: 自动识别 URL 中的 `bookId`，展示当前教材的阅读、地图、仪表盘及模块列表。
   - **模块层**: 在选中模块下自动展开 Q&A、测试及错题诊断等子入口。
-- **响应式设计**: 
-  - **桌面端**: 支持侧边栏展开（240px）与折叠（56px）模式，状态通过 `localStorage` 持久化。
-  - **移动端**: 采用侧边抽屉（Overlay）模式，配合磨砂背景（Backdrop）。
-- **状态管理**: 使用 `SidebarProvider` (React Context) 统一管理侧边栏的交互状态。
-- **根布局集成**: 在 `src/app/layout.tsx` 中全量集成 `SidebarLayout`，确保全站导航一致性。
+- **响应式设计与修复**: 
+  - **移动端优化**: 将悬浮的 Hamburger 按钮移至侧边栏外，解决移动端无法开启导航的问题。
+  - **交互增强**: 增加 ESC 键关闭移动端侧边栏的监听。
+  - **状态持久化**: 桌面端侧边栏展开（240px）与折叠（56px）状态通过 `localStorage` 同步。
+- **细节打磨**:
+  - 补充了模块展开后的"详情"入口。
+  - 修正了导航图标，改为展示模块的序号（order_index）而非数据库 ID。
+  - 统一了全站导航标签，适配产品规格书定义。
+- **根布局集成**: 在 `src/app/layout.tsx` 中全量集成 `SidebarLayout`。
 
 修改文件：
-- `src/components/sidebar/SidebarProvider.tsx` — 新建
-- `src/components/sidebar/Sidebar.tsx` — 新建
-- `src/components/sidebar/SidebarLayout.tsx` — 新建
-- `src/components/sidebar/SidebarToggle.tsx` — 新建
-- `src/app/layout.tsx` — 集成 SidebarLayout
+- `src/components/sidebar/SidebarProvider.tsx`
+- `src/components/sidebar/Sidebar.tsx`
+- `src/components/sidebar/SidebarLayout.tsx`
+- `src/components/sidebar/SidebarToggle.tsx`
+- `src/app/layout.tsx`
 
 ---
 
