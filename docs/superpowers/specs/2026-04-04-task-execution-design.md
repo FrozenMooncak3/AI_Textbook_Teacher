@@ -146,9 +146,11 @@ review 级别在 dispatch 时基于 task spec 预估并写入 ledger。agent 完
 
 **Escalate 后：** 人工决策，选项为：
 1. 修改 spec 后重新 dispatch（retry_count 重置）
-2. 换 agent 或换模型档位重新 dispatch
+2. 换 agent 重新 dispatch
 3. 拆分任务
 4. 跳过（标记 skipped）
+
+**模型档位：** 统一使用最高档（Codex: gpt-5.4 high / Gemini: gemini-2.5-pro）。不做档位选择，不做自动降档。CCB protocol Section 3 的三档规则在本 skill 中不适用。
 
 ### 3.5 质量门（Review 判定）
 
@@ -266,7 +268,7 @@ all tasks done:
 |-----------|------|
 | `structured-dispatch` | **保留为参考文档**。task-execution 内联其核心流程（interface contract check → template → user approval → send）作为 Phase 1 子步骤 |
 | `requesting-code-review` | **保留并增强**。增加 review level 参数：Full（现有流程）/ Spot Check（Claude 直接读 diff，不派 subagent）/ Auto-Pass（只验证 build）。统一 severity 术语为 Blocking/Advisory/Informational（替代原 Critical/Important/Minor） |
-| `executing-plans` | **合并**。task-execution 覆盖其功能。Claude 自执行的任务走同一状态机（assignee=claude），review 仍用双层模式（spec 合规 + 代码质量），保留 executing-plans 的 subagent prompt templates |
+| `executing-plans` | **不再使用**。本项目 Claude 不写业务代码（文件边界：只写 docs/skills/指令文件）。所有代码任务均 dispatch 给 Codex/Gemini。executing-plans 的 subagent 自执行模式不适用于本项目 |
 | `verification-before-completion` | **保留**，在收尾链中。task-execution 完成后触发 |
 | `session-init` | **更新 chain 声明**：Dispatch Chain 简化为 task-execution → verification → claudemd-check |
 
@@ -285,7 +287,6 @@ all tasks done:
 |------|------|
 | Push-with-ack 全自动完成检测 | 轻量级替代方案已纳入：session 恢复时自动 git log 检测。完整的 push-with-ack（agent 写 ack 文件回 inbox）需要修改所有 agent 指令文件，后续迭代加入 |
 | 并行任务调度 | 当前 CCB 串行派发已验证可靠。并行引入竞态风险，等有需求再加 |
-| 自动模型档位选择 | 需要积累任务复杂度→档位的经验数据。先人工标注，后续可自动化 |
 | task-ledger 可视化 Dashboard | 当前终端输出摘要够用。Web Dashboard 是锦上添花 |
 
 ---
@@ -296,7 +297,7 @@ all tasks done:
 2. review 级别在 dispatch 前确定，有规则可查，不凭感觉
 3. review-fix 循环最多 2 轮自动收敛或 escalate，不再无限循环
 4. 完成清单强制执行，changelog/project_status 不再漏更新
-5. executing-plans 和 structured-dispatch/requesting-code-review 的手动串联被 task-execution 的自动循环替代
+5. structured-dispatch 和 requesting-code-review 的手动串联被 task-execution 的自动循环替代
 
 ---
 
