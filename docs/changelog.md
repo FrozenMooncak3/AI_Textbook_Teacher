@@ -4,6 +4,26 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-04 | M5.5：错误边界与白屏优化 (Task 3)
+
+- **多层级错误边界**: 引入了三级 `error.tsx` 错误处理体系，确保任何代码崩溃都能被捕获并展示友好的中文错误提示。
+  - **全局层**: `src/app/error.tsx` 处理顶层异常。
+  - **教材层**: `src/app/books/[bookId]/error.tsx` 针对教材加载异常。
+  - **模块层**: `src/app/books/[bookId]/modules/[moduleId]/error.tsx` 针对具体学习阶段异常。
+- **全局 404 页面**: 新增 `src/app/not-found.tsx`，统一处理无效路由及未找到的数据实体。
+- **鲁棒性审计**: 
+  - 审计了所有服务端组件，确保 `db.get()` 结果均有 `notFound()` 校验。
+  - 确认客户端组件（仪表盘、地图、错题本）已具备 API 异常状态的 UI 呈现逻辑。
+- **用户体验**: 错误页面均提供"重试"与"返回"选项，彻底消除白屏现象。
+
+修改文件：
+- `src/app/error.tsx` — 新建
+- `src/app/books/[bookId]/error.tsx` — 新建
+- `src/app/books/[bookId]/modules/[moduleId]/error.tsx` — 新建
+- `src/app/not-found.tsx` — 新建
+
+---
+
 ## 2026-04-04 | M5.5：页面布局迁移与应用壳适配 (Task 2)
 
 - **布局标准化**: 全量将页面容器从 `min-h-screen`/`h-screen` 迁移为 `min-h-full`/`h-full`，确保所有页面在侧边栏的独立滚动区域内正确渲染。
