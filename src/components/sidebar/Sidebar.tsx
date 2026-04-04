@@ -196,13 +196,13 @@ export default function Sidebar() {
           <div className="space-y-1">
             <NavItem 
               href="/" 
-              label="妫ｆ牠銆" 
+              label="首页" 
               exact 
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>}
             />
             <NavItem 
               href="/upload" 
-              label="娑撳﹣绱堕弫娆愭綏" 
+              label="上传教材" 
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>}
             />
           </div>
@@ -223,17 +223,17 @@ export default function Sidebar() {
               <div className="space-y-1">
                 <NavItem 
                   href={`/books/${bookId}/reader`} 
-                  label="闂冨懓顕伴崢鐔告瀮" 
+                  label="阅读原文" 
                   icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>}
                 />
                 <NavItem 
                   href={`/books/${bookId}/module-map`} 
-                  label="濡€虫健閸︽澘娴" 
+                  label="模块地图" 
                   icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>}
                 />
                 <NavItem 
                   href={`/books/${bookId}/dashboard`} 
-                  label="娴狀亣銆冮惄?" 
+                  label="仪表盘" 
                   icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>}
                 />
                 <NavItem 
@@ -273,7 +273,7 @@ export default function Sidebar() {
                         <div className="ml-8 space-y-1 pr-2 animate-in slide-in-from-top-2 duration-200">
                           <NavItem 
                             href={`/books/${bookId}/modules/${m.id}`} 
-                            label="鐎涳缚绡" 
+                            label="学习" 
                             exact
                             icon={<div className="w-1.5 h-1.5 rounded-full bg-current" />}
                           />
