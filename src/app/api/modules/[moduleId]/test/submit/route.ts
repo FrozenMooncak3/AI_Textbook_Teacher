@@ -5,6 +5,7 @@ import { getPrompt } from '@/lib/prompt-templates'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
 import { logAction } from '@/lib/log'
+import { normalizeReviewErrorType } from '@/lib/review-question-utils'
 
 interface TestQuestion {
   id: number
@@ -162,11 +163,11 @@ export const POST = handleRoute(async (req, context) => {
     if (!mcr.is_correct) {
       const aiDiag = aiResults.find((ar) => ar.question_id === mcr.question_id)
       if (aiDiag) {
-        mcr.error_type = aiDiag.error_type ?? 'blind_spot'
+        mcr.error_type = normalizeReviewErrorType(aiDiag.error_type)
         mcr.feedback = aiDiag.feedback ?? mcr.feedback
         mcr.remediation = aiDiag.remediation ?? null
       } else {
-        mcr.error_type = 'blind_spot'
+        mcr.error_type = normalizeReviewErrorType(null)
       }
     }
   }
@@ -179,7 +180,7 @@ export const POST = handleRoute(async (req, context) => {
       is_correct: aiResult?.is_correct ?? false,
       score: Math.min(aiResult?.score ?? 0, maxPts),
       feedback: aiResult?.feedback ?? null,
-      error_type: aiResult?.error_type ?? (aiResult?.is_correct ? null : 'blind_spot'),
+      error_type: aiResult?.is_correct ? null : normalizeReviewErrorType(aiResult?.error_type),
       remediation: aiResult?.remediation ?? null,
     }
   })
@@ -226,7 +227,7 @@ export const POST = handleRoute(async (req, context) => {
         id,
         q.kp_id ?? kpIdsArr[0] ?? null,
         q.question_text.slice(0, 200),
-        r.error_type ?? 'blind_spot',
+        normalizeReviewErrorType(r.error_type),
         'test',
         r.remediation ?? null,
         q.question_text,
