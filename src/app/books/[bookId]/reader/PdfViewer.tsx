@@ -322,7 +322,7 @@ export default function PdfViewer({ bookId, bookTitle }: Props) {
   // ── 加载中 ────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
+      <div className="flex items-center justify-center h-full bg-gray-100">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-sm text-gray-500">正在加载 PDF...</p>
@@ -334,7 +334,7 @@ export default function PdfViewer({ bookId, bookTitle }: Props) {
   // ── 加载失败 ──────────────────────────────────────────────
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-100 gap-4">
+      <div className="flex flex-col items-center justify-center h-full bg-gray-100 gap-4">
         <p className="text-sm text-gray-600">{error}</p>
         <button
           onClick={() => router.push(`/books/${bookId}`)}
@@ -348,7 +348,7 @@ export default function PdfViewer({ bookId, bookTitle }: Props) {
 
   // ── 阅读器 ────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-full bg-gray-100">
 
       {/* 工具栏 */}
       <div className="bg-white border-b border-gray-200 px-4 h-12 flex items-center gap-3 shrink-0">

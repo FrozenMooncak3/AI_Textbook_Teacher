@@ -14,13 +14,10 @@ export default function Home() {
     .all() as Book[]
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-full bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-gray-900">AI 教材精学老师</h1>
-          <a href="/logs" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-            系统日志
-          </a>
         </div>
 
         <a

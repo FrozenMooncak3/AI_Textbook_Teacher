@@ -72,7 +72,7 @@ export default async function TestPage({
   const inProgressPaper = formattedHistory.find(h => h.total_score === null)
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-full bg-slate-50">
       <div className="max-w-2xl mx-auto px-4 py-10">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-xs text-slate-400 mb-8" aria-label="Breadcrumb">

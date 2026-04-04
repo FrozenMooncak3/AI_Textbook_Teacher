@@ -40,17 +40,8 @@ export default async function ModulePage({
   if (!module_) notFound()
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-full bg-slate-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-xs text-slate-400 mb-8 overflow-hidden whitespace-nowrap">
-          <a href={`/books/${bookId}`} className="hover:text-blue-600 transition-colors shrink-0">
-            {book.title}
-          </a>
-          <span className="shrink-0">/</span>
-          <span className="text-slate-600 truncate">模块 {module_.order_index}：{module_.title}</span>
-        </nav>
-
         <ModuleLearning 
           module={module_} 
           bookRawText={book.raw_text} 

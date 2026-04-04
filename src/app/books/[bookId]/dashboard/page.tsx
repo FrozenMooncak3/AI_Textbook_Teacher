@@ -87,7 +87,7 @@ export default function DashboardPage({ params }: { params: Promise<{ bookId: st
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-full bg-gray-50 flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
@@ -95,7 +95,7 @@ export default function DashboardPage({ params }: { params: Promise<{ bookId: st
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+      <div className="min-h-full bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-red-100 text-center max-w-sm w-full">
           <div className="text-red-500 text-4xl mb-4">⚠️</div>
           <p className="text-gray-900 font-medium mb-4">{error || 'Dashboard not found'}</p>
@@ -108,7 +108,7 @@ export default function DashboardPage({ params }: { params: Promise<{ bookId: st
   const completionRate = Math.round((data.book.completedModules / data.book.totalModules) * 100)
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20">
+    <main className="min-h-full bg-gray-50 pb-20">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header & Progress Bar */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">

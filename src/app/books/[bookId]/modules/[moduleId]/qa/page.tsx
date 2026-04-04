@@ -36,7 +36,7 @@ export default async function QAPage({
   if (!module_) notFound()
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-full bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-10">
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
           <a href={`/books/${bookId}`} className="hover:text-gray-600 transition-colors">

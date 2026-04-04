@@ -248,7 +248,7 @@ export default function ModuleMapPage() {
 
   if (status === 'pending' || status === 'processing') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
+      <div className="flex flex-col items-center justify-center min-h-full bg-slate-50">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
         <p className="text-slate-600 font-medium">正在提取知识点...</p>
         <p className="text-slate-400 text-sm mt-2">这可能需要几分钟，请稍候</p>
@@ -258,7 +258,7 @@ export default function ModuleMapPage() {
 
   if (status === 'failed' || (status === 'completed' && error)) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6">
+      <div className="flex flex-col items-center justify-center min-h-full bg-slate-50 p-6">
         <div className="bg-white p-8 rounded-xl shadow-sm max-w-md w-full text-center border border-red-100">
           <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">提取失败</h2>
@@ -278,7 +278,7 @@ export default function ModuleMapPage() {
   if (!data) return null
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-full bg-slate-50 pb-24">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">

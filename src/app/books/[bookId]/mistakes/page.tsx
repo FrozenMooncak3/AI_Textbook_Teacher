@@ -90,7 +90,7 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-full bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-red-100 text-center max-w-sm w-full">
           <div className="text-red-500 text-4xl mb-4">⚠️</div>
           <p className="text-gray-900 font-medium mb-4">{error}</p>
@@ -101,7 +101,7 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20">
+    <main className="min-h-full bg-gray-50 pb-20">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">

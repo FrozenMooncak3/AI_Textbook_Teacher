@@ -23,6 +23,7 @@ const STATUS_LABEL: Record<string, string> = {
   unstarted: '未开始',
   reading: '阅读中',
   qa: 'Q&A 中',
+  notes_generated: '笔记已生成',
   testing: '测试中',
   completed: '已完成',
 }

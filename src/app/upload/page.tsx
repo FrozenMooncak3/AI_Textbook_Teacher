@@ -55,7 +55,7 @@ export default function UploadPage() {
   // 上传中 / 跳转中：替换整个表单，显示等待面板
   if (status !== 'idle') {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <main className="min-h-full bg-gray-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 w-full max-w-md p-8">
           <div className="text-center py-4">
             <div className="flex justify-center mb-5">
@@ -83,7 +83,7 @@ export default function UploadPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <main className="min-h-full bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 w-full max-w-md p-8">
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">上传教材</h1>
         <p className="text-sm text-gray-500 mb-8">支持 PDF 和 TXT 格式</p>

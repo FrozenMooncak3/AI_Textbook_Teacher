@@ -4,6 +4,34 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-04 | M5.5：页面布局迁移与应用壳适配 (Task 2)
+
+- **布局标准化**: 全量将页面容器从 `min-h-screen`/`h-screen` 迁移为 `min-h-full`/`h-full`，确保所有页面在侧边栏的独立滚动区域内正确渲染。
+- **教材层级布局**: 新增 `src/app/books/[bookId]/layout.tsx`，为教材级联功能提供统一容器。
+- **导航冗余清理**:
+  - 移除首页顶部的系统日志链接（已整合至侧边栏底部）。
+  - 移除教材详情页顶部的仪表盘与阅读器按钮（已整合至侧边栏二级导航）。
+  - 移除模块详情页顶部的内联面包屑（已整合至侧边栏层级展示）。
+- **细节修复**: 完善了 `ModuleMap.tsx` 的状态标签映射，补充了 `notes_generated` (笔记已生成) 状态。
+
+修改文件：
+- `src/app/books/[bookId]/layout.tsx` — 新建
+- `src/app/page.tsx`
+- `src/app/upload/page.tsx`
+- `src/app/logs/page.tsx`
+- `src/app/books/[bookId]/page.tsx`
+- `src/app/books/[bookId]/dashboard/page.tsx`
+- `src/app/books/[bookId]/module-map/page.tsx`
+- `src/app/books/[bookId]/mistakes/page.tsx`
+- `src/app/books/[bookId]/reader/PdfViewer.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/page.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/qa/page.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/test/page.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/mistakes/page.tsx`
+- `src/app/books/[bookId]/ModuleMap.tsx`
+
+---
+
 ## 2026-04-04 | M5.5：应用壳与导航重构 (Task 1)
 
 - **应用壳架构 (App Shell)**: 引入了持久化的侧边栏导航，将应用从"独立页面集合"转变为具有统一体验的 Web App。
