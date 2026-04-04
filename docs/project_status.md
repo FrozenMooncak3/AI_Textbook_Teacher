@@ -9,14 +9,20 @@
 
 **方向**：MVP 重新设计——教练核心 + PDF 阅读器 + 独立问答通道
 
-**当前里程碑**：M5 功能补完 — **已完成**（2026-04-03）
+**当前里程碑**：M5.5 稳固 & App Shell — **执行中**（2026-04-04 开始）
 
-**最新完成**：M5 全部 9 个任务完成。截图问 AI 两步流程改造、AIResponse Markdown 渲染全覆盖、正确答案/解析展示、学习仪表盘、书级错题诊断本。
+**最新完成**：M5.5 brainstorming + spec + plan 全部完成。T1（侧栏）派 Gemini，T7（error_type）派 Codex，均已发出。
 
 **待办**：
-1. 进入 M5.5（体验增强）brainstorming
+1. T1 侧栏基础设施（Gemini，执行中）
+2. T7 error_type 归一化（Codex，执行中）
+3. T2 全站页面迁移（等 T1 完成后派发）
+4. T3 Error boundaries + 白屏修复
+5. T4 ProcessingPoller 重写
+6. T5 LoadingState 组件 + 全站替换
+7. T6 截图问 AI ESC 验证
 
-**下一步**：M5.5 brainstorming
+**下一步**：等 T1/T7 完成 → review → 派 T2
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -35,7 +41,7 @@
 | M3.5 | 里程碑衔接修复：测试→复习调度触发 + schema 清理 + reviewer prompt 重写 | **已完成**（2026-04-02） |
 | M4 | 复习系统：复习调度（3/7/15/30/60 天）→ 聚类出题 → P 值更新 → 前端复习会话 | **已完成**（2026-04-02） |
 | M5 | 功能补完：截图问 AI 两步流程 + AIResponse Markdown 渲染 + 正确答案展示 + 仪表盘 + 错题诊断 | **已完成**（2026-04-03） |
-| M5.5 | 体验增强：导航 sidebar + 笔记导出 + 模块内文字选取问 AI + UI/UX 打磨 | 未开始 |
+| M5.5 | 稳固 & App Shell：侧栏导航 + 白屏修复 + OCR 自动触发 + 进度显示 + LoadingState | **执行中**（2026-04-04） |
 
 ### M5 完成内容
 

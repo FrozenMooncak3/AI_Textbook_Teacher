@@ -29,6 +29,7 @@
 - **T2** 学习计划定制（百词斩模式）：AI 预估时长+用户自定节奏 → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
 
 ### 基础设施
+- **T2** 预生成系统——后台预生成下一步内容，消灭等待 → [2026-04-04-pregeneration-system.md](./2026-04-04-pregeneration-system.md)
 - **T2** 支持 PPT + 扫描版 PDF（独立里程碑）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - **T3** 语言模式系统——自动切换 prompt 语言，多国语言版本 → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
 
