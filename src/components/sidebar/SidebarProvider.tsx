@@ -37,6 +37,16 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const toggleCollapsed = () => setIsCollapsed(!isCollapsed)
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen)
 
+  // Close mobile sidebar on ESC key
+  useEffect(() => {
+    if (!isMobileOpen) return
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMobileOpen(false)
+    }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [isMobileOpen])
+
   return (
     <SidebarContext.Provider
       value={{

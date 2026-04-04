@@ -10,7 +10,7 @@ export default function SidebarToggle() {
       {/* Mobile Toggle (Hamburger) */}
       <button
         onClick={toggleMobile}
-        className="lg:hidden p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+        className="lg:hidden p-2 bg-white shadow-sm rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
         aria-label="Toggle Menu"
       >
         <svg

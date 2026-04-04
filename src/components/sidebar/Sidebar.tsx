@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useSidebar } from './SidebarProvider'
 import SidebarToggle from './SidebarToggle'
@@ -15,6 +15,7 @@ interface Module {
   id: number
   title: string
   learning_status: string
+  order_index: number
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -37,7 +38,6 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function Sidebar() {
   const pathname = usePathname()
-  const router = useRouter()
   const { isCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar()
 
   const [books, setBooks] = useState<Book[]>([])
@@ -64,7 +64,7 @@ export default function Sidebar() {
           setBooks(json.data)
         }
       } catch (e) {
-        console.error('Failed to fetch books', e)
+        // Error handled by loading state
       } finally {
         setIsLoadingBooks(false)
       }
@@ -88,7 +88,7 @@ export default function Sidebar() {
           setModules(json.modules)
         }
       } catch (e) {
-        console.error('Failed to fetch modules', e)
+        // Error handled by loading state
       } finally {
         setIsLoadingModules(false)
       }
@@ -212,7 +212,7 @@ export default function Sidebar() {
             <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-300">
               <div className="px-3">
                 {!isCollapsed ? (
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate" title={currentBook?.title}>
                     {currentBook?.title || '当前教材'}
                   </p>
                 ) : (
@@ -265,12 +265,18 @@ export default function Sidebar() {
                         href={`/books/${bookId}/modules/${m.id}`} 
                         label={m.title} 
                         badge={m.learning_status}
-                        icon={<div className="w-5 h-5 flex items-center justify-center font-bold text-xs">{m.id}</div>}
+                        icon={<div className="w-5 h-5 flex items-center justify-center font-bold text-xs">{m.order_index}</div>}
                       />
                       
                       {/* Layer 3: Module Sub-pages (Expanded only for active module) */}
                       {isCurrentModule && !isCollapsed && (
                         <div className="ml-8 space-y-1 pr-2 animate-in slide-in-from-top-2 duration-200">
+                          <NavItem 
+                            href={`/books/${bookId}/modules/${m.id}`} 
+                            label="详情" 
+                            exact
+                            icon={<div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                          />
                           <NavItem 
                             href={`/books/${bookId}/modules/${m.id}/qa`} 
                             label="Q&A 练习" 
