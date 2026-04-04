@@ -4,6 +4,28 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-04 | M5.5：应用壳与导航重构 (Task 1)
+
+- **应用壳架构 (App Shell)**: 引入了持久化的侧边栏导航，将应用从"独立页面集合"转变为具有统一体验的 Web App。
+- **三层导航体系**:
+  - **全局层**: 提供主页、上传教材等全局入口。
+  - **教材层**: 自动识别 URL 中的 `bookId`，展示当前教材的阅读、地图、仪表盘及模块列表。
+  - **模块层**: 在选中模块下自动展开 Q&A、测试及错题诊断等子入口。
+- **响应式设计**: 
+  - **桌面端**: 支持侧边栏展开（240px）与折叠（56px）模式，状态通过 `localStorage` 持久化。
+  - **移动端**: 采用侧边抽屉（Overlay）模式，配合磨砂背景（Backdrop）。
+- **状态管理**: 使用 `SidebarProvider` (React Context) 统一管理侧边栏的交互状态。
+- **根布局集成**: 在 `src/app/layout.tsx` 中全量集成 `SidebarLayout`，确保全站导航一致性。
+
+修改文件：
+- `src/components/sidebar/SidebarProvider.tsx` — 新建
+- `src/components/sidebar/Sidebar.tsx` — 新建
+- `src/components/sidebar/SidebarLayout.tsx` — 新建
+- `src/components/sidebar/SidebarToggle.tsx` — 新建
+- `src/app/layout.tsx` — 集成 SidebarLayout
+
+---
+
 ## 2026-04-03 | M5 热修复：截图问 AI 系统 prompt 重写
 
 - **问题**：系统 prompt 规定"只根据提供的内容回答"，导致 AI 变成复读机，无法解释教材没写明的"为什么"。
@@ -1054,3 +1076,12 @@
 **修改文件**:
 - `src/app/api/books/[bookId]/screenshot-ask/route.ts`
 - `scripts/test-m5-screenshot-prompt-hotfix.mjs`
+---
+
+## 2026-04-04 | M5.5: Normalize test/submit error_type with shared utility
+
+**完成内容**: 在 `POST /api/modules/[moduleId]/test/submit` 中接入共享的 `normalizeReviewErrorType()`，替换 4 处原始 `'blind_spot'` fallback，使单选诊断、主观题结果和 `mistakes` 写入都统一落到 4 个标准 `error_type` 值上，并与 review 流程保持一致。
+
+**修改文件**:
+- `src/app/api/modules/[moduleId]/test/submit/route.ts`
+- `scripts/test-m5.5-task7.mjs`
