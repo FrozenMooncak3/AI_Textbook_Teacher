@@ -38,12 +38,13 @@
 - **T2** 优先面向扫描版 PDF 用户群体 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 
 ### 工程流程
-- **T1**🔴 执行任务 skill——双层 review + fix 循环 + 自动派发 + 调研 PM 方法论 → [2026-04-04-execution-skill.md](./2026-04-04-execution-skill.md)
+（无）
 
 ### 已决策归档
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [infra:resolved] task-execution skill 已实现——统一执行引擎（dispatch→review→retry→close 全自动），替代手动串联 dispatch/review chain（2026-04-04）→ [2026-04-04-execution-skill.md](./2026-04-04-execution-skill.md)
 - [audit] M5.5 milestone-audit 通过：App Shell + ProcessingPoller + 错误边界全量验证，architecture.md 与代码一致（2026-04-04）→ [2026-04-04-m5.5-milestone-audit.md](./2026-04-04-m5.5-milestone-audit.md)
 - [audit] M5 milestone-audit 通过：architecture.md 与代码一致，3 条新契约已文档化，⚠️ test/submit error_type 未变（2026-04-03）→ [2026-04-03-m5-milestone-audit.md](./2026-04-03-m5-milestone-audit.md)
 - [M5完成] 评分后显示正确答案：T4/T7 实现（review/respond + test/submit 返回 correct_answer/explanation，前端展示）（2026-04-03）

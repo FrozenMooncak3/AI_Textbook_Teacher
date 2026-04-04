@@ -4,6 +4,26 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-04 | task-execution skill：统一执行引擎
+
+- **新增 task-execution skill**: 统筹 dispatch→review→retry→close 全生命周期，替代手动串联 structured-dispatch 和 requesting-code-review
+- **核心机制**: 5 阶段流程（初始化→派发→等待→审查→决策→收尾），circuit breaker（2 次重试后升级），质量门禁（Blocking/Advisory/Informational），状态账本（task-ledger.json）
+- **review 分级**: Full Review（>2 文件/接口契约）、Spot Check（1-2 文件）、Auto-Pass（格式/重命名），支持自动升级
+- **session 恢复**: git log 自动检测 agent 新提交，中断后无缝恢复
+- **skill 协同更新**: session-init chain routing 重写，structured-dispatch/requesting-code-review 标记为 task-execution 子流程
+
+修改文件：
+- `.claude/skills/task-execution/SKILL.md` — 新建（454 行）
+- `.claude/skills/session-init/SKILL.md` — chain routing + skill 手册更新
+- `.claude/skills/structured-dispatch/SKILL.md` — chain position + model tier 更新
+- `.claude/skills/requesting-code-review/SKILL.md` — review levels + chain position 更新
+- `.claude/skills/requesting-code-review/code-reviewer.md` — severity taxonomy 统一
+- `.gitignore` — 添加 `.ccb/task-ledger.json`
+- `docs/superpowers/specs/2026-04-04-task-execution-design.md` — 设计文稿
+- `docs/superpowers/plans/2026-04-04-task-execution-plan.md` — 实施计划
+
+---
+
 ## 2026-04-04 | M5.5：交互体验优化 (Task 6)
 
 - **截图对话框键盘支持**: 为 `AiChatDialog.tsx` 添加了全局 ESC 键监听，支持用户通过键盘快捷键快速关闭截图 AI 对话框。
