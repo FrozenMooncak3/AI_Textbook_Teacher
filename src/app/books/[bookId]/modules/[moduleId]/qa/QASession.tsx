@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AIResponse from '@/components/AIResponse'
+import LoadingState from '@/components/LoadingState'
 
 // --- Types ---
 
@@ -135,12 +136,8 @@ export default function QASession({
   // ── 渲染状态处理 ───────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
-        <div className="flex justify-center mb-6">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-        <h3 className="text-xl font-bold text-slate-900 mb-2">AI 正在准备你的 Q&A 练习...</h3>
-        <p className="text-slate-500">正在同步学习进度</p>
+      <div className="min-h-full flex items-center justify-center">
+        <LoadingState label="AI 正在准备你的 Q&A 练习..." />
       </div>
     )
   }

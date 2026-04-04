@@ -3,6 +3,7 @@
 import { useState, useEffect, use, useCallback } from 'react'
 import Link from 'next/link'
 import AIResponse from '@/components/AIResponse'
+import LoadingState from '@/components/LoadingState'
 
 interface Mistake {
   id: number
@@ -186,9 +187,7 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
 
         {/* Mistakes List */}
         {loading ? (
-          <div className="py-20 flex justify-center">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          </div>
+          <LoadingState label="正在加载全书错题记录..." />
         ) : data?.mistakes.length === 0 ? (
           <div className="bg-white rounded-3xl border border-gray-100 p-20 text-center">
             <span className="text-4xl mb-4 block">🎉</span>

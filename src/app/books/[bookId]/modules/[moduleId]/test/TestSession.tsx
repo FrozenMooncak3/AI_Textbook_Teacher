@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AIResponse from '@/components/AIResponse'
+import LoadingState from '@/components/LoadingState'
 
 interface TestQuestion {
   id: number
@@ -228,14 +229,10 @@ export default function TestSession({
   // ── 2. 加载中 / 提交中 ──────────────────────────────────────
   if (stage === 'generating' || stage === 'submitting') {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-12 flex flex-col items-center justify-center text-center">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-        <h3 className="text-lg font-semibold text-slate-900 mb-1">
-          {stage === 'generating' ? 'AI 正在为你生成试卷...' : 'AI 正在评分诊断...'}
-        </h3>
-        <p className="text-sm text-slate-500">
-          {stage === 'generating' ? '这将基于你的薄弱知识点定制题目' : '深度分析错误原因并给出补救建议'}
-        </p>
+      <div className="min-h-full flex items-center justify-center">
+        <LoadingState 
+          label={stage === 'generating' ? 'AI 正在为你生成试卷...' : 'AI 正在评分诊断...'} 
+        />
       </div>
     )
   }

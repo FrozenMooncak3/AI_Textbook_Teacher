@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import LoadingState from '@/components/LoadingState'
 
 // --- Types ---
 
@@ -248,10 +249,8 @@ export default function ModuleMapPage() {
 
   if (status === 'pending' || status === 'processing') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-full bg-slate-50">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-600 font-medium">正在提取知识点...</p>
-        <p className="text-slate-400 text-sm mt-2">这可能需要几分钟，请稍候</p>
+      <div className="flex flex-col items-center justify-center min-h-full">
+        <LoadingState label="正在加载模块地图..." />
       </div>
     )
   }

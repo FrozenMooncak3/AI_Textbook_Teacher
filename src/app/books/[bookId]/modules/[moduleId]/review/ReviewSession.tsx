@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import AIResponse from '@/components/AIResponse'
 import Link from 'next/link'
+import LoadingState from '@/components/LoadingState'
 
 // --- Types ---
 
@@ -244,9 +245,8 @@ export default function ReviewSession({
 
   if (isLoading || !question) {
     return (
-      <div className="max-w-2xl mx-auto mt-20 text-center">
-        <div className="inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
-        <p className="text-slate-500 font-medium">AI 正在加载你的复习内容...</p>
+      <div className="min-h-full flex items-center justify-center">
+        <LoadingState label="AI 正在加载你的复习内容..." />
       </div>
     )
   }

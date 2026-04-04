@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react'
 import AIResponse from '@/components/AIResponse'
+import LoadingState from '@/components/LoadingState'
 
 interface Mistake {
   id: number
@@ -67,8 +68,8 @@ export default function MistakesPage({
 
   if (loading) {
     return (
-      <div className="min-h-full bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-full flex items-center justify-center">
+        <LoadingState label="正在分析模块错题记录..." />
       </div>
     )
   }

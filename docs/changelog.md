@@ -4,6 +4,27 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-04 | M5.5：LoadingState 组件与全站加载状态标准化 (Task 5)
+
+- **新增 LoadingState 组件**: 创建 `src/components/LoadingState.tsx`，支持两种模式：
+  - **Stage 模式**: 用于加载静态阶段，展示品牌蓝色旋转动画及说明文字。
+  - **Progress 模式**: 用于展示百分比进度条（如 OCR 识别）。
+- **全站适配**: 替换了仪表盘、模块地图、错题本、测试会话、复习会话及 Q&A 练习中的页级空旋转图标，为所有长时间加载过程补充了描述性文字（如"AI 正在为你生成试卷..."）。
+- **交互规范**: 区分了页级加载与组件/按钮级加载，保留了按钮内的微型旋转图标，确保交互反馈的层次感。
+
+修改文件：
+- `src/components/LoadingState.tsx` — 新建
+- `src/app/books/[bookId]/dashboard/page.tsx`
+- `src/app/books/[bookId]/module-map/page.tsx`
+- `src/app/books/[bookId]/mistakes/page.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/mistakes/page.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/test/TestSession.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/review/ReviewSession.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/qa/QASession.tsx`
+- `src/app/books/[bookId]/modules/[moduleId]/NotesDisplay.tsx`
+
+---
+
 ## 2026-04-04 | M5.5：自动化处理流与 OCR 进度优化 (Task 4)
 
 - **ProcessingPoller 重写**: 彻底重写了 `ProcessingPoller.tsx` 组件，引入了三阶段自动处理流程：

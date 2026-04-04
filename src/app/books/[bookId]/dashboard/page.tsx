@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import Link from 'next/link'
 import AIResponse from '@/components/AIResponse'
+import LoadingState from '@/components/LoadingState'
 
 interface DashboardData {
   book: {
@@ -87,8 +88,8 @@ export default function DashboardPage({ params }: { params: Promise<{ bookId: st
 
   if (loading) {
     return (
-      <div className="min-h-full bg-gray-50 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-full flex items-center justify-center">
+        <LoadingState label="正在加载教材仪表盘..." />
       </div>
     )
   }
