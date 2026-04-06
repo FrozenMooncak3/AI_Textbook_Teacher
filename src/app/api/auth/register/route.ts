@@ -49,10 +49,6 @@ function parseBody(body: unknown): {
     throw new UserError('Password must be at least 8 characters', 'INVALID_PASSWORD', 400)
   }
 
-  if (!inviteCode) {
-    throw new UserError('Invite code is required', 'MISSING_INVITE_CODE', 400)
-  }
-
   return { email, password, inviteCode, displayName }
 }
 
@@ -75,23 +71,25 @@ export const POST = handleRoute(async (req) => {
   try {
     await client.query('BEGIN')
 
-    const invite = await client.query<{ code: string; used_count: number; max_uses: number }>(
-      `
-        SELECT code, used_count, max_uses
-        FROM invite_codes
-        WHERE code = $1
-        FOR UPDATE
-      `,
-      [inviteCode]
-    )
+    if (inviteCode) {
+      const invite = await client.query<{ code: string; used_count: number; max_uses: number }>(
+        `
+          SELECT code, used_count, max_uses
+          FROM invite_codes
+          WHERE code = $1
+          FOR UPDATE
+        `,
+        [inviteCode]
+      )
 
-    const inviteRow = invite.rows[0]
-    if (!inviteRow) {
-      throw new UserError('Invite code not found', 'INVALID_INVITE_CODE', 400)
-    }
+      const inviteRow = invite.rows[0]
+      if (!inviteRow) {
+        throw new UserError('Invite code not found', 'INVALID_INVITE_CODE', 400)
+      }
 
-    if (inviteRow.used_count >= inviteRow.max_uses) {
-      throw new UserError('Invite code has reached its usage limit', 'INVITE_CODE_EXHAUSTED', 400)
+      if (inviteRow.used_count >= inviteRow.max_uses) {
+        throw new UserError('Invite code has reached its usage limit', 'INVITE_CODE_EXHAUSTED', 400)
+      }
     }
 
     try {
@@ -112,10 +110,12 @@ export const POST = handleRoute(async (req) => {
       throw error
     }
 
-    await client.query(
-      'UPDATE invite_codes SET used_count = used_count + 1 WHERE code = $1',
-      [inviteCode]
-    )
+    if (inviteCode) {
+      await client.query(
+        'UPDATE invite_codes SET used_count = used_count + 1 WHERE code = $1',
+        [inviteCode]
+      )
+    }
 
     await client.query('COMMIT')
   } catch (error) {

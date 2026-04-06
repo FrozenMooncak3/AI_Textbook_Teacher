@@ -1389,3 +1389,11 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 - `scripts/ocr_server.py`
 - `src/lib/screenshot-ocr.ts`
 - `scripts/test-m6-task10.mjs`
+
+## 2026-04-06 | Post-M6 hotfix: optional invite code on registration
+
+**Completed**: Made registration accept email and password without an invite code while keeping invite code validation and usage-limit enforcement for non-empty codes. Updated the registration form to mark the invite code field as optional and added a regression script for the new behavior.
+**Modified files**:
+- `src/app/api/auth/register/route.ts`
+- `src/app/(auth)/register/page.tsx`
+- `scripts/test-m6-task11.mjs`

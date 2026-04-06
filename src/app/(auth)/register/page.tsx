@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
@@ -13,112 +13,111 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
     setError('')
 
     if (password.length < 8) {
-      setError('密码长度至少为 8 位')
+      setError('Password must be at least 8 characters.')
       return
     }
 
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, displayName, inviteCode }),
       })
-      const data = await res.json()
+      const data = await response.json()
 
-      if (res.ok && data.success) {
+      if (response.ok && data.success) {
         router.push('/')
         router.refresh()
       } else {
-        setError(data.error || '注册失败，请检查输入信息')
+        setError(data.error || 'Registration failed. Please check your input.')
       }
-    } catch (err) {
-      setError('网络请求失败，请稍后重试')
+    } catch {
+      setError('Network request failed. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-sm border border-gray-200">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">注册</h1>
-        <p className="text-sm text-gray-500 mt-2">创建你的 AI 学习账号</p>
+    <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl font-bold text-gray-900">Register</h1>
+        <p className="mt-2 text-sm text-gray-500">Create your AI Textbook Teacher account.</p>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">邮箱 *</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Email *</label>
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(event) => setEmail(event.target.value)}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             placeholder="your@email.com"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">密码 *</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Password *</label>
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(event) => setPassword(event.target.value)}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-            placeholder="至少 8 位字符"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            placeholder="At least 8 characters"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">显示名称 (可选)</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Display Name (optional)</label>
           <input
             type="text"
             value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-            placeholder="例如：Alex"
+            onChange={(event) => setDisplayName(event.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            placeholder="For example: Alex"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">邀请码 *</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Invite Code (optional)</label>
           <input
             type="text"
             value={inviteCode}
-            onChange={(e) => setInviteCode(e.target.value)}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-            placeholder="输入你的邀请码"
+            onChange={(event) => setInviteCode(event.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter an invite code if you have one"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors disabled:opacity-50 mt-2"
+          className="mt-2 w-full rounded-lg bg-blue-600 py-3 font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? '注册中...' : '注册'}
+          {loading ? 'Registering...' : 'Register'}
         </button>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-600">
-        已有账号？{' '}
-        <Link href="/login" className="text-blue-600 hover:text-blue-800 font-medium">
-          登录
+        Already have an account?{' '}
+        <Link href="/login" className="font-medium text-blue-600 hover:text-blue-800">
+          Log in
         </Link>
       </p>
     </div>
