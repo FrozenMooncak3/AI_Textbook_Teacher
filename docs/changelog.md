@@ -1330,3 +1330,12 @@
 - `src/app/api/review/[scheduleId]/complete/route.ts`
 - `scripts/test-m6-task5.mjs`
 - `.agents/API_CONTRACT.md`
+
+## 2026-04-06 | M6 MVP Launch: Large PDF chunking for KP extraction
+
+**Completed**: Added chunked textbook extraction for large OCR texts by introducing a text chunker, a cross-chunk KP/module merger, and a multi-chunk extraction path in `kp-extraction-service.ts`. Large books now split around detected chapter/section headings when possible, fall back to overlapped size-based chunks when needed, log chunk-by-chunk progress, then merge deduplicated KPs and clusters before writing to the database. Added the Task 7 regression script for chunking and merge behavior.
+**Modified files**:
+- `src/lib/text-chunker.ts`
+- `src/lib/kp-merger.ts`
+- `src/lib/services/kp-extraction-service.ts`
+- `scripts/test-m6-task7.mjs`

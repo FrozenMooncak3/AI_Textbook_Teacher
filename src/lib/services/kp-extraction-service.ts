@@ -2,8 +2,10 @@ import { generateText } from 'ai'
 import { getModel, timeout } from '../ai'
 import { pool, queryOne, run } from '../db'
 import { SystemError } from '../errors'
+import { mergeChunkResults, mergeModuleGroups } from '../kp-merger'
 import { logAction } from '../log'
 import { getPrompt } from '../prompt-templates'
+import { chunkText } from '../text-chunker'
 import type {
   Stage0Result,
   Stage1Result,
@@ -184,6 +186,30 @@ async function qualityCheck(rawKPs: RawKP[], modules: Stage0Result['modules']): 
   return parseJSON<Stage2Result>(response, 'Stage 2')
 }
 
+async function extractChunk(
+  rawText: string,
+  chunkLabel?: string
+): Promise<{ stage0: Stage0Result; stage2: Stage2Result }> {
+  const labelPrefix = chunkLabel ? `${chunkLabel} ` : ''
+
+  const stage0 = await structureScan(rawText)
+  await logAction(
+    'Stage 0 complete',
+    `${labelPrefix}sections=${stage0.sections.length}, modules=${stage0.modules.length}`
+  )
+
+  const rawKPs = await blockExtract(rawText, stage0.sections)
+  await logAction('Stage 1 complete', `${labelPrefix}raw_kps=${rawKPs.length}`)
+
+  const stage2 = await qualityCheck(rawKPs, stage0.modules)
+  await logAction(
+    'Stage 2 complete',
+    `${labelPrefix}final_kps=${stage2.final_knowledge_points.length}, clusters=${stage2.clusters.length}`
+  )
+
+  return { stage0, stage2 }
+}
+
 async function writeResultsToDB(
   bookId: number,
   stage0: Stage0Result,
@@ -309,21 +335,46 @@ export async function extractKPs(bookId: number): Promise<void> {
 
   try {
     await logAction('KP extraction started', `bookId=${bookId}, title=${book.title}`)
+    const chunks = chunkText(book.raw_text)
 
-    const stage0 = await structureScan(book.raw_text)
-    await logAction(
-      'Stage 0 complete',
-      `sections=${stage0.sections.length}, modules=${stage0.modules.length}`
-    )
+    let stage0: Stage0Result
+    let stage2: Stage2Result
 
-    const rawKPs = await blockExtract(book.raw_text, stage0.sections)
-    await logAction('Stage 1 complete', `raw_kps=${rawKPs.length}`)
+    if (chunks.length === 1) {
+      const extracted = await extractChunk(book.raw_text)
+      stage0 = extracted.stage0
+      stage2 = extracted.stage2
+    } else {
+      await logAction('KP extraction chunking', `bookId=${bookId}, chunks=${chunks.length}`)
 
-    const stage2 = await qualityCheck(rawKPs, stage0.modules)
-    await logAction(
-      'Stage 2 complete',
-      `final_kps=${stage2.final_knowledge_points.length}, clusters=${stage2.clusters.length}`
-    )
+      const chunkResults: Array<{ stage0: Stage0Result; stage2: Stage2Result }> = []
+
+      for (const [chunkIndex, chunk] of chunks.entries()) {
+        const chunkLabel = `chunk ${chunkIndex + 1}/${chunks.length}: ${chunk.title}`
+        await logAction('KP extraction chunk started', `bookId=${bookId}, ${chunkLabel}`)
+        const extracted = await extractChunk(chunk.text, chunkLabel)
+        chunkResults.push(extracted)
+        await logAction(
+          'KP extraction chunk completed',
+          `bookId=${bookId}, ${chunkLabel}, final_kps=${extracted.stage2.final_knowledge_points.length}`
+        )
+      }
+
+      const mergedModules = mergeModuleGroups(chunkResults.map((result) => result.stage0.modules))
+      stage0 = {
+        sections: [],
+        modules: mergedModules.modules,
+      }
+      stage2 = mergeChunkResults(
+        chunkResults.map((result) => result.stage2),
+        mergedModules.mappings
+      )
+
+      await logAction(
+        'KP extraction chunks merged',
+        `bookId=${bookId}, merged_modules=${stage0.modules.length}, merged_kps=${stage2.final_knowledge_points.length}`
+      )
+    }
 
     const failedGates = Object.entries(stage2.quality_gates)
       .filter(([, passed]) => !passed)
