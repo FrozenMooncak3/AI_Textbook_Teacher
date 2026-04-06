@@ -1204,3 +1204,16 @@
 **修改文件**:
 - `src/app/api/modules/[moduleId]/test/submit/route.ts`
 - `scripts/test-m5.5-task7.mjs`
+
+---
+
+## 2026-04-06 | M6 MVP Launch: PostgreSQL foundation migration
+
+**完成内容**: 将数据库基础层从同步 `better-sqlite3` 切换为异步 `pg`，新增 PostgreSQL `schema.sql` 定义 24 张表，并补充 `users`、`invite_codes`、`sessions` 三张认证基础表以及 `books.user_id` 外键；重写 `src/lib/db.ts` 为 `query`、`queryOne`、`run`、`insert`、`initDb` 和 `pool` 导出；同步更新 `.env.example` 为 `DATABASE_URL` 配置，并增加静态回归脚本覆盖依赖切换与 schema 结构要求。
+**修改文件**:
+- `package.json`
+- `package-lock.json`
+- `.env.example`
+- `src/lib/db.ts`
+- `src/lib/schema.sql`
+- `scripts/test-m6-task1.mjs`
