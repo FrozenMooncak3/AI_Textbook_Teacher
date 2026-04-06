@@ -38,8 +38,9 @@ App Shell (M5.5):
 ├── src/app/books/[bookId]/modules/[moduleId]/error.tsx → 模块级错误边界
 ├── src/app/books/[bookId]/layout.tsx → 书级 layout（薄包装）
 └── src/app/not-found.tsx → 全局 404 页面
-├── /login (登录页)
-├── /register (邀请码注册页)
+└── /(auth) (route group + layout.tsx)
+    ├── /login (登录页)
+    └── /register (邀请码注册页)
 ```
 
 ### API 组
@@ -208,6 +209,6 @@ unstarted → reading → qa → notes_generated → testing → completed
 ### 部署架构（M6）
 
 - **三容器 Docker Compose**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（PaddleOCR）
-- **环境变量**：DATABASE_URL, ANTHROPIC_API_KEY, AI_MODEL, SESSION_SECRET, OCR_SERVER_HOST, OCR_SERVER_PORT
+- **环境变量**：DATABASE_URL, ANTHROPIC_API_KEY, AI_MODEL, OCR_SERVER_HOST, OCR_SERVER_PORT
 - **持久化卷**：pgdata（数据库）+ uploads（用户 PDF）
 - **OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/ocr`，本地默认 127.0.0.1:9876

@@ -43,7 +43,7 @@
 
 ## 部署
 - **Docker Compose**：`docker-compose up --build` 启动三容器（app + db + ocr）
-- **环境变量**：DATABASE_URL, ANTHROPIC_API_KEY, AI_MODEL, SESSION_SECRET, OCR_SERVER_HOST, OCR_SERVER_PORT
+- **环境变量**：DATABASE_URL, ANTHROPIC_API_KEY, AI_MODEL, OCR_SERVER_HOST, OCR_SERVER_PORT
 - **Next.js standalone**：`output: 'standalone'`，生产镜像不含 node_modules
 
 ## 技术红线
