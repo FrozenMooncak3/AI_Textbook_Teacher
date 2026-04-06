@@ -50,7 +50,7 @@ Validation method: Deploy publicly, post demo videos on Douyin/Xiaohongshu, meas
 | OCR | Keep PaddleOCR (self-hosted) | Free per-use, switch to cloud OCR later if needed |
 | Deployment | Railway or Fly.io | Managed platform, auto-deploy on push, PostgreSQL add-on available |
 | PDF reader | react-pdf-viewer | Most mature React PDF library, full feature set |
-| DB abstraction | Drizzle ORM | Handles sync→async migration systematically; type-safe queries |
+| DB abstraction | Raw pg driver + async query helpers | Minimizes conversion scope (SQL stays same, just swap driver + add await). Drizzle deferred to post-MVP — adding an ORM on top of a 48-file driver migration doubles the work. |
 | Auth | Custom (email + password + invite code) | Simplest approach, no external auth provider dependency |
 | PDF chunking | Chapter/heading-based segmentation | Preserves knowledge context within chunks |
 
@@ -183,7 +183,7 @@ Migration from SQLite to PostgreSQL includes adding auth tables:
 ```sql
 -- New tables
 CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id SERIAL PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   display_name TEXT,
@@ -192,15 +192,22 @@ CREATE TABLE users (
 
 CREATE TABLE invite_codes (
   code TEXT PRIMARY KEY,
-  created_by UUID REFERENCES users(id),
-  max_uses INTEGER DEFAULT 5,
-  used_count INTEGER DEFAULT 0,
+  created_by INTEGER REFERENCES users(id),
+  max_uses INTEGER NOT NULL DEFAULT 5,
+  used_count INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE sessions (
+  token TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Existing tables: add user_id foreign key
-ALTER TABLE books ADD COLUMN user_id UUID REFERENCES users(id);
--- (All existing tables that store user-specific data need user_id)
+ALTER TABLE books ADD COLUMN user_id INTEGER REFERENCES users(id);
+-- (Books is the root — modules belong to books, all downstream data chains through books.)
 ```
 
 Tables needing `user_id`:
