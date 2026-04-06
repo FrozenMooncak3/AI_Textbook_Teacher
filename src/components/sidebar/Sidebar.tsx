@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSidebar } from './SidebarProvider'
 import SidebarToggle from './SidebarToggle'
@@ -38,12 +38,23 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { isCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar()
 
   const [books, setBooks] = useState<Book[]>([])
   const [modules, setModules] = useState<Module[]>([])
   const [isLoadingBooks, setIsLoadingBooks] = useState(false)
   const [isLoadingModules, setIsLoadingModules] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.push('/login')
+      router.refresh()
+    } catch (e) {
+      console.error('Logout failed', e)
+    }
+  }
 
   // Route parsing
   const bookMatch = pathname.match(/^\/books\/(\d+)/)
@@ -309,6 +320,22 @@ export default function Sidebar() {
             label="系统日志" 
             icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>}
           />
+          <button
+            onClick={handleLogout}
+            className={`w-full group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-gray-600 hover:bg-red-50 hover:text-red-600 mt-1`}
+          >
+            <div className={`shrink-0 transition-colors duration-200 text-gray-400 group-hover:text-red-500`}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            </div>
+            {!isCollapsed && <span className="truncate flex-1 text-left">退出登录</span>}
+            
+            {/* Tooltip for collapsed mode */}
+            {isCollapsed && (
+              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                退出登录
+              </div>
+            )}
+          </button>
         </div>
       </aside>
     </>

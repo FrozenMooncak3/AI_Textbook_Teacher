@@ -3,8 +3,15 @@
 import Sidebar from './Sidebar'
 import { SidebarProvider } from './SidebarProvider'
 import SidebarToggle from './SidebarToggle'
+import { usePathname } from 'next/navigation'
 
 export default function SidebarLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  
+  if (pathname === '/login' || pathname === '/register') {
+    return <>{children}</>
+  }
+
   return (
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden bg-gray-50">

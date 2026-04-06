@@ -1,5 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
-import { getDb } from '@/lib/db'
+import { query, queryOne } from '@/lib/db'
+import { cookies } from 'next/headers'
+import { getUserFromSession } from '@/lib/auth'
 import TestSession from './TestSession'
 
 interface Book {
@@ -19,22 +21,29 @@ export default async function TestPage({
 }: {
   params: Promise<{ bookId: string; moduleId: string }>
 }) {
-  const { bookId, moduleId } = await params
-  const db = getDb()
+  const cookieStore = await cookies()
+  const token = cookieStore.get('session_token')?.value
+  if (!token) redirect('/login')
+  const user = await getUserFromSession(token)
+  if (!user) redirect('/login')
 
-  const book = db
-    .prepare('SELECT id, title FROM books WHERE id = ?')
-    .get(Number(bookId)) as Book | undefined
+  const { bookId, moduleId } = await params
+
+  const book = await queryOne<Book>(
+    'SELECT id, title FROM books WHERE id = $1 AND user_id = $2',
+    [Number(bookId), user.id]
+  )
 
   if (!book) notFound()
 
-  const module_ = db
-    .prepare(`
+  const module_ = await queryOne<Module>(
+    `
       SELECT id, title, order_index, learning_status 
       FROM modules 
-      WHERE id = ? AND book_id = ?
-    `)
-    .get(Number(moduleId), Number(bookId)) as Module | undefined
+      WHERE id = $1 AND book_id = $2
+    `,
+    [Number(moduleId), Number(bookId)]
+  )
 
   if (!module_) notFound()
 
@@ -54,14 +63,15 @@ export default async function TestPage({
     created_at: string
   }
 
-  const history = db
-    .prepare(`
+  const history = await query<TestPaperRow>(
+    `
       SELECT id as paper_id, attempt_number, total_score, pass_rate, is_passed, created_at
       FROM test_papers
-      WHERE module_id = ?
+      WHERE module_id = $1
       ORDER BY attempt_number DESC
-    `)
-    .all(module_.id) as TestPaperRow[]
+    `,
+    [module_.id]
+  )
 
   // 转换 is_passed 为 boolean
   const formattedHistory = history.map(h => ({

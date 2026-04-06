@@ -1,4 +1,7 @@
-import { getDb } from '@/lib/db'
+import { query } from '@/lib/db'
+import { cookies } from 'next/headers'
+import { getUserFromSession } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 
 interface Log {
   id: number
@@ -14,11 +17,16 @@ const levelColor: Record<string, string> = {
   error: 'text-red-600 bg-red-50',
 }
 
-export default function LogsPage() {
-  const db = getDb()
-  const logs = db
-    .prepare('SELECT * FROM logs ORDER BY id DESC LIMIT 200')
-    .all() as Log[]
+export default async function LogsPage() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('session_token')?.value
+  if (!token) redirect('/login')
+  const user = await getUserFromSession(token)
+  if (!user) redirect('/login')
+
+  const logs = await query<Log>(
+    'SELECT * FROM logs ORDER BY id DESC LIMIT 200'
+  )
 
   return (
     <main className="min-h-full bg-gray-50">

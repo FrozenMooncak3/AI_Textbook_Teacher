@@ -1,5 +1,7 @@
-import { notFound } from 'next/navigation'
-import { getDb } from '@/lib/db'
+import { notFound, redirect } from 'next/navigation'
+import { query, queryOne } from '@/lib/db'
+import { cookies } from 'next/headers'
+import { getUserFromSession } from '@/lib/auth'
 import ModuleMap from './ModuleMap'
 import ProcessingPoller from './ProcessingPoller'
 
@@ -21,18 +23,25 @@ interface Module {
 }
 
 export default async function BookPage({ params }: { params: Promise<{ bookId: string }> }) {
-  const { bookId } = await params
-  const db = getDb()
+  const cookieStore = await cookies()
+  const token = cookieStore.get('session_token')?.value
+  if (!token) redirect('/login')
+  const user = await getUserFromSession(token)
+  if (!user) redirect('/login')
 
-  const book = db
-    .prepare('SELECT id, title, created_at, parse_status FROM books WHERE id = ?')
-    .get(Number(bookId)) as Book | undefined
+  const { bookId } = await params
+
+  const book = await queryOne<Book>(
+    'SELECT id, title, created_at, parse_status FROM books WHERE id = $1 AND user_id = $2',
+    [Number(bookId), user.id]
+  )
 
   if (!book) notFound()
 
-  const modules = db
-    .prepare('SELECT * FROM modules WHERE book_id = ? ORDER BY order_index')
-    .all(Number(bookId)) as Module[]
+  const modules = await query<Module>(
+    'SELECT * FROM modules WHERE book_id = $1 ORDER BY order_index',
+    [Number(bookId)]
+  )
 
   return (
     <main className="min-h-full bg-gray-50">

@@ -1,5 +1,8 @@
-import { getDb } from '@/lib/db'
+import { query } from '@/lib/db'
 import ReviewButton from './ReviewButton'
+import { cookies } from 'next/headers'
+import { getUserFromSession } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 
 interface Book {
   id: number
@@ -7,11 +10,17 @@ interface Book {
   created_at: string
 }
 
-export default function Home() {
-  const db = getDb()
-  const books = db
-    .prepare('SELECT id, title, created_at FROM books ORDER BY created_at DESC')
-    .all() as Book[]
+export default async function Home() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('session_token')?.value
+  if (!token) redirect('/login')
+  const user = await getUserFromSession(token)
+  if (!user) redirect('/login')
+
+  const books = await query<Book>(
+    'SELECT id, title, created_at FROM books WHERE user_id = $1 ORDER BY created_at DESC',
+    [user.id]
+  )
 
   return (
     <main className="min-h-full bg-gray-50">
