@@ -1231,3 +1231,27 @@
 - `src/lib/services/book-service.ts`
 - `src/lib/seed-templates.ts`
 - `scripts/test-m6-task2.mjs`
+
+---
+
+## 2026-04-06 | M6 MVP Launch: Books/conversations/logs routes to async PostgreSQL
+
+**完成内容**: 将 books 分组、conversation messages 和 logs 共 16 个 API route 从同步 `getDb()` / `db.prepare()` 迁移为异步 `query` / `queryOne` / `run` / `insert`，补齐 `await logAction()`、`await getPrompt()`、`await bookService.list()` 等 Task 2 引入的异步调用，并新增静态回归脚本验证目标路由不再依赖旧的 SQLite 访问模式。
+**修改文件**:
+- `src/app/api/books/route.ts`
+- `src/app/api/books/[bookId]/status/route.ts`
+- `src/app/api/books/[bookId]/extract/route.ts`
+- `src/app/api/books/[bookId]/pdf/route.ts`
+- `src/app/api/books/[bookId]/toc/route.ts`
+- `src/app/api/books/[bookId]/highlights/route.ts`
+- `src/app/api/books/[bookId]/notes/route.ts`
+- `src/app/api/books/[bookId]/module-map/route.ts`
+- `src/app/api/books/[bookId]/module-map/confirm/route.ts`
+- `src/app/api/books/[bookId]/module-map/regenerate/route.ts`
+- `src/app/api/books/[bookId]/screenshot-ocr/route.ts`
+- `src/app/api/books/[bookId]/screenshot-ask/route.ts`
+- `src/app/api/books/[bookId]/dashboard/route.ts`
+- `src/app/api/books/[bookId]/mistakes/route.ts`
+- `src/app/api/conversations/[conversationId]/messages/route.ts`
+- `src/app/api/logs/route.ts`
+- `scripts/test-m6-task3.mjs`

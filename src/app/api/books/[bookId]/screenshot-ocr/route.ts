@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto'
 import { unlink, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { getDb } from '@/lib/db'
+import { queryOne } from '@/lib/db'
 import { UserError, SystemError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
@@ -41,9 +41,8 @@ function parseBody(body: unknown): { imageBase64: string } {
 export const POST = handleRoute(async (req, context) => {
   const { bookId: rawBookId } = await context!.params
   const bookId = parseBookId(rawBookId)
-  const db = getDb()
 
-  const book = db.prepare('SELECT id FROM books WHERE id = ?').get(bookId) as BookRow | undefined
+  const book = await queryOne<BookRow>('SELECT id FROM books WHERE id = $1', [bookId])
   if (!book) {
     throw new UserError('Book not found', 'NOT_FOUND', 404)
   }
@@ -62,7 +61,7 @@ export const POST = handleRoute(async (req, context) => {
     await unlink(tempImagePath).catch(() => {})
   }
 
-  logAction(
+  await logAction(
     'screenshot_ocr_completed',
     `bookId=${bookId}, confidence=${ocrResult.confidence.toFixed(2)}, chars=${ocrResult.text.trim().length}`
   )

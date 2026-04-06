@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db'
+import { query, queryOne } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 
@@ -70,69 +70,83 @@ function getTodayDate(): string {
 export const GET = handleRoute(async (_req, context) => {
   const { bookId } = await context!.params
   const id = parseBookId(bookId)
-  const db = getDb()
 
-  const book = db.prepare('SELECT id, title FROM books WHERE id = ?').get(id) as BookRow | undefined
+  const book = await queryOne<BookRow>('SELECT id, title FROM books WHERE id = $1', [id])
   if (!book) {
     throw new UserError('Book not found', 'NOT_FOUND', 404)
   }
 
-  const modules = db.prepare(`
-    SELECT
-      m.id,
-      m.title,
-      m.order_index,
-      m.learning_status,
-      (SELECT COUNT(*) FROM qa_questions qq WHERE qq.module_id = m.id) AS qa_total,
-      (SELECT COUNT(*) FROM qa_responses qr
-       JOIN qa_questions qq2 ON qq2.id = qr.question_id
-       WHERE qq2.module_id = m.id) AS qa_answered,
-      (SELECT tp.total_score
-       FROM test_papers tp
-       WHERE tp.module_id = m.id AND tp.total_score IS NOT NULL
-       ORDER BY tp.created_at DESC
-       LIMIT 1) AS test_score,
-      (SELECT tp.is_passed
-       FROM test_papers tp
-       WHERE tp.module_id = m.id AND tp.total_score IS NOT NULL
-       ORDER BY tp.created_at DESC
-       LIMIT 1) AS test_passed
-    FROM modules m WHERE m.book_id = ? ORDER BY m.order_index
-  `).all(id) as ModuleDashboardRow[]
+  const modules = await query<ModuleDashboardRow>(
+    `
+      SELECT
+        m.id,
+        m.title,
+        m.order_index,
+        m.learning_status,
+        (SELECT COUNT(*)::int FROM qa_questions qq WHERE qq.module_id = m.id) AS qa_total,
+        (SELECT COUNT(*)::int FROM qa_responses qr
+         JOIN qa_questions qq2 ON qq2.id = qr.question_id
+         WHERE qq2.module_id = m.id) AS qa_answered,
+        (SELECT tp.total_score
+         FROM test_papers tp
+         WHERE tp.module_id = m.id AND tp.total_score IS NOT NULL
+         ORDER BY tp.created_at DESC
+         LIMIT 1) AS test_score,
+        (SELECT tp.is_passed
+         FROM test_papers tp
+         WHERE tp.module_id = m.id AND tp.total_score IS NOT NULL
+         ORDER BY tp.created_at DESC
+         LIMIT 1) AS test_passed
+      FROM modules m
+      WHERE m.book_id = $1
+      ORDER BY m.order_index
+    `,
+    [id]
+  )
 
-  const reviewsDue = db.prepare(`
-    SELECT
-      rs.id AS scheduleId,
-      rs.module_id AS moduleId,
-      m.title AS moduleTitle,
-      rs.due_date AS dueDate,
-      rs.review_round AS round
-    FROM review_schedule rs
-    JOIN modules m ON m.id = rs.module_id
-    WHERE m.book_id = ? AND rs.status = 'pending'
-    ORDER BY rs.due_date ASC, m.order_index ASC
-  `).all(id) as ReviewDueRow[]
+  const reviewsDue = await query<ReviewDueRow>(
+    `
+      SELECT
+        rs.id AS "scheduleId",
+        rs.module_id AS "moduleId",
+        m.title AS "moduleTitle",
+        rs.due_date AS "dueDate",
+        rs.review_round AS round
+      FROM review_schedule rs
+      JOIN modules m ON m.id = rs.module_id
+      WHERE m.book_id = $1 AND rs.status = 'pending'
+      ORDER BY rs.due_date ASC, m.order_index ASC
+    `,
+    [id]
+  )
 
-  const recentTests = db.prepare(`
-    SELECT
-      tp.module_id AS moduleId,
-      m.title AS moduleTitle,
-      tp.total_score AS score,
-      tp.is_passed AS passed,
-      tp.created_at AS completedAt
-    FROM test_papers tp
-    JOIN modules m ON m.id = tp.module_id
-    WHERE m.book_id = ? AND tp.total_score IS NOT NULL
-    ORDER BY tp.created_at DESC LIMIT 10
-  `).all(id) as RecentTestRow[]
+  const recentTests = await query<RecentTestRow>(
+    `
+      SELECT
+        tp.module_id AS "moduleId",
+        m.title AS "moduleTitle",
+        tp.total_score AS score,
+        tp.is_passed AS passed,
+        tp.created_at AS "completedAt"
+      FROM test_papers tp
+      JOIN modules m ON m.id = tp.module_id
+      WHERE m.book_id = $1 AND tp.total_score IS NOT NULL
+      ORDER BY tp.created_at DESC
+      LIMIT 10
+    `,
+    [id]
+  )
 
-  const mistakesSummary = db.prepare(`
-    SELECT mk.error_type, COUNT(*) AS count
-    FROM mistakes mk
-    JOIN modules m ON m.id = mk.module_id
-    WHERE m.book_id = ?
-    GROUP BY error_type
-  `).all(id) as MistakeSummaryRow[]
+  const mistakesSummary = await query<MistakeSummaryRow>(
+    `
+      SELECT mk.error_type, COUNT(*)::int AS count
+      FROM mistakes mk
+      JOIN modules m ON m.id = mk.module_id
+      WHERE m.book_id = $1
+      GROUP BY mk.error_type
+    `,
+    [id]
+  )
 
   const todayDate = getTodayDate()
   const byType = createEmptyMistakeSummary()
@@ -163,8 +177,7 @@ export const GET = handleRoute(async (_req, context) => {
           answered: module.qa_answered,
         },
         testScore: module.test_score,
-        testPassed:
-          module.test_passed === null ? null : module.test_passed === 1,
+        testPassed: module.test_passed === null ? null : module.test_passed === 1,
       })),
       reviewsDue: reviewsDue.map((review) => ({
         scheduleId: review.scheduleId,

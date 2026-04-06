@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { queryOne } from '@/lib/db'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 
@@ -10,13 +10,12 @@ export async function GET(
   const { bookId } = await params
   const id = Number(bookId)
   if (isNaN(id)) {
-    return NextResponse.json({ error: '无效的书籍 ID', code: 'INVALID_ID' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid book ID', code: 'INVALID_ID' }, { status: 400 })
   }
 
-  const db = getDb()
-  const book = db.prepare('SELECT id FROM books WHERE id = ?').get(id) as { id: number } | undefined
+  const book = await queryOne<{ id: number }>('SELECT id FROM books WHERE id = $1', [id])
   if (!book) {
-    return NextResponse.json({ error: '书籍不存在', code: 'NOT_FOUND' }, { status: 404 })
+    return NextResponse.json({ error: 'Book not found', code: 'NOT_FOUND' }, { status: 404 })
   }
 
   const pdfPath = join(process.cwd(), 'data', 'uploads', `${id}.pdf`)
@@ -30,6 +29,6 @@ export async function GET(
       },
     })
   } catch {
-    return NextResponse.json({ error: 'PDF 文件不存在', code: 'FILE_NOT_FOUND' }, { status: 404 })
+    return NextResponse.json({ error: 'PDF file not found', code: 'FILE_NOT_FOUND' }, { status: 404 })
   }
 }

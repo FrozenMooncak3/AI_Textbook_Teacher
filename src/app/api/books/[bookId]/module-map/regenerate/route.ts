@@ -1,42 +1,47 @@
 import { handleRoute } from '@/lib/handle-route'
-import { getDb } from '@/lib/db'
+import { queryOne, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { logAction } from '@/lib/log'
 import { extractKPs } from '@/lib/services/kp-extraction-service'
+
+interface BookRow {
+  id: number
+  title: string
+  parse_status: string
+  kp_extraction_status: string
+}
 
 export const POST = handleRoute(async (_req, context) => {
   const { bookId } = await context!.params
   const id = Number(bookId)
 
   if (Number.isNaN(id)) {
-    throw new UserError('鏃犳晥鐨勬暀鏉怲D', 'INVALID_ID', 400)
+    throw new UserError('Invalid book ID', 'INVALID_ID', 400)
   }
 
-  const db = getDb()
-  const book = db
-    .prepare('SELECT id, title, parse_status, kp_extraction_status FROM books WHERE id = ?')
-    .get(id) as
-    | { id: number; title: string; parse_status: string; kp_extraction_status: string }
-    | undefined
+  const book = await queryOne<BookRow>(
+    'SELECT id, title, parse_status, kp_extraction_status FROM books WHERE id = $1',
+    [id]
+  )
 
   if (!book) {
-    throw new UserError('鏁欐潗涓嶅瓨鍦?', 'NOT_FOUND', 404)
+    throw new UserError('Book not found', 'NOT_FOUND', 404)
   }
 
   if (book.parse_status !== 'done') {
-    throw new UserError('OCR 灏氭湭瀹屾垚', 'OCR_NOT_DONE', 409)
+    throw new UserError('OCR is not done yet', 'OCR_NOT_DONE', 409)
   }
 
   if (book.kp_extraction_status === 'processing') {
-    throw new UserError('KP 鎻愬彇姝ｅ湪杩涜涓紝璇风瓑寰呭畬鎴?', 'ALREADY_PROCESSING', 409)
+    throw new UserError('KP extraction is already processing', 'ALREADY_PROCESSING', 409)
   }
 
-  db.prepare("UPDATE books SET kp_extraction_status = 'pending' WHERE id = ?").run(id)
+  await run("UPDATE books SET kp_extraction_status = 'pending' WHERE id = $1", [id])
 
-  logAction('閲嶆柊鎻愬彇 KP', `bookId=${id}锛屾暀鏉愶細${book.title}`)
+  await logAction('kp_regeneration_started', `bookId=${id}, book=${book.title}`)
 
-  extractKPs(id).catch((error) => {
-    logAction('KP 閲嶆柊鎻愬彇鍚庡彴閿欒', `bookId=${id}: ${String(error)}`, 'error')
+  extractKPs(id).catch(async (error) => {
+    await logAction('kp_regeneration_failed', `bookId=${id}: ${String(error)}`, 'error')
   })
 
   return { data: { status: 'processing', bookId: id }, status: 202 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { query, queryOne, run } from '@/lib/db'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
 import { logAction } from '@/lib/log'
@@ -23,40 +23,41 @@ export async function POST(
   const { conversationId } = await params
   const convId = Number(conversationId)
   if (isNaN(convId)) {
-    return NextResponse.json({ error: '无效的对话 ID', code: 'INVALID_ID' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid conversation ID', code: 'INVALID_ID' }, { status: 400 })
   }
 
-  const db = getDb()
-  const conv = db.prepare('SELECT id, book_id, page_number, screenshot_text FROM conversations WHERE id = ?').get(convId) as Conversation | undefined
+  const conv = await queryOne<Conversation>(
+    'SELECT id, book_id, page_number, screenshot_text FROM conversations WHERE id = $1',
+    [convId]
+  )
   if (!conv) {
-    return NextResponse.json({ error: '对话不存在', code: 'NOT_FOUND' }, { status: 404 })
+    return NextResponse.json({ error: 'Conversation not found', code: 'NOT_FOUND' }, { status: 404 })
   }
 
   let body: { message?: string }
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: '请求格式错误', code: 'INVALID_BODY' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request body', code: 'INVALID_BODY' }, { status: 400 })
   }
 
   const { message } = body
   if (!message || typeof message !== 'string') {
-    return NextResponse.json({ error: '缺少 message 字段', code: 'MISSING_FIELDS' }, { status: 400 })
+    return NextResponse.json({ error: 'Missing message field', code: 'MISSING_FIELDS' }, { status: 400 })
   }
 
-  // 查询历史消息作为上下文
-  const history = db.prepare(
-    'SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY id ASC'
-  ).all(convId) as DbMessage[]
+  const history = await query<DbMessage>(
+    'SELECT role, content FROM messages WHERE conversation_id = $1 ORDER BY id ASC',
+    [convId]
+  )
 
-  // 构建 Claude messages 数组
-  const claudeMessages = history.map((m) => ({
-    role: m.role as 'user' | 'assistant',
-    content: m.content,
+  const claudeMessages = history.map((entry) => ({
+    role: entry.role as 'user' | 'assistant',
+    content: entry.content,
   }))
   claudeMessages.push({ role: 'user', content: message })
 
-  const book = db.prepare('SELECT title FROM books WHERE id = ?').get(conv.book_id) as { title: string } | undefined
+  const book = await queryOne<{ title: string }>('SELECT title FROM books WHERE id = $1', [conv.book_id])
   const bookTitle = book?.title ?? '教材'
   const systemPrompt = `你是一位财务教材辅导老师，正在帮助学生理解《${bookTitle}》第${conv.page_number}页的内容。回答简洁清晰，重点突出。`
 
@@ -70,16 +71,23 @@ export async function POST(
       abortSignal: AbortSignal.timeout(timeout),
     })
     answer = text
-  } catch (e) {
-    logAction('追问AI失败', `conversationId=${convId}，${String(e)}`, 'error')
+  } catch (error) {
+    await logAction('追问AI失败', `conversationId=${convId}，${String(error)}`, 'error')
     return NextResponse.json({ error: 'AI 服务暂时不可用', code: 'AI_ERROR' }, { status: 500 })
   }
 
-  // 存储用户消息和 AI 回复
-  db.prepare('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)').run(convId, 'user', message)
-  db.prepare('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)').run(convId, 'assistant', answer)
+  await run('INSERT INTO messages (conversation_id, role, content) VALUES ($1, $2, $3)', [
+    convId,
+    'user',
+    message,
+  ])
+  await run('INSERT INTO messages (conversation_id, role, content) VALUES ($1, $2, $3)', [
+    convId,
+    'assistant',
+    answer,
+  ])
 
-  logAction('追问AI完成', `conversationId=${convId}`)
+  await logAction('追问AI完成', `conversationId=${convId}`)
 
   return NextResponse.json({ answer })
 }

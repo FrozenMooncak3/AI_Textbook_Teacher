@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import { spawn } from 'child_process'
 import { join } from 'path'
-import { getDb } from '@/lib/db'
+import { insert, run } from '@/lib/db'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
 import { bookService } from '@/lib/services/book-service'
@@ -10,7 +10,7 @@ import { bookService } from '@/lib/services/book-service'
 const UPLOADS_DIR = join(process.cwd(), 'data', 'uploads')
 
 export const GET = handleRoute(async () => {
-  const books = bookService.list()
+  const books = await bookService.list()
   return { data: books }
 })
 
@@ -33,41 +33,46 @@ export async function POST(req: NextRequest) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer())
-  const db = getDb()
 
-  logAction('book_upload_started', `file=${file.name}, title=${title}`)
+  await logAction('book_upload_started', `file=${file.name}, title=${title}`)
 
   if (ext === 'txt') {
     const rawText = buffer.toString('utf-8').trim()
     if (rawText.length < 100) {
-      logAction('book_upload_short_text', `chars=${rawText.length}`, 'warn')
+      await logAction('book_upload_short_text', `chars=${rawText.length}`, 'warn')
       return NextResponse.json({ error: 'Text file content is too short' }, { status: 422 })
     }
 
-    const result = db
-      .prepare('INSERT INTO books (title, raw_text, parse_status) VALUES (?, ?, ?)')
-      .run(title.trim(), rawText, 'done')
+    const bookId = await insert(
+      'INSERT INTO books (title, raw_text, parse_status) VALUES ($1, $2, $3)',
+      [title.trim(), rawText, 'done']
+    )
 
-    logAction('book_upload_completed_txt', `bookId=${result.lastInsertRowid}, chars=${rawText.length}`)
-    return NextResponse.json({ bookId: result.lastInsertRowid }, { status: 201 })
+    await logAction('book_upload_completed_txt', `bookId=${bookId}, chars=${rawText.length}`)
+    return NextResponse.json({ bookId }, { status: 201 })
   }
 
-  const result = db
-    .prepare('INSERT INTO books (title, raw_text, parse_status) VALUES (?, ?, ?)')
-    .run(title.trim(), '', 'processing')
-  const bookId = result.lastInsertRowid as number
+  const bookId = await insert(
+    'INSERT INTO books (title, raw_text, parse_status) VALUES ($1, $2, $3)',
+    [title.trim(), '', 'processing']
+  )
 
   await mkdir(UPLOADS_DIR, { recursive: true })
   const pdfPath = join(UPLOADS_DIR, `${bookId}.pdf`)
   await writeFile(pdfPath, buffer)
 
-  const markOcrFailure = (details: string) => {
+  const markOcrFailure = async (details: string) => {
     try {
-      db.prepare("UPDATE books SET parse_status='error' WHERE id = ?").run(bookId)
+      await run("UPDATE books SET parse_status = 'error' WHERE id = $1", [bookId])
     } catch {
-      // Ignore logging-path failures while surfacing OCR failures.
+      // Ignore update failures while surfacing OCR failures.
     }
-    logAction('book_ocr_failed', `bookId=${bookId}, ${details}`, 'error')
+
+    try {
+      await logAction('book_ocr_failed', `bookId=${bookId}, ${details}`, 'error')
+    } catch {
+      // Ignore logging failures in background OCR paths.
+    }
   }
 
   const dbPath = join(process.cwd(), 'data', 'app.db')
@@ -82,7 +87,7 @@ export async function POST(req: NextRequest) {
       windowsHide: true,
     })
   } catch (error) {
-    markOcrFailure(`spawn exception: ${String(error)}`)
+    await markOcrFailure(`spawn exception: ${String(error)}`)
     return NextResponse.json({ error: 'Failed to start OCR worker' }, { status: 500 })
   }
 
@@ -90,9 +95,12 @@ export async function POST(req: NextRequest) {
   let stderr = ''
 
   const failOnce = (details: string) => {
-    if (completed) return
+    if (completed) {
+      return
+    }
+
     completed = true
-    markOcrFailure(details)
+    void markOcrFailure(details)
   }
 
   child.stdout?.on('data', () => {})
@@ -103,11 +111,14 @@ export async function POST(req: NextRequest) {
     failOnce(`spawn error: ${String(error)}`)
   })
   child.on('exit', (code, signal) => {
-    if (code === 0) return
+    if (code === 0) {
+      return
+    }
+
     const errorOutput = stderr.trim() || `signal=${signal ?? 'none'}`
     failOnce(`exit code=${code ?? 'null'}, ${errorOutput}`)
   })
 
-  logAction('book_ocr_started', `bookId=${bookId}, title=${title}`)
+  await logAction('book_ocr_started', `bookId=${bookId}, title=${title}`)
   return NextResponse.json({ bookId, processing: true }, { status: 201 })
 }

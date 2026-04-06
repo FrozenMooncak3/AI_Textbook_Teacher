@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db'
+import { query, queryOne } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 
@@ -95,9 +95,8 @@ function createEmptyMistakeSummary(): Record<MistakeErrorType, number> {
 export const GET = handleRoute(async (req, context) => {
   const { bookId } = await context!.params
   const id = parseBookId(bookId)
-  const db = getDb()
 
-  const book = db.prepare('SELECT id FROM books WHERE id = ?').get(id) as BookRow | undefined
+  const book = await queryOne<BookRow>('SELECT id FROM books WHERE id = $1', [id])
   if (!book) {
     throw new UserError('Book not found', 'NOT_FOUND', 404)
   }
@@ -107,66 +106,75 @@ export const GET = handleRoute(async (req, context) => {
   const errorTypeFilter = parseErrorTypeFilter(url.searchParams.get('errorType'))
   const sourceFilter = parseSourceFilter(url.searchParams.get('source'))
 
-  const conditions = ['m.book_id = ?']
+  const conditions = ['m.book_id = $1']
   const params: Array<number | string> = [id]
 
   if (moduleFilter !== null) {
-    conditions.push('mk.module_id = ?')
+    conditions.push(`mk.module_id = $${params.length + 1}`)
     params.push(moduleFilter)
   }
 
   if (errorTypeFilter !== null) {
-    conditions.push('mk.error_type = ?')
+    conditions.push(`mk.error_type = $${params.length + 1}`)
     params.push(errorTypeFilter)
   }
 
   if (sourceFilter !== null) {
-    conditions.push('mk.source = ?')
+    conditions.push(`mk.source = $${params.length + 1}`)
     params.push(sourceFilter)
   }
 
   const whereClause = conditions.join(' AND ')
 
-  const mistakes = db.prepare(`
-    SELECT
-      mk.id,
-      mk.module_id AS moduleId,
-      m.title AS moduleTitle,
-      mk.question_text AS questionText,
-      mk.user_answer AS userAnswer,
-      mk.correct_answer AS correctAnswer,
-      mk.error_type AS errorType,
-      mk.remediation,
-      mk.source,
-      mk.created_at AS createdAt,
-      kp.description AS kpTitle,
-      mk.knowledge_point AS knowledgePoint
-    FROM mistakes mk
-    JOIN modules m ON m.id = mk.module_id
-    LEFT JOIN knowledge_points kp ON kp.id = mk.kp_id
-    WHERE ${whereClause}
-    ORDER BY mk.created_at DESC
-  `).all(...params) as MistakeRow[]
+  const mistakes = await query<MistakeRow>(
+    `
+      SELECT
+        mk.id,
+        mk.module_id AS "moduleId",
+        m.title AS "moduleTitle",
+        mk.question_text AS "questionText",
+        mk.user_answer AS "userAnswer",
+        mk.correct_answer AS "correctAnswer",
+        mk.error_type AS "errorType",
+        mk.remediation,
+        mk.source,
+        mk.created_at AS "createdAt",
+        kp.description AS "kpTitle",
+        mk.knowledge_point AS "knowledgePoint"
+      FROM mistakes mk
+      JOIN modules m ON m.id = mk.module_id
+      LEFT JOIN knowledge_points kp ON kp.id = mk.kp_id
+      WHERE ${whereClause}
+      ORDER BY mk.created_at DESC
+    `,
+    params
+  )
 
-  const summaryByType = db.prepare(`
-    SELECT mk.error_type, COUNT(*) AS count
-    FROM mistakes mk
-    JOIN modules m ON m.id = mk.module_id
-    WHERE m.book_id = ?
-    GROUP BY mk.error_type
-  `).all(id) as SummaryByTypeRow[]
+  const summaryByType = await query<SummaryByTypeRow>(
+    `
+      SELECT mk.error_type, COUNT(*)::int AS count
+      FROM mistakes mk
+      JOIN modules m ON m.id = mk.module_id
+      WHERE m.book_id = $1
+      GROUP BY mk.error_type
+    `,
+    [id]
+  )
 
-  const summaryByModule = db.prepare(`
-    SELECT
-      mk.module_id AS moduleId,
-      m.title AS moduleTitle,
-      COUNT(*) AS count
-    FROM mistakes mk
-    JOIN modules m ON m.id = mk.module_id
-    WHERE m.book_id = ?
-    GROUP BY mk.module_id, m.title, m.order_index
-    ORDER BY count DESC, m.order_index ASC
-  `).all(id) as SummaryByModuleRow[]
+  const summaryByModule = await query<SummaryByModuleRow>(
+    `
+      SELECT
+        mk.module_id AS "moduleId",
+        m.title AS "moduleTitle",
+        COUNT(*)::int AS count
+      FROM mistakes mk
+      JOIN modules m ON m.id = mk.module_id
+      WHERE m.book_id = $1
+      GROUP BY mk.module_id, m.title, m.order_index
+      ORDER BY count DESC, m.order_index ASC
+    `,
+    [id]
+  )
 
   const byType = createEmptyMistakeSummary()
   let total = 0

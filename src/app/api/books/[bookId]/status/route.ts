@@ -1,5 +1,5 @@
 import { handleRoute } from '@/lib/handle-route'
-import { getDb } from '@/lib/db'
+import { queryOne } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 
 interface BookStatusRow {
@@ -27,12 +27,10 @@ export const GET = handleRoute(async (_req, context) => {
     throw new UserError('Invalid book ID', 'INVALID_ID', 400)
   }
 
-  const db = getDb()
-  const book = db
-    .prepare(
-      'SELECT parse_status, kp_extraction_status, ocr_current_page, ocr_total_pages FROM books WHERE id = ?'
-    )
-    .get(id) as BookStatusRow | undefined
+  const book = await queryOne<BookStatusRow>(
+    'SELECT parse_status, kp_extraction_status, ocr_current_page, ocr_total_pages FROM books WHERE id = $1',
+    [id]
+  )
 
   if (!book) {
     throw new UserError('Book not found', 'NOT_FOUND', 404)
