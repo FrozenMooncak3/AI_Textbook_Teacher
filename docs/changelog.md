@@ -1359,3 +1359,16 @@
 - `src/lib/log.ts`
 - `src/lib/schema.sql`
 - `scripts/test-m6-task9.mjs`
+
+## 2026-04-06 | M6 MVP Launch: Task 10 deployment containerization
+
+**Completed**: Added Docker deployment files for the Next.js app, PostgreSQL, and PaddleOCR service; switched Next.js production builds to standalone output; made both the OCR server and the app-side OCR client read host and port from environment variables with local-development defaults preserved; and added a Task 10 regression script covering the deployment contract.
+**Modified files**:
+- `Dockerfile`
+- `Dockerfile.ocr`
+- `docker-compose.yml`
+- `.dockerignore`
+- `next.config.ts`
+- `scripts/ocr_server.py`
+- `src/lib/screenshot-ocr.ts`
+- `scripts/test-m6-task10.mjs`

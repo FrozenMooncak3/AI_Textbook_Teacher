@@ -2,6 +2,7 @@
 """HTTP wrapper around PaddleOCR for screenshot recognition."""
 
 import json
+import os
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -100,9 +101,10 @@ class OCRHandler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 9876
-    server = HTTPServer(("127.0.0.1", port), OCRHandler)
-    print(f"OCR server listening on http://127.0.0.1:{port}", flush=True)
+    host = os.environ.get("OCR_HOST", "0.0.0.0")
+    port = int(os.environ.get("OCR_PORT", sys.argv[1] if len(sys.argv) > 1 else "8000"))
+    server = HTTPServer((host, port), OCRHandler)
+    print(f"OCR server listening on http://{host}:{port}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

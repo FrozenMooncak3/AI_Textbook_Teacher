@@ -1,7 +1,8 @@
 import http from 'http'
 import { logAction } from './log'
 
-const OCR_SERVER_PORT = 9876
+const OCR_SERVER_HOST = process.env.OCR_SERVER_HOST || '127.0.0.1'
+const OCR_SERVER_PORT = Number(process.env.OCR_SERVER_PORT) || 9876
 
 interface OcrResponseBody {
   text?: string
@@ -33,7 +34,7 @@ export async function ocrImage(imagePath: string): Promise<OcrResult> {
       const postData = JSON.stringify({ image_path: imagePath })
       const req = http.request(
         {
-          hostname: '127.0.0.1',
+          hostname: OCR_SERVER_HOST,
           port: OCR_SERVER_PORT,
           path: '/ocr',
           method: 'POST',
