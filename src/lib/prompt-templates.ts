@@ -1,4 +1,4 @@
-import { getDb } from './db'
+import { queryOne, run } from './db'
 
 interface PromptTemplate {
   id: number
@@ -13,15 +13,16 @@ interface PromptTemplate {
  * Get the currently active template for a role + stage.
  * Throws if no active template found.
  */
-export function getActiveTemplate(role: string, stage: string): PromptTemplate {
-  const db = getDb()
-  const row = db.prepare(
-    'SELECT * FROM prompt_templates WHERE role = ? AND stage = ? AND is_active = 1'
-  ).get(role, stage) as PromptTemplate | undefined
+export async function getActiveTemplate(role: string, stage: string): Promise<PromptTemplate> {
+  const row = await queryOne<PromptTemplate>(
+    'SELECT * FROM prompt_templates WHERE role = $1 AND stage = $2 AND is_active = 1',
+    [role, stage]
+  )
 
   if (!row) {
     throw new Error(`No active prompt template found for role=${role}, stage=${stage}`)
   }
+
   return row
 }
 
@@ -38,27 +39,38 @@ export function renderTemplate(template: string, variables: Record<string, strin
 /**
  * Load active template + substitute variables in one call.
  */
-export function getPrompt(role: string, stage: string, variables: Record<string, string>): string {
-  const template = getActiveTemplate(role, stage)
+export async function getPrompt(
+  role: string,
+  stage: string,
+  variables: Record<string, string>
+): Promise<string> {
+  const template = await getActiveTemplate(role, stage)
   return renderTemplate(template.template_text, variables)
 }
 
 /**
  * Insert or update a prompt template. Used for template migrations.
  */
-export function upsertTemplate(role: string, stage: string, templateText: string): void {
-  const db = getDb()
-  const existing = db.prepare(
-    'SELECT id FROM prompt_templates WHERE role = ? AND stage = ? AND is_active = 1'
-  ).get(role, stage) as { id: number } | undefined
+export async function upsertTemplate(
+  role: string,
+  stage: string,
+  templateText: string
+): Promise<void> {
+  const existing = await queryOne<{ id: number }>(
+    'SELECT id FROM prompt_templates WHERE role = $1 AND stage = $2 AND is_active = 1',
+    [role, stage]
+  )
 
   if (existing) {
-    db.prepare('UPDATE prompt_templates SET template_text = ? WHERE id = ?')
-      .run(templateText, existing.id)
+    await run('UPDATE prompt_templates SET template_text = $1 WHERE id = $2', [
+      templateText,
+      existing.id,
+    ])
     return
   }
 
-  db.prepare(
-    'INSERT INTO prompt_templates (role, stage, version, template_text, is_active) VALUES (?, ?, 1, ?, 1)'
-  ).run(role, stage, templateText)
+  await run(
+    'INSERT INTO prompt_templates (role, stage, version, template_text, is_active) VALUES ($1, $2, 1, $3, 1)',
+    [role, stage, templateText]
+  )
 }

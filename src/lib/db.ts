@@ -52,6 +52,8 @@ export async function initDb(): Promise<void> {
   const schemaPath = path.join(process.cwd(), 'src', 'lib', 'schema.sql')
   const schema = await readFile(schemaPath, 'utf8')
   await pool.query(schema)
+  const { seedTemplates } = await import('./seed-templates')
+  await seedTemplates()
 }
 
 export { pool }

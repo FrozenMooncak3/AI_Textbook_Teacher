@@ -1217,3 +1217,17 @@
 - `src/lib/db.ts`
 - `src/lib/schema.sql`
 - `scripts/test-m6-task1.mjs`
+
+---
+
+## 2026-04-06 | M6 MVP Launch: Async lib conversion for PostgreSQL helpers
+
+**完成内容**: 将 `log.ts`、`prompt-templates.ts`、`mistakes.ts`、`book-service.ts`、`seed-templates.ts` 从同步 `getDb()` 调用迁移到异步 `query` / `queryOne` / `run`，统一替换为 PostgreSQL `$1...$n` 占位符，并补回 `initDb()` 在建表后执行 `seedTemplates()` 的初始化逻辑；新增静态回归脚本覆盖异步签名、helper 导入和模板播种调用。
+**修改文件**:
+- `src/lib/db.ts`
+- `src/lib/log.ts`
+- `src/lib/prompt-templates.ts`
+- `src/lib/mistakes.ts`
+- `src/lib/services/book-service.ts`
+- `src/lib/seed-templates.ts`
+- `scripts/test-m6-task2.mjs`

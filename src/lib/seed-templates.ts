@@ -1,4 +1,4 @@
-import { getDb } from './db'
+import { queryOne, run } from './db'
 
 interface TemplateSeed {
   role: string
@@ -455,62 +455,41 @@ if (preReadingGuideTemplate) {
   preReadingGuideTemplate.template_text = COACH_PRE_READING_GUIDE_TEMPLATE
 }
 
-export function seedTemplates(): void {
-  const db = getDb()
-  const existing = db
-    .prepare('SELECT COUNT(*) as count FROM prompt_templates')
-    .get() as { count: number }
+const INSERT_TEMPLATE_SQL =
+  'INSERT INTO prompt_templates (role, stage, version, template_text, is_active) VALUES ($1, $2, 1, $3, 1)'
 
-  if (existing.count === 0) {
-    const insert = db.prepare(
-      'INSERT INTO prompt_templates (role, stage, version, template_text, is_active) VALUES (?, ?, 1, ?, 1)'
-    )
+const UPSERT_TEMPLATE_SQL = `
+  INSERT INTO prompt_templates (role, stage, version, template_text, is_active)
+  VALUES ($1, $2, 1, $3, 1)
+  ON CONFLICT(role, stage, version) DO UPDATE SET template_text = excluded.template_text
+`
 
-    const tx = db.transaction(() => {
-      for (const t of SEED_TEMPLATES) {
-        insert.run(t.role, t.stage, t.template_text)
-      }
-    })
-    tx()
+async function seedRoleTemplates(role: string): Promise<void> {
+  for (const template of SEED_TEMPLATES) {
+    if (template.role !== role) {
+      continue
+    }
+
+    await run(UPSERT_TEMPLATE_SQL, [template.role, template.stage, template.template_text])
+  }
+}
+
+export async function seedTemplates(): Promise<void> {
+  const existing = await queryOne<{ count: number }>(
+    'SELECT COUNT(*)::int as count FROM prompt_templates'
+  )
+
+  if (!existing || existing.count === 0) {
+    for (const template of SEED_TEMPLATES) {
+      await run(INSERT_TEMPLATE_SQL, [template.role, template.stage, template.template_text])
+    }
+
     return
   }
 
-  const upsert = db.prepare(`
-    INSERT INTO prompt_templates (role, stage, version, template_text, is_active)
-    VALUES (?, ?, 1, ?, 1)
-    ON CONFLICT(role, stage, version) DO UPDATE SET template_text = excluded.template_text
-  `)
-
-  const tx = db.transaction(() => {
-    for (const t of SEED_TEMPLATES) {
-      if (t.role === 'extractor') {
-        upsert.run(t.role, t.stage, t.template_text)
-      }
-    }
-
-    for (const t of SEED_TEMPLATES) {
-      if (t.role === 'coach') {
-        upsert.run(t.role, t.stage, t.template_text)
-      }
-    }
-
-    for (const t of SEED_TEMPLATES) {
-      if (t.role === 'examiner') {
-        upsert.run(t.role, t.stage, t.template_text)
-      }
-    }
-
-    for (const t of SEED_TEMPLATES) {
-      if (t.role === 'reviewer') {
-        upsert.run(t.role, t.stage, t.template_text)
-      }
-    }
-
-    for (const t of SEED_TEMPLATES) {
-      if (t.role === 'assistant') {
-        upsert.run(t.role, t.stage, t.template_text)
-      }
-    }
-  })
-  tx()
+  await seedRoleTemplates('extractor')
+  await seedRoleTemplates('coach')
+  await seedRoleTemplates('examiner')
+  await seedRoleTemplates('reviewer')
+  await seedRoleTemplates('assistant')
 }
