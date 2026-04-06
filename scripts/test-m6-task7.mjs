@@ -85,6 +85,16 @@ test('task 7 chunkText splits long text by headings or overlap fallback', async 
   assert.equal(parsed.plainOverlap, true, 'fallback chunks should overlap by line range')
 })
 
+test('task 7 chunkText terminates for oversized single-line text', async () => {
+  const { chunkText } = await loadTsModule('src/lib/text-chunker.ts')
+  const oversizedSingleLine = 'x'.repeat(100_001)
+
+  const chunks = chunkText(oversizedSingleLine)
+
+  assert.ok(chunks.length > 1, 'oversized single-line text should split into multiple chunks')
+  assert.ok(chunks.every((chunk) => chunk.text.length > 0), 'all chunks should contain text')
+})
+
 test('task 7 mergeChunkResults deduplicates repeated modules and KPs', async () => {
   const { mergeChunkResults } = await loadTsModule('src/lib/kp-merger.ts')
   const merged = mergeChunkResults([

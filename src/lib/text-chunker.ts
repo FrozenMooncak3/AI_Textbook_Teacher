@@ -187,7 +187,7 @@ function splitBySize(
       break
     }
 
-    currentStart = Math.max(startLine, currentEnd - OVERLAP_LINES + 1)
+    currentStart = Math.max(currentStart + 1, currentEnd - OVERLAP_LINES + 1)
     chunkIndex += 1
   }
 

@@ -1339,3 +1339,10 @@
 - `src/lib/kp-merger.ts`
 - `src/lib/services/kp-extraction-service.ts`
 - `scripts/test-m6-task7.mjs`
+
+## 2026-04-06 | M6 MVP Launch: Chunker forward-progress hotfix
+
+**Completed**: Fixed `splitBySize()` so the next window always advances even when long-line input makes overlap math stall, preventing the potential infinite loop flagged in the Task 7 follow-up dispatch. Added a regression case covering a single oversized 100K+ character line and verifying `chunkText()` terminates with multiple chunks.
+**Modified files**:
+- `src/lib/text-chunker.ts`
+- `scripts/test-m6-task7.mjs`
