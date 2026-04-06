@@ -1397,3 +1397,10 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 - `src/app/api/auth/register/route.ts`
 - `src/app/(auth)/register/page.tsx`
 - `scripts/test-m6-task11.mjs`
+
+## 2026-04-06 | Post-M6 hotfix: raise book upload limit to 100MB
+
+**Completed**: Raised the Next.js proxy request body limit for `/api/books` uploads from the default 10MB to 100MB by setting `experimental.proxyClientMaxBodySize` in the app config, preventing larger PDF uploads from failing before the route handler runs. Added a regression script that locks the 100MB config in place.
+**Modified files**:
+- `next.config.ts`
+- `scripts/test-m6-task12.mjs`
