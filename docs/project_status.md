@@ -5,15 +5,15 @@
 
 ---
 
-## 当前状态（2026-04-04）
+## 当前状态（2026-04-06）
 
-**方向**：MVP 重新设计——教练核心 + PDF 阅读器 + 独立问答通道
+**方向**：MVP 已上线——完整学习流程 + 多用户 + Docker 部署
 
-**当前里程碑**：M5.5 稳固 & App Shell — **已完成**（2026-04-04）
+**当前里程碑**：M6 MVP Launch — **已完成**（2026-04-06）
 
-**最新完成**：M6 MVP Launch spec + plan 完成（11 个任务），待执行。
+**最新完成**：M6 全部 11 个任务完成。PostgreSQL 迁移、用户认证、大 PDF 分块、PDF 阅读器升级、安全加固、Docker 部署。
 
-**下一步**：执行 M6 plan（T1 PostgreSQL 迁移开始）→ 完成后更新 CLAUDE.md
+**下一步**：部署到云平台（Railway/Fly.io）→ 邀请种子用户测试 → 收集反馈 → M7 规划
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -33,7 +33,23 @@
 | M4 | 复习系统：复习调度（3/7/15/30/60 天）→ 聚类出题 → P 值更新 → 前端复习会话 | **已完成**（2026-04-02） |
 | M5 | 功能补完：截图问 AI 两步流程 + AIResponse Markdown 渲染 + 正确答案展示 + 仪表盘 + 错题诊断 | **已完成**（2026-04-03） |
 | M5.5 | 稳固 & App Shell：侧栏导航 + 白屏修复 + OCR 自动触发 + 进度显示 + LoadingState | **已完成**（2026-04-04） |
-| M6 | MVP Launch：PostgreSQL 迁移 + 用户账号 + 大 PDF 分块 + PDF 阅读器 + 部署上线 | **计划完成，待执行** |
+| M6 | MVP Launch：PostgreSQL 迁移 + 用户账号 + 大 PDF 分块 + PDF 阅读器 + 部署上线 | **已完成**（2026-04-06） |
+
+### M6 完成内容
+
+| 任务 | 描述 | 执行者 | 状态 |
+|------|------|--------|------|
+| T1 | PostgreSQL Foundation (db.ts + schema) | Codex | ✅ |
+| T2 | Convert lib/ files to async | Codex | ✅ |
+| T3 | Convert API routes (books+conversations+logs) | Codex | ✅ |
+| T4 | Convert API routes (modules+review+qa) | Codex | ✅ |
+| T5 | Auth system backend | Codex | ✅ |
+| T6 | Auth frontend + server page conversion | Gemini | ✅ |
+| T7 | Large PDF chunking | Codex | ✅ (1 retry) |
+| T8 | PDF reader replacement (react-pdf-viewer) | Gemini | ✅ |
+| T9 | Bug fixes (auth guards + security) | Codex | ✅ |
+| T10 | Deployment (Docker + compose) | Codex | ✅ |
+| T11 | Smoke test + docs update | Claude | ✅ |
 
 ### M5 完成内容
 
@@ -65,7 +81,7 @@ M0 → M1 → M2 → M3 → M4 → M5
 - **KP 成为一级实体**：知识点有独立表，驱动所有学习活动
 - **即时反馈**：Q&A 每题答完立即反馈（不再是全部答完后批量）
 - **P-value 复习权重**：动态权重系统控制复习题量
-- **数据库从 12 张表扩展到 21 张表**，破坏性迁移（删旧建新）
+- **数据库从 12 张表扩展到 24 张表**（M6: +users, invite_codes, sessions），PostgreSQL 部署
 
 ---
 

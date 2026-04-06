@@ -38,11 +38,14 @@ App Shell (M5.5):
 ├── src/app/books/[bookId]/modules/[moduleId]/error.tsx → 模块级错误边界
 ├── src/app/books/[bookId]/layout.tsx → 书级 layout（薄包装）
 └── src/app/not-found.tsx → 全局 404 页面
+├── /login (登录页)
+├── /register (邀请码注册页)
 ```
 
 ### API 组
 
 ```
+auth/               — register, login, logout, me
 books/              — list/create
 books/[bookId]/     — extract, status, pdf, module-map(+confirm/regenerate), screenshot-ocr, screenshot-ask, notes, highlights, toc, dashboard, mistakes
 modules/            — list
@@ -50,15 +53,16 @@ modules/[moduleId]/ — status, guide, generate-questions, qa-feedback, question
                       generate-notes, evaluate, test/generate, test/submit, test/, mistakes
 review/due          — GET 待复习列表
 review/[scheduleId]/ — generate, respond, complete
-qa/[questionId]/    — respond
-conversations/      — messages
-logs/               — 系统日志
+qa/[questionId]/    — respond (ownership guard: question→module→book→user)
+conversations/      — messages (ownership guard: conversation→book→user)
+logs/               — 系统日志（按 user_id 过滤）
 ```
 
-### DB 表（21 张）
+### DB 表（24 张）
 
 | 分类 | 表 |
 |------|----|
+| 认证数据 | users, invite_codes, sessions |
 | 用户数据 | books, modules, conversations, messages, highlights, reading_notes, module_notes |
 | 学习数据 | knowledge_points, clusters, qa_questions, qa_responses |
 | 测试数据 | test_papers, test_questions, test_responses, mistakes |
@@ -133,6 +137,7 @@ unstarted → reading → qa → notes_generated → testing → completed
 - examiner 模板已用正常中文重写（M3）
 - reviewer 模板：review_generation（出题）+ review_scoring（评分），均为正常中文（M4）
 - assistant/screenshot_qa 模板已修复为干净中文，变量：{screenshot_text}, {user_question}, {conversation_history}（M5）
+- ⚠️ screenshot-ask 路由的系统 prompt 和 fallback 已改为英文（M6，Codex 编码问题导致中文乱码）
 
 ### 截图问 AI（M5 改造）
 
@@ -171,3 +176,38 @@ unstarted → reading → qa → notes_generated → testing → completed
 - **关键修复**：API 响应需 `json.data` 解包（handleRoute wrapper），kp_extraction_status 值为 `completed`/`failed`
 - 处理 409 ALREADY_COMPLETED / ALREADY_PROCESSING 边界情况
 - 上传后零手动点击：PDF → OCR → KP 提取 → 模块地图全自动
+
+### 数据库（M6）
+
+- **PostgreSQL**（pg 驱动），从 SQLite（better-sqlite3）迁移
+- 异步查询帮手：`query<T>`, `queryOne<T>`, `run`, `insert`（自动 RETURNING id）
+- 连接池：`Pool({ connectionString: process.env.DATABASE_URL })`
+- Schema：`src/lib/schema.sql`（24 表），`initDb()` 启动时自动建表 + 种子模板
+
+### 认证系统（M6）
+
+- **注册**：邀请码 + 邮箱 + 密码，bcryptjs 12 轮哈希，invite_codes FOR UPDATE 防并发
+- **登录**：验证密码 → crypto.randomBytes(32) 会话令牌 → HttpOnly cookie（30 天）
+- **中间件**：`src/middleware.ts` edge runtime，公开路径 /login, /register, /api/auth/*，其余需 cookie
+- **所有权链**：requireUser → requireBookOwner → requireModuleOwner → requireReviewScheduleOwner（JOIN 链验证）
+- **数据隔离**：books.user_id NOT NULL，所有 API 按 user_id 过滤
+
+### 大 PDF 分块（M6）
+
+- **text-chunker.ts**：标题检测（Chapter N, 第N章, 编号节, 全大写）→ 按标题边界分组 → 超大段按 35K 字符切割（20 行 overlap）
+- **kp-merger.ts**：多 chunk KP 提取后合并，Dice 系数 bigram 相似度去重（阈值 0.8），kp_code 重编号
+- **kp-extraction-service.ts**：单 chunk 直走，多 chunk 逐 chunk 提取 → mergeChunkResults → 写 DB
+
+### PDF 阅读器（M6）
+
+- **react-pdf-viewer**：`@react-pdf-viewer/core` + `@react-pdf-viewer/default-layout`
+- 内置功能：缩放、搜索、书签、缩略图、页码导航
+- pdfjs-dist@3.11.174 Worker（CDN）
+- ScreenshotOverlay + AiChatDialog 保持不变
+
+### 部署架构（M6）
+
+- **三容器 Docker Compose**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（PaddleOCR）
+- **环境变量**：DATABASE_URL, ANTHROPIC_API_KEY, AI_MODEL, SESSION_SECRET, OCR_SERVER_HOST, OCR_SERVER_PORT
+- **持久化卷**：pgdata（数据库）+ uploads（用户 PDF）
+- **OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/ocr`，本地默认 127.0.0.1:9876

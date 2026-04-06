@@ -4,6 +4,23 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-06 | M6 MVP Launch — 里程碑完成
+
+**M6 完成**：11 个任务全部通过 review，从 SQLite 单用户本地应用升级为 PostgreSQL 多用户可部署产品。
+
+核心变更：
+- **PostgreSQL 迁移**（T1-T4）：db.ts 全量重写为异步 Pool + query helpers，48+ 文件 sync→async 转换，SQL `?` → `$N`
+- **用户认证**（T5-T6）：bcrypt 密码哈希、crypto 会话令牌、HttpOnly cookie、邀请码注册、Next.js middleware、所有权 JOIN 链
+- **大 PDF 分块**（T7）：text-chunker 标题检测 + 35K 字符切割 + 20 行 overlap，kp-merger Dice 去重，chunk-aware KP 提取流（含 1 次 fix：splitBySize 无限循环修复）
+- **PDF 阅读器**（T8）：react-pdf-viewer 替换自研实现，内置缩放/搜索/书签/缩略图
+- **安全加固**（T9）：3 个 API 路由添加 ownership guard，books.user_id NOT NULL，open redirect 修复，mojibake 修复
+- **Docker 部署**（T10）：三容器 compose（app + PostgreSQL 16 + PaddleOCR），Next.js standalone，OCR 地址可配置
+- **Docs + smoke test**（T11）：architecture.md 全量更新，project_status M6 完成
+
+CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 advisory issues，1 次 retry（T7），0 次 escalation。
+
+---
+
 ## 2026-04-04 | task-execution skill：统一执行引擎
 
 - **新增 task-execution skill**: 统筹 dispatch→review→retry→close 全生命周期，替代手动串联 structured-dispatch 和 requesting-code-review

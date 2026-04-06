@@ -28,7 +28,7 @@
 ## 技术栈
 - **框架**: Next.js 15 (App Router) + React + Tailwind CSS
 - **AI**: Vercel AI SDK（多模型），默认 `anthropic:claude-sonnet-4-6`，通过 `AI_MODEL` 环境变量切换 provider/模型
-- **数据库**: SQLite (`data/app.db`)，使用 `better-sqlite3`
+- **数据库**: PostgreSQL（M6 从 SQLite 迁移），使用 `pg` 驱动
 
 ## 架构地图
 `docs/architecture.md` 是系统现状的唯一真相源。所有里程碑设计必须基于它，不得凭记忆假设。
@@ -41,10 +41,14 @@
 4. **模块过关线是 80%**，这是硬规则，不是建议值，不得改为软提示
 5. **Q&A 是一次一题 + 即时反馈**：显示一题 → 用户作答 → 立即显示评分和解析 → 点"下一题"继续
 
+## 部署
+- **Docker Compose**：`docker-compose up --build` 启动三容器（app + db + ocr）
+- **环境变量**：DATABASE_URL, ANTHROPIC_API_KEY, AI_MODEL, SESSION_SECRET, OCR_SERVER_HOST, OCR_SERVER_PORT
+- **Next.js standalone**：`output: 'standalone'`，生产镜像不含 node_modules
+
 ## 技术红线
 - 不写 TypeScript `any`，不绕过类型系统
 - 不在客户端代码中暴露 `ANTHROPIC_API_KEY`，API 调用只在服务端
-- `data/app.db` 不得提交到 git（已在 `.gitignore` 中配置）
 - 不在生产代码中留 `console.log`
 
 ## CCB 角色分工
@@ -67,7 +71,7 @@
 - `docs/journal/` — 会话日志（想法、决策推理、待跟进）
 
 ## 禁止事项
-- 禁止引入多用户 / 登录 / 注册系统
+- 用户系统仅限邀请码注册，不做社交功能、不做公开注册
 - 禁止添加 MVP 范围外的功能（社区、个性化推荐、游戏化等）
 - 禁止未经确认就修改产品不变量
 - 禁止在未更新 `docs/project_status.md`、`docs/changelog.md` 和 `docs/architecture.md` 的情况下声称任务完成
