@@ -1,19 +1,15 @@
 import { generateText } from 'ai'
 import { getModel, timeout } from '../ai'
-import { getDb } from '../db'
+import { pool, queryOne, run } from '../db'
 import { SystemError } from '../errors'
 import { logAction } from '../log'
 import { getPrompt } from '../prompt-templates'
 import type {
-  ClusterDef,
-  FinalKP,
-  ModuleGroup,
-  QualityIssue,
-  RawKP,
-  Section,
   Stage0Result,
   Stage1Result,
   Stage2Result,
+  RawKP,
+  Section,
 } from './kp-extraction-types'
 
 const MAX_CHARS_PER_CALL = 120_000
@@ -53,14 +49,14 @@ function repairLooseJSON(candidate: string): string {
   let repaired = ''
   let inString = false
 
-  for (let i = 0; i < candidate.length; i++) {
-    const char = candidate[i]
+  for (let index = 0; index < candidate.length; index++) {
+    const char = candidate[index]
 
     if (char === '\\') {
       repaired += char
-      if (i + 1 < candidate.length) {
-        repaired += candidate[i + 1]
-        i += 1
+      if (index + 1 < candidate.length) {
+        repaired += candidate[index + 1]
+        index += 1
       }
       continue
     }
@@ -72,7 +68,7 @@ function repairLooseJSON(candidate: string): string {
         continue
       }
 
-      let lookahead = i + 1
+      let lookahead = index + 1
       while (lookahead < candidate.length && /\s/.test(candidate[lookahead])) {
         lookahead += 1
       }
@@ -82,7 +78,7 @@ function repairLooseJSON(candidate: string): string {
         inString = false
         repaired += char
       } else {
-        repaired += String.fromCharCode(92) + '"'
+        repaired += '\\"'
       }
       continue
     }
@@ -118,7 +114,7 @@ function parseJSON<T>(text: string, context: string): T {
 
 async function structureScan(rawText: string): Promise<Stage0Result> {
   const lines = splitIntoLines(rawText)
-  const prompt = getPrompt('extractor', 'structure_scan', {
+  const prompt = await getPrompt('extractor', 'structure_scan', {
     ocr_text: buildStructureScanText(lines),
   })
   const response = await callModel(prompt, 4_096)
@@ -138,11 +134,11 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
     let rawResponse = ''
 
     if (!textBlock.trim()) {
-      logAction('KP 鎻愬彇璺宠繃', `灏忚妭"${section.title}"鏂囨湰涓虹┖`, 'warn')
+      await logAction('KP extraction skipped', `Section "${section.title}" has empty text`, 'warn')
       continue
     }
 
-    const prompt = getPrompt('extractor', 'kp_extraction', {
+    const prompt = await getPrompt('extractor', 'kp_extraction', {
       section_name: section.title,
       text_block: textBlock,
       previous_block_tail: previousTail,
@@ -158,18 +154,18 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
       const lastKP = result.knowledge_points[result.knowledge_points.length - 1]
       previousTail = lastKP?.cross_block_risk ? JSON.stringify(lastKP) : '无'
 
-      logAction('KP 鎻愬彇', `灏忚妭"${section.title}"鎻愬彇鍒?${result.knowledge_points.length} 涓?KP`)
-    } catch (err) {
-      logAction(
-        'KP 鎻愬彇澶辫触',
-        `灏忚妭"${section.title}"鎻愬彇澶辫触锛岃烦杩? ${err instanceof Error ? err.message : String(err)}`,
-        'warn'
+      await logAction(
+        'KP extraction',
+        `Section "${section.title}" extracted ${result.knowledge_points.length} KPs`
       )
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      await logAction('KP extraction failed', `Section "${section.title}" failed: ${message}`, 'warn')
       if (rawResponse) {
-        logAction(
+        await logAction(
           'KP raw response',
-          `Section "${section.title}" Claude returned first 500 chars: ${rawResponse.slice(0, 500)}`,
-          'warn',
+          `Section "${section.title}" first 500 chars: ${rawResponse.slice(0, 500)}`,
+          'warn'
         )
       }
     }
@@ -178,8 +174,8 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
   return allKPs
 }
 
-async function qualityCheck(rawKPs: RawKP[], modules: ModuleGroup[]): Promise<Stage2Result> {
-  const prompt = getPrompt('extractor', 'quality_check', {
+async function qualityCheck(rawKPs: RawKP[], modules: Stage0Result['modules']): Promise<Stage2Result> {
+  const prompt = await getPrompt('extractor', 'quality_check', {
     kp_table: JSON.stringify(rawKPs, null, 2),
     module_structure: JSON.stringify(modules, null, 2),
   })
@@ -188,106 +184,145 @@ async function qualityCheck(rawKPs: RawKP[], modules: ModuleGroup[]): Promise<St
   return parseJSON<Stage2Result>(response, 'Stage 2')
 }
 
-function writeResultsToDB(bookId: number, stage0: Stage0Result, stage2: Stage2Result): void {
-  const db = getDb()
+async function writeResultsToDB(
+  bookId: number,
+  stage0: Stage0Result,
+  stage2: Stage2Result
+): Promise<void> {
+  const client = await pool.connect()
 
-  const tx = db.transaction(() => {
-    db.prepare('DELETE FROM modules WHERE book_id = ?').run(bookId)
-
-    const moduleInsert = db.prepare(
-      `INSERT INTO modules (book_id, title, summary, order_index, page_start, page_end, kp_count, cluster_count)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-    const clusterInsert = db.prepare('INSERT INTO clusters (module_id, name) VALUES (?, ?)')
-    const kpInsert = db.prepare(
-      `INSERT INTO knowledge_points
-       (module_id, kp_code, section_name, description, type, importance, detailed_content, cluster_id, ocr_quality)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
+  try {
+    await client.query('BEGIN')
+    await client.query('DELETE FROM modules WHERE book_id = $1', [bookId])
 
     const moduleIdMap = new Map<number, number>()
     const clusterIdMap = new Map<string, number>()
 
-    for (const module of [...stage0.modules].sort((a, b) => a.group_id - b.group_id)) {
-      const moduleKPs = stage2.final_knowledge_points.filter((kp) => kp.module_group === module.group_id)
-      const moduleClusters = stage2.clusters.filter((cluster) => cluster.module_group === module.group_id)
+    for (const module_ of [...stage0.modules].sort((left, right) => left.group_id - right.group_id)) {
+      const moduleKPs = stage2.final_knowledge_points.filter((kp) => kp.module_group === module_.group_id)
+      const moduleClusters = stage2.clusters.filter((cluster) => cluster.module_group === module_.group_id)
 
-      const result = moduleInsert.run(
-        bookId,
-        module.title,
-        module.sections.join(' / '),
-        module.group_id,
-        module.page_start,
-        module.page_end,
-        moduleKPs.length,
-        moduleClusters.length
+      const result = await client.query<{ id: number }>(
+        `
+          INSERT INTO modules (
+            book_id,
+            title,
+            summary,
+            order_index,
+            page_start,
+            page_end,
+            kp_count,
+            cluster_count
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING id
+        `,
+        [
+          bookId,
+          module_.title,
+          module_.sections.join(' / '),
+          module_.group_id,
+          module_.page_start,
+          module_.page_end,
+          moduleKPs.length,
+          moduleClusters.length,
+        ]
       )
 
-      moduleIdMap.set(module.group_id, Number(result.lastInsertRowid))
+      moduleIdMap.set(module_.group_id, result.rows[0].id)
     }
 
     for (const cluster of stage2.clusters) {
       const moduleId = moduleIdMap.get(cluster.module_group)
-      if (!moduleId) continue
+      if (!moduleId) {
+        continue
+      }
 
-      const result = clusterInsert.run(moduleId, cluster.name)
-      clusterIdMap.set(`${cluster.module_group}:${cluster.name}`, Number(result.lastInsertRowid))
+      const result = await client.query<{ id: number }>(
+        'INSERT INTO clusters (module_id, name) VALUES ($1, $2) RETURNING id',
+        [moduleId, cluster.name]
+      )
+
+      clusterIdMap.set(`${cluster.module_group}:${cluster.name}`, result.rows[0].id)
     }
 
     for (const kp of stage2.final_knowledge_points) {
       const moduleId = moduleIdMap.get(kp.module_group)
-      if (!moduleId) continue
+      if (!moduleId) {
+        continue
+      }
 
       const clusterId = clusterIdMap.get(`${kp.module_group}:${kp.cluster_name}`) ?? null
 
-      kpInsert.run(
-        moduleId,
-        kp.kp_code,
-        kp.section_name,
-        kp.description,
-        kp.type,
-        kp.importance,
-        kp.detailed_content,
-        clusterId,
-        kp.ocr_quality
+      await client.query(
+        `
+          INSERT INTO knowledge_points (
+            module_id,
+            kp_code,
+            section_name,
+            description,
+            type,
+            importance,
+            detailed_content,
+            cluster_id,
+            ocr_quality
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `,
+        [
+          moduleId,
+          kp.kp_code,
+          kp.section_name,
+          kp.description,
+          kp.type,
+          kp.importance,
+          kp.detailed_content,
+          clusterId,
+          kp.ocr_quality,
+        ]
       )
     }
 
-    db.prepare("UPDATE books SET kp_extraction_status = 'completed' WHERE id = ?").run(bookId)
-  })
-
-  tx()
+    await client.query("UPDATE books SET kp_extraction_status = 'completed' WHERE id = $1", [bookId])
+    await client.query('COMMIT')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
 }
 
 export async function extractKPs(bookId: number): Promise<void> {
-  const db = getDb()
-  const book = db
-    .prepare('SELECT id, title, raw_text FROM books WHERE id = ?')
-    .get(bookId) as { id: number; title: string; raw_text: string | null } | undefined
+  const book = await queryOne<{ id: number; title: string; raw_text: string | null }>(
+    'SELECT id, title, raw_text FROM books WHERE id = $1',
+    [bookId]
+  )
 
   if (!book) {
-    throw new SystemError(`鏁欐潗 ${bookId} 涓嶅瓨鍦?`)
+    throw new SystemError(`Book ${bookId} not found`)
   }
 
   if (!book.raw_text) {
-    throw new SystemError(`鏁欐潗 ${bookId} 鏃?OCR 鏂囨湰锛岃鍏堝畬鎴?OCR`)
+    throw new SystemError(`Book ${bookId} has no OCR text; run OCR before extraction`)
   }
 
-  db.prepare("UPDATE books SET kp_extraction_status = 'processing' WHERE id = ?").run(bookId)
+  await run("UPDATE books SET kp_extraction_status = 'processing' WHERE id = $1", [bookId])
 
   try {
-    logAction('KP 鎻愬彇寮€濮?', `bookId=${bookId}锛屾暀鏉愶細${book.title}`)
+    await logAction('KP extraction started', `bookId=${bookId}, title=${book.title}`)
 
     const stage0 = await structureScan(book.raw_text)
-    logAction('Stage 0 瀹屾垚', `璇嗗埆鍒?${stage0.sections.length} 涓皬鑺傦紝${stage0.modules.length} 涓ā鍧?`)
+    await logAction(
+      'Stage 0 complete',
+      `sections=${stage0.sections.length}, modules=${stage0.modules.length}`
+    )
 
     const rawKPs = await blockExtract(book.raw_text, stage0.sections)
-    logAction('Stage 1 瀹屾垚', `鍒濇彁鍙?${rawKPs.length} 涓?KP`)
+    await logAction('Stage 1 complete', `raw_kps=${rawKPs.length}`)
 
     const stage2 = await qualityCheck(rawKPs, stage0.modules)
-    logAction(
-      'Stage 2 瀹屾垚',
-      `鏈€缁?${stage2.final_knowledge_points.length} 涓?KP锛?${stage2.clusters.length} 涓仛绫?`
+    await logAction(
+      'Stage 2 complete',
+      `final_kps=${stage2.final_knowledge_points.length}, clusters=${stage2.clusters.length}`
     )
 
     const failedGates = Object.entries(stage2.quality_gates)
@@ -295,20 +330,20 @@ export async function extractKPs(bookId: number): Promise<void> {
       .map(([name]) => name)
 
     if (failedGates.length > 0) {
-      logAction('璐ㄩ噺闂ㄦ湭閫氳繃', `澶辫触椤? ${failedGates.join(', ')}`, 'warn')
+      await logAction('Quality gates failed', `failed=${failedGates.join(', ')}`, 'warn')
       if (stage2.issues.length > 0) {
-        logAction('璐ㄩ噺闂璇︽儏', JSON.stringify(stage2.issues), 'warn')
+        await logAction('Quality issues', JSON.stringify(stage2.issues), 'warn')
       }
     }
 
-    writeResultsToDB(bookId, stage0, stage2)
-    logAction(
-      'KP 鎻愬彇瀹屾垚',
-      `bookId=${bookId}锛?${stage2.final_knowledge_points.length} 涓?KP锛?${stage2.clusters.length} 涓仛绫伙紝${stage0.modules.length} 涓ā鍧?`
+    await writeResultsToDB(bookId, stage0, stage2)
+    await logAction(
+      'KP extraction completed',
+      `bookId=${bookId}, final_kps=${stage2.final_knowledge_points.length}, clusters=${stage2.clusters.length}, modules=${stage0.modules.length}`
     )
   } catch (error) {
-    db.prepare("UPDATE books SET kp_extraction_status = 'failed' WHERE id = ?").run(bookId)
-    logAction('KP 鎻愬彇澶辫触', `bookId=${bookId}: ${String(error)}`, 'error')
+    await run("UPDATE books SET kp_extraction_status = 'failed' WHERE id = $1", [bookId])
+    await logAction('KP extraction failed', `bookId=${bookId}: ${String(error)}`, 'error')
     throw error
   }
 }

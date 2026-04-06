@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db'
+import { query, queryOne } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 
@@ -23,23 +23,24 @@ export const GET = handleRoute(async (_req, context) => {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
 
-  const db = getDb()
-  const module_ = db
-    .prepare('SELECT learning_status FROM modules WHERE id = ?')
-    .get(id) as ModuleRow | undefined
+  const module_ = await queryOne<ModuleRow>(
+    'SELECT learning_status FROM modules WHERE id = $1',
+    [id]
+  )
 
   if (!module_) {
     throw new UserError('Module not found', 'NOT_FOUND', 404)
   }
 
-  const papers = db
-    .prepare(`
+  const papers = await query<TestPaperRow>(
+    `
       SELECT id, attempt_number, total_score, pass_rate, is_passed, created_at
       FROM test_papers
-      WHERE module_id = ?
+      WHERE module_id = $1
       ORDER BY attempt_number ASC
-    `)
-    .all(id) as TestPaperRow[]
+    `,
+    [id]
+  )
 
   const inProgressPaper = papers.find((paper) => paper.total_score === null)
   const history = papers

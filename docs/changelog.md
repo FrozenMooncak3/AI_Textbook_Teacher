@@ -1255,3 +1255,30 @@
 - `src/app/api/conversations/[conversationId]/messages/route.ts`
 - `src/app/api/logs/route.ts`
 - `scripts/test-m6-task3.mjs`
+
+## 2026-04-06 | M6 MVP Launch: Modules/review/qa routes + KP extraction service to async PostgreSQL
+
+**Completed**: Migrated the modules/review/qa route batch and the DB-writing path in `kp-extraction-service.ts` from sync SQLite access to async PostgreSQL helpers, added the Task 4 regression script, fixed the `screenshot-ask` OCR fallback mojibake string, and added a temporary `getDb()` compatibility shim in `src/lib/db.ts` so untouched server pages can still build without editing forbidden `.tsx` files.
+**Modified files**:
+- `src/app/api/modules/route.ts`
+- `src/app/api/modules/[moduleId]/status/route.ts`
+- `src/app/api/modules/[moduleId]/guide/route.ts`
+- `src/app/api/modules/[moduleId]/generate-questions/route.ts`
+- `src/app/api/modules/[moduleId]/questions/route.ts`
+- `src/app/api/modules/[moduleId]/qa-feedback/route.ts`
+- `src/app/api/modules/[moduleId]/evaluate/route.ts`
+- `src/app/api/modules/[moduleId]/generate-notes/route.ts`
+- `src/app/api/modules/[moduleId]/reading-notes/route.ts`
+- `src/app/api/modules/[moduleId]/test/route.ts`
+- `src/app/api/modules/[moduleId]/test/generate/route.ts`
+- `src/app/api/modules/[moduleId]/test/submit/route.ts`
+- `src/app/api/modules/[moduleId]/mistakes/route.ts`
+- `src/app/api/review/due/route.ts`
+- `src/app/api/review/[scheduleId]/generate/route.ts`
+- `src/app/api/review/[scheduleId]/respond/route.ts`
+- `src/app/api/review/[scheduleId]/complete/route.ts`
+- `src/app/api/qa/[questionId]/respond/route.ts`
+- `src/app/api/books/[bookId]/screenshot-ask/route.ts`
+- `src/lib/services/kp-extraction-service.ts`
+- `src/lib/db.ts`
+- `scripts/test-m6-task4.mjs`

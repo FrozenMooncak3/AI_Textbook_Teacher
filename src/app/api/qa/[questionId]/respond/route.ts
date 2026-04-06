@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { insert, queryOne } from '@/lib/db'
 
-// POST /api/qa/[questionId]/respond — 保存用户回答
+// POST /api/qa/[questionId]/respond - 保存用户回答
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ questionId: string }> }
@@ -13,28 +13,29 @@ export async function POST(
     return NextResponse.json({ error: '回答不能为空' }, { status: 400 })
   }
 
-  const db = getDb()
-
-  const question = db
-    .prepare('SELECT id FROM questions WHERE id = ?')
-    .get(Number(questionId))
+  const normalizedQuestionId = Number(questionId)
+  const question = await queryOne<{ id: number }>(
+    'SELECT id FROM qa_questions WHERE id = $1',
+    [normalizedQuestionId]
+  )
 
   if (!question) {
     return NextResponse.json({ error: '题目不存在' }, { status: 404 })
   }
 
-  // 已答题目不可修改（产品不变量）
-  const existing = db
-    .prepare('SELECT id FROM user_responses WHERE question_id = ?')
-    .get(Number(questionId))
+  const existing = await queryOne<{ id: number }>(
+    'SELECT id FROM qa_responses WHERE question_id = $1',
+    [normalizedQuestionId]
+  )
 
   if (existing) {
     return NextResponse.json({ error: '该题已作答，不可修改' }, { status: 409 })
   }
 
-  const result = db
-    .prepare('INSERT INTO user_responses (question_id, response_text) VALUES (?, ?)')
-    .run(Number(questionId), response_text.trim())
+  const responseId = await insert(
+    'INSERT INTO qa_responses (question_id, user_answer) VALUES ($1, $2)',
+    [normalizedQuestionId, response_text.trim()]
+  )
 
-  return NextResponse.json({ responseId: result.lastInsertRowid }, { status: 201 })
+  return NextResponse.json({ responseId }, { status: 201 })
 }

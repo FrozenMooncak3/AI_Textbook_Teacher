@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { queryOne, run } from '@/lib/db'
 
 const VALID_STATUSES = ['unstarted', 'reading', 'qa', 'notes_generated', 'testing', 'completed']
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -22,10 +22,10 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
 
-  const db = getDb()
-  const module_ = db
-    .prepare('SELECT learning_status FROM modules WHERE id = ?')
-    .get(Number(moduleId)) as { learning_status: string } | undefined
+  const module_ = await queryOne<{ learning_status: string }>(
+    'SELECT learning_status FROM modules WHERE id = $1',
+    [Number(moduleId)]
+  )
 
   if (!module_) {
     return NextResponse.json({ error: 'Module not found' }, { status: 404 })
@@ -39,8 +39,10 @@ export async function PATCH(
     )
   }
 
-  db.prepare('UPDATE modules SET learning_status = ? WHERE id = ?')
-    .run(learning_status, Number(moduleId))
+  await run('UPDATE modules SET learning_status = $1 WHERE id = $2', [
+    learning_status,
+    Number(moduleId),
+  ])
 
   return NextResponse.json({ ok: true })
 }

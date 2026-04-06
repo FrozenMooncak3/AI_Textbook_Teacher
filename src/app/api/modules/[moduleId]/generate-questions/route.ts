@@ -1,10 +1,10 @@
-import { handleRoute } from '@/lib/handle-route'
-import { getDb } from '@/lib/db'
-import { UserError, SystemError } from '@/lib/errors'
-import { getPrompt } from '@/lib/prompt-templates'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
+import { insert, query, queryOne, run } from '@/lib/db'
+import { UserError, SystemError } from '@/lib/errors'
+import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
+import { getPrompt } from '@/lib/prompt-templates'
 
 interface ModuleRow {
   id: number
@@ -39,13 +39,13 @@ interface GeneratedQuestion {
 }
 
 interface InsertedQuestion {
-  id: number | bigint
+  id: number
   module_id: number
   kp_id: number | null
   question_type: string
   question_text: string
-  correct_answer: string
-  scaffolding?: string
+  correct_answer: string | null
+  scaffolding: string | null
   order_index: number
 }
 
@@ -64,18 +64,24 @@ export const POST = handleRoute(async (_req, context) => {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
 
-  const db = getDb()
-  const module_ = db
-    .prepare('SELECT id, book_id, title, learning_status FROM modules WHERE id = ?')
-    .get(id) as ModuleRow | undefined
+  const module_ = await queryOne<ModuleRow>(
+    'SELECT id, book_id, title, learning_status FROM modules WHERE id = $1',
+    [id]
+  )
 
   if (!module_) {
     throw new UserError('Module not found', 'NOT_FOUND', 404)
   }
 
-  const existingQuestions = db
-    .prepare('SELECT * FROM qa_questions WHERE module_id = ? ORDER BY order_index ASC')
-    .all(id)
+  const existingQuestions = await query<InsertedQuestion>(
+    `
+      SELECT id, module_id, kp_id, question_type, question_text, correct_answer, scaffolding, order_index
+      FROM qa_questions
+      WHERE module_id = $1
+      ORDER BY order_index ASC
+    `,
+    [id]
+  )
 
   if (module_.learning_status === 'qa' && existingQuestions.length > 0) {
     return { data: { questions: existingQuestions, cached: true } }
@@ -89,38 +95,42 @@ export const POST = handleRoute(async (_req, context) => {
     )
   }
 
-  const kps = db
-    .prepare(`
+  const kps = await query<KP>(
+    `
       SELECT id, kp_code, section_name, description, type, importance, detailed_content
       FROM knowledge_points
-      WHERE module_id = ?
-    `)
-    .all(id) as KP[]
+      WHERE module_id = $1
+    `,
+    [id]
+  )
 
   if (kps.length === 0) {
     throw new UserError('No knowledge points found for this module', 'NO_KPS', 409)
   }
 
   const kpTable = kps
-    .map((kp) =>
-      `- [${kp.kp_code}] (${kp.type}, importance=${kp.importance}) ${kp.description}\n  Detail: ${kp.detailed_content}`
+    .map(
+      (kp) =>
+        `- [${kp.kp_code}] (${kp.type}, importance=${kp.importance}) ${kp.description}\n  Detail: ${kp.detailed_content}`
     )
     .join('\n')
 
-  const notes = db
-    .prepare('SELECT content FROM reading_notes WHERE module_id = ? ORDER BY created_at ASC')
-    .all(id) as Array<{ content: string }>
+  const notes = await query<{ content: string }>(
+    'SELECT content FROM reading_notes WHERE module_id = $1 ORDER BY created_at ASC',
+    [id]
+  )
   const userNotes = notes.length > 0 ? notes.map((note) => note.content).join('\n---\n') : '(No reading notes)'
 
-  const conversations = db
-    .prepare(`
+  const conversations = await query<ConversationRow>(
+    `
       SELECT c.id, c.screenshot_text, m.role, m.content
       FROM conversations c
       JOIN messages m ON m.conversation_id = c.id
-      WHERE c.book_id = ?
+      WHERE c.book_id = $1
       ORDER BY c.id ASC, m.id ASC
-    `)
-    .all(module_.book_id) as ConversationRow[]
+    `,
+    [module_.book_id]
+  )
 
   let qaHistory = '(No screenshot Q&A)'
   if (conversations.length > 0) {
@@ -131,10 +141,7 @@ export const POST = handleRoute(async (_req, context) => {
         grouped.set(row.id, { text: row.screenshot_text, messages: [] })
       }
 
-      const group = grouped.get(row.id)
-      if (group) {
-        group.messages.push(`${row.role}: ${row.content}`)
-      }
+      grouped.get(row.id)?.messages.push(`${row.role}: ${row.content}`)
     }
 
     qaHistory = Array.from(grouped.values())
@@ -152,9 +159,9 @@ export const POST = handleRoute(async (_req, context) => {
 - Do NOT include review questions from other modules
 `.trim()
 
-  logAction('Q&A generation started', `moduleId=${id}, kpCount=${kps.length}`)
+  await logAction('Q&A generation started', `moduleId=${id}, kpCount=${kps.length}`)
 
-  const prompt = getPrompt('coach', 'qa_generation', {
+  const prompt = await getPrompt('coach', 'qa_generation', {
     qa_rules: qaRules,
     kp_table: kpTable,
     user_notes: userNotes,
@@ -181,58 +188,55 @@ export const POST = handleRoute(async (_req, context) => {
       throw new Error('Empty questions array')
     }
   } catch (err) {
-    logAction('Q&A generation parse error', text.slice(0, 500), 'error')
+    await logAction('Q&A generation parse error', text.slice(0, 500), 'error')
     throw new SystemError('Failed to parse Claude response for Q&A generation', err)
   }
 
   const kpIds = new Set(kps.map((kp) => kp.id))
-  const insert = db.prepare(`
-    INSERT INTO qa_questions (
-      module_id,
-      kp_id,
-      question_type,
-      question_text,
-      correct_answer,
-      scaffolding,
-      order_index,
-      is_review
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-  `)
-
   const insertedQuestions: InsertedQuestion[] = []
 
-  const tx = db.transaction(() => {
-    for (const [index, question] of generated.questions.entries()) {
-      const kpId = kpIds.has(question.kp_id) ? question.kp_id : null
-      const questionType = VALID_TYPES.has(question.type) ? question.type : 'short_answer'
-      const result = insert.run(
+  for (const [index, question] of generated.questions.entries()) {
+    const kpId = kpIds.has(question.kp_id) ? question.kp_id : null
+    const questionType = VALID_TYPES.has(question.type) ? question.type : 'short_answer'
+    const questionId = await insert(
+      `
+        INSERT INTO qa_questions (
+          module_id,
+          kp_id,
+          question_type,
+          question_text,
+          correct_answer,
+          scaffolding,
+          order_index,
+          is_review
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 0)
+      `,
+      [
         id,
         kpId,
         questionType,
         question.text,
         question.correct_answer || null,
         question.scaffolding || null,
-        index + 1
-      )
+        index + 1,
+      ]
+    )
 
-      insertedQuestions.push({
-        id: result.lastInsertRowid,
-        module_id: id,
-        kp_id: kpId,
-        question_type: questionType,
-        question_text: question.text,
-        correct_answer: question.correct_answer,
-        scaffolding: question.scaffolding,
-        order_index: index + 1,
-      })
-    }
+    insertedQuestions.push({
+      id: questionId,
+      module_id: id,
+      kp_id: kpId,
+      question_type: questionType,
+      question_text: question.text,
+      correct_answer: question.correct_answer || null,
+      scaffolding: question.scaffolding || null,
+      order_index: index + 1,
+    })
+  }
 
-    db.prepare('UPDATE modules SET learning_status = ? WHERE id = ?').run('qa', id)
-  })
+  await run('UPDATE modules SET learning_status = $1 WHERE id = $2', ['qa', id])
 
-  tx()
-
-  logAction('Q&A generation complete', `moduleId=${id}, questionCount=${insertedQuestions.length}`)
+  await logAction('Q&A generation complete', `moduleId=${id}, questionCount=${insertedQuestions.length}`)
 
   return { data: { questions: insertedQuestions } }
 })

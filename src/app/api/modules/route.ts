@@ -1,36 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
+import { insert, query, queryOne } from '@/lib/db'
 import { logAction } from '@/lib/log'
 
-// POST /api/modules — 为指定书籍生成模块地图
+interface BookRow {
+  id: number
+  title: string
+  raw_text: string | null
+}
+
+interface ModuleRow {
+  id: number
+  book_id: number
+  title: string
+  summary: string
+  order_index: number
+  kp_count: number
+  cluster_count: number
+  page_start: number | null
+  page_end: number | null
+  learning_status: string
+  guide_json: string | null
+  created_at: string
+}
+
+interface GeneratedModule {
+  title: string
+  summary: string
+  kp_count: number
+  dependency: string
+}
+
+async function listModules(bookId: number): Promise<ModuleRow[]> {
+  return query<ModuleRow>(
+    'SELECT * FROM modules WHERE book_id = $1 ORDER BY order_index ASC',
+    [bookId]
+  )
+}
+
+// POST /api/modules - 为指定书籍生成模块地图
 export async function POST(req: NextRequest) {
   const { bookId } = await req.json() as { bookId?: number }
-  if (!bookId) {
+  const normalizedBookId = Number(bookId)
+  if (!Number.isInteger(normalizedBookId) || normalizedBookId <= 0) {
     return NextResponse.json({ error: '缺少 bookId' }, { status: 400 })
   }
 
-  const db = getDb()
-  const book = db
-    .prepare('SELECT id, title, raw_text FROM books WHERE id = ?')
-    .get(bookId) as { id: number; title: string; raw_text: string } | undefined
+  const book = await queryOne<BookRow>(
+    'SELECT id, title, raw_text FROM books WHERE id = $1',
+    [normalizedBookId]
+  )
 
   if (!book) {
     return NextResponse.json({ error: '教材不存在' }, { status: 404 })
   }
 
-  // 已有模块则不重复生成
-  const existing = db.prepare('SELECT id FROM modules WHERE book_id = ?').all(bookId)
+  if (!book.raw_text?.trim()) {
+    return NextResponse.json({ error: '教材原文为空，无法生成模块' }, { status: 409 })
+  }
+
+  const existing = await query<{ id: number }>('SELECT id FROM modules WHERE book_id = $1', [normalizedBookId])
   if (existing.length > 0) {
     return NextResponse.json({ error: '模块已存在，不可重复生成' }, { status: 409 })
   }
 
-  logAction('生成模块地图', `bookId=${bookId}，教材：${book.title}`)
+  await logAction('生成模块地图', `bookId=${normalizedBookId}，教材：${book.title}`)
 
-  // 文本过长时截断（100k 字符安全边界）
-  const bookText = book.raw_text.slice(0, 50000)
-
+  const bookText = book.raw_text.slice(0, 50_000)
   const prompt = `你是一位专业的学习设计师，请将以下教材文本拆分为学习模块。
 
 教材名称：${book.title}
@@ -63,47 +100,39 @@ ${bookText}
     abortSignal: AbortSignal.timeout(timeout),
   })
 
-  let parsed: { modules: Array<{ title: string; summary: string; kp_count: number; dependency: string }> }
+  let parsed: { modules: GeneratedModule[] }
   try {
-    // 提取 JSON（Claude 有时会在前后加 ```json 标记）
     const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('未找到 JSON')
-    parsed = JSON.parse(jsonMatch[0])
+    if (!jsonMatch) {
+      throw new Error('未找到 JSON')
+    }
+
+    parsed = JSON.parse(jsonMatch[0]) as { modules: GeneratedModule[] }
   } catch {
-    logAction('模块生成解析失败', `len=${text.length} tail=${text.slice(-100)}`, 'error')
+    await logAction('模块生成解析失败', `len=${text.length} tail=${text.slice(-100)}`, 'error')
     return NextResponse.json({ error: 'Claude 返回内容无法解析为 JSON' }, { status: 500 })
   }
 
-  // 写入数据库
-  const insertModule = db.prepare(
-    'INSERT INTO modules (book_id, title, summary, order_index, kp_count) VALUES (?, ?, ?, ?, ?)'
-  )
-  const insertMany = db.transaction(() => {
-    parsed.modules.forEach((mod, idx) => {
-      insertModule.run(bookId, mod.title, mod.summary, idx + 1, mod.kp_count)
-    })
-  })
-  insertMany()
+  for (const [index, module_] of parsed.modules.entries()) {
+    await insert(
+      'INSERT INTO modules (book_id, title, summary, order_index, kp_count) VALUES ($1, $2, $3, $4, $5)',
+      [normalizedBookId, module_.title, module_.summary, index + 1, module_.kp_count]
+    )
+  }
 
-  const modules = db
-    .prepare('SELECT * FROM modules WHERE book_id = ? ORDER BY order_index')
-    .all(bookId)
+  const modules = await listModules(normalizedBookId)
 
-  logAction('模块地图生成成功', `bookId=${bookId}，共 ${parsed.modules.length} 个模块`)
+  await logAction('模块地图生成成功', `bookId=${normalizedBookId}，共 ${parsed.modules.length} 个模块`)
   return NextResponse.json({ modules }, { status: 201 })
 }
 
-// GET /api/modules?bookId=X — 获取书籍的模块列表
+// GET /api/modules?bookId=X - 获取书籍的模块列表
 export async function GET(req: NextRequest) {
-  const bookId = req.nextUrl.searchParams.get('bookId')
-  if (!bookId) {
+  const bookId = Number(req.nextUrl.searchParams.get('bookId'))
+  if (!Number.isInteger(bookId) || bookId <= 0) {
     return NextResponse.json({ error: '缺少 bookId' }, { status: 400 })
   }
 
-  const db = getDb()
-  const modules = db
-    .prepare('SELECT * FROM modules WHERE book_id = ? ORDER BY order_index')
-    .all(Number(bookId))
-
+  const modules = await listModules(bookId)
   return NextResponse.json({ modules })
 }

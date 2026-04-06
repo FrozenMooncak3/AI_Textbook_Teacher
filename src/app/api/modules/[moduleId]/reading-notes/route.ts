@@ -1,6 +1,6 @@
-import { handleRoute } from '@/lib/handle-route'
-import { getDb } from '@/lib/db'
+import { insert, query, queryOne, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
+import { handleRoute } from '@/lib/handle-route'
 
 interface ReadingNote {
   id: number
@@ -19,10 +19,10 @@ export const GET = handleRoute(async (_req, context) => {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
 
-  const db = getDb()
-  const notes = db
-    .prepare('SELECT * FROM reading_notes WHERE module_id = ? ORDER BY created_at ASC')
-    .all(id) as ReadingNote[]
+  const notes = await query<ReadingNote>(
+    'SELECT * FROM reading_notes WHERE module_id = $1 ORDER BY created_at ASC',
+    [id]
+  )
 
   return { data: { notes } }
 })
@@ -44,24 +44,22 @@ export const POST = handleRoute(async (req, context) => {
     throw new UserError('Content is required', 'MISSING_CONTENT', 400)
   }
 
-  const db = getDb()
-  const module_ = db
-    .prepare('SELECT book_id FROM modules WHERE id = ?')
-    .get(id) as { book_id: number } | undefined
+  const module_ = await queryOne<{ book_id: number }>(
+    'SELECT book_id FROM modules WHERE id = $1',
+    [id]
+  )
 
   if (!module_) {
     throw new UserError('Module not found', 'NOT_FOUND', 404)
   }
 
   const normalizedPageNumber = Number.isInteger(page_number) ? page_number : null
+  const noteId = await insert(
+    'INSERT INTO reading_notes (book_id, module_id, page_number, content) VALUES ($1, $2, $3, $4)',
+    [module_.book_id, id, normalizedPageNumber, content.trim()]
+  )
 
-  const result = db
-    .prepare(
-      'INSERT INTO reading_notes (book_id, module_id, page_number, content) VALUES (?, ?, ?, ?)'
-    )
-    .run(module_.book_id, id, normalizedPageNumber, content.trim())
-
-  return { data: { id: result.lastInsertRowid }, status: 201 }
+  return { data: { id: noteId }, status: 201 }
 })
 
 export const DELETE = handleRoute(async (req, context) => {
@@ -79,12 +77,8 @@ export const DELETE = handleRoute(async (req, context) => {
     throw new UserError('Invalid note ID', 'INVALID_NOTE_ID', 400)
   }
 
-  const db = getDb()
-  const result = db
-    .prepare('DELETE FROM reading_notes WHERE id = ? AND module_id = ?')
-    .run(noteId, id)
-
-  if (result.changes === 0) {
+  const result = await run('DELETE FROM reading_notes WHERE id = $1 AND module_id = $2', [noteId, id])
+  if ((result.rowCount ?? 0) === 0) {
     throw new UserError('Note not found', 'NOT_FOUND', 404)
   }
 

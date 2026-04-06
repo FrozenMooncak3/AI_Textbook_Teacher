@@ -1,6 +1,6 @@
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
-import { getDb } from '@/lib/db'
+import { insert, queryOne } from '@/lib/db'
 import { UserError, SystemError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
@@ -8,7 +8,6 @@ import { getPrompt } from '@/lib/prompt-templates'
 import {
   normalizeReviewErrorType,
   REVIEW_SCORING_MAX_OUTPUT_TOKENS,
-  type ReviewMistakeErrorType,
   type ReviewQuestionType as QuestionType,
 } from '@/lib/review-question-utils'
 
@@ -175,21 +174,24 @@ export const POST = handleRoute(async (req, context) => {
   const { scheduleId } = await context!.params
   const normalizedScheduleId = parseScheduleId(scheduleId)
   const { questionId, userAnswer } = parseRequestBody(await req.json())
-  const db = getDb()
 
-  const question = db.prepare(`
-    SELECT *
-    FROM review_questions
-    WHERE id = ? AND schedule_id = ?
-  `).get(questionId, normalizedScheduleId) as ReviewQuestionRow | undefined
+  const question = await queryOne<ReviewQuestionRow>(
+    `
+      SELECT *
+      FROM review_questions
+      WHERE id = $1 AND schedule_id = $2
+    `,
+    [questionId, normalizedScheduleId]
+  )
 
   if (!question) {
     throw new UserError('Question not found or wrong schedule', 'NOT_FOUND', 404)
   }
 
-  const existingResponse = db.prepare(
-    'SELECT id FROM review_responses WHERE question_id = ?'
-  ).get(questionId) as { id: number } | undefined
+  const existingResponse = await queryOne<{ id: number }>(
+    'SELECT id FROM review_responses WHERE question_id = $1',
+    [questionId]
+  )
 
   if (existingResponse) {
     throw new UserError('Already answered', 'ALREADY_ANSWERED', 409)
@@ -197,13 +199,16 @@ export const POST = handleRoute(async (req, context) => {
 
   const kp = question.kp_id === null
     ? null
-    : db.prepare(`
-        SELECT description, detailed_content
-        FROM knowledge_points
-        WHERE id = ?
-      `).get(question.kp_id) as KnowledgePointRow | undefined
+    : await queryOne<KnowledgePointRow>(
+        `
+          SELECT description, detailed_content
+          FROM knowledge_points
+          WHERE id = $1
+        `,
+        [question.kp_id]
+      )
 
-  const prompt = getPrompt('reviewer', 'review_scoring', {
+  const prompt = await getPrompt('reviewer', 'review_scoring', {
     question_text: question.question_text,
     correct_answer: question.correct_answer,
     explanation: question.explanation ?? '',
@@ -222,63 +227,78 @@ export const POST = handleRoute(async (req, context) => {
   try {
     feedback = parseFeedbackResponse(text)
   } catch (error) {
-    logAction('Review scoring parse error', text.slice(0, 300), 'error')
+    await logAction('Review scoring parse error', text.slice(0, 300), 'error')
     throw new SystemError('Failed to parse review scoring response', error)
   }
 
-  db.prepare(`
-    INSERT INTO review_responses (question_id, user_answer, is_correct, score, ai_feedback, error_type)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(
-    questionId,
-    userAnswer,
-    feedback.is_correct ? 1 : 0,
-    feedback.score,
-    feedback.feedback,
-    feedback.error_type
+  await insert(
+    `
+      INSERT INTO review_responses (question_id, user_answer, is_correct, score, ai_feedback, error_type)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `,
+    [
+      questionId,
+      userAnswer,
+      feedback.is_correct ? 1 : 0,
+      feedback.score,
+      feedback.feedback,
+      feedback.error_type,
+    ]
   )
 
   if (!feedback.is_correct) {
-    const normalizedErrorType: ReviewMistakeErrorType = normalizeReviewErrorType(feedback.error_type)
-    const schedule = db.prepare(`
-      SELECT module_id
-      FROM review_schedule
-      WHERE id = ?
-    `).get(normalizedScheduleId) as ScheduleRow | undefined
+    const schedule = await queryOne<ScheduleRow>(
+      'SELECT module_id FROM review_schedule WHERE id = $1',
+      [normalizedScheduleId]
+    )
 
     if (!schedule) {
       throw new SystemError('Review schedule missing while recording mistake')
     }
 
     const knowledgePointLabel = kp ? kp.description : question.question_text.slice(0, 50)
-    db.prepare(`
-      INSERT INTO mistakes (
-        module_id, kp_id, knowledge_point, error_type, source, remediation, is_resolved,
-        question_text, user_answer, correct_answer
-      )
-      VALUES (?, ?, ?, ?, 'review', ?, 0, ?, ?, ?)
-    `).run(
-      schedule.module_id,
-      question.kp_id,
-      knowledgePointLabel,
-      normalizedErrorType,
-      feedback.remediation,
-      question.question_text,
-      userAnswer,
-      question.correct_answer
+    await insert(
+      `
+        INSERT INTO mistakes (
+          module_id,
+          kp_id,
+          knowledge_point,
+          error_type,
+          source,
+          remediation,
+          is_resolved,
+          question_text,
+          user_answer,
+          correct_answer
+        ) VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9)
+      `,
+      [
+        schedule.module_id,
+        question.kp_id,
+        knowledgePointLabel,
+        normalizeReviewErrorType(feedback.error_type),
+        'review',
+        feedback.remediation,
+        question.question_text,
+        userAnswer,
+        question.correct_answer,
+      ]
     )
   }
 
-  const nextQuestion = db.prepare(`
-    SELECT rq.id, rq.question_type, rq.question_text, rq.options, rq.order_index
-    FROM review_questions rq
-    LEFT JOIN review_responses rr ON rr.question_id = rq.id
-    WHERE rq.schedule_id = ? AND rr.id IS NULL
-    ORDER BY rq.order_index ASC
-    LIMIT 1
-  `).get(normalizedScheduleId) as NextQuestionRow | undefined
+  const nextQuestion = await queryOne<NextQuestionRow>(
+    `
+      SELECT rq.id, rq.question_type, rq.question_text, rq.options, rq.order_index
+      FROM review_questions rq
+      LEFT JOIN review_responses rr ON rr.question_id = rq.id
+      WHERE rq.schedule_id = $1 AND rr.id IS NULL
+      ORDER BY rq.order_index ASC
+      LIMIT 1
+    `,
+    [normalizedScheduleId]
+  )
 
-  logAction(
+  await logAction(
     'Review response recorded',
     `scheduleId=${normalizedScheduleId}, questionId=${questionId}, correct=${feedback.is_correct}`
   )

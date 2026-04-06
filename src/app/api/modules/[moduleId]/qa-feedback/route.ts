@@ -1,10 +1,10 @@
-import { handleRoute } from '@/lib/handle-route'
-import { getDb } from '@/lib/db'
-import { UserError, SystemError } from '@/lib/errors'
-import { getPrompt } from '@/lib/prompt-templates'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
+import { insert, query, queryOne } from '@/lib/db'
+import { UserError, SystemError } from '@/lib/errors'
+import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
+import { getPrompt } from '@/lib/prompt-templates'
 
 interface QAQuestion {
   id: number
@@ -23,7 +23,6 @@ interface FeedbackResult {
 }
 
 interface StoredFeedbackRow {
-  id: number
   question_id: number
   user_answer: string
   is_correct: number | null
@@ -46,15 +45,15 @@ export const GET = handleRoute(async (_req, context) => {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
 
-  const db = getDb()
-  const responseRows = db
-    .prepare(`
-      SELECT qr.id, qr.question_id, qr.user_answer, qr.is_correct, qr.ai_feedback, qr.score
+  const responseRows = await query<StoredFeedbackRow>(
+    `
+      SELECT qr.question_id, qr.user_answer, qr.is_correct, qr.ai_feedback, qr.score
       FROM qa_responses qr
       JOIN qa_questions qq ON qr.question_id = qq.id
-      WHERE qq.module_id = ?
-    `)
-    .all(moduleNumericId) as StoredFeedbackRow[]
+      WHERE qq.module_id = $1
+    `,
+    [moduleNumericId]
+  )
 
   const responses = responseRows.reduce<Record<number, StoredFeedback>>((accumulator, row) => {
     accumulator[row.question_id] = {
@@ -89,18 +88,19 @@ export const POST = handleRoute(async (req, context) => {
     throw new UserError('questionId and userAnswer are required', 'MISSING_FIELDS', 400)
   }
 
-  const db = getDb()
-  const question = db
-    .prepare('SELECT * FROM qa_questions WHERE id = ? AND module_id = ?')
-    .get(normalizedQuestionId, moduleNumericId) as QAQuestion | undefined
+  const question = await queryOne<QAQuestion>(
+    'SELECT * FROM qa_questions WHERE id = $1 AND module_id = $2',
+    [normalizedQuestionId, moduleNumericId]
+  )
 
   if (!question) {
     throw new UserError('Question not found', 'NOT_FOUND', 404)
   }
 
-  const existingResponse = db
-    .prepare('SELECT id FROM qa_responses WHERE question_id = ?')
-    .get(normalizedQuestionId) as { id: number } | undefined
+  const existingResponse = await queryOne<{ id: number }>(
+    'SELECT id FROM qa_responses WHERE question_id = $1',
+    [normalizedQuestionId]
+  )
 
   if (existingResponse) {
     throw new UserError('Question already answered', 'ALREADY_ANSWERED', 409)
@@ -108,16 +108,17 @@ export const POST = handleRoute(async (req, context) => {
 
   let kpDetail = '(No specific KP linked)'
   if (question.kp_id) {
-    const kp = db
-      .prepare('SELECT description, detailed_content FROM knowledge_points WHERE id = ?')
-      .get(question.kp_id) as { description: string; detailed_content: string } | undefined
+    const kp = await queryOne<{ description: string; detailed_content: string }>(
+      'SELECT description, detailed_content FROM knowledge_points WHERE id = $1',
+      [question.kp_id]
+    )
 
     if (kp) {
       kpDetail = `${kp.description}\n${kp.detailed_content}`
     }
   }
 
-  const prompt = getPrompt('coach', 'qa_feedback', {
+  const prompt = await getPrompt('coach', 'qa_feedback', {
     question: question.question_text,
     correct_answer: question.correct_answer || '(Open-ended question, no fixed answer)',
     user_answer: userAnswer.trim(),
@@ -140,28 +141,29 @@ export const POST = handleRoute(async (req, context) => {
 
     feedback = JSON.parse(jsonMatch[0]) as FeedbackResult
   } catch (err) {
-    logAction('QA feedback parse error', text.slice(0, 300), 'error')
+    await logAction('QA feedback parse error', text.slice(0, 300), 'error')
     throw new SystemError('Failed to parse feedback response', err)
   }
 
-  const result = db
-    .prepare(`
+  const responseId = await insert(
+    `
       INSERT INTO qa_responses (question_id, user_answer, is_correct, ai_feedback, score)
-      VALUES (?, ?, ?, ?, ?)
-    `)
-    .run(
+      VALUES ($1, $2, $3, $4, $5)
+    `,
+    [
       normalizedQuestionId,
       userAnswer.trim(),
       feedback.is_correct ? 1 : 0,
       feedback.feedback,
-      feedback.score
-    )
+      feedback.score,
+    ]
+  )
 
-  logAction('QA feedback given', `questionId=${normalizedQuestionId}, correct=${feedback.is_correct}`)
+  await logAction('QA feedback given', `questionId=${normalizedQuestionId}, correct=${feedback.is_correct}`)
 
   return {
     data: {
-      responseId: Number(result.lastInsertRowid),
+      responseId,
       is_correct: feedback.is_correct,
       score: feedback.score,
       feedback: feedback.feedback,

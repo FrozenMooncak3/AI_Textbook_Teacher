@@ -1,6 +1,6 @@
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
-import { getDb } from '@/lib/db'
+import { pool, query, queryOne, run } from '@/lib/db'
 import { UserError, SystemError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
@@ -152,7 +152,6 @@ function formatPastMistakes(mistakes: MistakeRow[]): string {
 }
 
 function parseGeneratedQuestions(text: string): GeneratedQuestion[] {
-  // Strip markdown code fences before extracting JSON
   let cleaned = text
   const codeBlock = text.match(/```(?:json)?\s*\n([\s\S]*?)\n\s*```/)
   if (codeBlock) {
@@ -168,9 +167,6 @@ function parseGeneratedQuestions(text: string): GeneratedQuestion[] {
   try {
     parsed = JSON.parse(jsonMatch[0])
   } catch {
-    // AI sometimes emits raw control characters inside JSON string values.
-    // Fix them only inside strings (between unescaped quotes), not in
-    // structural whitespace.
     const raw = jsonMatch[0]
     let fixed = ''
     let inString = false
@@ -183,13 +179,13 @@ function parseGeneratedQuestions(text: string): GeneratedQuestion[] {
         if (ch === '\n') fixed += '\\n'
         else if (ch === '\r') fixed += '\\r'
         else if (ch === '\t') fixed += '\\t'
-        // drop other control chars
       } else {
         fixed += ch
       }
     }
     parsed = JSON.parse(fixed)
   }
+
   if (parsed === null || typeof parsed !== 'object' || !('questions' in parsed)) {
     throw new Error('Missing questions field in model response')
   }
@@ -265,6 +261,7 @@ function validateQuestion(
 
       return option.trim()
     })
+
     if (options.some((option) => option.length === 0)) {
       throw new Error(`Question ${index + 1} contains empty options`)
     }
@@ -299,17 +296,21 @@ export const POST = handleRoute(async (req, context) => {
   }
 
   const body = parseRequestBody(await req.json().catch(() => undefined))
-  const db = getDb()
 
-  const module_ = db
-    .prepare('SELECT id, title, learning_status FROM modules WHERE id = ?')
-    .get(id) as ModuleRow | undefined
+  const module_ = await queryOne<ModuleRow>(
+    'SELECT id, title, learning_status FROM modules WHERE id = $1',
+    [id]
+  )
 
   if (!module_) {
     throw new UserError('Module not found', 'NOT_FOUND', 404)
   }
 
-  if (module_.learning_status !== 'notes_generated' && module_.learning_status !== 'testing' && module_.learning_status !== 'completed') {
+  if (
+    module_.learning_status !== 'notes_generated' &&
+    module_.learning_status !== 'testing' &&
+    module_.learning_status !== 'completed'
+  ) {
     throw new UserError(
       'Module must have completed notes generation before testing',
       'INVALID_STATUS',
@@ -318,27 +319,29 @@ export const POST = handleRoute(async (req, context) => {
   }
 
   if (body.retake) {
-    db.prepare('DELETE FROM test_papers WHERE module_id = ? AND total_score IS NULL').run(id)
+    await run('DELETE FROM test_papers WHERE module_id = $1 AND total_score IS NULL', [id])
   } else {
-    const existingPaper = db
-      .prepare(`
+    const existingPaper = await queryOne<TestPaperRow>(
+      `
         SELECT id, attempt_number
         FROM test_papers
-        WHERE module_id = ? AND total_score IS NULL
+        WHERE module_id = $1 AND total_score IS NULL
         ORDER BY id DESC
         LIMIT 1
-      `)
-      .get(id) as TestPaperRow | undefined
+      `,
+      [id]
+    )
 
     if (existingPaper) {
-      const existingQuestions = db
-        .prepare(`
+      const existingQuestions = await query<StoredQuestionRow>(
+        `
           SELECT id, kp_id, kp_ids, question_type, question_text, options, order_index
           FROM test_questions
-          WHERE paper_id = ?
+          WHERE paper_id = $1
           ORDER BY order_index ASC
-        `)
-        .all(existingPaper.id) as StoredQuestionRow[]
+        `,
+        [existingPaper.id]
+      )
 
       return {
         data: {
@@ -351,46 +354,49 @@ export const POST = handleRoute(async (req, context) => {
     }
   }
 
-  const kps = db
-    .prepare(`
+  const kps = await query<KnowledgePointRow>(
+    `
       SELECT id, kp_code, description, type, importance, detailed_content
       FROM knowledge_points
-      WHERE module_id = ?
+      WHERE module_id = $1
       ORDER BY id ASC
-    `)
-    .all(id) as KnowledgePointRow[]
+    `,
+    [id]
+  )
 
   if (kps.length === 0) {
     throw new UserError('No knowledge points found for this module', 'NO_KPS', 409)
   }
 
-  const mistakes = db
-    .prepare(`
+  const mistakes = await query<MistakeRow>(
+    `
       SELECT kp_id, knowledge_point, error_type, remediation
       FROM mistakes
-      WHERE module_id = ? AND is_resolved = 0
+      WHERE module_id = $1 AND is_resolved = 0
       ORDER BY created_at DESC
-    `)
-    .all(id) as MistakeRow[]
+    `,
+    [id]
+  )
 
-  const prompt = getPrompt('examiner', 'test_generation', {
+  const prompt = await getPrompt('examiner', 'test_generation', {
     kp_table: formatKnowledgePointTable(kps),
     past_mistakes: formatPastMistakes(mistakes),
   })
 
-  const lastPaper = db
-    .prepare(`
+  const lastPaper = await queryOne<{ attempt_number: number }>(
+    `
       SELECT attempt_number
       FROM test_papers
-      WHERE module_id = ?
+      WHERE module_id = $1
       ORDER BY attempt_number DESC
       LIMIT 1
-    `)
-    .get(id) as { attempt_number: number } | undefined
+    `,
+    [id]
+  )
 
   const attemptNumber = (lastPaper?.attempt_number ?? 0) + 1
 
-  logAction('Test generation started', `moduleId=${id}, attempt=${attemptNumber}, kpCount=${kps.length}`)
+  await logAction('Test generation started', `moduleId=${id}, attempt=${attemptNumber}, kpCount=${kps.length}`)
 
   const { text } = await generateText({
     model: getModel(),
@@ -403,84 +409,91 @@ export const POST = handleRoute(async (req, context) => {
   try {
     generatedQuestions = sortGeneratedQuestions(parseGeneratedQuestions(text))
   } catch (error) {
-    logAction('Test generation parse error', text.slice(0, 500), 'error')
+    await logAction('Test generation parse error', text.slice(0, 500), 'error')
     throw new SystemError('Failed to parse AI response for test generation', error)
   }
 
   const validKpIds = new Set(kps.map((kp) => kp.id))
-  const insertPaper = db.prepare('INSERT INTO test_papers (module_id, attempt_number) VALUES (?, ?)')
-  const insertQuestion = db.prepare(`
-    INSERT INTO test_questions (
-      paper_id,
-      kp_id,
-      kp_ids,
-      question_type,
-      question_text,
-      options,
-      correct_answer,
-      explanation,
-      order_index
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `)
-
   let paperId = 0
   const questionResponses: QuestionResponse[] = []
+  const client = await pool.connect()
 
   try {
-    const transaction = db.transaction(() => {
-      const paperResult = insertPaper.run(id, attemptNumber)
-      paperId = Number(paperResult.lastInsertRowid)
+    await client.query('BEGIN')
 
-      let orderIndex = 0
-      for (const [index, question] of generatedQuestions.entries()) {
-        let validated
-        try {
-          validated = validateQuestion(question, index, validKpIds)
-        } catch {
-          logAction('Skipping invalid question', `index=${index}, type=${question.type}`, 'warn')
-          continue
-        }
-        const kpIdsJson = JSON.stringify(validated.kpIds)
-        const optionsJson = validated.options === null ? null : JSON.stringify(validated.options)
-        const result = insertQuestion.run(
+    const paperResult = await client.query<{ id: number }>(
+      'INSERT INTO test_papers (module_id, attempt_number) VALUES ($1, $2) RETURNING id',
+      [id, attemptNumber]
+    )
+    paperId = paperResult.rows[0].id
+
+    let orderIndex = 0
+    for (const [index, question] of generatedQuestions.entries()) {
+      let validated
+      try {
+        validated = validateQuestion(question, index, validKpIds)
+      } catch {
+        await logAction('Skipping invalid question', `index=${index}, type=${question.type}`, 'warn')
+        continue
+      }
+
+      const result = await client.query<{ id: number }>(
+        `
+          INSERT INTO test_questions (
+            paper_id,
+            kp_id,
+            kp_ids,
+            question_type,
+            question_text,
+            options,
+            correct_answer,
+            explanation,
+            order_index
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          RETURNING id
+        `,
+        [
           paperId,
           validated.kpIds[0],
-          kpIdsJson,
+          JSON.stringify(validated.kpIds),
           validated.type,
           validated.text,
-          optionsJson,
+          validated.options === null ? null : JSON.stringify(validated.options),
           validated.correctAnswer,
           validated.explanation,
-          orderIndex + 1
-        )
+          orderIndex + 1,
+        ]
+      )
 
-        questionResponses.push({
-          id: Number(result.lastInsertRowid),
-          kp_id: validated.kpIds[0],
-          kp_ids: validated.kpIds,
-          question_type: validated.type,
-          question_text: validated.text,
-          options: validated.options,
-          order_index: orderIndex + 1,
-        })
-        orderIndex++
-      }
+      questionResponses.push({
+        id: result.rows[0].id,
+        kp_id: validated.kpIds[0],
+        kp_ids: validated.kpIds,
+        question_type: validated.type,
+        question_text: validated.text,
+        options: validated.options,
+        order_index: orderIndex + 1,
+      })
+      orderIndex += 1
+    }
 
-      if (questionResponses.length === 0) {
-        throw new Error('No valid questions generated')
-      }
+    if (questionResponses.length === 0) {
+      throw new Error('No valid questions generated')
+    }
 
-      if (module_.learning_status === 'notes_generated') {
-        db.prepare('UPDATE modules SET learning_status = ? WHERE id = ?').run('testing', id)
-      }
-    })
+    if (module_.learning_status === 'notes_generated') {
+      await client.query('UPDATE modules SET learning_status = $1 WHERE id = $2', ['testing', id])
+    }
 
-    transaction()
+    await client.query('COMMIT')
   } catch (error) {
+    await client.query('ROLLBACK')
     throw new SystemError('Failed to create generated test paper', error)
+  } finally {
+    client.release()
   }
 
-  logAction(
+  await logAction(
     'Test generation complete',
     `moduleId=${id}, paperId=${paperId}, questionCount=${questionResponses.length}`
   )

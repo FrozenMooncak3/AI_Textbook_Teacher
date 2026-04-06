@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
+import { query, queryOne, run } from '@/lib/db'
 import { recordMistakes } from '@/lib/mistakes'
 
 interface Question {
@@ -12,104 +12,118 @@ interface Question {
 }
 
 interface UserResponse {
-  id: number
   question_id: number
   response_text: string
+  score: number | null
+  is_correct: number | null
+  ai_feedback: string | null
 }
 
-// POST /api/modules/[moduleId]/evaluate — AI 逐题评分
+// POST /api/modules/[moduleId]/evaluate - AI 逐题评分
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ moduleId: string }> }
 ) {
   const { moduleId } = await params
-  const db = getDb()
+  const moduleNumericId = Number(moduleId)
 
-  const questions = db
-    .prepare('SELECT id, prompt, answer_key, explanation FROM questions WHERE module_id = ? AND type = ? ORDER BY id')
-    .all(Number(moduleId), 'qa') as Question[]
+  const questions = await query<Question>(
+    `
+      SELECT
+        id,
+        question_text AS prompt,
+        COALESCE(correct_answer, '') AS answer_key,
+        COALESCE(scaffolding, '') AS explanation
+      FROM qa_questions
+      WHERE module_id = $1
+      ORDER BY order_index ASC
+    `,
+    [moduleNumericId]
+  )
 
   if (questions.length === 0) {
     return NextResponse.json({ error: '没有题目' }, { status: 404 })
   }
 
-  const responses = db
-    .prepare(`
-      SELECT ur.id, ur.question_id, ur.response_text
-      FROM user_responses ur
-      JOIN questions q ON ur.question_id = q.id
-      WHERE q.module_id = ? AND q.type = 'qa'
-    `)
-    .all(Number(moduleId)) as UserResponse[]
+  const responses = await query<UserResponse>(
+    `
+      SELECT
+        qr.question_id,
+        qr.user_answer AS response_text,
+        qr.score,
+        qr.is_correct,
+        qr.ai_feedback
+      FROM qa_responses qr
+      JOIN qa_questions qq ON qr.question_id = qq.id
+      WHERE qq.module_id = $1
+      ORDER BY qq.order_index ASC
+    `,
+    [moduleNumericId]
+  )
 
   if (responses.length < questions.length) {
     return NextResponse.json({ error: '还有题目未作答' }, { status: 400 })
   }
 
-  // 已有评分则直接返回
   const firstResponse = responses[0]
-  const alreadyScored = db
-    .prepare('SELECT score FROM user_responses WHERE id = ?')
-    .get(firstResponse.id) as { score: number | null } | undefined
+  if (firstResponse?.score !== null && firstResponse?.score !== undefined) {
+    const scored = questions.map((question) => {
+      const response = responses.find((item) => item.question_id === question.id)
+      return {
+        id: question.id,
+        prompt: question.prompt,
+        answer_key: question.answer_key,
+        explanation: question.explanation,
+        response_text: response?.response_text ?? '',
+        score: response?.score ?? 0,
+        error_type: null,
+        feedback: response?.ai_feedback ?? '',
+      }
+    })
 
-  if (alreadyScored?.score !== null && alreadyScored?.score !== undefined) {
-    const scored = db
-      .prepare(`
-        SELECT q.id, q.prompt, q.answer_key, q.explanation,
-               ur.response_text, ur.score, ur.error_type
-        FROM questions q
-        JOIN user_responses ur ON ur.question_id = q.id
-        WHERE q.module_id = ? AND q.type = 'qa'
-        ORDER BY q.id
-      `)
-      .all(Number(moduleId))
     return NextResponse.json({ evaluations: scored })
   }
 
-  const qaList = questions.map((q) => {
-    const resp = responses.find((r) => r.question_id === q.id)
+  const qaList = questions.map((question) => {
+    const response = responses.find((item) => item.question_id === question.id)
     return {
-      questionId: q.id,
-      prompt: q.prompt,
-      answer_key: q.answer_key,
-      explanation: q.explanation,
-      user_answer: resp?.response_text ?? '',
+      questionId: question.id,
+      prompt: question.prompt,
+      answer_key: question.answer_key,
+      explanation: question.explanation,
+      user_answer: response?.response_text ?? '',
     }
   })
 
   const prompt = `你是一位专业的教学评估老师，请逐题评分并给出诊断。
-
 以下是学生的 Q&A 作答记录，请对每道题进行评估。
-
-${qaList.map((q, i) => `
-【第${i + 1}题】
-题目：${q.prompt}
-参考答案：${q.answer_key}
-解析：${q.explanation}
-学生回答：${q.user_answer}
+${qaList.map((question, index) => `
+【第${index + 1}题】题目：${question.prompt}
+参考答案：${question.answer_key}
+解析：${question.explanation}
+学生回答：${question.user_answer}
 `).join('\n---\n')}
 
 评分标准：
 - 满分 10 分
 - 8-10 分：理解正确，表述清晰
-- 5-7 分：大体正确，有遗漏或表述不准确
+- 5-7 分：大体正确，有遗漏或表述不够准确
 - 0-4 分：理解有误或未能回答要点
 
 错误类型（仅在扣分时填写，四选一）：
-- 知识盲点：完全不知道这个概念
-- 程序性失误：懂原理但步骤执行错
-- 粗心错误：偶发，非系统性错误
-- 概念混淆：把 A 误认为 B
+- blind_spot
+- procedural
+- careless
+- confusion
 
-请以严格 JSON 格式返回，不要有任何额外文字。
-重要：所有字段值内部不得出现英文双引号 "，如需强调词语请用【】或『』代替：
+请以严格 JSON 格式返回：
 {
   "evaluations": [
     {
-      "question_id": ${qaList[0]?.questionId},
+      "question_id": ${qaList[0]?.questionId ?? 0},
       "score": 8,
       "error_type": null,
-      "feedback": "评价：指出答对了什么，错在哪里，应该如何补充"
+      "feedback": "评价"
     }
   ]
 }`
@@ -131,54 +145,69 @@ ${qaList.map((q, i) => `
   }
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('未找到 JSON')
-    parsed = JSON.parse(jsonMatch[0])
+    if (!jsonMatch) {
+      throw new Error('未找到 JSON')
+    }
+
+    parsed = JSON.parse(jsonMatch[0]) as {
+      evaluations: Array<{
+        question_id: number
+        score: number
+        error_type: string | null
+        feedback: string
+      }>
+    }
   } catch {
     return NextResponse.json({ error: 'Claude 返回内容无法解析' }, { status: 500 })
   }
 
-  // 写回评分
-  const updateResponse = db.prepare(
-    'UPDATE user_responses SET score = ?, error_type = ? WHERE question_id = ?'
-  )
-  const updateAll = db.transaction(() => {
-    parsed.evaluations.forEach((ev) => {
-      updateResponse.run(ev.score, ev.error_type ?? null, ev.question_id)
-    })
+  for (const evaluation of parsed.evaluations) {
+    await run(
+      `
+        UPDATE qa_responses
+        SET score = $1, is_correct = $2, ai_feedback = $3
+        WHERE question_id = $4
+      `,
+      [
+        evaluation.score,
+        evaluation.score >= 6 ? 1 : 0,
+        evaluation.feedback,
+        evaluation.question_id,
+      ]
+    )
+  }
+
+  const result = questions.map((question) => {
+    const response = responses.find((item) => item.question_id === question.id)
+    const evaluation = parsed.evaluations.find((item) => item.question_id === question.id)
+    return {
+      id: question.id,
+      prompt: question.prompt,
+      answer_key: question.answer_key,
+      explanation: question.explanation,
+      response_text: response?.response_text ?? '',
+      score: evaluation?.score ?? response?.score ?? 0,
+      error_type: evaluation?.error_type ?? null,
+      feedback: evaluation?.feedback ?? '',
+    }
   })
-  updateAll()
 
-  // 返回完整评估结果（含题目 + 用户回答 + 评分 + feedback）
-  const result = db
-    .prepare(`
-      SELECT q.id, q.prompt, q.answer_key, q.explanation,
-             ur.response_text, ur.score, ur.error_type
-      FROM questions q
-      JOIN user_responses ur ON ur.question_id = q.id
-      WHERE q.module_id = ? AND q.type = 'qa'
-      ORDER BY q.id
-    `)
-    .all(Number(moduleId))
-
-  // 记录 Q&A 低分错题（满分10分，得分 < 6 算错题）
   const qaMistakes = parsed.evaluations
-    .filter((ev) => ev.score < 6)
-    .map((ev) => {
-      const q = questions.find((qu) => qu.id === ev.question_id)!
+    .filter((evaluation) => evaluation.score < 6 && evaluation.error_type)
+    .map((evaluation) => {
+      const question = questions.find((item) => item.id === evaluation.question_id)
       return {
-        moduleId: Number(moduleId),
-        questionId: ev.question_id,
-        errorType: ev.error_type,
-        explanation: q.explanation,
+        moduleId: moduleNumericId,
+        questionId: evaluation.question_id,
+        kpId: undefined,
+        knowledgePoint: question?.prompt.slice(0, 200) ?? '',
+        errorType: evaluation.error_type,
+        source: 'qa' as const,
+        remediation: question?.explanation,
       }
     })
-  recordMistakes(db, qaMistakes)
 
-  // feedback 来自 Claude 返回，合并进结果
-  const withFeedback = (result as Array<Record<string, unknown>>).map((row) => {
-    const ev = parsed.evaluations.find((e) => e.question_id === row['id'])
-    return { ...row, feedback: ev?.feedback ?? '' }
-  })
+  await recordMistakes(qaMistakes)
 
-  return NextResponse.json({ evaluations: withFeedback })
+  return NextResponse.json({ evaluations: result })
 }

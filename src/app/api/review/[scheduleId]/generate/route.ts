@@ -1,6 +1,6 @@
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
-import { getDb } from '@/lib/db'
+import { pool, query, queryOne } from '@/lib/db'
 import { UserError, SystemError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
@@ -232,13 +232,15 @@ function parseGeneratedQuestions(text: string): GeneratedReviewQuestion[] {
 export const POST = handleRoute(async (_req, context) => {
   const { scheduleId } = await context!.params
   const id = parseScheduleId(scheduleId)
-  const db = getDb()
 
-  const schedule = db.prepare(`
-    SELECT id, module_id, review_round, status
-    FROM review_schedule
-    WHERE id = ?
-  `).get(id) as ScheduleRow | undefined
+  const schedule = await queryOne<ScheduleRow>(
+    `
+      SELECT id, module_id, review_round, status
+      FROM review_schedule
+      WHERE id = $1
+    `,
+    [id]
+  )
 
   if (!schedule) {
     throw new UserError('Review schedule not found', 'NOT_FOUND', 404)
@@ -248,36 +250,43 @@ export const POST = handleRoute(async (_req, context) => {
     throw new UserError('Review schedule is not pending', 'INVALID_STATUS', 409)
   }
 
-  const existingQuestions = db.prepare(
-    'SELECT id FROM review_questions WHERE schedule_id = ?'
-  ).all(id) as { id: number }[]
+  const existingQuestions = await query<{ id: number }>(
+    'SELECT id FROM review_questions WHERE schedule_id = $1',
+    [id]
+  )
 
   if (existingQuestions.length > 0) {
-    const nextQuestion = db.prepare(`
-      SELECT rq.id, rq.question_type, rq.question_text, rq.options, rq.order_index
-      FROM review_questions rq
-      LEFT JOIN review_responses rr ON rr.question_id = rq.id
-      WHERE rq.schedule_id = ? AND rr.id IS NULL
-      ORDER BY rq.order_index ASC
-      LIMIT 1
-    `).get(id) as ResumeQuestionRow | undefined
+    const nextQuestion = await queryOne<ResumeQuestionRow>(
+      `
+        SELECT rq.id, rq.question_type, rq.question_text, rq.options, rq.order_index
+        FROM review_questions rq
+        LEFT JOIN review_responses rr ON rr.question_id = rq.id
+        WHERE rq.schedule_id = $1 AND rr.id IS NULL
+        ORDER BY rq.order_index ASC
+        LIMIT 1
+      `,
+      [id]
+    )
 
-    const totalQuestions = db.prepare(
-      'SELECT COUNT(*) as c FROM review_questions WHERE schedule_id = ?'
-    ).get(id) as CountRow
-
-    const answeredQuestions = db.prepare(`
-      SELECT COUNT(*) as c
-      FROM review_responses rr
-      JOIN review_questions rq ON rr.question_id = rq.id
-      WHERE rq.schedule_id = ?
-    `).get(id) as CountRow
+    const totalQuestions = await queryOne<CountRow>(
+      'SELECT COUNT(*)::int AS c FROM review_questions WHERE schedule_id = $1',
+      [id]
+    )
+    const answeredQuestions = await queryOne<CountRow>(
+      `
+        SELECT COUNT(*)::int AS c
+        FROM review_responses rr
+        JOIN review_questions rq ON rr.question_id = rq.id
+        WHERE rq.schedule_id = $1
+      `,
+      [id]
+    )
 
     if (!nextQuestion) {
       return {
         data: {
-          total_questions: totalQuestions.c,
-          current_index: totalQuestions.c,
+          total_questions: totalQuestions?.c ?? 0,
+          current_index: totalQuestions?.c ?? 0,
           all_answered: true,
         },
       }
@@ -285,19 +294,22 @@ export const POST = handleRoute(async (_req, context) => {
 
     return {
       data: {
-        total_questions: totalQuestions.c,
-        current_index: answeredQuestions.c + 1,
+        total_questions: totalQuestions?.c ?? 0,
+        current_index: (answeredQuestions?.c ?? 0) + 1,
         question: formatQuestion(nextQuestion),
       },
     }
   }
 
-  const clusters = db.prepare(`
-    SELECT id, name, current_p_value
-    FROM clusters
-    WHERE module_id = ?
-    ORDER BY id ASC
-  `).all(schedule.module_id) as ClusterRow[]
+  const clusters = await query<ClusterRow>(
+    `
+      SELECT id, name, current_p_value
+      FROM clusters
+      WHERE module_id = $1
+      ORDER BY id ASC
+    `,
+    [schedule.module_id]
+  )
 
   if (clusters.length === 0) {
     throw new UserError('No clusters found for this module', 'NO_CLUSTERS', 409)
@@ -306,12 +318,15 @@ export const POST = handleRoute(async (_req, context) => {
   const allocations = buildAllocations(clusters)
   const clusterIds = new Set(clusters.map((cluster) => cluster.id))
 
-  const kps = db.prepare(`
-    SELECT id, kp_code, description, type, detailed_content, cluster_id
-    FROM knowledge_points
-    WHERE module_id = ?
-    ORDER BY cluster_id ASC, id ASC
-  `).all(schedule.module_id) as KnowledgePointRow[]
+  const kps = await query<KnowledgePointRow>(
+    `
+      SELECT id, kp_code, description, type, detailed_content, cluster_id
+      FROM knowledge_points
+      WHERE module_id = $1
+      ORDER BY cluster_id ASC, id ASC
+    `,
+    [schedule.module_id]
+  )
 
   if (kps.length === 0) {
     throw new UserError('No knowledge points found for this module', 'NO_KPS', 409)
@@ -319,24 +334,30 @@ export const POST = handleRoute(async (_req, context) => {
 
   const knowledgePoints = new Map(kps.map((kp) => [kp.id, kp]))
 
-  const mistakes = db.prepare(`
-    SELECT kp_id, knowledge_point, error_type, remediation
-    FROM mistakes
-    WHERE module_id = ? AND is_resolved = 0
-    ORDER BY created_at DESC
-  `).all(schedule.module_id) as MistakeRow[]
+  const mistakes = await query<MistakeRow>(
+    `
+      SELECT kp_id, knowledge_point, error_type, remediation
+      FROM mistakes
+      WHERE module_id = $1 AND is_resolved = 0
+      ORDER BY created_at DESC
+    `,
+    [schedule.module_id]
+  )
 
   const previousQuestions = schedule.review_round > 1
-    ? db.prepare(`
-        SELECT rq.question_text
-        FROM review_questions rq
-        JOIN review_schedule rs ON rq.schedule_id = rs.id
-        WHERE rs.module_id = ? AND rs.review_round = ?
-        ORDER BY rq.order_index ASC
-      `).all(schedule.module_id, schedule.review_round - 1) as PreviousQuestionRow[]
+    ? await query<PreviousQuestionRow>(
+        `
+          SELECT rq.question_text
+          FROM review_questions rq
+          JOIN review_schedule rs ON rq.schedule_id = rs.id
+          WHERE rs.module_id = $1 AND rs.review_round = $2
+          ORDER BY rq.order_index ASC
+        `,
+        [schedule.module_id, schedule.review_round - 1]
+      )
     : []
 
-  const prompt = getPrompt('reviewer', 'review_generation', {
+  const prompt = await getPrompt('reviewer', 'review_generation', {
     max_questions: String(MAX_QUESTIONS),
     clusters_with_p: formatClustersWithP(clusters, allocations),
     kp_table: formatKnowledgePointTable(kps),
@@ -344,7 +365,7 @@ export const POST = handleRoute(async (_req, context) => {
     recent_questions: formatRecentQuestions(previousQuestions),
   })
 
-  logAction(
+  await logAction(
     'Review generation started',
     `scheduleId=${id}, moduleId=${schedule.module_id}, clusterCount=${clusters.length}`
   )
@@ -360,41 +381,43 @@ export const POST = handleRoute(async (_req, context) => {
   try {
     generatedQuestions = parseGeneratedQuestions(text)
   } catch (error) {
-    logAction('Review generation parse error', text.slice(0, 500), 'error')
+    await logAction('Review generation parse error', text.slice(0, 500), 'error')
     throw error
   }
 
-  const insertQuestion = db.prepare(`
-    INSERT INTO review_questions (
-      schedule_id,
-      module_id,
-      cluster_id,
-      kp_id,
-      question_type,
-      question_text,
-      options,
-      correct_answer,
-      explanation,
-      order_index
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `)
-
   const storedQuestions: ResumeQuestionRow[] = []
+  const client = await pool.connect()
 
   try {
-    const transaction = db.transaction(() => {
-      let orderIndex = 0
+    await client.query('BEGIN')
 
-      for (const [index, question] of generatedQuestions.entries()) {
-        let validated
-        try {
-          validated = validateGeneratedReviewQuestion(question, index, clusterIds, knowledgePoints)
-        } catch (error) {
-          logAction('Skipping invalid review question', String(error), 'warn')
-          continue
-        }
+    let orderIndex = 0
+    for (const [index, question] of generatedQuestions.entries()) {
+      let validated
+      try {
+        validated = validateGeneratedReviewQuestion(question, index, clusterIds, knowledgePoints)
+      } catch (error) {
+        await logAction('Skipping invalid review question', String(error), 'warn')
+        continue
+      }
 
-        const result = insertQuestion.run(
+      const result = await client.query<{ id: number }>(
+        `
+          INSERT INTO review_questions (
+            schedule_id,
+            module_id,
+            cluster_id,
+            kp_id,
+            question_type,
+            question_text,
+            options,
+            correct_answer,
+            explanation,
+            order_index
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          RETURNING id
+        `,
+        [
           id,
           schedule.module_id,
           validated.clusterId,
@@ -404,33 +427,33 @@ export const POST = handleRoute(async (_req, context) => {
           validated.options === null ? null : JSON.stringify(validated.options),
           validated.correctAnswer,
           validated.explanation,
-          orderIndex + 1
-        )
+          orderIndex + 1,
+        ]
+      )
 
-        storedQuestions.push({
-          id: Number(result.lastInsertRowid),
-          question_type: validated.type,
-          question_text: validated.text,
-          options: validated.options === null ? null : JSON.stringify(validated.options),
-          order_index: orderIndex + 1,
-        })
+      storedQuestions.push({
+        id: result.rows[0].id,
+        question_type: validated.type,
+        question_text: validated.text,
+        options: validated.options === null ? null : JSON.stringify(validated.options),
+        order_index: orderIndex + 1,
+      })
+      orderIndex += 1
+    }
 
-        orderIndex += 1
-      }
+    if (storedQuestions.length === 0) {
+      throw new Error('No valid review questions generated')
+    }
 
-      if (storedQuestions.length === 0) {
-        throw new Error('No valid review questions generated')
-      }
-    })
-
-    transaction()
+    await client.query('COMMIT')
   } catch (error) {
+    await client.query('ROLLBACK')
     throw new SystemError('Failed to create review questions', error)
+  } finally {
+    client.release()
   }
 
-  const firstQuestion = storedQuestions[0]
-
-  logAction(
+  await logAction(
     'Review generation complete',
     `scheduleId=${id}, moduleId=${schedule.module_id}, questionCount=${storedQuestions.length}`
   )
@@ -439,7 +462,7 @@ export const POST = handleRoute(async (_req, context) => {
     data: {
       total_questions: storedQuestions.length,
       current_index: 1,
-      question: formatQuestion(firstQuestion),
+      question: formatQuestion(storedQuestions[0]),
     },
   }
 })

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { generateText } from 'ai'
-import { queryOne, run, insert } from '@/lib/db'
+import { insert, queryOne, run } from '@/lib/db'
 import { getModel, timeout } from '@/lib/ai'
 import { UserError, SystemError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
@@ -54,11 +54,9 @@ function parseBody(body: unknown): {
 }
 
 const SCREENSHOT_ASK_SYSTEM_PROMPT = `你是一位专业的教材学习导师。
-
-基于教材内容和截图回答学生问题，不要只复述原文，要解释清楚原因、概念和解题思路。
-如果教材片段不足以回答问题，可以补充必要的背景知识，但要优先围绕教材语境。
-使用与教材相同的语言回答，并使用清晰的 Markdown 排版。
-简单问题简洁作答，复杂问题分步骤讲解。`
+基于教材截图和识别文本回答学生问题，不要只重复原文，要解释原因、概念和解题思路。
+如果截图内容不足以完整回答问题，可以补充必要背景，但优先围绕教材语境。
+使用与教材一致的语言回答，并用清晰的 Markdown 排版。`
 
 export const POST = handleRoute(async (req: NextRequest, context) => {
   const { bookId: rawBookId } = await context!.params

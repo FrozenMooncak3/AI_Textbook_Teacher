@@ -1,10 +1,10 @@
-import { handleRoute } from '@/lib/handle-route'
-import { getDb } from '@/lib/db'
-import { UserError } from '@/lib/errors'
-import { getPrompt } from '@/lib/prompt-templates'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
+import { insert, query, queryOne, run } from '@/lib/db'
+import { UserError } from '@/lib/errors'
+import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
+import { getPrompt } from '@/lib/prompt-templates'
 
 interface ModuleRow {
   id: number
@@ -41,19 +41,26 @@ export const POST = handleRoute(async (_req, context) => {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
 
-  const db = getDb()
-  const module_ = db
-    .prepare('SELECT id, title, learning_status FROM modules WHERE id = ?')
-    .get(id) as ModuleRow | undefined
+  const module_ = await queryOne<ModuleRow>(
+    'SELECT id, title, learning_status FROM modules WHERE id = $1',
+    [id]
+  )
 
   if (!module_) {
     throw new UserError('Module not found', 'NOT_FOUND', 404)
   }
 
   if (module_.learning_status === 'notes_generated' || module_.learning_status === 'completed') {
-    const existing = db
-      .prepare('SELECT * FROM module_notes WHERE module_id = ? ORDER BY created_at DESC LIMIT 1')
-      .get(id) as { id: number; content: string; generated_from: string | null } | undefined
+    const existing = await queryOne<{ id: number; content: string; generated_from: string | null }>(
+      `
+        SELECT id, content, generated_from
+        FROM module_notes
+        WHERE module_id = $1
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [id]
+    )
 
     if (existing) {
       return { data: { noteId: existing.id, content: existing.content, cached: true } }
@@ -64,54 +71,66 @@ export const POST = handleRoute(async (_req, context) => {
     throw new UserError('Q&A must be completed before generating notes', 'INVALID_STATUS', 409)
   }
 
-  const totalQ = db
-    .prepare('SELECT COUNT(*) as count FROM qa_questions WHERE module_id = ?')
-    .get(id) as { count: number }
-  const answeredQ = db
-    .prepare(`
-      SELECT COUNT(*) as count FROM qa_responses r
+  const totalQ = await queryOne<{ count: number }>(
+    'SELECT COUNT(*)::int AS count FROM qa_questions WHERE module_id = $1',
+    [id]
+  )
+  const answeredQ = await queryOne<{ count: number }>(
+    `
+      SELECT COUNT(*)::int AS count
+      FROM qa_responses r
       JOIN qa_questions q ON q.id = r.question_id
-      WHERE q.module_id = ?
-    `)
-    .get(id) as { count: number }
+      WHERE q.module_id = $1
+    `,
+    [id]
+  )
 
-  if (answeredQ.count < totalQ.count) {
+  if ((answeredQ?.count ?? 0) < (totalQ?.count ?? 0)) {
     throw new UserError(
-      `Not all questions answered (${answeredQ.count}/${totalQ.count})`,
+      `Not all questions answered (${answeredQ?.count ?? 0}/${totalQ?.count ?? 0})`,
       'INCOMPLETE_QA',
       409
     )
   }
 
-  const kps = db
-    .prepare(`
+  const kps = await query<KnowledgePointRow>(
+    `
       SELECT kp_code, description, type, detailed_content
       FROM knowledge_points
-      WHERE module_id = ?
-    `)
-    .all(id) as KnowledgePointRow[]
+      WHERE module_id = $1
+    `,
+    [id]
+  )
 
   const kpTable = kps
     .map((kp) => `- [${kp.kp_code}] (${kp.type}) ${kp.description}: ${kp.detailed_content}`)
     .join('\n')
 
-  const readingNotes = db
-    .prepare('SELECT content FROM reading_notes WHERE module_id = ? ORDER BY created_at ASC')
-    .all(id) as ReadingNoteRow[]
+  const readingNotes = await query<ReadingNoteRow>(
+    'SELECT content FROM reading_notes WHERE module_id = $1 ORDER BY created_at ASC',
+    [id]
+  )
   const userNotes = readingNotes.length > 0
     ? readingNotes.map((note) => note.content).join('\n---\n')
     : '(No reading notes)'
 
-  const qaResults = db
-    .prepare(`
-      SELECT q.question_text, q.question_type, q.correct_answer,
-             r.user_answer, r.is_correct, r.score, r.ai_feedback
+  const qaResults = await query<QAResultRow>(
+    `
+      SELECT
+        q.question_text,
+        q.question_type,
+        q.correct_answer,
+        r.user_answer,
+        r.is_correct,
+        r.score,
+        r.ai_feedback
       FROM qa_questions q
       JOIN qa_responses r ON r.question_id = q.id
-      WHERE q.module_id = ?
+      WHERE q.module_id = $1
       ORDER BY q.order_index ASC
-    `)
-    .all(id) as QAResultRow[]
+    `,
+    [id]
+  )
 
   const qaResultsText = qaResults
     .map(
@@ -120,9 +139,9 @@ export const POST = handleRoute(async (_req, context) => {
     )
     .join('\n---\n')
 
-  logAction('Note generation started', `moduleId=${id}`)
+  await logAction('Note generation started', `moduleId=${id}`)
 
-  const prompt = getPrompt('coach', 'note_generation', {
+  const prompt = await getPrompt('coach', 'note_generation', {
     kp_table: kpTable,
     user_notes: userNotes,
     qa_results: qaResultsText,
@@ -136,20 +155,20 @@ export const POST = handleRoute(async (_req, context) => {
   })
 
   const noteContent = text.trim()
-  const kpCodes = kps.map((kp) => kp.kp_code)
   const generatedFrom = JSON.stringify({
-    kp_codes: kpCodes,
+    kp_codes: kps.map((kp) => kp.kp_code),
     reading_notes: readingNotes.length,
     qa_count: qaResults.length,
   })
 
-  const result = db
-    .prepare('INSERT INTO module_notes (module_id, content, generated_from) VALUES (?, ?, ?)')
-    .run(id, noteContent, generatedFrom)
+  const noteId = await insert(
+    'INSERT INTO module_notes (module_id, content, generated_from) VALUES ($1, $2, $3)',
+    [id, noteContent, generatedFrom]
+  )
 
-  db.prepare('UPDATE modules SET learning_status = ? WHERE id = ?').run('notes_generated', id)
+  await run('UPDATE modules SET learning_status = $1 WHERE id = $2', ['notes_generated', id])
 
-  logAction('Note generation complete', `moduleId=${id}`)
+  await logAction('Note generation complete', `moduleId=${id}`)
 
-  return { data: { noteId: Number(result.lastInsertRowid), content: noteContent } }
+  return { data: { noteId, content: noteContent } }
 })
