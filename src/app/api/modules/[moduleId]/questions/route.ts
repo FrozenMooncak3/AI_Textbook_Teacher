@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
+import { requireModuleOwner } from '@/lib/auth'
 import { insert, query, queryOne } from '@/lib/db'
+import { UserError } from '@/lib/errors'
 import { logAction } from '@/lib/log'
 
 interface Module {
@@ -43,6 +45,16 @@ export async function GET(
 ) {
   const { moduleId } = await params
   const moduleNumericId = Number(moduleId)
+
+  try {
+    await requireModuleOwner(_req, moduleNumericId)
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
+  }
 
   const module_ = await queryOne<Module>(
     'SELECT id, book_id, title, summary, kp_count FROM modules WHERE id = $1',

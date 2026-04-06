@@ -1,3 +1,4 @@
+import { requireReviewScheduleOwner } from '@/lib/auth'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
 import { insert, queryOne } from '@/lib/db'
@@ -173,6 +174,7 @@ function formatNextQuestion(question: NextQuestionRow | undefined): {
 export const POST = handleRoute(async (req, context) => {
   const { scheduleId } = await context!.params
   const normalizedScheduleId = parseScheduleId(scheduleId)
+  await requireReviewScheduleOwner(req, normalizedScheduleId)
   const { questionId, userAnswer } = parseRequestBody(await req.json())
 
   const question = await queryOne<ReviewQuestionRow>(

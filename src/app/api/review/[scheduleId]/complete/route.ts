@@ -1,3 +1,4 @@
+import { requireReviewScheduleOwner } from '@/lib/auth'
 import { pool, query, queryOne } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
@@ -39,9 +40,11 @@ function parseScheduleId(value: string): number {
   return id
 }
 
-export const POST = handleRoute(async (_req, context) => {
+export const POST = handleRoute(async (req, context) => {
   const { scheduleId } = await context!.params
   const id = parseScheduleId(scheduleId)
+
+  await requireReviewScheduleOwner(req, id)
 
   const schedule = await queryOne<ScheduleRow>(
     `

@@ -1,3 +1,4 @@
+import { requireModuleOwner } from '@/lib/auth'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
 import { pool, query, queryOne } from '@/lib/db'
@@ -59,6 +60,8 @@ export const POST = handleRoute(async (req, context) => {
   if (!Number.isInteger(id) || id <= 0) {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
+
+  await requireModuleOwner(req, id)
 
   const body = await req.json() as { paper_id: number; answers: UserAnswer[] }
   if (!body.paper_id || !Array.isArray(body.answers) || body.answers.length === 0) {

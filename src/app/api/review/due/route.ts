@@ -1,3 +1,4 @@
+import { requireUser } from '@/lib/auth'
 import { query } from '@/lib/db'
 import { handleRoute } from '@/lib/handle-route'
 
@@ -11,7 +12,8 @@ interface DueReview {
   due_date: string
 }
 
-export const GET = handleRoute(async () => {
+export const GET = handleRoute(async (req) => {
+  const user = await requireUser(req)
   const reviews = await query<DueReview>(
     `
       SELECT
@@ -25,9 +27,12 @@ export const GET = handleRoute(async () => {
       FROM review_schedule rs
       JOIN modules m ON rs.module_id = m.id
       JOIN books b ON m.book_id = b.id
-      WHERE rs.status = 'pending' AND rs.due_date <= CURRENT_DATE::text
+      WHERE rs.status = 'pending'
+        AND rs.due_date <= CURRENT_DATE::text
+        AND b.user_id = $1
       ORDER BY rs.due_date ASC
-    `
+    `,
+    [user.id]
   )
 
   return { data: { reviews } }

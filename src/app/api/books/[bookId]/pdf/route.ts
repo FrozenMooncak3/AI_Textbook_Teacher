@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireBookOwner } from '@/lib/auth'
 import { queryOne } from '@/lib/db'
+import { UserError } from '@/lib/errors'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 
@@ -11,6 +13,16 @@ export async function GET(
   const id = Number(bookId)
   if (isNaN(id)) {
     return NextResponse.json({ error: 'Invalid book ID', code: 'INVALID_ID' }, { status: 400 })
+  }
+
+  try {
+    await requireBookOwner(_req, id)
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
   }
 
   const book = await queryOne<{ id: number }>('SELECT id FROM books WHERE id = $1', [id])

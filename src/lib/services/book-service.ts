@@ -9,10 +9,16 @@ interface Book {
 }
 
 export const bookService = {
-  async list(): Promise<Book[]> {
+  async list(userId: number): Promise<Book[]> {
     try {
       return await query<Book>(
-        'SELECT id, title, parse_status, created_at FROM books ORDER BY created_at DESC'
+        `
+          SELECT id, title, parse_status, created_at
+          FROM books
+          WHERE user_id = $1
+          ORDER BY created_at DESC
+        `,
+        [userId]
       )
     } catch (err) {
       throw new SystemError('查询教材列表失败', err)

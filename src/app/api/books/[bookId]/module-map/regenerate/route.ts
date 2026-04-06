@@ -1,3 +1,4 @@
+import { requireBookOwner } from '@/lib/auth'
 import { handleRoute } from '@/lib/handle-route'
 import { queryOne, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
@@ -11,13 +12,15 @@ interface BookRow {
   kp_extraction_status: string
 }
 
-export const POST = handleRoute(async (_req, context) => {
+export const POST = handleRoute(async (req, context) => {
   const { bookId } = await context!.params
   const id = Number(bookId)
 
   if (Number.isNaN(id)) {
     throw new UserError('Invalid book ID', 'INVALID_ID', 400)
   }
+
+  await requireBookOwner(req, id)
 
   const book = await queryOne<BookRow>(
     'SELECT id, title, parse_status, kp_extraction_status FROM books WHERE id = $1',

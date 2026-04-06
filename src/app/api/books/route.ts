@@ -2,19 +2,48 @@ import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import { spawn } from 'child_process'
 import { join } from 'path'
-import { insert, run } from '@/lib/db'
+import { requireUser } from '@/lib/auth'
+import { insert, query, run } from '@/lib/db'
+import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
-import { bookService } from '@/lib/services/book-service'
 
 const UPLOADS_DIR = join(process.cwd(), 'data', 'uploads')
 
-export const GET = handleRoute(async () => {
-  const books = await bookService.list()
+interface BookListRow {
+  id: number
+  title: string
+  parse_status: string
+  created_at: string
+}
+
+export const GET = handleRoute(async (req) => {
+  const user = await requireUser(req)
+  const books = await query<BookListRow>(
+    `
+      SELECT id, title, parse_status, created_at
+      FROM books
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `,
+    [user.id]
+  )
   return { data: books }
 })
 
 export async function POST(req: NextRequest) {
+  let userId = 0
+  try {
+    const user = await requireUser(req)
+    userId = user.id
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
+  }
+
   const formData = await req.formData()
   const file = formData.get('file') as File | null
   const title = formData.get('title') as string | null
@@ -44,8 +73,8 @@ export async function POST(req: NextRequest) {
     }
 
     const bookId = await insert(
-      'INSERT INTO books (title, raw_text, parse_status) VALUES ($1, $2, $3)',
-      [title.trim(), rawText, 'done']
+      'INSERT INTO books (user_id, title, raw_text, parse_status) VALUES ($1, $2, $3, $4)',
+      [userId, title.trim(), rawText, 'done']
     )
 
     await logAction('book_upload_completed_txt', `bookId=${bookId}, chars=${rawText.length}`)
@@ -53,8 +82,8 @@ export async function POST(req: NextRequest) {
   }
 
   const bookId = await insert(
-    'INSERT INTO books (title, raw_text, parse_status) VALUES ($1, $2, $3)',
-    [title.trim(), '', 'processing']
+    'INSERT INTO books (user_id, title, raw_text, parse_status) VALUES ($1, $2, $3, $4)',
+    [userId, title.trim(), '', 'processing']
   )
 
   await mkdir(UPLOADS_DIR, { recursive: true })

@@ -1,3 +1,4 @@
+import { requireModuleOwner } from '@/lib/auth'
 import { query } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
@@ -16,12 +17,14 @@ interface MistakeRow {
   kp_description: string | null
 }
 
-export const GET = handleRoute(async (_req, context) => {
+export const GET = handleRoute(async (req, context) => {
   const { moduleId } = await context!.params
   const id = Number(moduleId)
   if (!Number.isInteger(id) || id <= 0) {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
+
+  await requireModuleOwner(req, id)
 
   const mistakes = await query<MistakeRow>(
     `

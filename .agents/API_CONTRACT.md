@@ -335,6 +335,92 @@ Response `200`:
 }
 ```
 
+### `POST /api/auth/register`
+
+Request body:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "inviteCode": "BETA-001",
+  "displayName": "Optional Name"
+}
+```
+
+Response `201`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "display_name": "Optional Name"
+  }
+}
+```
+
+Note: sets an HttpOnly session cookie on success.
+
+### `POST /api/auth/login`
+
+Request body:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "display_name": "Optional Name"
+  }
+}
+```
+
+Note: sets an HttpOnly session cookie on success.
+
+### `POST /api/auth/logout`
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "success": true
+  }
+}
+```
+
+Note: clears the session cookie.
+
+### `GET /api/auth/me`
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "display_name": "Optional Name"
+  }
+}
+```
+
+Response `401` when the session cookie is missing or expired.
+
 ### `POST /api/review/[scheduleId]/generate`
 
 Request body:
@@ -562,3 +648,4 @@ Response `200`:
 - [2026-03-31] [Claude] Added M3 test generate, test submit, test status, and mistakes API contracts.
 - [2026-04-02] [Codex] Added M4 review API contracts for due, generate, respond, and complete endpoints.
 - [2026-04-03] [Codex] Added book-level dashboard and mistakes API contracts, and updated review respond response fields.
+- [2026-04-06] [Codex] Added auth register/login/logout/me API contracts for M6 invite-code authentication.

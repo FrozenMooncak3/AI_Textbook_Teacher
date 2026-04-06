@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
+import { requireUser } from '@/lib/auth'
 import { insert, query, queryOne } from '@/lib/db'
+import { UserError } from '@/lib/errors'
 import { logAction } from '@/lib/log'
 
 interface BookRow {
@@ -32,66 +34,100 @@ interface GeneratedModule {
   dependency: string
 }
 
-async function listModules(bookId: number): Promise<ModuleRow[]> {
+function parseJsonObject(text: string): { modules: GeneratedModule[] } {
+  const jsonMatch = text.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) {
+    throw new Error('No JSON found in model response')
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]) as { modules?: GeneratedModule[] }
+  if (!Array.isArray(parsed.modules)) {
+    throw new Error('Missing modules array')
+  }
+
+  return { modules: parsed.modules }
+}
+
+async function listModules(bookId: number, userId: number): Promise<ModuleRow[]> {
   return query<ModuleRow>(
-    'SELECT * FROM modules WHERE book_id = $1 ORDER BY order_index ASC',
-    [bookId]
+    `
+      SELECT m.*
+      FROM modules m
+      JOIN books b ON b.id = m.book_id
+      WHERE m.book_id = $1 AND b.user_id = $2
+      ORDER BY m.order_index ASC
+    `,
+    [bookId, userId]
   )
 }
 
-// POST /api/modules - 为指定书籍生成模块地图
+async function getAuthenticatedUserId(req: NextRequest): Promise<number | NextResponse> {
+  try {
+    const user = await requireUser(req)
+    return user.id
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
+  }
+}
+
 export async function POST(req: NextRequest) {
+  const userId = await getAuthenticatedUserId(req)
+  if (userId instanceof NextResponse) {
+    return userId
+  }
+
   const { bookId } = await req.json() as { bookId?: number }
   const normalizedBookId = Number(bookId)
   if (!Number.isInteger(normalizedBookId) || normalizedBookId <= 0) {
-    return NextResponse.json({ error: '缺少 bookId' }, { status: 400 })
+    return NextResponse.json({ error: 'Missing bookId' }, { status: 400 })
   }
 
   const book = await queryOne<BookRow>(
-    'SELECT id, title, raw_text FROM books WHERE id = $1',
-    [normalizedBookId]
+    'SELECT id, title, raw_text FROM books WHERE id = $1 AND user_id = $2',
+    [normalizedBookId, userId]
   )
 
   if (!book) {
-    return NextResponse.json({ error: '教材不存在' }, { status: 404 })
+    return NextResponse.json({ error: 'Book not found' }, { status: 404 })
   }
 
   if (!book.raw_text?.trim()) {
-    return NextResponse.json({ error: '教材原文为空，无法生成模块' }, { status: 409 })
+    return NextResponse.json({ error: 'Book text is empty and cannot be mapped' }, { status: 409 })
   }
 
   const existing = await query<{ id: number }>('SELECT id FROM modules WHERE book_id = $1', [normalizedBookId])
   if (existing.length > 0) {
-    return NextResponse.json({ error: '模块已存在，不可重复生成' }, { status: 409 })
+    return NextResponse.json({ error: 'Modules already exist for this book' }, { status: 409 })
   }
 
-  await logAction('生成模块地图', `bookId=${normalizedBookId}，教材：${book.title}`)
+  await logAction('module_map_generation_started', `bookId=${normalizedBookId}, title=${book.title}`)
 
-  const bookText = book.raw_text.slice(0, 50_000)
-  const prompt = `你是一位专业的学习设计师，请将以下教材文本拆分为学习模块。
-
-教材名称：${book.title}
-
-教材内容：
-${bookText}
-
-请按照以下规则拆分：
-1. 以书中的小节（二级/三级标题）为自然分割点，不按页数机械切割
-2. 每个模块必须覆盖至少 4 种知识点类型（位置类/计算类/C1判断类/C2评估类/定义类）
-3. 模块间知识点数量差距不超过 2:1
-4. 明确标注跨模块依赖关系
-
-请以严格的 JSON 格式返回，不要有任何额外文字，格式如下：
+  const prompt = `You are designing a study module map from textbook content.
+Return strict JSON only:
 {
   "modules": [
     {
-      "title": "模块名称（对应小节名）",
-      "summary": "核心技能描述：学完后能做什么具体判断（1-2句话）",
+      "title": "Module title",
+      "summary": "1-2 sentence learning summary",
       "kp_count": 8,
-      "dependency": "无 / 依赖模块X的某知识点"
+      "dependency": "none or prerequisite note"
     }
   ]
-}`
+}
+
+Rules:
+1. Split by natural sections, not arbitrary page counts.
+2. Balance module difficulty and knowledge-point counts.
+3. Preserve prerequisite ordering where needed.
+4. Use the same language as the textbook.
+
+Textbook title: ${book.title}
+Textbook content:
+${book.raw_text.slice(0, 50_000)}`
 
   const { text } = await generateText({
     model: getModel(),
@@ -102,15 +138,10 @@ ${bookText}
 
   let parsed: { modules: GeneratedModule[] }
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      throw new Error('未找到 JSON')
-    }
-
-    parsed = JSON.parse(jsonMatch[0]) as { modules: GeneratedModule[] }
+    parsed = parseJsonObject(text)
   } catch {
-    await logAction('模块生成解析失败', `len=${text.length} tail=${text.slice(-100)}`, 'error')
-    return NextResponse.json({ error: 'Claude 返回内容无法解析为 JSON' }, { status: 500 })
+    await logAction('module_map_generation_parse_failed', text.slice(-500), 'error')
+    return NextResponse.json({ error: 'AI response could not be parsed as JSON' }, { status: 500 })
   }
 
   for (const [index, module_] of parsed.modules.entries()) {
@@ -120,19 +151,23 @@ ${bookText}
     )
   }
 
-  const modules = await listModules(normalizedBookId)
+  const modules = await listModules(normalizedBookId, userId)
+  await logAction('module_map_generated', `bookId=${normalizedBookId}, count=${modules.length}`)
 
-  await logAction('模块地图生成成功', `bookId=${normalizedBookId}，共 ${parsed.modules.length} 个模块`)
   return NextResponse.json({ modules }, { status: 201 })
 }
 
-// GET /api/modules?bookId=X - 获取书籍的模块列表
 export async function GET(req: NextRequest) {
-  const bookId = Number(req.nextUrl.searchParams.get('bookId'))
-  if (!Number.isInteger(bookId) || bookId <= 0) {
-    return NextResponse.json({ error: '缺少 bookId' }, { status: 400 })
+  const userId = await getAuthenticatedUserId(req)
+  if (userId instanceof NextResponse) {
+    return userId
   }
 
-  const modules = await listModules(bookId)
+  const bookId = Number(req.nextUrl.searchParams.get('bookId'))
+  if (!Number.isInteger(bookId) || bookId <= 0) {
+    return NextResponse.json({ error: 'Missing bookId' }, { status: 400 })
+  }
+
+  const modules = await listModules(bookId, userId)
   return NextResponse.json({ modules })
 }

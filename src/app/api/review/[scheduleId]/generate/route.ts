@@ -1,3 +1,4 @@
+import { requireReviewScheduleOwner } from '@/lib/auth'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
 import { pool, query, queryOne } from '@/lib/db'
@@ -229,9 +230,11 @@ function parseGeneratedQuestions(text: string): GeneratedReviewQuestion[] {
   return questions as GeneratedReviewQuestion[]
 }
 
-export const POST = handleRoute(async (_req, context) => {
+export const POST = handleRoute(async (req, context) => {
   const { scheduleId } = await context!.params
   const id = parseScheduleId(scheduleId)
+
+  await requireReviewScheduleOwner(req, id)
 
   const schedule = await queryOne<ScheduleRow>(
     `

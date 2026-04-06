@@ -1,3 +1,4 @@
+import { requireBookOwner } from '@/lib/auth'
 import { query, queryOne } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
@@ -95,6 +96,8 @@ function createEmptyMistakeSummary(): Record<MistakeErrorType, number> {
 export const GET = handleRoute(async (req, context) => {
   const { bookId } = await context!.params
   const id = parseBookId(bookId)
+
+  await requireBookOwner(req, id)
 
   const book = await queryOne<BookRow>('SELECT id FROM books WHERE id = $1', [id])
   if (!book) {

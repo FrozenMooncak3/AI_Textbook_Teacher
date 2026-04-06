@@ -5,9 +5,22 @@ import { logAction } from './log'
 interface RouteResult {
   data: unknown
   status?: number
+  cookies?: RouteCookie[]
+  headers?: Record<string, string>
 }
 
 type RouteContext = { params: Promise<Record<string, string>> }
+
+interface RouteCookie {
+  name: string
+  value: string
+  httpOnly?: boolean
+  sameSite?: 'lax' | 'strict' | 'none'
+  secure?: boolean
+  path?: string
+  expires?: Date
+  maxAge?: number
+}
 
 type RouteHandler = (
   req: NextRequest,
@@ -18,10 +31,19 @@ export function handleRoute(fn: RouteHandler) {
   return async (req: NextRequest, context?: RouteContext): Promise<NextResponse> => {
     try {
       const result = await fn(req, context)
-      return NextResponse.json(
+      const response = NextResponse.json(
         { success: true, data: result.data },
-        { status: result.status ?? 200 }
+        {
+          status: result.status ?? 200,
+          headers: result.headers,
+        }
       )
+
+      for (const cookie of result.cookies ?? []) {
+        response.cookies.set(cookie)
+      }
+
+      return response
     } catch (err) {
       if (err instanceof SyntaxError) {
         return NextResponse.json(

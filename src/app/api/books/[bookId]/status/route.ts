@@ -1,3 +1,4 @@
+import { requireBookOwner } from '@/lib/auth'
 import { handleRoute } from '@/lib/handle-route'
 import { queryOne } from '@/lib/db'
 import { UserError } from '@/lib/errors'
@@ -19,13 +20,15 @@ interface BookStatusResponse {
   ocr_total_pages: number
 }
 
-export const GET = handleRoute(async (_req, context) => {
+export const GET = handleRoute(async (req, context) => {
   const { bookId } = await context!.params
   const id = Number(bookId)
 
   if (!Number.isInteger(id) || id <= 0) {
     throw new UserError('Invalid book ID', 'INVALID_ID', 400)
   }
+
+  await requireBookOwner(req, id)
 
   const book = await queryOne<BookStatusRow>(
     'SELECT parse_status, kp_extraction_status, ocr_current_page, ocr_total_pages FROM books WHERE id = $1',

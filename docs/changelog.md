@@ -1282,3 +1282,51 @@
 - `src/lib/services/kp-extraction-service.ts`
 - `src/lib/db.ts`
 - `scripts/test-m6-task4.mjs`
+
+## 2026-04-06 | M6 MVP Launch: Auth backend, invite codes, middleware, and user isolation
+
+**Completed**: Added the M6 Task 5 auth backend with invite-code registration, session cookies, `/api/auth` endpoints, request middleware, and user ownership enforcement across books, modules, and review APIs. This also fixed the repeated `screenshot-ask` fallback mojibake in the prompt payload and added the invite-code seed script plus the Task 5 regression script.
+**Modified files**:
+- `package.json`
+- `package-lock.json`
+- `src/lib/auth.ts`
+- `src/lib/handle-route.ts`
+- `src/app/api/auth/register/route.ts`
+- `src/app/api/auth/login/route.ts`
+- `src/app/api/auth/logout/route.ts`
+- `src/app/api/auth/me/route.ts`
+- `src/middleware.ts`
+- `scripts/seed-invite-codes.ts`
+- `src/app/api/books/route.ts`
+- `src/app/api/books/[bookId]/status/route.ts`
+- `src/app/api/books/[bookId]/extract/route.ts`
+- `src/app/api/books/[bookId]/pdf/route.ts`
+- `src/app/api/books/[bookId]/toc/route.ts`
+- `src/app/api/books/[bookId]/highlights/route.ts`
+- `src/app/api/books/[bookId]/notes/route.ts`
+- `src/app/api/books/[bookId]/module-map/route.ts`
+- `src/app/api/books/[bookId]/module-map/confirm/route.ts`
+- `src/app/api/books/[bookId]/module-map/regenerate/route.ts`
+- `src/app/api/books/[bookId]/screenshot-ocr/route.ts`
+- `src/app/api/books/[bookId]/screenshot-ask/route.ts`
+- `src/app/api/books/[bookId]/dashboard/route.ts`
+- `src/app/api/books/[bookId]/mistakes/route.ts`
+- `src/app/api/modules/route.ts`
+- `src/app/api/modules/[moduleId]/status/route.ts`
+- `src/app/api/modules/[moduleId]/guide/route.ts`
+- `src/app/api/modules/[moduleId]/generate-questions/route.ts`
+- `src/app/api/modules/[moduleId]/questions/route.ts`
+- `src/app/api/modules/[moduleId]/qa-feedback/route.ts`
+- `src/app/api/modules/[moduleId]/evaluate/route.ts`
+- `src/app/api/modules/[moduleId]/generate-notes/route.ts`
+- `src/app/api/modules/[moduleId]/reading-notes/route.ts`
+- `src/app/api/modules/[moduleId]/test/route.ts`
+- `src/app/api/modules/[moduleId]/test/generate/route.ts`
+- `src/app/api/modules/[moduleId]/test/submit/route.ts`
+- `src/app/api/modules/[moduleId]/mistakes/route.ts`
+- `src/app/api/review/due/route.ts`
+- `src/app/api/review/[scheduleId]/generate/route.ts`
+- `src/app/api/review/[scheduleId]/respond/route.ts`
+- `src/app/api/review/[scheduleId]/complete/route.ts`
+- `scripts/test-m6-task5.mjs`
+- `.agents/API_CONTRACT.md`

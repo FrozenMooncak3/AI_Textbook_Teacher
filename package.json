@@ -14,6 +14,7 @@
     "@anthropic-ai/sdk": "^0.78.0",
     "@tailwindcss/typography": "^0.5.19",
     "ai": "^6.0.141",
+    "bcryptjs": "^3.0.3",
     "https-proxy-agent": "^8.0.0",
     "next": "16.1.6",
     "pdf-parse": "^2.4.5",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.5",
     "@types/pg": "^8.20.0",

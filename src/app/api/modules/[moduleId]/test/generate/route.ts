@@ -1,3 +1,4 @@
+import { requireModuleOwner } from '@/lib/auth'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
 import { pool, query, queryOne, run } from '@/lib/db'
@@ -294,6 +295,8 @@ export const POST = handleRoute(async (req, context) => {
   if (!Number.isInteger(id) || id <= 0) {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
+
+  await requireModuleOwner(req, id)
 
   const body = parseRequestBody(await req.json().catch(() => undefined))
 

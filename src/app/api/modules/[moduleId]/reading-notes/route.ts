@@ -1,3 +1,4 @@
+import { requireModuleOwner } from '@/lib/auth'
 import { insert, query, queryOne, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
@@ -11,13 +12,15 @@ interface ReadingNote {
   created_at: string
 }
 
-export const GET = handleRoute(async (_req, context) => {
+export const GET = handleRoute(async (req, context) => {
   const { moduleId } = await context!.params
   const id = Number(moduleId)
 
   if (!Number.isInteger(id) || id <= 0) {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
+
+  await requireModuleOwner(req, id)
 
   const notes = await query<ReadingNote>(
     'SELECT * FROM reading_notes WHERE module_id = $1 ORDER BY created_at ASC',
@@ -34,6 +37,8 @@ export const POST = handleRoute(async (req, context) => {
   if (!Number.isInteger(id) || id <= 0) {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
+
+  await requireModuleOwner(req, id)
 
   const { content, page_number } = await req.json() as {
     content?: string
@@ -69,6 +74,8 @@ export const DELETE = handleRoute(async (req, context) => {
   if (!Number.isInteger(id) || id <= 0) {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
+
+  await requireModuleOwner(req, id)
 
   const url = new URL(req.url)
   const noteId = Number(url.searchParams.get('noteId'))

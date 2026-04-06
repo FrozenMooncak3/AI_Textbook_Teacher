@@ -1,3 +1,4 @@
+import { requireModuleOwner } from '@/lib/auth'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
 import { insert, query, queryOne } from '@/lib/db'
@@ -37,13 +38,15 @@ interface StoredFeedback {
   user_answer: string
 }
 
-export const GET = handleRoute(async (_req, context) => {
+export const GET = handleRoute(async (req, context) => {
   const { moduleId } = await context!.params
   const moduleNumericId = Number(moduleId)
 
   if (!Number.isInteger(moduleNumericId) || moduleNumericId <= 0) {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
+
+  await requireModuleOwner(req, moduleNumericId)
 
   const responseRows = await query<StoredFeedbackRow>(
     `
@@ -76,6 +79,8 @@ export const POST = handleRoute(async (req, context) => {
   if (!Number.isInteger(moduleNumericId) || moduleNumericId <= 0) {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
+
+  await requireModuleOwner(req, moduleNumericId)
 
   const { questionId, userAnswer } = await req.json() as {
     questionId?: number

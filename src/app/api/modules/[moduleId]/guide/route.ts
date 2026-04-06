@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
+import { requireModuleOwner } from '@/lib/auth'
 import { query, queryOne, run } from '@/lib/db'
+import { UserError } from '@/lib/errors'
 import { logAction } from '@/lib/log'
 import { getPrompt } from '@/lib/prompt-templates'
 
@@ -29,9 +31,21 @@ export async function GET(
   { params }: { params: Promise<{ moduleId: string }> }
 ) {
   const { moduleId } = await params
+  const moduleNumericId = Number(moduleId)
+
+  try {
+    await requireModuleOwner(_req, moduleNumericId)
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
+  }
+
   const module_ = await queryOne<{ guide_json: string | null }>(
     'SELECT guide_json FROM modules WHERE id = $1',
-    [Number(moduleId)]
+    [moduleNumericId]
   )
 
   if (!module_) {
@@ -56,6 +70,16 @@ export async function POST(
 ) {
   const { moduleId } = await params
   const moduleNumericId = Number(moduleId)
+
+  try {
+    await requireModuleOwner(_req, moduleNumericId)
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
+  }
 
   const module_ = await queryOne<Module>(
     'SELECT id, book_id, title, summary, kp_count, guide_json FROM modules WHERE id = $1',

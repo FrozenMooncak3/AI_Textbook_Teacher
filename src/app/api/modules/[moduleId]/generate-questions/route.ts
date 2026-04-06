@@ -1,3 +1,4 @@
+import { requireModuleOwner } from '@/lib/auth'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
 import { insert, query, queryOne, run } from '@/lib/db'
@@ -63,6 +64,8 @@ export const POST = handleRoute(async (_req, context) => {
   if (!Number.isInteger(id) || id <= 0) {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
+
+  await requireModuleOwner(_req, id)
 
   const module_ = await queryOne<ModuleRow>(
     'SELECT id, book_id, title, learning_status FROM modules WHERE id = $1',

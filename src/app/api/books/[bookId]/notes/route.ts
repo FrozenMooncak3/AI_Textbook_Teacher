@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireBookOwner } from '@/lib/auth'
 import { query, run, insert } from '@/lib/db'
+import { UserError } from '@/lib/errors'
 
 interface NoteRow {
   id: number
@@ -21,6 +23,16 @@ export async function GET(req: NextRequest, { params }: Params) {
   const id = parseBookId((await params).bookId)
   if (!id) {
     return NextResponse.json({ error: 'Invalid book ID', code: 'INVALID_ID' }, { status: 400 })
+  }
+
+  try {
+    await requireBookOwner(req, id)
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
   }
 
   const url = new URL(req.url)
@@ -56,6 +68,16 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Invalid book ID', code: 'INVALID_ID' }, { status: 400 })
   }
 
+  try {
+    await requireBookOwner(req, id)
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
+  }
+
   let body: { pageNumber?: number; content?: string }
   try {
     body = await req.json()
@@ -80,6 +102,16 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const bookId = parseBookId((await params).bookId)
   if (!bookId) {
     return NextResponse.json({ error: 'Invalid book ID', code: 'INVALID_ID' }, { status: 400 })
+  }
+
+  try {
+    await requireBookOwner(req, bookId)
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
   }
 
   let body: { id?: number; content?: string }
@@ -110,6 +142,16 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   const bookId = parseBookId((await params).bookId)
   if (!bookId) {
     return NextResponse.json({ error: 'Invalid book ID', code: 'INVALID_ID' }, { status: 400 })
+  }
+
+  try {
+    await requireBookOwner(req, bookId)
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
   }
 
   const url = new URL(req.url)

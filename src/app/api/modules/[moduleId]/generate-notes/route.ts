@@ -1,3 +1,4 @@
+import { requireModuleOwner } from '@/lib/auth'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
 import { insert, query, queryOne, run } from '@/lib/db'
@@ -33,13 +34,15 @@ interface QAResultRow {
   ai_feedback: string | null
 }
 
-export const POST = handleRoute(async (_req, context) => {
+export const POST = handleRoute(async (req, context) => {
   const { moduleId } = await context!.params
   const id = Number(moduleId)
 
   if (!Number.isInteger(id) || id <= 0) {
     throw new UserError('Invalid module ID', 'INVALID_ID', 400)
   }
+
+  await requireModuleOwner(req, id)
 
   const module_ = await queryOne<ModuleRow>(
     'SELECT id, title, learning_status FROM modules WHERE id = $1',

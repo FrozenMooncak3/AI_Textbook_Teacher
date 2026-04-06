@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { generateText } from 'ai'
+import { requireBookOwner } from '@/lib/auth'
 import { insert, queryOne, run } from '@/lib/db'
 import { getModel, timeout } from '@/lib/ai'
 import { UserError, SystemError } from '@/lib/errors'
@@ -53,14 +54,13 @@ function parseBody(body: unknown): {
   return { image, text, question, pageNumber }
 }
 
-const SCREENSHOT_ASK_SYSTEM_PROMPT = `你是一位专业的教材学习导师。
-基于教材截图和识别文本回答学生问题，不要只重复原文，要解释原因、概念和解题思路。
-如果截图内容不足以完整回答问题，可以补充必要背景，但优先围绕教材语境。
-使用与教材一致的语言回答，并用清晰的 Markdown 排版。`
+const SCREENSHOT_ASK_SYSTEM_PROMPT = `浣犳槸涓€浣嶄笓涓氱殑鏁欐潗瀛︿範瀵煎笀銆?鍩轰簬鏁欐潗鎴浘鍜岃瘑鍒枃鏈洖绛斿鐢熼棶棰橈紝涓嶈鍙噸澶嶅師鏂囷紝瑕佽В閲婂師鍥犮€佹蹇靛拰瑙ｉ鎬濊矾銆?濡傛灉鎴浘鍐呭涓嶈冻浠ュ畬鏁村洖绛旈棶棰橈紝鍙互琛ュ厖蹇呰鑳屾櫙锛屼絾浼樺厛鍥寸粫鏁欐潗璇銆?浣跨敤涓庢暀鏉愪竴鑷寸殑璇█鍥炵瓟锛屽苟鐢ㄦ竻鏅扮殑 Markdown 鎺掔増銆俙`
 
 export const POST = handleRoute(async (req: NextRequest, context) => {
   const { bookId: rawBookId } = await context!.params
   const bookId = parseBookId(rawBookId)
+
+  await requireBookOwner(req, bookId)
 
   const book = await queryOne<BookRow>('SELECT id FROM books WHERE id = $1', [bookId])
   if (!book) {

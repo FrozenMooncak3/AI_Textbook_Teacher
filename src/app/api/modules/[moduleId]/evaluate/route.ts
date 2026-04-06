@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { getModel, timeout } from '@/lib/ai'
+import { requireModuleOwner } from '@/lib/auth'
 import { query, queryOne, run } from '@/lib/db'
 import { recordMistakes } from '@/lib/mistakes'
+import { UserError } from '@/lib/errors'
 
 interface Question {
   id: number
@@ -26,6 +28,16 @@ export async function POST(
 ) {
   const { moduleId } = await params
   const moduleNumericId = Number(moduleId)
+
+  try {
+    await requireModuleOwner(_req, moduleNumericId)
+  } catch (error) {
+    if (error instanceof UserError) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode })
+    }
+
+    throw error
+  }
 
   const questions = await query<Question>(
     `

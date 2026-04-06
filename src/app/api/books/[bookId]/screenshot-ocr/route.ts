@@ -1,3 +1,4 @@
+import { requireBookOwner } from '@/lib/auth'
 import { randomUUID } from 'crypto'
 import { unlink, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
@@ -41,6 +42,8 @@ function parseBody(body: unknown): { imageBase64: string } {
 export const POST = handleRoute(async (req, context) => {
   const { bookId: rawBookId } = await context!.params
   const bookId = parseBookId(rawBookId)
+
+  await requireBookOwner(req, bookId)
 
   const book = await queryOne<BookRow>('SELECT id FROM books WHERE id = $1', [bookId])
   if (!book) {
