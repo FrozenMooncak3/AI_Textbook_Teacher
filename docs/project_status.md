@@ -11,9 +11,9 @@
 
 **当前里程碑**：M5.5 稳固 & App Shell — **已完成**（2026-04-04）
 
-**最新完成**：M5.5 milestone-audit 通过 + task-execution skill 已实现（统一执行引擎）。
+**最新完成**：M6 MVP Launch spec + plan 完成（11 个任务），待执行。
 
-**下一步**：重新分配停车场想法 → 大更项目文件 → 下一个里程碑规划
+**下一步**：执行 M6 plan（T1 PostgreSQL 迁移开始）→ 完成后更新 CLAUDE.md
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -33,6 +33,7 @@
 | M4 | 复习系统：复习调度（3/7/15/30/60 天）→ 聚类出题 → P 值更新 → 前端复习会话 | **已完成**（2026-04-02） |
 | M5 | 功能补完：截图问 AI 两步流程 + AIResponse Markdown 渲染 + 正确答案展示 + 仪表盘 + 错题诊断 | **已完成**（2026-04-03） |
 | M5.5 | 稳固 & App Shell：侧栏导航 + 白屏修复 + OCR 自动触发 + 进度显示 + LoadingState | **已完成**（2026-04-04） |
+| M6 | MVP Launch：PostgreSQL 迁移 + 用户账号 + 大 PDF 分块 + PDF 阅读器 + 部署上线 | **计划完成，待执行** |
 
 ### M5 完成内容
 

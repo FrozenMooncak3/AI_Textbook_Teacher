@@ -1,7 +1,7 @@
 # Journal Index
 
 ## open（需要关注）
-- [decision] MVP 方向 brainstorming：目标留学生 + 验证学习系统需求 + 5 项 MVP 范围 → [2026-04-06-mvp-direction-brainstorming.md](./2026-04-06-mvp-direction-brainstorming.md)
+- [decision] MVP 方向确定 + M6 spec/plan 完成（11 任务待执行）→ [2026-04-06-mvp-direction-brainstorming.md](./2026-04-06-mvp-direction-brainstorming.md)
 - [bug] M5.5 验收：test_ch1_2 显示 PDF 处理失败（实际有 PDF）+ 读财报模块地图白屏（TXT 上传）→ [2026-04-04-m5.5-user-testing.md](./2026-04-04-m5.5-user-testing.md)
 
 ## in_progress（解决中）
