@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query, queryOne, run } from '@/lib/db'
 import { generateText } from 'ai'
+import { requireUser } from '@/lib/auth'
 import { getModel, timeout } from '@/lib/ai'
+import { query, queryOne, run } from '@/lib/db'
 import { logAction } from '@/lib/log'
 
 interface Conversation {
@@ -21,16 +22,24 @@ export async function POST(
   { params }: { params: Promise<{ conversationId: string }> }
 ) {
   const { conversationId } = await params
+  const user = await requireUser(req)
   const convId = Number(conversationId)
-  if (isNaN(convId)) {
+
+  if (Number.isNaN(convId)) {
     return NextResponse.json({ error: 'Invalid conversation ID', code: 'INVALID_ID' }, { status: 400 })
   }
 
-  const conv = await queryOne<Conversation>(
-    'SELECT id, book_id, page_number, screenshot_text FROM conversations WHERE id = $1',
-    [convId]
+  const conversation = await queryOne<Conversation>(
+    `
+      SELECT c.id, c.book_id, c.page_number, c.screenshot_text
+      FROM conversations c
+      JOIN books b ON b.id = c.book_id
+      WHERE c.id = $1 AND b.user_id = $2
+    `,
+    [convId, user.id]
   )
-  if (!conv) {
+
+  if (!conversation) {
     return NextResponse.json({ error: 'Conversation not found', code: 'NOT_FOUND' }, { status: 404 })
   }
 
@@ -57,23 +66,25 @@ export async function POST(
   }))
   claudeMessages.push({ role: 'user', content: message })
 
-  const book = await queryOne<{ title: string }>('SELECT title FROM books WHERE id = $1', [conv.book_id])
-  const bookTitle = book?.title ?? '教材'
-  const systemPrompt = `你是一位财务教材辅导老师，正在帮助学生理解《${bookTitle}》第${conv.page_number}页的内容。回答简洁清晰，重点突出。`
+  const book = await queryOne<{ title: string }>('SELECT title FROM books WHERE id = $1', [conversation.book_id])
+  const bookTitle = book?.title ?? 'textbook'
+  const systemPrompt = `You are a textbook tutor helping a student understand page ${conversation.page_number} of ${bookTitle}. Keep answers concise, clear, and focused on the page context.`
 
   let answer = ''
   try {
-    const { text } = await generateText({
+    const result = await generateText({
       model: getModel(),
       maxOutputTokens: 1024,
       system: systemPrompt,
       messages: claudeMessages,
       abortSignal: AbortSignal.timeout(timeout),
     })
-    answer = text
+    answer = result.text
   } catch (error) {
-    await logAction('追问AI失败', `conversationId=${convId}，${String(error)}`, 'error')
-    return NextResponse.json({ error: 'AI 服务暂时不可用', code: 'AI_ERROR' }, { status: 500 })
+    await logAction('conversation_ai_failed', `conversationId=${convId}, ${String(error)}`, 'error', {
+      userId: user.id,
+    })
+    return NextResponse.json({ error: 'AI service unavailable', code: 'AI_ERROR' }, { status: 500 })
   }
 
   await run('INSERT INTO messages (conversation_id, role, content) VALUES ($1, $2, $3)', [
@@ -87,7 +98,9 @@ export async function POST(
     answer,
   ])
 
-  await logAction('追问AI完成', `conversationId=${convId}`)
+  await logAction('conversation_ai_completed', `conversationId=${convId}`, 'info', {
+    userId: user.id,
+  })
 
   return NextResponse.json({ answer })
 }

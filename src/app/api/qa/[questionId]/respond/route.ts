@@ -1,26 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireUser } from '@/lib/auth'
 import { insert, queryOne } from '@/lib/db'
 
-// POST /api/qa/[questionId]/respond - 保存用户回答
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ questionId: string }> }
 ) {
   const { questionId } = await params
+  const user = await requireUser(req)
   const { response_text } = await req.json() as { response_text?: string }
 
   if (!response_text || !response_text.trim()) {
-    return NextResponse.json({ error: '回答不能为空' }, { status: 400 })
+    return NextResponse.json({ error: 'Response cannot be empty' }, { status: 400 })
   }
 
   const normalizedQuestionId = Number(questionId)
   const question = await queryOne<{ id: number }>(
-    'SELECT id FROM qa_questions WHERE id = $1',
-    [normalizedQuestionId]
+    `
+      SELECT q.id
+      FROM qa_questions q
+      JOIN modules m ON m.id = q.module_id
+      JOIN books b ON b.id = m.book_id
+      WHERE q.id = $1 AND b.user_id = $2
+    `,
+    [normalizedQuestionId, user.id]
   )
 
   if (!question) {
-    return NextResponse.json({ error: '题目不存在' }, { status: 404 })
+    return NextResponse.json({ error: 'Question not found' }, { status: 404 })
   }
 
   const existing = await queryOne<{ id: number }>(
@@ -29,7 +36,7 @@ export async function POST(
   )
 
   if (existing) {
-    return NextResponse.json({ error: '该题已作答，不可修改' }, { status: 409 })
+    return NextResponse.json({ error: 'Question already answered and cannot be changed' }, { status: 409 })
   }
 
   const responseId = await insert(

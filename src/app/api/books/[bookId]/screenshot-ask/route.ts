@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { generateText } from 'ai'
 import { requireBookOwner } from '@/lib/auth'
-import { insert, queryOne, run } from '@/lib/db'
 import { getModel, timeout } from '@/lib/ai'
+import { insert, queryOne, run } from '@/lib/db'
 import { UserError, SystemError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
@@ -54,13 +54,12 @@ function parseBody(body: unknown): {
   return { image, text, question, pageNumber }
 }
 
-const SCREENSHOT_ASK_SYSTEM_PROMPT = `浣犳槸涓€浣嶄笓涓氱殑鏁欐潗瀛︿範瀵煎笀銆?鍩轰簬鏁欐潗鎴浘鍜岃瘑鍒枃鏈洖绛斿鐢熼棶棰橈紝涓嶈鍙噸澶嶅師鏂囷紝瑕佽В閲婂師鍥犮€佹蹇靛拰瑙ｉ鎬濊矾銆?濡傛灉鎴浘鍐呭涓嶈冻浠ュ畬鏁村洖绛旈棶棰橈紝鍙互琛ュ厖蹇呰鑳屾櫙锛屼絾浼樺厛鍥寸粫鏁欐潗璇銆?浣跨敤涓庢暀鏉愪竴鑷寸殑璇█鍥炵瓟锛屽苟鐢ㄦ竻鏅扮殑 Markdown 鎺掔増銆俙`
+const SCREENSHOT_ASK_SYSTEM_PROMPT = `You are a professional textbook learning tutor. Answer student questions based on the textbook screenshot and recognized text. Do not just repeat the original text - explain the reasoning, concepts, and problem-solving approach. If the screenshot content is insufficient to fully answer the question, you may supplement with necessary background, but prioritize staying close to the textbook. Answer in the same language as the textbook, and use clear Markdown formatting.`
 
 export const POST = handleRoute(async (req: NextRequest, context) => {
   const { bookId: rawBookId } = await context!.params
   const bookId = parseBookId(rawBookId)
-
-  await requireBookOwner(req, bookId)
+  const { user } = await requireBookOwner(req, bookId)
 
   const book = await queryOne<BookRow>('SELECT id FROM books WHERE id = $1', [bookId])
   if (!book) {
@@ -68,10 +67,12 @@ export const POST = handleRoute(async (req: NextRequest, context) => {
   }
 
   const body = parseBody(await req.json())
-  await logAction('screenshot_ask_started', `bookId=${bookId}, page=${body.pageNumber}`)
+  await logAction('screenshot_ask_started', `bookId=${bookId}, page=${body.pageNumber}`, 'info', {
+    userId: user.id,
+  })
 
   const userPrompt = await getPrompt('assistant', 'screenshot_qa', {
-    screenshot_text: body.text || '(鏃犳枃瀛楄瘑鍒粨鏋?',
+    screenshot_text: body.text || '(no text recognized)',
     user_question: body.question,
     conversation_history: '',
   })
@@ -103,7 +104,7 @@ export const POST = handleRoute(async (req: NextRequest, context) => {
 
     answer = result.text
   } catch (error) {
-    await logAction('screenshot_ask_failed', String(error), 'error')
+    await logAction('screenshot_ask_failed', String(error), 'error', { userId: user.id })
     throw new SystemError('AI service unavailable', error)
   }
 
@@ -123,7 +124,9 @@ export const POST = handleRoute(async (req: NextRequest, context) => {
     answer,
   ])
 
-  await logAction('screenshot_ask_completed', `bookId=${bookId}, conversationId=${conversationId}`)
+  await logAction('screenshot_ask_completed', `bookId=${bookId}, conversationId=${conversationId}`, 'info', {
+    userId: user.id,
+  })
 
   return {
     data: {

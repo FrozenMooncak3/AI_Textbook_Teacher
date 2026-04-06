@@ -1346,3 +1346,16 @@
 **Modified files**:
 - `src/lib/text-chunker.ts`
 - `scripts/test-m6-task7.mjs`
+
+## 2026-04-06 | M6 MVP Launch: Task 9 security and mojibake fixes
+
+**Completed**: Added missing ownership/auth checks to the QA respond route, conversation follow-up route, and logs API; hardened the login redirect against external/open redirects; replaced the mojibake screenshot-ask prompt and fallback text with readable English strings; added `logs.user_id` plus scoped log writes for touched routes; and tightened `books.user_id` to `NOT NULL` in the PostgreSQL schema. Added a Task 9 regression script covering the required guard, schema, redirect, and string fixes.
+**Modified files**:
+- `src/app/api/qa/[questionId]/respond/route.ts`
+- `src/app/api/conversations/[conversationId]/messages/route.ts`
+- `src/app/api/logs/route.ts`
+- `src/app/api/books/[bookId]/screenshot-ask/route.ts`
+- `src/app/(auth)/login/page.tsx`
+- `src/lib/log.ts`
+- `src/lib/schema.sql`
+- `scripts/test-m6-task9.mjs`

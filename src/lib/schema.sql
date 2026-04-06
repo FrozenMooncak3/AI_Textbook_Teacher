@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS books (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
   title TEXT NOT NULL,
   raw_text TEXT,
   file_path TEXT,
@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS highlights (
 CREATE TABLE IF NOT EXISTS logs (
   id SERIAL PRIMARY KEY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  user_id INTEGER REFERENCES users(id),
   level TEXT NOT NULL DEFAULT 'info',
   action TEXT NOT NULL,
   details TEXT NOT NULL DEFAULT ''
