@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
-import { spawn } from 'child_process'
 import { join } from 'path'
 import { requireUser } from '@/lib/auth'
 import { insert, query, run } from '@/lib/db'
@@ -104,49 +103,33 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const dbPath = join(process.cwd(), 'data', 'app.db')
-  const scriptPath = join(process.cwd(), 'scripts', 'ocr_pdf.py')
-  const pythonCommand = process.env.PYTHON_BIN ?? (process.platform === 'win32' ? 'python' : 'python3')
+  const ocrHost = process.env.OCR_SERVER_HOST || '127.0.0.1'
+  const ocrPort = process.env.OCR_SERVER_PORT || '8000'
+  const ocrUrl = `http://${ocrHost}:${ocrPort}/ocr-pdf`
 
-  let child: ReturnType<typeof spawn>
-  try {
-    child = spawn(pythonCommand, [scriptPath, pdfPath, '--book-id', String(bookId), '--db-path', dbPath], {
-      cwd: process.cwd(),
-      stdio: ['ignore', 'pipe', 'pipe'],
-      windowsHide: true,
+  void fetch(ocrUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      pdf_path: pdfPath,
+      book_id: bookId,
+    }),
+  })
+    .then(async (response) => {
+      if (response.ok) {
+        return
+      }
+
+      const responseText = await response.text().catch(() => '')
+      const failureDetails = responseText.trim()
+        ? `OCR service responded with HTTP ${response.status}: ${responseText.trim().slice(0, 500)}`
+        : `OCR service responded with HTTP ${response.status}`
+
+      await markOcrFailure(failureDetails)
     })
-  } catch (error) {
-    await markOcrFailure(`spawn exception: ${String(error)}`)
-    return NextResponse.json({ error: 'Failed to start OCR worker' }, { status: 500 })
-  }
-
-  let completed = false
-  let stderr = ''
-
-  const failOnce = (details: string) => {
-    if (completed) {
-      return
-    }
-
-    completed = true
-    void markOcrFailure(details)
-  }
-
-  child.stdout?.on('data', () => {})
-  child.stderr?.on('data', (chunk: Buffer | string) => {
-    stderr = `${stderr}${chunk.toString()}`.slice(-4000)
-  })
-  child.on('error', (error) => {
-    failOnce(`spawn error: ${String(error)}`)
-  })
-  child.on('exit', (code, signal) => {
-    if (code === 0) {
-      return
-    }
-
-    const errorOutput = stderr.trim() || `signal=${signal ?? 'none'}`
-    failOnce(`exit code=${code ?? 'null'}, ${errorOutput}`)
-  })
+    .catch(async (error) => {
+      await markOcrFailure(`OCR service call failed: ${String(error)}`)
+    })
 
   await logAction('book_ocr_started', `bookId=${bookId}, title=${title}`)
   return NextResponse.json({ bookId, processing: true }, { status: 201 })

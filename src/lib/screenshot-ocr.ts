@@ -2,7 +2,7 @@ import http from 'http'
 import { logAction } from './log'
 
 const OCR_SERVER_HOST = process.env.OCR_SERVER_HOST || '127.0.0.1'
-const OCR_SERVER_PORT = Number(process.env.OCR_SERVER_PORT) || 9876
+const OCR_SERVER_PORT = Number(process.env.OCR_SERVER_PORT) || 8000
 
 interface OcrResponseBody {
   text?: string

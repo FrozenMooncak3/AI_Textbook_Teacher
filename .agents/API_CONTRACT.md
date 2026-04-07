@@ -638,6 +638,27 @@ Response `200`:
 }
 ```
 
+### `POST /ocr-pdf` (internal OCR service)
+
+Request body:
+
+```json
+{
+  "pdf_path": "/app/data/uploads/123.pdf",
+  "book_id": 123
+}
+```
+
+Response `202`:
+
+```json
+{
+  "status": "processing"
+}
+```
+
+Note: this endpoint is used by the backend upload flow, reads `DATABASE_URL` from environment variables only, and performs background OCR that updates `books.raw_text`, `books.parse_status`, `books.ocr_current_page`, and `books.ocr_total_pages`.
+
 ## Change Log
 
 - [2026-03-28] [Codex] Added reading notes CRUD API contract for M2.
@@ -649,3 +670,4 @@ Response `200`:
 - [2026-04-02] [Codex] Added M4 review API contracts for due, generate, respond, and complete endpoints.
 - [2026-04-03] [Codex] Added book-level dashboard and mistakes API contracts, and updated review respond response fields.
 - [2026-04-06] [Codex] Added auth register/login/logout/me API contracts for M6 invite-code authentication.
+- [2026-04-07] [Codex] Added the internal `/ocr-pdf` OCR service contract for the M6 OCR hotfix.

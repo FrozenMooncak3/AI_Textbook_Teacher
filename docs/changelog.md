@@ -1404,3 +1404,20 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 **Modified files**:
 - `next.config.ts`
 - `scripts/test-m6-task12.mjs`
+
+## 2026-04-07 | Post-M6 hotfix: OCR service PDF pipeline migration
+
+**Completed**: Replaced the broken local `spawn()` + SQLite PDF OCR path with a fire-and-forget HTTP call from `src/app/api/books/route.ts` to the OCR service, rewrote `scripts/ocr_server.py` to add background `/ocr-pdf` processing backed by PostgreSQL, aligned OCR defaults on port `8000`, updated Docker wiring so the OCR container can read uploaded PDFs and write DB progress, removed the obsolete `scripts/ocr_pdf.py`, and added regression coverage for the hotfix contract.
+**Modified files**:
+- `src/app/api/books/route.ts`
+- `src/lib/screenshot-ocr.ts`
+- `scripts/ocr_server.py`
+- `Dockerfile.ocr`
+- `docker-compose.yml`
+- `scripts/test-m6-hotfix-ocr.mjs`
+- `scripts/test-m6-task10.mjs`
+- `.agents/API_CONTRACT.md`
+- `docs/changelog.md`
+
+**Deleted files**:
+- `scripts/ocr_pdf.py`
