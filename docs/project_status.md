@@ -11,9 +11,11 @@
 
 **当前里程碑**：M6 MVP Launch — **已完成**（2026-04-06）
 
-**最新完成**：M6 全部 11 个任务完成。PostgreSQL 迁移、用户认证、大 PDF 分块、PDF 阅读器升级、安全加固、Docker 部署。
+**最新完成**：M6 全部 11 个任务完成 + 3 个 post-M6 hotfix。用户正在本地测试完整流程。
 
-**下一步**：部署到云平台（Railway/Fly.io）→ 邀请种子用户测试 → 收集反馈 → M7 规划
+**Post-M6 hotfixes**：邀请码改可选（7ee5653）、PDF 上传 100MB 限制（3c32bd9）、DB schema 初始化到 Neon。
+
+**下一步**：用户本地测试中 → 修 bug → 部署到云平台 → 邀请种子用户 → M7 规划
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
