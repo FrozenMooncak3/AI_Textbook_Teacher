@@ -206,9 +206,23 @@ unstarted → reading → qa → notes_generated → testing → completed
 - pdfjs-dist@3.11.174 Worker（CDN）
 - ScreenshotOverlay + AiChatDialog 保持不变
 
+### PDF OCR 管道（⚠️ M6 断裂 — 待修复）
+
+- **现状（已坏）**：`books/route.ts` spawn 本地 Python 进程 `ocr_pdf.py`，传 `--db-path data/app.db`（SQLite）
+- **问题**：① `ocr_pdf.py` 用 sqlite3 写结果，PostgreSQL 收不到 ② Docker 容器没有 Python/scripts ③ 端口默认值不一致（screenshot-ocr.ts=9876, ocr_server.py=8000）
+- **目标架构**：upload → 调用 OCR HTTP 服务（复用 ocr 容器的 /ocr-pdf 端点）→ OCR 服务处理完整 PDF → 通过 PostgreSQL 写回结果
+- **parse_status 实际值**：`pending` → `processing` → `done` → `error`（注意不是 completed/failed）
+
+### 启动初始化（⚠️ M6 断裂 — 待修复）
+
+- `initDb()` 定义在 `src/lib/db.ts` 但无调用入口
+- 新数据库 prompt_templates 为空，所有 AI 功能不可用
+- 需要 Next.js `instrumentation.ts` 或等效启动钩子
+
 ### 部署架构（M6）
 
 - **三容器 Docker Compose**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（PaddleOCR）
 - **环境变量**：DATABASE_URL, ANTHROPIC_API_KEY, AI_MODEL, OCR_SERVER_HOST, OCR_SERVER_PORT
 - **持久化卷**：pgdata（数据库）+ uploads（用户 PDF）
-- **OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/ocr`，本地默认 127.0.0.1:9876
+- **OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/ocr`，本地默认 127.0.0.1:8000
+- ⚠️ `docker-compose.yml` 残留未使用的 `SESSION_SECRET` 环境变量

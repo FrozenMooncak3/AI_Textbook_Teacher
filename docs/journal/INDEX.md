@@ -1,8 +1,8 @@
 # Journal Index
 
 ## open（需要关注）
-- [decision] MVP 方向确定 + M6 spec/plan 完成（11 任务待执行）→ [2026-04-06-mvp-direction-brainstorming.md](./2026-04-06-mvp-direction-brainstorming.md)
-- [bug] M5.5 验收：test_ch1_2 显示 PDF 处理失败（实际有 PDF）+ 读财报模块地图白屏（TXT 上传）→ [2026-04-04-m5.5-user-testing.md](./2026-04-04-m5.5-user-testing.md)
+- [audit] M6 重做审计：4 个严重断裂（OCR SQLite 遗漏 + initDb 未调用 + Docker OCR 断裂）→ [2026-04-07-m6-milestone-audit-redo.md](./2026-04-07-m6-milestone-audit-redo.md)
+- [bug] M5.5 验收：test_ch1_2 显示 PDF 处理失败 + 读财报模块地图白屏 → [2026-04-04-m5.5-user-testing.md](./2026-04-04-m5.5-user-testing.md)
 
 ## in_progress（解决中）
 
@@ -45,6 +45,7 @@
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [decision:resolved] MVP 方向确定 + M6 spec/plan 完成 → M6 全部 11 任务已完成（2026-04-06）→ [2026-04-06-mvp-direction-brainstorming.md](./2026-04-06-mvp-direction-brainstorming.md)
 - [infra:resolved] task-execution skill 已实现——统一执行引擎（dispatch→review→retry→close 全自动），替代手动串联 dispatch/review chain（2026-04-04）→ [2026-04-04-execution-skill.md](./2026-04-04-execution-skill.md)
 - [audit] M5.5 milestone-audit 通过：App Shell + ProcessingPoller + 错误边界全量验证，architecture.md 与代码一致（2026-04-04）→ [2026-04-04-m5.5-milestone-audit.md](./2026-04-04-m5.5-milestone-audit.md)
 - [audit] M5 milestone-audit 通过：architecture.md 与代码一致，3 条新契约已文档化，⚠️ test/submit error_type 未变（2026-04-03）→ [2026-04-03-m5-milestone-audit.md](./2026-04-03-m5-milestone-audit.md)

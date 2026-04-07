@@ -5,17 +5,21 @@
 
 ---
 
-## 当前状态（2026-04-06）
+## 当前状态（2026-04-07）
 
 **方向**：MVP 已上线——完整学习流程 + 多用户 + Docker 部署
 
-**当前里程碑**：M6 MVP Launch — **已完成**（2026-04-06）
+**当前里程碑**：M6 MVP Launch — **功能完成，审计修复中**
 
-**最新完成**：M6 全部 11 个任务完成 + 3 个 post-M6 hotfix。用户正在本地测试完整流程。
+**最新完成**：M6 重做 milestone-audit，发现 4 个严重断裂（OCR 管道未迁移 PostgreSQL + initDb 未自动调用）。
 
-**Post-M6 hotfixes**：邀请码改可选（7ee5653）、PDF 上传 100MB 限制（3c32bd9）、DB schema 初始化到 Neon。
+**正在进行**：M6-hotfix — 2 个修复任务待派发给 Codex（见 `.ccb/task-ledger.json`）
+- T1（重档）：OCR 管道迁移 — ocr_pdf.py→HTTP 服务，books/route.ts spawn→HTTP，端口统一
+- T2（轻档）：instrumentation.ts 自动调用 initDb() + 清理 docker-compose SESSION_SECRET
 
-**下一步**：用户本地测试中 → 修 bug → 部署到云平台 → 邀请种子用户 → M7 规划
+**已手动修复**：prompt templates 已种子化（12 个），通过 `scripts/seed-now.ts`
+
+**下一步**：派发 T1+T2 → review → 重新测试 → 部署 → 邀请种子用户
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
