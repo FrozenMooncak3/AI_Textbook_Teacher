@@ -132,7 +132,7 @@ export default function PdfViewer({ bookId, bookTitle }: Props) {
           <div className="flex items-center gap-3">
             {kpStatus === 'completed' && (
               <button
-                onClick={() => router.push(`/books/${bookId}/module-map`)}
+                onClick={() => router.push(`/books/${bookId}`)}
                 className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-bold shadow-sm transition-colors"
               >
                 查看模块地图 →

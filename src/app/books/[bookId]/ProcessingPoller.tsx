@@ -109,35 +109,36 @@ export default function ProcessingPoller({ bookId }: { bookId: number }) {
   if (phase === 'ocr') {
     const pct = ocrTotal > 0 ? Math.round((ocrCurrent / ocrTotal) * 100) : 0
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-4 overflow-hidden">
-          <div className="bg-blue-600 h-2 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+      <div className="bg-surface-container rounded-[32px] border border-outline-variant/10 p-10 text-center shadow-sm">
+        <div className="w-full bg-surface-variant rounded-full h-2 mb-6 overflow-hidden">
+          <div className="bg-primary-fixed-dim h-full rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
         </div>
-        <p className="text-sm font-medium text-gray-800">     
+        <p className="text-lg font-bold text-on-surface font-headline">     
           {ocrTotal > 0 ? `正在识别文字内容 (${ocrCurrent}/${ocrTotal} 页)` : '正在启动 OCR...'}
         </p>
-        <p className="text-xs text-gray-400 mt-1">这是教材深度学习的第一步，请耐心等待</p>
+        <p className="text-sm text-on-surface-variant mt-2">这是教材深度学习的第一步，请耐心等待</p>
       </div>
     )
   }
 
   if (phase === 'extracting') {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
-        <div className="flex justify-center mb-4">
-          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <div className="bg-surface-container rounded-[32px] border border-outline-variant/10 p-10 text-center shadow-sm">
+        <div className="flex justify-center mb-6">
+          <div className="w-10 h-10 border-4 border-primary-fixed-dim border-t-transparent rounded-full animate-spin" />
         </div>
-        <p className="text-sm font-medium text-gray-800">正在分析教材知识点...</p>
-        <p className="text-xs text-gray-400 mt-1">AI 正在根据识别出的教材文本划分模块并提取知识点</p>
+        <p className="text-lg font-bold text-on-surface font-headline">正在分析教材知识点...</p>
+        <p className="text-sm text-on-surface-variant mt-2">AI 正在根据识别出的教材文本划分模块并提取知识点</p>
       </div>
     )
   }
 
   if (phase === 'error') {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-        <p className="text-sm font-medium text-red-700">{error}</p>
-        <a href="/logs" className="text-xs text-red-600 underline mt-2 block">查看系统日志</a>
+      <div className="bg-error-container/10 border border-error/20 rounded-[32px] p-8 text-center shadow-sm">
+        <span className="material-symbols-outlined text-error text-5xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+        <p className="text-lg font-bold text-error font-headline">{error}</p>
+        <a href="/logs" className="text-sm text-error underline mt-4 block font-bold">查看系统日志</a>
       </div>
     )
   }

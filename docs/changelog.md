@@ -1474,6 +1474,29 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 
 ---
 
+## 2026-04-08 | UX Redesign T2: Action Hub 整合
+
+**完成内容**: 将原有的模块地图（Module Map）和学习仪表盘（Dashboard）合并为全新的 "Action Hub" 教材落地页。
+- **ActionHub.tsx**: 
+  - 新增核心组件，聚合展示教材学习状态、复习计划、最近测试和错题统计。
+  - 实现了带有动态 SVG 进度环的 Hero 区域，自动定位下一个待学习模块。
+  - 采用卡片式布局展示课程大纲，支持语义化状态勋章（已完成、进行中、未开始）。
+  - 集成了可折叠的"最近考试"记录面板。
+- **页面重定向与清理**: 
+  - 将 `/books/[bookId]/module-map` 和 `/books/[bookId]/dashboard` 重定向至 `/books/[bookId]`。
+  - 删除了已废弃的 `ModuleMap.tsx` 组件。
+- **视觉统一**: 
+  - 升级 `ProcessingPoller.tsx` 采用 Amber Companion 设计 Token 和圆角规范。
+  - 修复 `PdfViewer.tsx` 中的导航链接，使其跳转至新的 Action Hub。
+- **数据流**: 全量接入 `GET /api/books/[bookId]/dashboard` 接口，实现单次请求驱动全页渲染。
+
+**修改文件**:
+- 新增: `src/app/books/[bookId]/ActionHub.tsx`
+- 修改: `src/app/books/[bookId]/page.tsx`, `src/app/books/[bookId]/module-map/page.tsx`, `src/app/books/[bookId]/dashboard/page.tsx`, `src/app/books/[bookId]/ProcessingPoller.tsx`, `src/app/books/[bookId]/reader/PdfViewer.tsx`, `docs/changelog.md`
+- 删除: `src/app/books/[bookId]/ModuleMap.tsx`
+
+---
+
 ## 2026-04-08 | UX Redesign T3: 核心布局组件 SplitPanelLayout & FeedbackPanel
 
 **完成内容**: 创建了两个核心共享组件，作为后续学习页面（Q&A、学习、复习）的基础构建块。
