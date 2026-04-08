@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import AIResponse from '@/components/AIResponse'
 import LoadingState from '@/components/LoadingState'
+import QuestionNavigator from '@/components/QuestionNavigator'
+import ExamShell from './ExamShell'
 
 interface TestQuestion {
   id: number
@@ -19,12 +22,6 @@ interface TestHistoryEntry {
   pass_rate: number | null
   is_passed: boolean
   created_at: string
-}
-
-interface TestStatusData {
-  learning_status: string
-  in_progress_paper_id: number | null
-  history: TestHistoryEntry[]
 }
 
 interface TestResultEntry {
@@ -53,7 +50,7 @@ interface TestSubmitData {
   results: TestResultEntry[]
 }
 
-type Stage = 'test_intro' | 'generating' | 'answering' | 'submitting' | 'results' | 'error'
+type Stage = 'test_intro' | 'generating' | 'answering' | 'review' | 'submitting' | 'results' | 'error'
 
 const ERROR_TYPE_LABELS: Record<string, string> = {
   blind_spot: '知识盲点',
@@ -84,15 +81,72 @@ export default function TestSession({
   initialHistory?: TestHistoryEntry[]
   inProgressPaperId?: number | null
 }) {
+  const router = useRouter()
   const [stage, setStage] = useState<Stage>('test_intro')
   const [history, setHistory] = useState<TestHistoryEntry[]>(initialHistory)
   const [paperId, setPaperId] = useState<number | null>(inProgressPaperId)
   const [questions, setQuestions] = useState<TestQuestion[]>([])
   const [answers, setAnswers] = useState<Record<number, string>>({})
+  const [flags, setFlags] = useState<Set<number>>(new Set())
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [submitResult, setSubmitResult] = useState<TestSubmitData | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
 
-  // 检查是否最近 3 次测试都失败了
+  // ── Persistence ─────────────────────────────────────────────
+  
+  const saveToLocal = useCallback((currentAnswers: Record<number, string>, currentFlags: Set<number>) => {
+    if (!paperId) return
+    localStorage.setItem(`test_${paperId}_answers`, JSON.stringify(currentAnswers))
+    localStorage.setItem(`test_${paperId}_flags`, JSON.stringify(Array.from(currentFlags)))
+  }, [paperId])
+
+  const restoreFromLocal = useCallback(() => {
+    if (!paperId) return
+    const savedAnswers = localStorage.getItem(`test_${paperId}_answers`)
+    const savedFlags = localStorage.getItem(`test_${paperId}_flags`)
+    
+    if (savedAnswers) {
+      try {
+        setAnswers(JSON.parse(savedAnswers))
+      } catch (e) {
+        console.error('Failed to parse saved answers', e)
+      }
+    }
+    
+    if (savedFlags) {
+      try {
+        setFlags(new Set(JSON.parse(savedFlags)))
+      } catch (e) {
+        console.error('Failed to parse saved flags', e)
+      }
+    }
+  }, [paperId])
+
+  useEffect(() => {
+    if (stage === 'answering' && paperId) {
+      restoreFromLocal()
+    }
+  }, [stage, paperId, restoreFromLocal])
+
+  const updateAnswer = (questionId: number, value: string) => {
+    const newAnswers = { ...answers, [questionId]: value }
+    setAnswers(newAnswers)
+    saveToLocal(newAnswers, flags)
+  }
+
+  const toggleFlag = (questionId: number) => {
+    const newFlags = new Set(flags)
+    if (newFlags.has(questionId)) {
+      newFlags.delete(questionId)
+    } else {
+      newFlags.add(questionId)
+    }
+    setFlags(newFlags)
+    saveToLocal(answers, newFlags)
+  }
+
+  // ── Logic ───────────────────────────────────────────────────
+
   const consecutiveFails = history
     .slice(0, 3)
     .filter((h) => h.total_score !== null && !h.is_passed).length === 3 && history.length >= 3
@@ -116,6 +170,9 @@ export default function TestSession({
 
       setPaperId(data.paper_id)
       setQuestions(data.questions)
+      setAnswers({})
+      setFlags(new Set())
+      setCurrentIndex(0)
       setStage('answering')
     } catch (err) {
       setErrorMsg('网络请求失败')
@@ -124,18 +181,11 @@ export default function TestSession({
   }
 
   async function handleSubmit() {
-    // 检查是否有未答题目
-    const unanswered = questions.some((q) => !answers[q.id]?.trim())
-    if (unanswered) {
-      alert('请回答完所有题目后再提交')
-      return
-    }
-
     setStage('submitting')
     try {
       const answerList = questions.map((q) => ({
         question_id: q.id,
-        user_answer: answers[q.id],
+        user_answer: answers[q.id] || '',
       }))
 
       const res = await fetch(`/api/modules/${moduleId}/test/submit`, {
@@ -156,7 +206,13 @@ export default function TestSession({
       setSubmitResult(data)
       setStage('results')
       
-      // 提交成功后，刷新历史记录
+      // Cleanup local storage
+      if (paperId) {
+        localStorage.removeItem(`test_${paperId}_answers`)
+        localStorage.removeItem(`test_${paperId}_flags`)
+      }
+
+      // Refresh history
       const statusRes = await fetch(`/api/modules/${moduleId}/test`)
       const statusData = await statusRes.json()
       if (statusData.success) {
@@ -168,297 +224,488 @@ export default function TestSession({
     }
   }
 
-  // ── 1. 引导页 ──────────────────────────────────────────────
+  const handleExit = () => {
+    if (stage === 'answering' || stage === 'review') {
+      if (confirm('确定要退出测试吗？你的进度将保存在本地。')) {
+        router.push(`/books/${bookId}`)
+      }
+    } else {
+      router.push(`/books/${bookId}`)
+    }
+  }
+
+  // ── Rendering ───────────────────────────────────────────────
+
+  // 1. Intro Stage
   if (stage === 'test_intro') {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-8">
-        <h2 className="text-xl font-semibold text-slate-900 mb-2">{moduleTitle} — 测试</h2>
-        
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 my-6">
-          <p className="text-sm text-blue-800 font-medium mb-1">💡 软提醒：建议隔天再做</p>
-          <p className="text-xs text-blue-700">
-            间隔效应让记忆更牢固。如果你刚读完笔记，睡一觉再考效果更好。
-          </p>
-        </div>
-
-        {consecutiveFails && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-            <p className="text-sm text-amber-800 font-medium mb-1">⚠️ 复习建议</p>
-            <p className="text-xs text-amber-700">
-              最近三次测试均未过关，建议回到 Q&A 重新训练薄弱知识点，再来尝试。
+      <div className="min-h-screen bg-surface-container-low flex items-center justify-center p-6">
+        <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant/10 p-8 md:p-12 shadow-xl max-w-xl w-full">
+          <div className="flex flex-col items-center text-center mb-10">
+            <div className="w-20 h-20 amber-glow rounded-3xl flex items-center justify-center mb-6 shadow-lg shadow-orange-900/20">
+              <span className="material-symbols-outlined text-4xl text-white">quiz</span>
+            </div>
+            <h2 className="text-3xl font-black text-on-surface font-headline tracking-tight mb-2">
+              {moduleTitle}
+            </h2>
+            <p className="text-on-surface-variant font-medium">模块结课测试</p>
+          </div>
+          
+          <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 mb-8">
+            <div className="flex items-center gap-3 mb-3 text-primary">
+              <span className="material-symbols-outlined text-xl">lightbulb</span>
+              <p className="text-sm font-black font-headline tracking-wide uppercase">温馨提示</p>
+            </div>
+            <p className="text-sm text-on-surface-variant leading-relaxed">
+              建议在学习完笔记后，间隔一定时间（如 24 小时）再进行测试。间隔效应能帮助你发现真正的知识盲点并加固记忆。
             </p>
           </div>
-        )}
 
-        <div className="bg-slate-50 rounded-xl p-5 mb-8">
-          <p className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3">测试规则</p>
-          <ul className="text-sm text-slate-600 space-y-2">
-            <li className="flex items-center gap-2">
-              <span className="w-1 h-1 bg-slate-400 rounded-full" />
-              <span>禁止查看笔记或 Q&A 记录（盲测）</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1 h-1 bg-slate-400 rounded-full" />
-              <span className="font-medium text-slate-900">过关线：总分 80%</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1 h-1 bg-slate-400 rounded-full" />
-              <span>包含单选题与 AI 评分的主观题</span>
-            </li>
-          </ul>
-        </div>
+          {consecutiveFails && (
+            <div className="bg-error-container/10 border border-error/20 rounded-2xl p-6 mb-8">
+              <div className="flex items-center gap-3 mb-2 text-error">
+                <span className="material-symbols-outlined text-xl">warning</span>
+                <p className="text-sm font-black font-headline tracking-wide uppercase">复习建议</p>
+              </div>
+              <p className="text-sm text-error/80 font-medium">
+                最近三次测试均未过关。这通常意味着基础概念尚不牢固，建议回到 Q&A 重新训练薄弱知识点后再来挑战。
+              </p>
+            </div>
+          )}
 
-        <div className="flex flex-col gap-3">
-          <button
-            onClick={() => startTest(hasFailures && !paperId)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
-          >
-            {paperId ? '继续当前测试' : hasFailures ? '重新测试' : '开始测试'}
-          </button>
-          <a
-            href={`/books/${bookId}`}
-            className="w-full text-center border border-slate-300 text-slate-700 font-medium py-3 px-6 rounded-xl hover:bg-slate-50 transition-colors"
-          >
-            明天再来
-          </a>
+          <div className="space-y-4 mb-10">
+            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-on-surface-variant">check_circle</span>
+                <span className="text-sm font-bold text-on-surface">过关要求</span>
+              </div>
+              <span className="text-sm font-black text-primary font-headline">总分 80%</span>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-on-surface-variant">timer_off</span>
+                <span className="text-sm font-bold text-on-surface">测试模式</span>
+              </div>
+              <span className="text-sm font-black text-on-surface-variant font-headline">禁止查看笔记</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={() => startTest(hasFailures && !paperId)}
+              className="w-full amber-glow text-on-primary font-black font-headline text-lg py-5 rounded-full shadow-xl shadow-orange-900/20 active:scale-95 transition-all"
+            >
+              {paperId ? '继续当前测试' : hasFailures ? '重新开始测试' : '立即开始测试'}
+            </button>
+            <button
+              onClick={handleExit}
+              className="w-full text-on-surface-variant font-bold py-3 hover:text-on-surface transition-colors"
+            >
+              以后再来
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
-  // ── 2. 加载中 / 提交中 ──────────────────────────────────────
+  // 2. Loading State
   if (stage === 'generating' || stage === 'submitting') {
     return (
-      <div className="min-h-full flex items-center justify-center">
-        <LoadingState 
-          label={stage === 'generating' ? 'AI 正在为你生成试卷...' : 'AI 正在评分诊断...'} 
-        />
-      </div>
+      <ExamShell
+        moduleTitle={moduleTitle}
+        bookId={bookId}
+        totalQuestions={0}
+        answeredCount={0}
+        currentIndex={0}
+        onSubmit={() => {}}
+        onExit={handleExit}
+      >
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <LoadingState 
+            label={stage === 'generating' ? 'AI 正在为你生成试卷...' : 'AI 正在评分诊断...'} 
+          />
+        </div>
+      </ExamShell>
     )
   }
 
-  // ── 3. 错误状态 ──────────────────────────────────────────────
+  // 3. Error Stage
   if (stage === 'error') {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-        <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </div>
-        <p className="text-slate-900 font-medium mb-4">{errorMsg}</p>
-        <button
-          onClick={() => setStage('test_intro')}
-          className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-6 rounded-lg transition-colors"
-        >
-          返回重试
-        </button>
-      </div>
-    )
-  }
-
-  // ── 4. 答题界面 ──────────────────────────────────────────────
-  if (stage === 'answering') {
-    const answeredCount = questions.filter((q) => answers[q.id]?.trim()).length
-
-    return (
-      <div className="space-y-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sticky top-4 z-10 shadow-sm flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-slate-900">进度</span>
-            <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-blue-600 transition-all duration-300"
-                style={{ width: `${(answeredCount / questions.length) * 100}%` }}
-              />
-            </div>
-            <span className="text-xs font-medium text-slate-500">{answeredCount} / {questions.length}</span>
+      <div className="min-h-screen bg-surface-container-low flex items-center justify-center p-6">
+        <div className="bg-surface-container-lowest rounded-[32px] border border-error/20 p-12 text-center shadow-xl max-w-md w-full">
+          <div className="w-20 h-20 bg-error-container/10 text-error rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-sm">
+            <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
           </div>
+          <h3 className="text-2xl font-black text-on-surface mb-4 font-headline tracking-tight">操作失败</h3>
+          <p className="text-on-surface-variant mb-10 leading-relaxed font-medium">{errorMsg}</p>
           <button
-            onClick={handleSubmit}
-            disabled={answeredCount < questions.length}
-            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold py-2 px-4 rounded-lg transition-colors"
+            onClick={() => setStage('test_intro')}
+            className="w-full amber-glow text-on-primary font-bold py-4 rounded-full shadow-lg shadow-orange-900/10 active:scale-95 transition-all"
           >
-            提交试卷
+            返回重试
           </button>
         </div>
-
-        <div className="space-y-6 pb-12">
-          {questions.map((q, idx) => (
-            <div key={q.id} className="bg-white rounded-xl border border-slate-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Question {idx + 1}</span>
-                <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-md font-bold">
-                  {QUESTION_TYPE_LABELS[q.question_type]}
-                </span>
-              </div>
-              
-              <div className="text-slate-900 font-medium mb-6 leading-relaxed whitespace-pre-wrap">
-                <AIResponse content={q.question_text} />
-              </div>
-
-              {q.question_type === 'single_choice' && q.options ? (
-                <div className="space-y-3">
-                  {q.options.map((opt) => {
-                    const letter = opt.trim().charAt(0)
-                    const isSelected = answers[q.id] === letter
-                    return (
-                      <label
-                        key={opt}
-                        className={`flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer ${
-                          isSelected ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={`q-${q.id}`}
-                          value={letter}
-                          checked={isSelected}
-                          onChange={() => setAnswers({ ...answers, [q.id]: letter })}
-                          className="mt-1 sr-only"
-                        />
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                          isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300'
-                        }`}>
-                          {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
-                        </div>
-                        <span className={`text-sm ${isSelected ? 'text-blue-900 font-medium' : 'text-slate-700'}`}>
-                          {opt}
-                        </span>
-                      </label>
-                    )
-                  })}
-                </div>
-              ) : (
-                <textarea
-                  value={answers[q.id] ?? ''}
-                  onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
-                  placeholder="在此输入你的回答..."
-                  className="w-full min-h-[120px] p-4 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm leading-relaxed"
-                />
-              )}
-            </div>
-          ))}
-        </div>
       </div>
     )
   }
 
-  // ── 5. 结果展示 ──────────────────────────────────────────────
+  // 4. Answering Stage
+  if (stage === 'answering') {
+    const currentQuestion = questions[currentIndex]
+    if (!currentQuestion) return null
+
+    const answeredCount = Object.keys(answers).length
+    const questionStatuses = questions.map((q, i) => {
+      if (i === currentIndex) return 'current' as const
+      if (flags.has(q.id)) return 'flagged' as const
+      if (answers[q.id]?.trim()) return 'answered' as const
+      return 'unanswered' as const
+    })
+
+    return (
+      <ExamShell
+        moduleTitle={moduleTitle}
+        bookId={bookId}
+        totalQuestions={questions.length}
+        answeredCount={answeredCount}
+        currentIndex={currentIndex}
+        questionStatuses={questionStatuses}
+        onExit={handleExit}
+        onSubmit={() => setStage('review')}
+        footer={
+          <QuestionNavigator
+            questions={questions}
+            currentIndex={currentIndex}
+            answers={answers}
+            flags={flags}
+            onNavigate={setCurrentIndex}
+            onReview={() => setStage('review')}
+          />
+        }
+      >
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-surface-container-lowest rounded-[32px] p-8 md:p-12 shadow-[0_8px_40px_rgba(167,72,0,0.04)] border border-outline-variant/10 relative">
+            <div className="flex justify-between items-center mb-10">
+              <span className="bg-surface-variant text-on-surface-variant px-4 py-1.5 rounded-xl text-xs font-black font-label uppercase tracking-widest">
+                {QUESTION_TYPE_LABELS[currentQuestion.question_type]}
+              </span>
+              
+              <button 
+                onClick={() => toggleFlag(currentQuestion.id)}
+                className={`flex items-center gap-2 font-black font-headline uppercase text-xs tracking-widest transition-all hover:scale-105 ${
+                  flags.has(currentQuestion.id) ? 'text-tertiary' : 'text-on-surface-variant opacity-40 hover:opacity-100'
+                }`}
+              >
+                <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: flags.has(currentQuestion.id) ? "'FILL' 1" : "'FILL' 0" }}>
+                  flag
+                </span>
+                <span>{flags.has(currentQuestion.id) ? '取消标记' : '标记复查'}</span>
+              </button>
+            </div>
+
+            <div className="text-on-surface text-xl md:text-2xl font-bold leading-relaxed font-headline mb-12">
+              <AIResponse content={currentQuestion.question_text} />
+            </div>
+
+            {currentQuestion.question_type === 'single_choice' && currentQuestion.options ? (
+              <div className="grid gap-4">
+                {currentQuestion.options.map((opt) => {
+                  const letter = opt.trim().charAt(0).toUpperCase()
+                  const isSelected = answers[currentQuestion.id] === letter
+                  return (
+                    <button
+                      key={opt}
+                      onClick={() => updateAnswer(currentQuestion.id, letter)}
+                      className={`group w-full flex items-center gap-5 p-6 rounded-2xl transition-all text-left border-2 ${
+                        isSelected 
+                          ? 'bg-secondary-container/20 border-primary shadow-sm' 
+                          : 'bg-surface-container-low border-transparent hover:border-outline-variant/30 hover:bg-surface-container'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black font-headline transition-colors shrink-0 ${
+                        isSelected 
+                          ? 'bg-primary text-on-primary' 
+                          : 'bg-surface-container-lowest border border-outline-variant text-on-surface-variant group-hover:border-primary group-hover:text-primary'
+                      }`}>
+                        {isSelected ? (
+                          <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                        ) : (
+                          letter
+                        )}
+                      </div>
+                      <span className={`text-lg ${isSelected ? 'text-on-surface font-bold' : 'text-on-surface-variant font-medium'}`}>
+                        {opt.substring(opt.indexOf('.') + 1).trim() || opt}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="group relative">
+                <textarea
+                  value={answers[currentQuestion.id] ?? ''}
+                  onChange={(e) => updateAnswer(currentQuestion.id, e.target.value)}
+                  placeholder="请输入你的回答分析过程..."
+                  className="w-full min-h-[240px] p-8 rounded-[32px] bg-surface-container-low/50 border border-outline-variant/10 focus:bg-surface-container-lowest focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none text-lg leading-relaxed font-body transition-all placeholder:text-on-surface-variant/30 shadow-inner"
+                />
+                <div className="absolute bottom-6 right-8 text-[10px] font-black text-on-surface-variant/20 uppercase tracking-widest pointer-events-none group-focus-within:opacity-0 transition-opacity">
+                  Subjective Answer Area
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </ExamShell>
+    )
+  }
+
+  // 5. Review Stage
+  if (stage === 'review') {
+    const unansweredIndices = questions
+      .map((q, i) => (!answers[q.id]?.trim() ? i : -1))
+      .filter((i) => i !== -1)
+    
+    const flaggedIndices = questions
+      .map((q, i) => (flags.has(q.id) ? i : -1))
+      .filter((i) => i !== -1)
+
+    const isComplete = unansweredIndices.length === 0 && flaggedIndices.length === 0
+
+    return (
+      <ExamShell
+        moduleTitle={moduleTitle}
+        bookId={bookId}
+        totalQuestions={questions.length}
+        answeredCount={Object.keys(answers).length}
+        currentIndex={currentIndex}
+        onExit={handleExit}
+        onSubmit={handleSubmit}
+      >
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-black text-on-surface font-headline tracking-tight mb-4">检查你的答案</h2>
+            <div className="flex items-center justify-center gap-6">
+              <div className="flex flex-col items-center">
+                <span className="text-2xl font-black text-on-surface font-headline">{Object.keys(answers).length} / {questions.length}</span>
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">已回答题目</span>
+              </div>
+              <div className="w-px h-8 bg-outline-variant/20" />
+              <div className="flex flex-col items-center">
+                <span className="text-2xl font-black text-tertiary font-headline">{flags.size}</span>
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">标记复查</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6 mb-12">
+            {/* Unanswered Section */}
+            {unansweredIndices.length > 0 && (
+              <div className="bg-error-container/5 border border-error/10 rounded-3xl p-8">
+                <h3 className="text-sm font-black text-error font-headline uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg">pending_actions</span>
+                  未答题目 ({unansweredIndices.length})
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {unansweredIndices.map((idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => { setCurrentIndex(idx); setStage('answering'); }}
+                      className="w-12 h-12 rounded-full bg-surface-container-lowest border border-error/20 flex items-center justify-center font-black font-headline text-error hover:bg-error hover:text-white transition-all active:scale-90"
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Flagged Section */}
+            {flaggedIndices.length > 0 && (
+              <div className="bg-tertiary-container/10 border border-tertiary-container/30 rounded-3xl p-8">
+                <h3 className="text-sm font-black text-tertiary font-headline uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg">flag</span>
+                  需复查题目 ({flaggedIndices.length})
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {flaggedIndices.map((idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => { setCurrentIndex(idx); setStage('answering'); }}
+                      className="w-12 h-12 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center font-black font-headline hover:bg-tertiary hover:text-white transition-all active:scale-90 shadow-sm"
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isComplete && (
+              <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-10 text-center">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+                  <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                </div>
+                <h3 className="text-xl font-bold text-emerald-900 mb-2">准备就绪!</h3>
+                <p className="text-emerald-700 font-medium">你已经完成了所有题目且没有待复查项。现在可以提交试卷了。</p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              onClick={() => setStage('answering')}
+              className="flex-1 bg-surface-container-lowest border border-outline-variant text-on-surface font-black font-headline py-4 rounded-full hover:bg-surface-container transition-all active:scale-95 shadow-sm"
+            >
+              返回检查
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="flex-1 amber-glow text-on-primary font-black font-headline py-4 rounded-full shadow-xl shadow-orange-900/20 active:scale-95 transition-all"
+            >
+              确认交卷
+            </button>
+          </div>
+        </div>
+      </ExamShell>
+    )
+  }
+
+  // 6. Results Stage
   if (stage === 'results' && submitResult) {
     const { total_score, max_score, pass_rate, is_passed, results } = submitResult
 
     return (
-      <div className="space-y-8 pb-12">
-        <div className={`rounded-2xl border p-8 text-center ${
-          is_passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+      <div className="max-w-4xl mx-auto p-6 md:p-12 pb-24">
+        {/* Results Hero */}
+        <div className={`rounded-[40px] border p-10 md:p-16 text-center mb-12 shadow-xl ${
+          is_passed ? 'bg-emerald-50 border-emerald-200' : 'bg-error-container/10 border-error/20'
         }`}>
-          <div className="mb-4">
-            <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${
-              is_passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+          <div className="mb-8">
+            <span className={`inline-flex items-center px-6 py-2 rounded-full text-xs font-black font-headline uppercase tracking-[0.2em] ${
+              is_passed ? 'bg-emerald-100 text-emerald-700' : 'bg-error-container/20 text-error'
             }`}>
               {is_passed ? 'Test Passed' : 'Test Failed'}
             </span>
           </div>
           
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-4xl font-black text-slate-900">{total_score}</span>
-            <span className="text-xl text-slate-400 font-medium">/ {max_score}</span>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <span className="text-7xl font-black text-on-surface font-headline tracking-tighter">{total_score}</span>
+            <span className="text-2xl text-on-surface-variant font-bold opacity-30 mt-6">/ {max_score}</span>
           </div>
 
-          <div className="mb-6">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 max-w-[200px] mx-auto">
-              <span>Pass Line</span>
-              <span>80%</span>
+          <div className="mb-10 max-w-xs mx-auto">
+            <div className="flex items-center justify-between text-[10px] font-black text-on-surface-variant/50 uppercase tracking-[0.2em] mb-3">
+              <span>Pass Rate: {Math.round(pass_rate)}%</span>
+              <span>Target: 80%</span>
             </div>
-            <div className="w-full max-w-[200px] mx-auto h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-surface-container rounded-full overflow-hidden shadow-inner p-0.5">
               <div 
-                className={`h-full transition-all duration-1000 ${is_passed ? 'bg-green-500' : 'bg-red-500'}`}
+                className={`h-full rounded-full transition-all duration-1000 ease-out ${is_passed ? 'bg-emerald-500' : 'bg-error'}`}
                 style={{ width: `${Math.min(100, pass_rate)}%` }}
               />
             </div>
           </div>
 
           {!is_passed && (
-            <p className="text-sm text-red-700 font-medium mb-6">
-              未达到 80% 过关线。查看下方错题诊断并补救。
+            <p className="text-lg text-error font-bold mb-10 max-w-sm mx-auto leading-snug">
+              遗憾未达到过关线。别灰心，AI 已经为你生成了针对性的补救建议。
             </p>
           )}
 
-          <div className="flex gap-4 max-w-sm mx-auto">
+          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
             {!is_passed && (
               <button
                 onClick={() => startTest(true)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                className="flex-1 amber-glow text-on-primary font-black font-headline py-4 px-8 rounded-full shadow-xl shadow-orange-900/20 transition-all active:scale-95"
               >
                 重新测试
               </button>
             )}
-            <a
-              href={`/books/${bookId}`}
-              className="flex-1 bg-white border border-slate-300 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-50 transition-colors"
+            <button
+              onClick={() => router.push(`/books/${bookId}`)}
+              className="flex-1 bg-surface-container-lowest border-2 border-outline-variant/30 text-on-surface font-black font-headline py-4 px-8 rounded-full hover:bg-surface-container transition-all active:scale-95"
             >
-              返回地图
-            </a>
+              返回教材
+            </button>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <h3 className="text-lg font-bold text-slate-900 px-2">逐题反馈</h3>
+        {/* Detailed Feedback */}
+        <div className="space-y-10">
+          <div className="flex items-center gap-4 px-4">
+            <div className="h-px flex-1 bg-outline-variant/20" />
+            <h3 className="text-sm font-black text-on-surface-variant font-headline uppercase tracking-[0.3em]">详细解析报告</h3>
+            <div className="h-px flex-1 bg-outline-variant/20" />
+          </div>
+
           {results.map((r, idx) => (
-            <div key={r.question_id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className={`px-6 py-3 flex items-center justify-between ${
-                r.is_correct ? 'bg-green-50/50 border-b border-green-100' : 'bg-red-50/50 border-b border-red-100'
+            <div key={r.question_id} className="bg-surface-container-lowest rounded-[32px] border border-outline-variant/10 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className={`px-8 py-5 flex items-center justify-between border-b ${
+                r.is_correct ? 'bg-emerald-50/30 border-emerald-100' : 'bg-error-container/5 border-error/10'
               }`}>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-slate-400 uppercase">Q{idx + 1}</span>
-                  <span className="text-xs font-bold text-slate-600">{QUESTION_TYPE_LABELS[r.question_type]}</span>
+                <div className="flex items-center gap-4">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black font-headline text-sm ${
+                    r.is_correct ? 'bg-emerald-100 text-emerald-700' : 'bg-error-container/20 text-error'
+                  }`}>
+                    {idx + 1}
+                  </div>
+                  <span className="text-xs font-black text-on-surface-variant font-headline uppercase tracking-widest">
+                    {QUESTION_TYPE_LABELS[r.question_type] || r.question_type}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   {!r.is_correct && r.error_type && (
-                    <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-bold">
-                      {ERROR_TYPE_LABELS[r.error_type]}
+                    <span className="text-[10px] px-3 py-1 bg-tertiary-container/30 text-tertiary font-black font-headline rounded-full uppercase tracking-wider">
+                      {ERROR_TYPE_LABELS[r.error_type] || r.error_type}
                     </span>
                   )}
-                  <span className={`text-sm font-bold ${r.is_correct ? 'text-green-600' : 'text-red-600'}`}>
-                    {r.score} / {r.max_score}
+                  <span className={`text-lg font-black font-headline ${r.is_correct ? 'text-emerald-600' : 'text-error'}`}>
+                    {r.score} <span className="text-xs opacity-30 font-medium">/ {r.max_score}</span>
                   </span>
                 </div>
               </div>
 
-              <div className="p-6 space-y-4">
-                <div className="text-slate-900 font-medium text-sm leading-relaxed whitespace-pre-wrap">
+              <div className="p-8 md:p-10 space-y-8">
+                <div className="text-on-surface font-bold text-lg leading-relaxed">
                   <AIResponse content={r.question_text} />
                 </div>
                 
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">你的回答</span>
-                    <div className={`p-4 rounded-xl border text-sm whitespace-pre-wrap leading-relaxed ${
-                      r.is_correct ? 'border-green-200 bg-green-50 text-green-900' : 'border-red-200 bg-red-50 text-red-900'
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">
+                      <span className="material-symbols-outlined text-sm">person</span>
+                      你的回答
+                    </div>
+                    <div className={`p-6 rounded-2xl border text-sm font-medium leading-loose min-h-[100px] ${
+                      r.is_correct ? 'border-emerald-100 bg-emerald-50/20 text-emerald-900' : 'border-error/10 bg-error-container/5 text-on-surface'
                     }`}>
-                      {r.user_answer || '(空)'}
+                      {r.user_answer || '(未作答)'}
                     </div>
                   </div>
 
-                  {/* Correct answer block */}
-                  {r.correct_answer && (
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">正确答案</span>
-                      <div className="mt-1 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <AIResponse content={r.correct_answer} />
-                      </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-emerald-600/60 uppercase tracking-widest">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      标准答案
                     </div>
-                  )}
+                    <div className="p-6 bg-emerald-50/40 border border-emerald-100 rounded-2xl text-sm font-bold text-emerald-900 leading-loose min-h-[100px]">
+                      <AIResponse content={r.correct_answer || '无标准答案'} />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2 pt-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">解析</span>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 text-sm text-slate-700 leading-relaxed border border-blue-200 dark:border-blue-800">
+                <div className="bg-surface-container-low/50 rounded-3xl p-8 border border-outline-variant/10">
+                  <div className="flex items-center gap-3 mb-4 text-on-surface-variant">
+                    <span className="material-symbols-outlined text-xl">auto_awesome</span>
+                    <h4 className="text-xs font-black font-headline uppercase tracking-[0.2em]">AI 深度诊断</h4>
+                  </div>
+                  <div className="prose prose-sm max-w-none text-on-surface-variant leading-relaxed">
                     <AIResponse content={r.explanation} />
                     {r.feedback && (
-                      <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800 text-blue-700 font-medium">
-                        <div className="text-[10px] font-black text-blue-600/50 uppercase tracking-widest mb-1">AI 评价</div>
+                      <div className="mt-6 pt-6 border-t border-outline-variant/10">
+                        <div className="text-[10px] font-black text-primary uppercase tracking-widest mb-3">针对性反馈</div>
                         <AIResponse content={r.feedback} />
                       </div>
                     )}
@@ -466,9 +713,16 @@ export default function TestSession({
                 </div>
 
                 {!r.is_correct && r.remediation && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                    <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest block mb-1">Remediation Advice</span>
-                    <AIResponse content={r.remediation} className="text-amber-800" />
+                  <div className="bg-tertiary-container/10 border border-tertiary-container/20 rounded-3xl p-8 flex gap-5 items-start">
+                    <div className="w-10 h-10 bg-tertiary-container rounded-full flex items-center justify-center shrink-0 text-tertiary">
+                      <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>healing</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black text-tertiary uppercase tracking-widest block mb-2">补救性学习建议</span>
+                      <div className="text-on-tertiary-container font-medium text-sm leading-relaxed italic">
+                        <AIResponse content={r.remediation} />
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

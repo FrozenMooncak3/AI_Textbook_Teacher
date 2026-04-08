@@ -82,26 +82,13 @@ export default async function TestPage({
   const inProgressPaper = formattedHistory.find(h => h.total_score === null)
 
   return (
-    <main className="min-h-full bg-slate-50">
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-xs text-slate-400 mb-8" aria-label="Breadcrumb">
-          <a href={`/books/${bookId}`} className="hover:text-slate-600 transition-colors">
-            {book.title}
-          </a>
-          <span className="text-slate-300">/</span>
-          <span className="text-slate-600 font-medium">模块 {module_.order_index} 测试</span>
-        </nav>
-
-        <TestSession
-          moduleId={module_.id}
-          moduleTitle={module_.title}
-          bookId={book.id}
-          learningStatus={module_.learning_status}
-          initialHistory={formattedHistory}
-          inProgressPaperId={inProgressPaper?.paper_id || null}
-        />
-      </div>
-    </main>
+    <TestSession
+      moduleId={module_.id}
+      moduleTitle={module_.title}
+      bookId={book.id}
+      learningStatus={module_.learning_status}
+      initialHistory={formattedHistory}
+      inProgressPaperId={inProgressPaper?.paper_id || null}
+    />
   )
 }

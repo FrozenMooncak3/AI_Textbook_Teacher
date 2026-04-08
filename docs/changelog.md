@@ -1566,3 +1566,24 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 
 **修改文件**:
 - 修改: `src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`, `docs/changelog.md`
+
+---
+
+## 2026-04-09 | UX Redesign T6: 全新测试模式（沉浸式全屏 + 自由跳转）
+
+**完成内容**: 重构了模块测试体验，从传统的顺序答题改为支持自由跳转和标记复查的专业考试模式。
+- **ExamShell.tsx 封装**: 实现了全屏沉浸式测试外壳，包含固定的顶部状态栏（模块名、测试进度条、题目计数器、退出按钮）。
+- **QuestionNavigator.tsx**: 实现了底部的题目导航器，支持通过点击题号快速跳转，并能实时展示答题状态（已答、当前、已标记）。
+- **TestSession.tsx 重写**:
+  - **交互模型升级**: 改为一题一页模式，支持通过导航器或左右箭头自由切换题目。
+  - **标记复查**: 新增题目标记功能（Flag），方便学生针对不确定的题目进行后续检查。
+  - **进度持久化**: 接入 `localStorage` 自动保存答题进度和标记状态，防止页面刷新导致数据丢失。
+  - **检查汇总页**: 在提交前提供汇总检查视图，直观展示未答题目和已标记题目，支持点击一键回跳。
+- **视觉与规范**: 
+  - 全面适配 Amber Companion 设计系统（奶油色背景、暖橙色主色调）。
+  - **严守不变量 #3**: 彻底移除了测试界面的所有提示（Hint）、笔记入口及 Q&A 访问路径，确保盲测严肃性。
+- **简化页面逻辑**: 更新 `test/page.tsx`，将布局管理权移交给 `ExamShell`。
+
+**修改文件**:
+- 新增: `src/components/QuestionNavigator.tsx`, `src/app/books/[bookId]/modules/[moduleId]/test/ExamShell.tsx`
+- 修改: `src/app/books/[bookId]/modules/[moduleId]/test/TestSession.tsx`, `src/app/books/[bookId]/modules/[moduleId]/test/page.tsx`, `docs/changelog.md`
