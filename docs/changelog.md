@@ -1587,3 +1587,26 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 **修改文件**:
 - 新增: `src/components/QuestionNavigator.tsx`, `src/app/books/[bookId]/modules/[moduleId]/test/ExamShell.tsx`
 - 修改: `src/app/books/[bookId]/modules/[moduleId]/test/TestSession.tsx`, `src/app/books/[bookId]/modules/[moduleId]/test/page.tsx`, `docs/changelog.md`
+
+---
+
+## 2026-04-09 | UX Redesign T8: 复习概览页与 Review Session 布局升级
+
+**完成内容**: 为复习流程新增了引导概览页，并将复习过程封装进 `SplitPanelLayout`。
+- **ReviewBriefing.tsx**:
+  - 新增复习前置概览页，展示当前复习轮次、时间间隔、预计题量及时间。
+  - 实现了基于知识集群的掌握分布图表（Mastered/Improving/Weak），帮助学生了解复习重点。
+  - 采用 Amber Companion 风格的 Hero 图标与卡片设计。
+- **ReviewSession.tsx 重构**:
+  - 接入 `SplitPanelLayout` 和 `FeedbackPanel`，视觉风格与 Q&A 模式对齐。
+  - 移除了冗余的 Intro 阶段（由 Briefing 页接管），实现无缝开启复习。
+  - 升级了完成页视觉，直观展示正确率、集群掌握情况及下一轮复习计划。
+- **路由与状态管理**:
+  - 重构 `review/page.tsx` 为 Server Wrapper，预取书名与模块名以支持面包屑。
+  - 引入 `ReviewPageClient.tsx` 管理 `briefing` -> `session` 的阶段转换。
+- **视觉一致性**:
+  - 全面使用 Amber Token（`amber-glow`, `bg-surface-container` 等），修正了所有指向 `/` 或 `/module-map` 的废弃链接。
+
+**修改文件**:
+- 新增: `src/app/books/[bookId]/modules/[moduleId]/review/ReviewBriefing.tsx`, `src/app/books/[bookId]/modules/[moduleId]/review/ReviewPageClient.tsx`
+- 修改: `src/app/books/[bookId]/modules/[moduleId]/review/page.tsx`, `src/app/books/[bookId]/modules/[moduleId]/review/ReviewSession.tsx`, `docs/changelog.md`
