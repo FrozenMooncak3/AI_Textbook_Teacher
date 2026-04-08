@@ -1,30 +1,27 @@
 'use client'
 
-import Sidebar from './Sidebar'
-import { SidebarProvider } from './SidebarProvider'
-import SidebarToggle from './SidebarToggle'
 import { usePathname } from 'next/navigation'
+import { SidebarProvider } from './SidebarProvider'
+import Sidebar from './Sidebar'
+import SidebarToggle from './SidebarToggle'
 
 export default function SidebarLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  
-  if (pathname === '/login' || pathname === '/register') {
+  const isExamMode = pathname.includes('/test')
+
+  if (pathname === '/login' || pathname === '/register' || isExamMode) {
     return <>{children}</>
   }
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen overflow-hidden bg-gray-50">
+      <div className="flex min-h-screen bg-surface-container-low">
         <Sidebar />
-        <main className="flex-1 overflow-auto relative">
-          {/* Mobile hamburger — visible only on <1024px, positioned top-left */}
-          <div className="fixed top-3 left-3 z-30 lg:hidden">
+        <main className="flex-1 min-w-0">
+          <div className="lg:hidden p-4">
             <SidebarToggle />
           </div>
-          {/* Main content area */}
-          <div className="min-h-full">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
     </SidebarProvider>

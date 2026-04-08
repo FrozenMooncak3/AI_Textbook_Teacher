@@ -1457,3 +1457,17 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 **修改文件**:
 - 新增: `DESIGN.md`
 - 修改: `src/app/globals.css`, `src/app/layout.tsx`, `.gemini/DESIGN_TOKENS.md`, `docs/changelog.md`
+
+---
+
+## 2026-04-08 | UX Redesign T1: 侧边栏简化与 Exam Mode 适配
+
+**完成内容**: 将侧边栏导航重构为单层全局导航，并支持测试页面的全屏模式。
+- **Sidebar 重构**: `Sidebar.tsx` 从 343 行简化为约 80 行。移除了所有书籍级（L2）和模块级（L3）导航，仅保留"首页中心"、"上传教材"、"系统日志"和"退出登录"四个核心入口。
+- **Amber Token 适配**: 侧边栏全面采用 Amber Companion Token（`bg-surface-container-low`, `text-on-surface`, `bg-primary/10` 等），图标切换为 `Material Symbols Outlined`。
+- **状态管理简化**: `SidebarProvider.tsx` 移除了 `isCollapsed` 桌面折叠状态及相关的 `localStorage` 持久化逻辑。
+- **组件简化**: `SidebarToggle.tsx` 移除了桌面端的折叠按钮，仅保留移动端的汉堡菜单按钮。
+- **Exam Mode 绕过**: `SidebarLayout.tsx` 新增逻辑，当路径包含 `/test` 时自动隐藏侧边栏，提供全屏沉浸式测试体验。同时将主内容区域背景色统一为 `bg-surface-container-low`。
+
+**修改文件**:
+- 修改: `src/components/sidebar/Sidebar.tsx`, `src/components/sidebar/SidebarProvider.tsx`, `src/components/sidebar/SidebarToggle.tsx`, `src/components/sidebar/SidebarLayout.tsx`, `docs/changelog.md`
