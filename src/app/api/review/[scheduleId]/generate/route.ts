@@ -7,7 +7,11 @@ import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
 import { getPrompt } from '@/lib/prompt-templates'
 import {
+  buildAllocations,
   type GeneratedReviewQuestion,
+  MAX_REVIEW_QUESTIONS as MAX_QUESTIONS,
+  type ReviewAllocationRow as AllocationRow,
+  type ReviewClusterRow as ClusterRow,
   type ReviewKnowledgePointRow as KnowledgePointRow,
   type ReviewQuestionType as QuestionType,
   validateGeneratedReviewQuestion,
@@ -32,18 +36,6 @@ interface CountRow {
   c: number
 }
 
-interface ClusterRow {
-  id: number
-  name: string
-  current_p_value: number
-}
-
-interface AllocationRow {
-  clusterId: number
-  pValue: number
-  count: number
-}
-
 interface MistakeRow {
   kp_id: number | null
   knowledge_point: string | null
@@ -61,8 +53,6 @@ interface StoredQuestionResponse {
   text: string
   options: string[] | null
 }
-
-const MAX_QUESTIONS = 10
 
 function parseScheduleId(value: string): number {
   const id = Number(value)
@@ -97,47 +87,6 @@ function formatQuestion(row: ResumeQuestionRow): StoredQuestionResponse {
   } catch (error) {
     throw new SystemError('Failed to parse stored review question', error)
   }
-}
-
-function buildAllocations(clusters: ClusterRow[]): AllocationRow[] {
-  let allocations = clusters.map((cluster) => ({
-    clusterId: cluster.id,
-    pValue: Math.max(1, cluster.current_p_value),
-    count: Math.max(1, cluster.current_p_value),
-  }))
-
-  const total = allocations.reduce((sum, allocation) => sum + allocation.count, 0)
-  if (total <= MAX_QUESTIONS) {
-    return allocations
-  }
-
-  const scale = MAX_QUESTIONS / total
-  allocations = allocations.map((allocation) => ({
-    ...allocation,
-    count: Math.max(1, Math.round(allocation.count * scale)),
-  }))
-
-  let adjusted = allocations.reduce((sum, allocation) => sum + allocation.count, 0)
-  while (adjusted > MAX_QUESTIONS) {
-    const highest = allocations
-      .filter((allocation) => allocation.count > 1)
-      .sort((left, right) => {
-        if (right.pValue !== left.pValue) {
-          return right.pValue - left.pValue
-        }
-
-        return right.count - left.count
-      })[0]
-
-    if (!highest) {
-      break
-    }
-
-    highest.count -= 1
-    adjusted -= 1
-  }
-
-  return allocations
 }
 
 function formatClustersWithP(clusters: ClusterRow[], allocations: AllocationRow[]): string {

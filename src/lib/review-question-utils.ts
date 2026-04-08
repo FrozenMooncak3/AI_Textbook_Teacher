@@ -31,7 +31,20 @@ export interface ValidatedReviewQuestion {
 
 export type ReviewMistakeErrorType = 'blind_spot' | 'procedural' | 'confusion' | 'careless'
 
+export const MAX_REVIEW_QUESTIONS = 10
 export const REVIEW_SCORING_MAX_OUTPUT_TOKENS = 8192
+
+export interface ReviewClusterRow {
+  id: number
+  name: string
+  current_p_value: number
+}
+
+export interface ReviewAllocationRow {
+  clusterId: number
+  pValue: number
+  count: number
+}
 
 const VALID_REVIEW_QUESTION_TYPES = new Set<ReviewQuestionType>([
   'single_choice',
@@ -92,6 +105,47 @@ export function normalizeReviewErrorType(errorType: string | null | undefined): 
   }
 
   return 'confusion'
+}
+
+export function buildAllocations(clusters: ReviewClusterRow[]): ReviewAllocationRow[] {
+  let allocations = clusters.map((cluster) => ({
+    clusterId: cluster.id,
+    pValue: Math.max(1, cluster.current_p_value),
+    count: Math.max(1, cluster.current_p_value),
+  }))
+
+  const total = allocations.reduce((sum, allocation) => sum + allocation.count, 0)
+  if (total <= MAX_REVIEW_QUESTIONS) {
+    return allocations
+  }
+
+  const scale = MAX_REVIEW_QUESTIONS / total
+  allocations = allocations.map((allocation) => ({
+    ...allocation,
+    count: Math.max(1, Math.round(allocation.count * scale)),
+  }))
+
+  let adjusted = allocations.reduce((sum, allocation) => sum + allocation.count, 0)
+  while (adjusted > MAX_REVIEW_QUESTIONS) {
+    const highest = allocations
+      .filter((allocation) => allocation.count > 1)
+      .sort((left, right) => {
+        if (right.pValue !== left.pValue) {
+          return right.pValue - left.pValue
+        }
+
+        return right.count - left.count
+      })[0]
+
+    if (!highest) {
+      break
+    }
+
+    highest.count -= 1
+    adjusted -= 1
+  }
+
+  return allocations
 }
 
 export function validateGeneratedReviewQuestion(
