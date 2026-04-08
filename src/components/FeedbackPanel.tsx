@@ -18,12 +18,12 @@ export default function FeedbackPanel({
   score,
   content,
   onNext,
-  nextLabel = '继续学习'
+  nextLabel = '下一题'
 }: FeedbackPanelProps) {
   return (
     <div
       className={`
-        fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-out lg:absolute
+        transform transition-transform duration-300 ease-out
         ${visible ? 'translate-y-0' : 'translate-y-full'}
       `}
     >
@@ -33,7 +33,7 @@ export default function FeedbackPanel({
           ${isCorrect ? 'border-emerald-500' : 'border-error'}
         `}
       >
-        <div className="px-6 py-6 md:px-10 lg:py-8 max-h-[70vh] flex flex-col">
+        <div className="px-6 py-6 md:px-10 lg:py-8 max-h-[45vh] flex flex-col">
           {/* Header Row */}
           <div className="flex items-center justify-between mb-6 shrink-0">
             <div className="flex items-center gap-3">
@@ -41,7 +41,7 @@ export default function FeedbackPanel({
                 {isCorrect ? 'check_circle' : 'cancel'}
               </span>
               <h2 className={`text-2xl font-bold font-headline ${isCorrect ? 'text-emerald-800' : 'text-error'}`}>
-                {isCorrect ? '太棒了!' : '下次加油!'}
+                {isCorrect ? '正确!' : '再想想'}
               </h2>
             </div>
             {score !== undefined && (
