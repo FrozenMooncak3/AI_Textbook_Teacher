@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import QASession from './qa/QASession'
 import NotesDisplay from './NotesDisplay'
 import AIResponse from '@/components/AIResponse'
+import SplitPanelLayout from '@/components/SplitPanelLayout'
+import LoadingState from '@/components/LoadingState'
 
 // --- Types ---
 
@@ -102,60 +104,101 @@ export default function ModuleLearning({
     setStatus('completed')
   }
 
+  // ── KP Sidebar Derivation ───────────────────────────────────
+  const kpStatus = (status === 'qa') 
+    ? 'current' as const 
+    : (status === 'notes_generated' || status === 'completed') 
+      ? 'done' as const 
+      : 'pending' as const
+
+  const knowledgePoints = Array.from({ length: module.kp_count || 5 }).map((_, i) => ({
+    id: i,
+    code: `KP ${module.order_index}.${i + 1}`,
+    name: `知识点 ${i + 1}`,
+    status: kpStatus
+  }))
+
+  const breadcrumbs = [
+    { label: bookTitle, href: `/books/${bookId}` },
+    { label: `${module.title} 学习` },
+  ]
+
   // ── 渲染视图 ──────────────────────────────────────────────
-  if (status === 'unstarted' || status === 'reading') {
+  
+  if (isTransitioning) {
     return (
-      <ReadingPhase 
-        module={module} 
-        bookRawText={bookRawText} 
-        onDone={handleStartQA}
-        isGenerating={isTransitioning}
-        error={error}
-      />
-    )
-  }
-
-  if (status === 'qa') {
-    return (
-      <QASession 
-        moduleId={module.id} 
-        moduleTitle={module.title} 
-        bookId={bookId}
-        bookTitle={bookTitle}
-        onComplete={handleCompleteNotes}
-      />
-    )
-  }
-
-  if (status === 'notes_generated') {
-    return (
-      <NotesDisplay 
-        moduleId={module.id} 
-        bookId={bookId} 
-        onComplete={handleFinalComplete}
-      />
-    )
-  }
-
-  if (status === 'completed') {
-    return (
-      <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant/10 p-12 text-center shadow-xl">
-        <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-sm">
-          <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-        </div>
-        <h2 className="text-3xl font-black text-on-surface mb-4 font-headline tracking-tight">恭喜完成模块学习！</h2>
-        <p className="text-on-surface-variant mb-10 font-medium text-lg">你已经成功完成了《{module.title}》的所有学习环节。</p>
-        <button 
-          onClick={() => router.push(`/books/${bookId}`)}
-          className="w-full sm:w-auto amber-glow text-on-primary font-bold py-4 px-12 rounded-full shadow-xl shadow-orange-900/10 transition-all font-headline tracking-wide active:scale-95"
-        >
-          返回教材首页
-        </button>
+      <div className="h-screen flex items-center justify-center bg-surface">
+        <LoadingState label="AI 正在为你准备下一步学习内容..." />
       </div>
     )
   }
 
-  return null
+  return (
+    <SplitPanelLayout
+      breadcrumbs={breadcrumbs}
+      knowledgePoints={knowledgePoints}
+    >
+      <div className="max-w-4xl mx-auto p-6 lg:p-12">
+        {error && (
+          <div className="mb-8 p-6 bg-error-container/10 border border-error/20 rounded-[32px] text-center shadow-sm">
+            <span className="material-symbols-outlined text-error text-4xl mb-3" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+            <p className="text-lg font-bold text-error font-headline">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 px-8 py-2 bg-primary text-on-primary rounded-full font-bold shadow-lg shadow-orange-900/10 active:scale-95 transition-all"
+            >
+              重试
+            </button>
+          </div>
+        )}
+
+        {/* Learning Status Router */}
+        {(status === 'unstarted' || status === 'reading') && (
+          <ReadingPhase 
+            module={module} 
+            bookRawText={bookRawText} 
+            onDone={handleStartQA}
+            isGenerating={isTransitioning}
+            error={error}
+          />
+        )}
+
+        {status === 'qa' && (
+          <QASession 
+            moduleId={module.id} 
+            moduleTitle={module.title} 
+            bookId={bookId}
+            bookTitle={bookTitle}
+            onComplete={handleCompleteNotes}
+          />
+        )}
+
+        {status === 'notes_generated' && (
+          <NotesDisplay 
+            moduleId={module.id} 
+            bookId={bookId} 
+            onComplete={handleFinalComplete}
+          />
+        )}
+
+        {status === 'completed' && (
+          <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant/10 p-12 text-center shadow-xl">
+            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-sm">
+              <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+            </div>
+            <h2 className="text-3xl font-black text-on-surface mb-4 font-headline tracking-tight">恭喜完成模块学习！</h2>
+            <p className="text-on-surface-variant mb-10 font-medium text-lg">你已经成功完成了《{module.title}》的所有学习环节。</p>
+            <button 
+              onClick={() => router.push(`/books/${bookId}`)}
+              className="w-full sm:w-auto amber-glow text-on-primary font-bold py-4 px-12 rounded-full shadow-xl shadow-orange-900/10 transition-all font-headline tracking-wide active:scale-95"
+            >
+              返回教材首页
+            </button>
+          </div>
+        )}
+      </div>
+    </SplitPanelLayout>
+  )
 }
 
 // ── Reading Phase Component ───────────────────────────────────
@@ -328,12 +371,6 @@ function ReadingPhase({
 
       {/* CTA */}
       <div className="pt-6">
-        {error && (
-          <div className="mb-6 p-4 bg-error-container/10 border border-error/20 text-error text-sm font-bold rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-            <span className="material-symbols-outlined">error</span>
-            {error}
-          </div>
-        )}
         <button 
           onClick={onDone}
           disabled={isGenerating}

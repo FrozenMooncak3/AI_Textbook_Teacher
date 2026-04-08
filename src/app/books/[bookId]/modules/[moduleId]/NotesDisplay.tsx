@@ -59,7 +59,7 @@ export default function NotesDisplay({
       })
       if (res.ok) {
         if (onComplete) onComplete()
-        router.push(`/books/${bookId}/module-map`)
+        router.push(`/books/${bookId}`)
       }
     } catch {
       setError('操作失败，请重试')

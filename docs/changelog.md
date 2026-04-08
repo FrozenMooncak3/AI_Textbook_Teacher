@@ -1537,3 +1537,21 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 
 **修改文件**:
 - 修改: `src/app/books/[bookId]/modules/[moduleId]/qa/page.tsx`, `src/app/books/[bookId]/modules/[moduleId]/qa/QASession.tsx`, `src/app/books/[bookId]/modules/[moduleId]/page.tsx`, `src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`, `docs/changelog.md`
+
+---
+
+## 2026-04-08 | UX Redesign T5: 模块学习页 Split Panel 封装与链接修复
+
+**完成内容**: 将模块学习主流程（阅读、指引、笔记）封装进 `SplitPanelLayout`，并修复了导航链接。
+- **ModuleLearning.tsx 封装**:
+  - 引入 `SplitPanelLayout` 作为学习页面的外层壳，统一了面包屑导航（[书名] > [模块名] 学习）。
+  - 实现了基于 `learning_status` 的知识点状态推导：阅读阶段显示为"待开始"，Q&A 阶段显示为"进行中"，笔记及以后阶段显示为"已完成"。
+  - 优化了加载与错误状态的视觉呈现，使其符合 Amber Companion 设计规范。
+- **NotesDisplay.tsx 修复**:
+  - 修正了"完成学习"后的跳转逻辑，从已废弃的 `/module-map` 改为跳转至新的 `/books/[bookId]` Action Hub。
+- **视觉一致性**: 
+  - 移除了所有残留的 `blue-` 和 `gray-` Tailwind 类，全面切换为 Amber Token。
+  - 使用 `Material Symbols Outlined` 统一了所有图标。
+
+**修改文件**:
+- 修改: `src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`, `src/app/books/[bookId]/modules/[moduleId]/NotesDisplay.tsx`, `docs/changelog.md`
