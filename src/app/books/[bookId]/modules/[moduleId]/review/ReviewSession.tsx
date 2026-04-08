@@ -175,7 +175,7 @@ export default function ReviewSession({
     id: i,
     code: `Q${i + 1}`,
     name: `复习题目 ${i + 1}`,
-    status: (i < currentIndex) ? 'done' as const : (i === currentIndex) ? 'current' as const : 'pending' as const
+    status: (i < currentIndex - 1) ? 'done' as const : (i === currentIndex - 1) ? 'current' as const : 'pending' as const
   }))
 
   const breadcrumbs = [
@@ -215,7 +215,11 @@ export default function ReviewSession({
             visible={!!feedback}
             isCorrect={feedback.is_correct}
             score={Math.round(feedback.score * 100)}
-            content={feedback.ai_feedback}
+            content={[
+              feedback.ai_feedback,
+              feedback.correct_answer ? `\n\n**正确答案：** ${feedback.correct_answer}` : '',
+              feedback.explanation ? `\n\n**解析：** ${feedback.explanation}` : ''
+            ].join('')}
             onNext={handleNext}
             nextLabel={feedback.has_next ? '下一题' : '查看复习报告'}
           />
