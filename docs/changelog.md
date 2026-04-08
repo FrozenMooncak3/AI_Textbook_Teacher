@@ -1471,3 +1471,24 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 
 **修改文件**:
 - 修改: `src/components/sidebar/Sidebar.tsx`, `src/components/sidebar/SidebarProvider.tsx`, `src/components/sidebar/SidebarToggle.tsx`, `src/components/sidebar/SidebarLayout.tsx`, `docs/changelog.md`
+
+---
+
+## 2026-04-08 | UX Redesign T3: 核心布局组件 SplitPanelLayout & FeedbackPanel
+
+**完成内容**: 创建了两个核心共享组件，作为后续学习页面（Q&A、学习、复习）的基础构建块。
+- **SplitPanelLayout.tsx**: 
+  - 实现了左侧知识点导航栏（240px，支持桌面折叠和移动端抽屉模式）。
+  - 知识点列表支持状态圆点（已完成、当前、待开始）及其对应的视觉特效。
+  - 顶部集成面包屑导航条，支持多级跳转和当前位置展示。
+  - 主内容区域提供 `feedbackSlot`（底部滑出反馈）和 `footerSlot`（吸底操作栏）插槽。
+- **FeedbackPanel.tsx**: 
+  - 实现了标准化的答题反馈面板，支持根据对错自动切换颜色（翡翠绿/错误红）和图标。
+  - 集成 `AIResponse` 渲染 Markdown 格式的 AI 评价。
+  - 采用 `amber-glow` 渐变按钮作为主操作项，并提供平滑的向上滑入动画。
+- **Amber Token 适配**: 全部组件严格遵循 Amber Companion 设计规范，无 hardcoded 颜色。
+- **类型安全**: 通过 `npx tsc --noEmit` 验证，无 TypeScript 错误。
+
+**修改文件**:
+- 新增: `src/components/SplitPanelLayout.tsx`, `src/components/FeedbackPanel.tsx`
+- 修改: `docs/changelog.md`
