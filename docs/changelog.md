@@ -1610,3 +1610,23 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 **修改文件**:
 - 新增: `src/app/books/[bookId]/modules/[moduleId]/review/ReviewBriefing.tsx`, `src/app/books/[bookId]/modules/[moduleId]/review/ReviewPageClient.tsx`
 - 修改: `src/app/books/[bookId]/modules/[moduleId]/review/page.tsx`, `src/app/books/[bookId]/modules/[moduleId]/review/ReviewSession.tsx`, `docs/changelog.md`
+
+---
+
+## 2026-04-09 | UX Redesign T11: 全新首页（Amber Hero 风格 + 进度聚合）
+
+**完成内容**: 重构了系统首页，提供基于书籍数量的动态布局，并集成了复习任务追踪。
+- **页面重构 (src/app/page.tsx)**:
+  - **Hero 模式**: 当用户仅有一本书时，展示巨幕 Hero 卡片，左侧显示书籍详情，右侧辅以动态圆环进度条（SVG Circle），直观展示总学习进度。
+  - **Grid 模式**: 当用户有多本书时，展示响应式卡片网格，每张卡片均包含线性进度条和模块完成统计。
+  - **空状态**: 针对新用户设计了引导式的空状态卡片，通过大图标和明确的 "上传教材" CTA 引导开始学习。
+  - **数据增强**: 扩展了首页查询 SQL，实现了一次性聚合计算每本书的模块总数与已完成数。
+- **复习提醒升级 (src/app/ReviewButton.tsx)**:
+  - 将 `ReviewButton` 重构为 `ReviewDueBadge` 风格的折叠横幅。
+  - 接入 Amber Token 和 Material Symbols，使用双栏网格展示待复习任务，支持快速跳转。
+- **视觉一致性**: 
+  - 全面移除 legacy 类名，适配 `bg-surface-container-low` 页面背景。
+  - 修正了所有指向旧版 `/dashboard` 的链接，统一收口至 `/books/[bookId]` Action Hub。
+
+**修改文件**:
+- 修改: `src/app/page.tsx`, `src/app/ReviewButton.tsx`, `docs/changelog.md`

@@ -30,57 +30,56 @@ export default function ReviewButton() {
   if (loading || reviews.length === 0) return null
 
   return (
-    <div className="mb-8">
+    <div className="w-full">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-900 px-5 py-4 rounded-xl transition-all shadow-sm"       
+        className="w-full flex items-center justify-between bg-surface-container-high border border-primary/10 hover:bg-surface-container transition-all px-6 py-5 rounded-3xl shadow-sm group"       
       >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-primary text-on-primary rounded-full flex items-center justify-center text-sm font-black shadow-md shadow-orange-900/20">
             {reviews.length}
           </div>
-          <span className="text-sm font-bold uppercase tracking-tight">待复习任务</span>
+          <div className="flex flex-col items-start">
+            <span className="text-sm font-black text-on-surface font-headline uppercase tracking-widest">待复习任务</span>
+            <span className="text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-tighter mt-0.5">REVIEW TASKS DUE TODAY</span>
+          </div>
         </div>
-        <svg 
-          className={`w-5 h-5 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <span className={`material-symbols-outlined transition-transform duration-300 text-on-surface-variant ${expanded ? 'rotate-180' : ''}`}>
+          expand_more
+        </span>
       </button>
 
       {expanded && (
-        <div className="mt-3 bg-white rounded-xl border border-slate-200 overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="divide-y divide-slate-100">
-            {reviews.map(r => (
-              <Link
-                key={r.schedule_id}
-                href={`/books/${r.book_id}/modules/${r.module_id}/review?scheduleId=${r.schedule_id}`}
-                className="block px-5 py-4 hover:bg-amber-50/50 transition-colors group"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-bold text-slate-900 group-hover:text-amber-900 transition-colors">
-                      {r.module_title}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {r.book_title}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded uppercase tracking-tighter">
-                      Round {r.review_round}
-                    </span>
-                    <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter font-medium">
-                      Due: {r.due_date}
-                    </p>
-                  </div>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          {reviews.map(r => (
+            <Link
+              key={r.schedule_id}
+              href={`/books/${r.book_id}/modules/${r.module_id}/review?scheduleId=${r.schedule_id}`}
+              className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-5 hover:shadow-md hover:border-primary/20 transition-all group flex items-center justify-between gap-4"
+            >
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary shrink-0 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                  <span className="material-symbols-outlined text-xl">auto_stories</span>
                 </div>
-              </Link>
-            ))}
-          </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-on-surface truncate group-hover:text-primary transition-colors">
+                    {r.module_title}
+                  </p>
+                  <p className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest mt-1 truncate">
+                    {r.book_title}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="inline-block text-[10px] font-black bg-primary/10 text-primary px-2.5 py-1 rounded-lg uppercase tracking-widest mb-1">
+                  第 {r.review_round} 轮
+                </span>
+                <p className="text-[10px] font-black text-on-surface-variant/30 uppercase tracking-tighter">
+                  到期：{r.due_date}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </div>
