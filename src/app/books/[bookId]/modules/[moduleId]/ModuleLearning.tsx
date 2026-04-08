@@ -35,17 +35,19 @@ interface ReadingNote {
 // --- Components ---
 
 const LoadingSpinner = () => (
-  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
 )
 
 export default function ModuleLearning({
   module,
   bookRawText,
   bookId,
+  bookTitle,
 }: {
   module: Module
   bookRawText: string
   bookId: number
+  bookTitle: string
 }) {
   const router = useRouter()
   const [status, setStatus] = useState<LearningStatus>(module.learning_status as LearningStatus)
@@ -66,7 +68,7 @@ export default function ModuleLearning({
             setStatus('reading')
           }
         } catch {
-          // silently fail, we'll try again if they refresh
+          // silently fail
         }
       }
       transitionToReading()
@@ -83,10 +85,10 @@ export default function ModuleLearning({
       if (result.success) {
         setStatus('qa')
       } else {
-        setError(result.error || 'Failed to generate questions')
+        setError(result.error || '无法生成 Q&A 题目')
       }
     } catch {
-      setError('Connection failed. Please try again.')
+      setError('无法连接服务器，请重试。')
     } finally {
       setIsTransitioning(false)
     }
@@ -118,6 +120,8 @@ export default function ModuleLearning({
       <QASession 
         moduleId={module.id} 
         moduleTitle={module.title} 
+        bookId={bookId}
+        bookTitle={bookTitle}
         onComplete={handleCompleteNotes}
       />
     )
@@ -135,15 +139,17 @@ export default function ModuleLearning({
 
   if (status === 'completed') {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center shadow-sm">
-        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">✓</div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">恭喜完成！</h2>
-        <p className="text-slate-600 mb-8">你已经完成了模块《{module.title}》的学习。</p>
+      <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant/10 p-12 text-center shadow-xl">
+        <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-sm">
+          <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+        </div>
+        <h2 className="text-3xl font-black text-on-surface mb-4 font-headline tracking-tight">恭喜完成模块学习！</h2>
+        <p className="text-on-surface-variant mb-10 font-medium text-lg">你已经成功完成了《{module.title}》的所有学习环节。</p>
         <button 
-          onClick={() => router.push(`/books/${bookId}/module-map`)}
-          className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-10 rounded-xl transition-all"
+          onClick={() => router.push(`/books/${bookId}`)}
+          className="w-full sm:w-auto amber-glow text-on-primary font-bold py-4 px-12 rounded-full shadow-xl shadow-orange-900/10 transition-all font-headline tracking-wide active:scale-95"
         >
-          返回模块地图
+          返回教材首页
         </button>
       </div>
     )
@@ -181,7 +187,7 @@ function ReadingPhase({
         if (data.guide) {
           setGuide(data.guide)
         }
-      } catch { /* ignore guide load failures */ }
+      } catch { /* ignore */ }
     }
     fetchGuide()
   }, [module.id])
@@ -193,7 +199,6 @@ function ReadingPhase({
         const res = await fetch(`/api/modules/${module.id}/reading-notes`)
         const result = await res.json()
         if (result.success && result.data.notes.length > 0) {
-          // Join multiple notes into one text area content for simplicity
           setNotes(result.data.notes.map((n: ReadingNote) => n.content).join('\n\n'))
         }
       } catch { /* ignore */ }
@@ -205,7 +210,6 @@ function ReadingPhase({
     if (!notes.trim()) return
     setIsSaving(true)
     try {
-      // Fix C1: Clear existing notes before saving new content to avoid duplicates
       const res = await fetch(`/api/modules/${module.id}/reading-notes`)
       const result = await res.json()
       if (result.success && result.data.notes.length > 0) {
@@ -228,53 +232,50 @@ function ReadingPhase({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-12">
       {/* Guide Banner */}
       {guide && (
-        <div className="bg-white rounded-2xl border border-blue-100 overflow-hidden shadow-sm shadow-blue-50">
+        <div className="bg-surface-container-lowest rounded-[32px] border border-primary/10 overflow-hidden shadow-sm shadow-orange-900/5">
           <button 
             onClick={() => setIsGuideOpen(!isGuideOpen)}
-            className="w-full px-6 py-4 flex items-center justify-between bg-blue-50/50 hover:bg-blue-50 transition-colors"
+            className="w-full px-8 py-5 flex items-center justify-between bg-primary/5 hover:bg-primary/10 transition-colors"
           >
-            <div className="flex items-center gap-3">
-              <span className="text-xl">💡</span>
-              <span className="font-bold text-blue-900">读前指引：本模块学习目标</span>
+            <div className="flex items-center gap-4 text-primary">
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>lightbulb</span>
+              <span className="font-black font-headline tracking-wide uppercase text-xs">读前指引：本模块学习目标</span>
             </div>
-            <svg 
-              className={`w-5 h-5 text-blue-400 transition-transform ${isGuideOpen ? 'rotate-180' : ''}`} 
-              fill="none" viewBox="0 0 24 24" stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="19 9l-7 7-7-7" />
-            </svg>
+            <span className={`material-symbols-outlined text-primary/40 transition-transform ${isGuideOpen ? 'rotate-180' : ''}`}>
+              expand_more
+            </span>
           </button>
           
           {isGuideOpen && (
-            <div className="p-6 space-y-6">
+            <div className="p-8 space-y-8">
               <div>
-                <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2">学完能做什么</p>
-                <div className="text-slate-700 leading-relaxed">
+                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4">学完能做什么</p>
+                <div className="text-on-surface text-lg leading-relaxed font-medium">
                   <AIResponse content={guide.goal} />
                 </div>
               </div>
               
-              <div className="grid sm:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-2 gap-8 pt-4 border-t border-outline-variant/10">
                 <div>
-                  <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-3">核心重点</p>
-                  <ul className="space-y-2">
+                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-4">核心重点</p>
+                  <ul className="space-y-3">
                     {guide.focus_points.map((p, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-slate-600">
-                        <span className="text-emerald-400 font-bold shrink-0">·</span>
+                      <li key={i} className="flex gap-3 text-sm text-on-surface-variant font-medium">
+                        <span className="text-emerald-500 font-black shrink-0">·</span>
                         <AIResponse content={p} />
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-amber-500 uppercase tracking-widest mb-3">容易混淆</p>
-                  <ul className="space-y-2">
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4">容易混淆</p>
+                  <ul className="space-y-3">
                     {guide.common_mistakes.map((p, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-slate-600">
-                        <span className="text-amber-400 font-bold shrink-0">!</span>
+                      <li key={i} className="flex gap-3 text-sm text-on-surface-variant font-medium">
+                        <span className="text-primary font-black shrink-0">!</span>
                         <AIResponse content={p} />
                       </li>
                     ))}
@@ -287,61 +288,56 @@ function ReadingPhase({
       )}
 
       {/* Reading Area */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h3 className="font-bold text-slate-900 flex items-center gap-2">
-            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
+      <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant/10 overflow-hidden shadow-sm">
+        <div className="px-8 py-5 border-b border-outline-variant/10 flex items-center justify-between bg-surface-container-low/30">
+          <h3 className="font-black font-headline text-on-surface flex items-center gap-3">
+            <span className="material-symbols-outlined text-on-surface-variant/40">menu_book</span>
             教材原文
           </h3>
-          <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter">Read Carefully</span>
+          <span className="text-[10px] bg-surface-container-high text-on-surface-variant px-3 py-1 rounded-full font-black uppercase tracking-[0.1em]">Deep Learning</span>
         </div>
-        <div className="p-8 max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
-          <pre className="text-sm text-slate-700 leading-loose whitespace-pre-wrap font-sans">
+        <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+          <pre className="text-base text-on-surface leading-loose whitespace-pre-wrap font-body">
             {bookRawText}
           </pre>
         </div>
       </div>
 
       {/* Notes Area */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-slate-900 flex items-center gap-2">
-            <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
+      <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant/10 p-8 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-black font-headline text-on-surface flex items-center gap-3">
+            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>edit_note</span>
             阅读笔记
           </h3>
-          {isSaving && <div className="text-[10px] text-slate-400 animate-pulse">正在保存...</div>}
+          {isSaving && <div className="text-[10px] text-primary font-bold animate-pulse uppercase tracking-widest">Saving...</div>}
         </div>
         <textarea 
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           onBlur={handleSaveNotes}
           placeholder="在这里记录你的思考、疑问或重点..."
-          rows={4}
-          className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-300 resize-none bg-slate-50/30"
+          rows={5}
+          className="w-full bg-surface-container-low/30 border border-outline-variant/10 rounded-2xl px-6 py-5 text-on-surface focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all placeholder:text-on-surface-variant/30 resize-none"
         />
-        <p className="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+        <div className="mt-4 flex items-center gap-2 text-[10px] text-on-surface-variant/50 font-bold uppercase tracking-widest">
+          <span className="material-symbols-outlined text-xs">info</span>
           笔记将用于辅助 AI 出题，让练习更具针对性
-        </p>
+        </div>
       </div>
 
       {/* CTA */}
-      <div className="pt-4">
+      <div className="pt-6">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 text-xs rounded-xl flex items-center gap-2">
-            <span>⚠️</span> {error}
+          <div className="mb-6 p-4 bg-error-container/10 border border-error/20 text-error text-sm font-bold rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+            <span className="material-symbols-outlined">error</span>
+            {error}
           </div>
         )}
         <button 
           onClick={onDone}
           disabled={isGenerating}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-3 transform active:scale-[0.99]"
+          className="w-full amber-glow text-on-primary font-black font-headline text-lg py-5 rounded-full shadow-xl shadow-orange-900/20 transition-all flex items-center justify-center gap-4 transform active:scale-[0.98] disabled:opacity-50"
         >
           {isGenerating ? (
             <>
@@ -351,9 +347,7 @@ function ReadingPhase({
           ) : (
             <>
               <span>我读完了，进入 Q&A 练习</span>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
+              <span className="material-symbols-outlined">chevron_right</span>
             </>
           )}
         </button>

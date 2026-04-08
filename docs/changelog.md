@@ -1515,3 +1515,25 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 **修改文件**:
 - 新增: `src/components/SplitPanelLayout.tsx`, `src/components/FeedbackPanel.tsx`
 - 修改: `docs/changelog.md`
+
+---
+
+## 2026-04-08 | UX Redesign T4: Q&A 模式重构与 Split Panel 集成
+
+**完成内容**: 使用 `SplitPanelLayout` 和 `FeedbackPanel` 重构了 Q&A 练习模式。
+- **QASession.tsx 重写**:
+  - 集成了 `SplitPanelLayout` 作为基础布局，展示知识点侧边栏和多级面包屑。
+  - 引入 `FeedbackPanel` 处理答题后的实时评分与 AI 反馈，支持平滑的滑出动画。
+  - 新增分段式进度条（Segmented Progress Bar），实时展示答题进度与当前位置。
+  - 针对 `scaffolded_mc` 类型实现了卡片式选项选择 UI，提升触控与点击体验。
+  - 适配 Amber Companion 设计系统，全面使用设计 Token（如 `amber-glow`, `primary-fixed-dim` 等）。
+- **流程与不变量**:
+  - 严格遵守"已答题目不可修改"原则，提交后锁定输入。
+  - 保留原有的一题一答、即时反馈逻辑。
+  - 完整保留并优化了自动出题（Generate Questions）与进度恢复（Resume Progress）的数据交互逻辑。
+- **关联更新**:
+  - 更新 `ModuleLearning.tsx` 和相关 `page.tsx`，确保正确传递 `bookId` 和 `bookTitle` 等上下文信息。
+  - 统一了模块学习页面的视觉风格，移除了旧有的 blue/gray 色调。
+
+**修改文件**:
+- 修改: `src/app/books/[bookId]/modules/[moduleId]/qa/page.tsx`, `src/app/books/[bookId]/modules/[moduleId]/qa/QASession.tsx`, `src/app/books/[bookId]/modules/[moduleId]/page.tsx`, `src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`, `docs/changelog.md`

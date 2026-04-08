@@ -45,18 +45,13 @@ export default async function QAPage({
   if (!module_) notFound()
 
   return (
-    <main className="min-h-full bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
-          <a href={`/books/${bookId}`} className="hover:text-gray-600 transition-colors">
-            {book.title}
-          </a>
-          <span>/</span>
-          <span className="text-gray-600">模块 {module_.order_index} Q&A</span>
-        </div>
-
-        <QASession moduleId={module_.id} moduleTitle={module_.title} />
-      </div>
+    <main className="min-h-full bg-surface-container-low">
+      <QASession 
+        moduleId={module_.id} 
+        moduleTitle={module_.title} 
+        bookId={book.id}
+        bookTitle={book.title}
+      />
     </main>
   )
 }
