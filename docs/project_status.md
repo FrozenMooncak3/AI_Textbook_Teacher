@@ -5,21 +5,21 @@
 
 ---
 
-## 当前状态（2026-04-07）
+## 当前状态（2026-04-09）
 
-**方向**：MVP 已上线——完整学习流程 + 多用户 + Docker 部署
+**方向**：MVP 已上线 + UX 全面升级——完整学习流程 + 多用户 + Docker 部署 + Amber Companion 设计系统
 
-**当前里程碑**：M6 MVP Launch — **功能完成，审计修复中**
+**当前里程碑**：UX Redesign — **已完成**
 
-**最新完成**：M6 重做 milestone-audit，发现 4 个严重断裂（OCR 管道未迁移 PostgreSQL + initDb 未自动调用）。
+**最新完成**：
+- UX Redesign 全部 13 个任务完成（T0-T12），Amber Companion 设计系统覆盖全部页面
+- 新增共享组件：SplitPanelLayout、FeedbackPanel、QuestionNavigator、ExamShell
+- 合并页面：module-map + dashboard → Action Hub（/books/[bookId]）
+- 考试模式重写：自由导航 + 标记 + localStorage 持久化 + 检查页 + 批量提交
+- 复习系统升级：新增 Briefing 画面（API + 前端） + SplitPanelLayout session
+- 全站中文 UI + Material Symbols 图标 + Plus Jakarta Sans / Be Vietnam Pro 字体
 
-**正在进行**：M6-hotfix — 2 个修复任务待派发给 Codex（见 `.ccb/task-ledger.json`）
-- T1（重档）：OCR 管道迁移 — ocr_pdf.py→HTTP 服务，books/route.ts spawn→HTTP，端口统一
-- T2（轻档）：instrumentation.ts 自动调用 initDb() + 清理 docker-compose SESSION_SECRET
-
-**已手动修复**：prompt templates 已种子化（12 个），通过 `scripts/seed-now.ts`
-
-**下一步**：派发 T1+T2 → review → 重新测试 → 部署 → 邀请种子用户
+**下一步**：部署更新 + 用户测试验证
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -40,6 +40,7 @@
 | M5 | 功能补完：截图问 AI 两步流程 + AIResponse Markdown 渲染 + 正确答案展示 + 仪表盘 + 错题诊断 | **已完成**（2026-04-03） |
 | M5.5 | 稳固 & App Shell：侧栏导航 + 白屏修复 + OCR 自动触发 + 进度显示 + LoadingState | **已完成**（2026-04-04） |
 | M6 | MVP Launch：PostgreSQL 迁移 + 用户账号 + 大 PDF 分块 + PDF 阅读器 + 部署上线 | **已完成**（2026-04-06） |
+| UX Redesign | Amber Companion 设计系统全覆盖 + 页面合并 + 考试/复习重写 + 共享组件 | **已完成**（2026-04-09） |
 
 ### M6 完成内容
 

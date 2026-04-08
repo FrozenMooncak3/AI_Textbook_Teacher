@@ -1630,3 +1630,25 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 
 **修改文件**:
 - 修改: `src/app/page.tsx`, `src/app/ReviewButton.tsx`, `docs/changelog.md`
+
+---
+
+## 2026-04-09 | UX Redesign 里程碑完成 — Amber Companion 设计系统全覆盖
+
+**UX Redesign 完成**：13 个任务（T0-T12），11 个 Gemini 前端任务 + 1 个 Codex 后端任务 + 1 个 Claude 文档任务。
+
+核心变更：
+- **T0 设计基础**（52163ad）：Tailwind v4 @theme inline tokens（Amber Companion 色板），Plus Jakarta Sans + Be Vietnam Pro 字体（next/font/google），Material Symbols Outlined 图标，amber-glow 渐变类
+- **T1 侧栏简化**（ecbbb51）：三层导航→两层，Amber 视觉，/login /register /test 路由跳过侧栏
+- **T2 Action Hub**（a7e40b0）：合并 module-map + dashboard 为 `/books/[bookId]`，进度概览 + 模块列表 + 复习入口
+- **T3 共享组件**（5af7ef2, 97ce35b）：SplitPanelLayout（KP 侧栏 240px + 面包屑 + feedbackSlot + footerSlot）+ FeedbackPanel（滑入式答题反馈）
+- **T4 QA 重写**（0e0f206）：QASession 迁移到 SplitPanelLayout + FeedbackPanel
+- **T5 模块学习**（b205f06, 4902ea3）：ModuleLearning 迁移到 SplitPanelLayout shell
+- **T6 考试模式**（c7bc043）：ExamShell 全屏容器 + QuestionNavigator 自由导航 + 标记题目 + localStorage 持久化 + 检查页 + 批量提交
+- **T7 复习 Briefing API**（509e762）：`GET /api/review/[scheduleId]/briefing` → 轮次/间隔/掌握分布/集群列表
+- **T8 复习前端**（993297b, 2f0dac2）：ReviewBriefing 画面 + ReviewSession 迁移到 SplitPanelLayout + FeedbackPanel
+- **T9 错题本**（f673832）：两个错题页 Amber token 替换 + LoadingState Amber 风格
+- **T10 认证页**（c6daf84）：登录/注册页 Amber 重写 + 全中文 UI + 邀请码 URL 自动填充
+- **T11 首页**（32bb9c2, 6407aa1）：单书 Hero（SVG 进度环）/ 多书网格 / 空状态 + 复习提醒横幅
+
+CCB 协作统计：Gemini 11 任务（4 次 retry），Codex 1 任务，Claude 1 任务。Advisory 累计 22 条。

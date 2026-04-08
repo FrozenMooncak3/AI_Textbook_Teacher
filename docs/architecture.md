@@ -10,37 +10,47 @@
 ### 页面
 
 ```
-/ (首页：书目列表 + 待复习按钮)
+/ (首页：单书 Hero / 多书网格 / 空状态 + 复习提醒横幅)
 ├── /upload (上传 PDF)
 ├── /logs (系统日志)
 └── /books/[bookId]
-    ├── / (书详情：ProcessingPoller 或 ModuleMap)
+    ├── / (Action Hub：合并原 module-map + dashboard，进度+模块列表+复习入口)
     ├── /reader (PDF 阅读器 + 截图问 AI：OCR→提问→回答两步流程)
-    ├── /module-map (模块地图)
-    ├── /dashboard (学习仪表盘：进度/复习/测试/错题四宫格)
-    ├── /mistakes (书级错题诊断本：多维筛选)
+    ├── /module-map → 重定向到 /books/[bookId]（已废弃）
+    ├── /dashboard → 重定向到 /books/[bookId]（已废弃）
+    ├── /mistakes (书级错题诊断本：Amber 风格多维筛选)
     └── /modules/[moduleId]
-        ├── / (模块学习：指引→阅读→QA→笔记)
-        ├── /qa (QA session)
-        ├── /test (测试 session)
-        ├── /review?scheduleId=X (复习 session)
-        └── /mistakes (错题页)
+        ├── / (模块学习：SplitPanelLayout shell，指引→阅读→QA→笔记)
+        ├── /qa (QA session：SplitPanelLayout + FeedbackPanel)
+        ├── /test (测试 session：ExamShell 全屏模式 + QuestionNavigator 自由导航)
+        ├── /review?scheduleId=X (复习 session：ReviewBriefing → SplitPanelLayout + FeedbackPanel)
+        └── /mistakes (错题页：Amber 风格)
 
-App Shell (M5.5):
+App Shell（UX Redesign 更新）:
 ├── src/app/layout.tsx → 包裹 SidebarLayout
 ├── src/components/sidebar/SidebarProvider.tsx → 侧栏状态 Context（展开/折叠/移动端）
-├── src/components/sidebar/Sidebar.tsx → 三层路由感知导航（全局→书→模块）
-├── src/components/sidebar/SidebarLayout.tsx → flex h-screen: sidebar + main(flex-1 overflow-auto)
+├── src/components/sidebar/Sidebar.tsx → 两层路由感知导航（全局→书），Amber Companion 视觉
+├── src/components/sidebar/SidebarLayout.tsx → flex h-screen，/login /register /test 路由跳过侧栏
 ├── src/components/sidebar/SidebarToggle.tsx → 移动端汉堡菜单 + 桌面端折叠按钮
-├── src/components/LoadingState.tsx → 共享加载组件（stage 模式 / progress 模式）
+├── src/components/SplitPanelLayout.tsx → 共享 KP 侧栏（240px）+ 面包屑 + 内容 + feedbackSlot + footerSlot
+├── src/components/FeedbackPanel.tsx → 滑入式答题反馈面板（isCorrect/score/content/onNext）
+├── src/components/QuestionNavigator.tsx → 测试底部导航栏（题号圆点+上下题+检查页按钮）
+├── src/app/books/[bookId]/modules/[moduleId]/test/ExamShell.tsx → 全屏考试容器（顶栏+进度+footer slot）
+├── src/components/LoadingState.tsx → 共享加载组件（Amber 风格 spinner + progress）
 ├── src/app/error.tsx → 根级错误边界
 ├── src/app/books/[bookId]/error.tsx → 书级错误边界
 ├── src/app/books/[bookId]/modules/[moduleId]/error.tsx → 模块级错误边界
 ├── src/app/books/[bookId]/layout.tsx → 书级 layout（薄包装）
 └── src/app/not-found.tsx → 全局 404 页面
-└── /(auth) (route group + layout.tsx)
-    ├── /login (登录页)
-    └── /register (邀请码注册页)
+└── /(auth) (route group + layout.tsx，Amber 风格居中卡片)
+    ├── /login (登录页：中文 UI + auto_stories 图标)
+    └── /register (邀请码注册页：?code= URL 自动填充)
+
+Design System（UX Redesign 新增）:
+├── src/app/globals.css → @theme inline Tailwind v4 tokens（Amber Companion 色板）
+├── 字体：Plus Jakarta Sans（headline）+ Be Vietnam Pro（body）通过 next/font/google
+├── 图标：Material Symbols Outlined（全局 <link>）
+└── 主色：primary=#a74800，surface-container-low=#fefae8（cream）
 ```
 
 ### API 组
@@ -53,7 +63,7 @@ modules/            — list
 modules/[moduleId]/ — status, guide, generate-questions, qa-feedback, questions, reading-notes,
                       generate-notes, evaluate, test/generate, test/submit, test/, mistakes
 review/due          — GET 待复习列表
-review/[scheduleId]/ — generate, respond, complete
+review/[scheduleId]/ — generate, respond, complete, briefing
 qa/[questionId]/    — respond (ownership guard: question→module→book→user)
 conversations/      — messages (ownership guard: conversation→book→user)
 logs/               — 系统日志（按 user_id 过滤）
@@ -120,7 +130,8 @@ unstarted → reading → qa → notes_generated → testing → completed
   - 首次错 → P 不变，consecutive_correct = 0
 - **P=1 跳级**：所有 cluster P=1 且 consecutive_correct ≥ 3 → 跳过一个间隔级别
 - **复习记录**：review_records 存每次每 cluster 的 p_value_before/after
-- **前端**：ReviewSession 组件（QA 模式），首页 ReviewButton 显示待复习列表
+- **Briefing API**：`GET /api/review/[scheduleId]/briefing` → `{ data: { scheduleId, moduleId, moduleName, reviewRound, intervalDays, estimatedQuestions, lastReviewDaysAgo, masteryDistribution: { mastered, improving, weak }, clusters: [...] } }`
+- **前端（UX Redesign 更新）**：ReviewBriefing 展示轮次/间隔/掌握分布 → ReviewSession（SplitPanelLayout + FeedbackPanel），首页 ReviewButton 显示待复习列表
 
 ### 错题流转
 
@@ -161,15 +172,22 @@ unstarted → reading → qa → notes_generated → testing → completed
 - 覆盖范围：QA 反馈、测试评分、复习反馈、截图问答、读前指引、学习笔记、模块摘要、错题诊断
 - MarkdownRenderer 已删除，不再使用
 
-### App Shell 与导航（M5.5）
+### App Shell 与导航（M5.5 → UX Redesign 更新）
 
-- **侧栏导航**：SidebarLayout 包裹 root layout，`flex h-screen overflow-hidden`。侧栏固定左侧，内容区 `flex-1 overflow-auto` 独立滚动
-- **三层导航**：L1 全局（首页/上传）→ L2 书级（阅读/地图/仪表盘/错题）→ L3 模块级（学习/QA/测试/错题），路由感知自动展开
+- **侧栏导航**：SidebarLayout 包裹 root layout，`flex h-screen overflow-hidden`。侧栏固定左侧（Amber Companion 视觉），内容区 `flex-1 overflow-auto` 独立滚动
+- **两层导航**：L1 全局（首页/上传）→ L2 书级（阅读/Action Hub/错题），路由感知自动展开。原 L3 模块级导航移入 SplitPanelLayout KP 侧栏
+- **路由跳过**：/login、/register、/test 路由跳过侧栏（`SidebarLayout` 直接返回 `<>{children}</>`）
 - **移动端**：< 1024px 侧栏隐藏，汉堡菜单触发 overlay。ESC / backdrop 关闭
 - **折叠状态**：localStorage 持久化，折叠时显示图标 + hover tooltip
+- **共享布局组件**：
+  - SplitPanelLayout：KP 侧栏（240px，可折叠）+ 面包屑 + 内容区 + feedbackSlot（绝对定位底部）+ footerSlot（粘性底部）。用于 QA、模块学习、复习
+  - FeedbackPanel：滑入式底部面板，props: visible/isCorrect/score/content(string)/onNext/nextLabel。content 通过 AIResponse 渲染 markdown
+  - ExamShell：全屏考试容器（跳过侧栏），顶栏显示模块名 + EXAM MODE 徽章 + 分段进度条 + 题数统计
+  - QuestionNavigator：底部导航栏，题号圆点（已答/当前/标记/未答四种状态），上下题箭头，"检查页"按钮
 - **页面布局**：所有页面使用 `min-h-full`（不再使用 `min-h-screen`），唯一 `h-screen` 在 SidebarLayout
 - **错误边界**：三级 error.tsx（根/书/模块）+ not-found.tsx，捕获所有未处理异常，显示中文友好提示
-- **LoadingState**：共享加载组件，stage 模式（spinner + 描述文字）和 progress 模式（进度条），替代所有页面级裸 spinner
+- **LoadingState**：共享加载组件（Amber 风格），stage 模式（border-primary spinner + pulse 标签）和 progress 模式（primary 进度条）
+- **Design System**：Amber Companion — Tailwind v4 @theme inline tokens，Plus Jakarta Sans + Be Vietnam Pro 字体，Material Symbols Outlined 图标
 
 ### 上传自动化流程（M5.5）
 
@@ -206,23 +224,25 @@ unstarted → reading → qa → notes_generated → testing → completed
 - pdfjs-dist@3.11.174 Worker（CDN）
 - ScreenshotOverlay + AiChatDialog 保持不变
 
-### PDF OCR 管道（⚠️ M6 断裂 — 待修复）
+### PDF OCR 管道（M6-hotfix 修复）
 
-- **现状（已坏）**：`books/route.ts` spawn 本地 Python 进程 `ocr_pdf.py`，传 `--db-path data/app.db`（SQLite）
-- **问题**：① `ocr_pdf.py` 用 sqlite3 写结果，PostgreSQL 收不到 ② Docker 容器没有 Python/scripts ③ 端口默认值不一致（screenshot-ocr.ts=9876, ocr_server.py=8000）
-- **目标架构**：upload → 调用 OCR HTTP 服务（复用 ocr 容器的 /ocr-pdf 端点）→ OCR 服务处理完整 PDF → 通过 PostgreSQL 写回结果
-- **parse_status 实际值**：`pending` → `processing` → `done` → `error`（注意不是 completed/failed）
+- **上传流程**：`books/route.ts` 通过 HTTP POST 调用 OCR 服务 `/ocr-pdf` 端点（fire-and-forget）
+- **OCR 服务**：`scripts/ocr_server.py` Flask 应用，提供 `/ocr`（单图）和 `/ocr-pdf`（整 PDF）两个端点
+- **PDF OCR**：`/ocr-pdf` 接收 `{ pdf_path, book_id }`，后台线程处理，逐页 text extraction + PaddleOCR fallback，通过 psycopg2 写 PostgreSQL
+- **进度更新**：每页更新 `books.ocr_current_page`/`ocr_total_pages`，完成写 `raw_text` + `parse_status='done'`
+- **线程安全**：`ocr_lock` 保护 PaddleOCR 引擎（非线程安全）
+- **parse_status 值**：`pending` → `processing` → `done` / `error`
+- **端口统一**：OCR 服务默认 8000，`screenshot-ocr.ts` 默认 8000
 
-### 启动初始化（⚠️ M6 断裂 — 待修复）
+### 启动初始化（M6-hotfix 修复）
 
-- `initDb()` 定义在 `src/lib/db.ts` 但无调用入口
-- 新数据库 prompt_templates 为空，所有 AI 功能不可用
-- 需要 Next.js `instrumentation.ts` 或等效启动钩子
+- `src/instrumentation.ts` → Next.js 启动钩子，调用 `initDb()`
+- `initDb()` 读 `schema.sql`（CREATE TABLE IF NOT EXISTS）+ `seedTemplates()`（幂等 UPSERT）
+- 保护条件：`NEXT_RUNTIME === 'nodejs'`，避免 Edge runtime 导入 pg
 
 ### 部署架构（M6）
 
-- **三容器 Docker Compose**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（PaddleOCR）
+- **三容器 Docker Compose**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（PaddleOCR + PyMuPDF + psycopg2）
 - **环境变量**：DATABASE_URL, ANTHROPIC_API_KEY, AI_MODEL, OCR_SERVER_HOST, OCR_SERVER_PORT
-- **持久化卷**：pgdata（数据库）+ uploads（用户 PDF）
-- **OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/ocr`，本地默认 127.0.0.1:8000
-- ⚠️ `docker-compose.yml` 残留未使用的 `SESSION_SECRET` 环境变量
+- **持久化卷**：pgdata（数据库）+ uploads（用户 PDF，app 和 ocr 共享）
+- **OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/ocr-pdf`，本地默认 127.0.0.1:8000
