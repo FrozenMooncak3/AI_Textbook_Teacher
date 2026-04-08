@@ -4,6 +4,17 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-07 | M6-hotfix — OCR 管道修复 + 启动初始化
+
+**修复 M6 审计发现的 4 个严重断裂**：
+
+- **T1 OCR 管道迁移**（082e6ea）：`books/route.ts` 从 `spawn(python ocr_pdf.py)` 改为 HTTP POST 到 OCR 服务 `/ocr-pdf`；`ocr_server.py` 新增 `/ocr-pdf` 端点（Flask + 后台线程 + psycopg2 写 PostgreSQL）；`screenshot-ocr.ts` 默认端口统一为 8000；`Dockerfile.ocr` 添加 PyMuPDF/psycopg2-binary；`docker-compose.yml` OCR 服务增加 DATABASE_URL + uploads 卷；删除 `scripts/ocr_pdf.py`
+- **T2 启动初始化**（aa813b5）：新建 `src/instrumentation.ts` 自动调用 `initDb()`（NEXT_RUNTIME 守卫）；移除 `docker-compose.yml` 中未使用的 `SESSION_SECRET`
+
+CCB 协作：Codex 2 任务，0 retry，0 escalation。
+
+---
+
 ## 2026-04-06 | M6 MVP Launch — 里程碑完成
 
 **M6 完成**：11 个任务全部通过 review，从 SQLite 单用户本地应用升级为 PostgreSQL 多用户可部署产品。
@@ -1421,3 +1432,28 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 
 **Deleted files**:
 - `scripts/ocr_pdf.py`
+
+## 2026-04-08 | UX redesign: add review briefing API and shared allocation utility
+
+**Completed**: Extracted review question allocation logic into `src/lib/review-question-utils.ts`, added regression coverage for the shared allocation behavior, and implemented `GET /api/review/[scheduleId]/briefing` with existing review auth/route conventions. Verified the new endpoint and the non-AI `review/generate` resume path against a temporary PostgreSQL fixture, then cleaned the fixture data.
+**Modified files**:
+- `src/lib/review-question-utils.ts`
+- `src/lib/review-question-utils.test.ts`
+- `src/app/api/review/[scheduleId]/generate/route.ts`
+- `src/app/api/review/[scheduleId]/briefing/route.ts`
+- `docs/changelog.md`
+
+---
+
+## 2026-04-08 | UX Redesign T0: Amber Companion Design Foundation
+
+**完成内容**: 建立了 "Amber Companion" 设计系统基础：
+- **DESIGN.md**: 在项目根目录创建了符合 Stitch 标准的 9 段式设计规范文档，涵盖视觉主题、30+ 颜色 Token、字体层级、组件样式、布局原则及阴影系统。
+- **Tailwind v4 Token 注入**: 重写了 `src/app/globals.css`，将所有设计 Token 注入 `@theme inline`，移除了旧的 slate/blue 变量，并添加了 `amber-glow` 渐变实用类。
+- **Google Fonts & Icons**: 在 `src/app/layout.tsx` 中通过 `next/font/google` 引入了 `Plus Jakarta Sans` 和 `Be Vietnam Pro`，并通过 `<link>` 引入了 `Material Symbols Outlined`；同步更新了 `globals.css` 中的字体变量引用。
+- **设计规范对齐**: 更新了 `.gemini/DESIGN_TOKENS.md` 以确保后续 AI 会话遵循新的暖橙色调规范。
+- **验证**: 确认 `npm run dev` 启动正常，页面背景切换为奶油色 (#fefae8)，文字切换为深棕色 (#39382d)。
+
+**修改文件**:
+- 新增: `DESIGN.md`
+- 修改: `src/app/globals.css`, `src/app/layout.tsx`, `.gemini/DESIGN_TOKENS.md`, `docs/changelog.md`
