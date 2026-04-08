@@ -1,7 +1,7 @@
 # Journal Index
 
 ## open（需要关注）
-- [audit] M6 重做审计：4 个严重断裂（OCR SQLite 遗漏 + initDb 未调用 + Docker OCR 断裂）→ [2026-04-07-m6-milestone-audit-redo.md](./2026-04-07-m6-milestone-audit-redo.md)
+- [testing] M6 用户测试：多个问题待收集（Date.slice 已修复，其他问题待 brainstorm）→ [2026-04-07-m6-user-testing.md](./2026-04-07-m6-user-testing.md)
 - [bug] M5.5 验收：test_ch1_2 显示 PDF 处理失败 + 读财报模块地图白屏 → [2026-04-04-m5.5-user-testing.md](./2026-04-04-m5.5-user-testing.md)
 
 ## in_progress（解决中）
@@ -45,6 +45,8 @@
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [brainstorm-chain:resolved] UX 重设计 chain 全 4 次完成（scope + tokens + 后端分析 + 前端映射），spec + plan 已出（2026-04-08）→ chain 文件 `docs/superpowers/specs/2026-04-07-ux-redesign-chain.md`
+- [audit:resolved] M6-hotfix 完成：OCR 管道迁移 + initDb 启动初始化 + 端口统一 + SESSION_SECRET 清理（2026-04-07）→ [2026-04-07-m6-milestone-audit-redo.md](./2026-04-07-m6-milestone-audit-redo.md)
 - [decision:resolved] MVP 方向确定 + M6 spec/plan 完成 → M6 全部 11 任务已完成（2026-04-06）→ [2026-04-06-mvp-direction-brainstorming.md](./2026-04-06-mvp-direction-brainstorming.md)
 - [infra:resolved] task-execution skill 已实现——统一执行引擎（dispatch→review→retry→close 全自动），替代手动串联 dispatch/review chain（2026-04-04）→ [2026-04-04-execution-skill.md](./2026-04-04-execution-skill.md)
 - [audit] M5.5 milestone-audit 通过：App Shell + ProcessingPoller + 错误边界全量验证，architecture.md 与代码一致（2026-04-04）→ [2026-04-04-m5.5-milestone-audit.md](./2026-04-04-m5.5-milestone-audit.md)
