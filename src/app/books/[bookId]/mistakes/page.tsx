@@ -40,10 +40,10 @@ const ERROR_TYPE_LABELS: Record<string, string> = {
 }
 
 const ERROR_TYPE_COLORS: Record<string, string> = {
-  blind_spot: 'bg-red-100 text-red-700 border-red-200',
-  procedural: 'bg-blue-100 text-blue-700 border-blue-200',
-  confusion: 'bg-amber-100 text-amber-700 border-amber-200',
-  careless: 'bg-slate-100 text-slate-700 border-slate-200',
+  blind_spot: 'bg-error-container/10 text-error border-error/20',
+  procedural: 'bg-tertiary-container/10 text-tertiary border-tertiary-container/20',
+  confusion: 'bg-secondary-container/10 text-secondary border-secondary-container/20',
+  careless: 'bg-surface-container text-on-surface-variant border-outline-variant/30',
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -91,55 +91,59 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
 
   if (error) {
     return (
-      <div className="min-h-full bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-red-100 text-center max-w-sm w-full">
-          <div className="text-red-500 text-4xl mb-4">⚠️</div>
-          <p className="text-gray-900 font-medium mb-4">{error}</p>
-          <button onClick={() => window.location.reload()} className="text-blue-600 font-medium text-sm">重试</button>
+      <div className="min-h-full bg-surface-container-low flex items-center justify-center p-4">
+        <div className="bg-surface-container-lowest p-12 rounded-[32px] shadow-xl shadow-orange-900/10 border border-error/20 text-center max-w-md w-full">
+          <span className="material-symbols-outlined text-error text-5xl mb-6" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+          <p className="text-on-surface font-black font-headline text-xl mb-6">{error}</p>
+          <button onClick={() => window.location.reload()} className="amber-glow text-on-primary font-bold px-8 py-3 rounded-full shadow-lg shadow-orange-900/20 active:scale-95 transition-all">重试</button>
         </div>
       </div>
     )
   }
 
   return (
-    <main className="min-h-full bg-gray-50 pb-20">
+    <main className="min-h-full bg-surface-container-low pb-20">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <Link href={`/books/${bookId}/dashboard`} className="text-xs text-gray-400 hover:text-blue-600 transition-colors uppercase tracking-widest font-bold">
-            &larr; 返回仪表盘
+        <div className="mb-10">
+          <Link href={`/books/${bookId}`} className="text-[10px] font-black text-on-surface-variant/50 hover:text-primary transition-colors uppercase tracking-widest flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm">arrow_back</span>
+            返回教材中心
           </Link>
-          <div className="flex items-center justify-between mt-2">
-            <h1 className="text-2xl font-bold text-gray-900">错题诊断本</h1>
-            <div className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-black">
+          <div className="flex items-center justify-between mt-4">
+            <h1 className="text-3xl font-black text-on-surface font-headline tracking-tight">错题诊断本</h1>
+            <div className="bg-primary text-on-primary px-4 py-1.5 rounded-full text-xs font-black font-headline shadow-lg shadow-orange-900/10">
               {data?.summary.total || 0} TOTAL
             </div>
           </div>
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 space-y-6">
+        <div className="bg-surface-container-lowest rounded-[32px] shadow-sm shadow-orange-900/5 border border-outline-variant/10 p-8 mb-10 space-y-8">
           {/* Module Dropdown */}
           <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">按模块筛选</label>
-            <select 
-              value={moduleFilter}
-              onChange={(e) => setModuleFilter(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
-            >
-              <option value="">全部模块</option>
-              {data?.summary.byModule.map((m) => (
-                <option key={m.moduleId} value={m.moduleId.toString()}>
-                  {m.moduleTitle} ({m.count})
-                </option>
-              ))}
-            </select>
+            <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">按模块筛选</label>
+            <div className="relative">
+              <select 
+                value={moduleFilter}
+                onChange={(e) => setModuleFilter(e.target.value)}
+                className="w-full bg-surface-container-low border border-outline-variant/10 rounded-2xl px-6 py-4 text-sm font-bold text-on-surface focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all appearance-none"
+              >
+                <option value="">全部模块</option>
+                {data?.summary.byModule.map((m) => (
+                  <option key={m.moduleId} value={m.moduleId.toString()}>
+                    {m.moduleTitle} ({m.count})
+                  </option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Error Type Tags */}
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">错误类型</label>
+              <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">错误类型</label>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(ERROR_TYPE_LABELS).map(([type, label]) => {
                   const isActive = errorTypeFilter === type
@@ -147,10 +151,10 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
                     <button
                       key={type}
                       onClick={() => setErrorTypeFilter(isActive ? '' : type)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                      className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${
                         isActive 
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm' 
-                        : 'bg-white text-gray-500 border-gray-100 hover:border-blue-200'
+                        ? 'bg-primary text-on-primary border-primary shadow-md' 
+                        : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-primary/30'
                       }`}
                     >
                       {label}
@@ -162,7 +166,7 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
 
             {/* Source Tags */}
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">来源渠道</label>
+              <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">来源渠道</label>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(SOURCE_LABELS).map(([src, label]) => {
                   const isActive = sourceFilter === src
@@ -170,10 +174,10 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
                     <button
                       key={src}
                       onClick={() => setSourceFilter(isActive ? '' : src)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                      className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${
                         isActive 
-                        ? 'bg-gray-800 text-white border-gray-800 shadow-sm' 
-                        : 'bg-white text-gray-500 border-gray-100 hover:border-gray-300'
+                        ? 'bg-primary text-on-primary border-primary shadow-md' 
+                        : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-primary/30'
                       }`}
                     >
                       {label}
@@ -187,55 +191,57 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
 
         {/* Mistakes List */}
         {loading ? (
-          <LoadingState label="正在加载全书错题记录..." />
+          <div className="py-20">
+            <LoadingState label="正在加载全书错题记录..." />
+          </div>
         ) : data?.mistakes.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-gray-100 p-20 text-center">
-            <span className="text-4xl mb-4 block">🎉</span>
-            <h3 className="text-lg font-bold text-gray-900">恭喜！这里空空如也</h3>
-            <p className="text-sm text-gray-400 mt-1">当前筛选条件下没有任何错题记录</p>
+          <div className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/10 p-20 text-center shadow-sm shadow-orange-900/5">
+            <span className="text-5xl mb-6 block">🎉</span>
+            <h3 className="text-xl font-black text-on-surface font-headline">恭喜！这里空空如也</h3>
+            <p className="text-sm text-on-surface-variant mt-2 font-medium">当前筛选条件下没有任何错题记录</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {data?.mistakes.map((m) => (
-              <div key={m.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div key={m.id} className="bg-surface-container-lowest rounded-[32px] shadow-sm shadow-orange-900/5 border border-outline-variant/10 overflow-hidden">
                 {/* Card Header */}
-                <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-50 flex flex-wrap items-center justify-between gap-3">
+                <div className="px-8 py-5 bg-surface-container-low/30 border-b border-outline-variant/5 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter border ${ERROR_TYPE_COLORS[m.errorType] || 'bg-gray-100'}`}>
+                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${ERROR_TYPE_COLORS[m.errorType] || 'bg-surface-container'}`}>
                       {ERROR_TYPE_LABELS[m.errorType] || m.errorType}
                     </span>
-                    <span className="bg-white px-2 py-0.5 rounded border border-gray-100 text-[10px] font-bold text-gray-400 uppercase">
+                    <span className="bg-surface-container-lowest px-3 py-1 rounded-lg border border-outline-variant/10 text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">
                       {SOURCE_LABELS[m.source] || m.source}
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold text-gray-300">{m.createdAt.slice(0, 16).replace('T', ' ')}</span>
+                  <span className="text-[10px] font-black text-on-surface-variant/30 uppercase tracking-widest">{m.createdAt.slice(0, 16).replace('T', ' ')}</span>
                 </div>
 
-                <div className="p-6">
+                <div className="p-8 md:p-10">
                   {/* KP & Module */}
-                  <div className="mb-4">
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{m.moduleTitle}</p>
-                    <h3 className="text-sm font-bold text-gray-900 mt-0.5">{m.kpTitle || '未归类知识点'}</h3>
+                  <div className="mb-6">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">{m.moduleTitle}</p>
+                    <h3 className="text-lg font-black text-on-surface font-headline tracking-tight">{m.kpTitle || '未归类知识点'}</h3>
                   </div>
 
                   {/* Question */}
-                  <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                    <div className="text-sm text-gray-700 leading-relaxed font-medium">
+                  <div className="bg-surface-container-low/50 rounded-2xl p-6 mb-8 border border-outline-variant/10 shadow-inner">
+                    <div className="text-on-surface leading-relaxed font-bold font-headline">
                       <AIResponse content={m.questionText} />
                     </div>
                   </div>
 
                   {/* Answers Comparison */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">你的回答</label>
-                      <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-sm text-red-900 font-medium whitespace-pre-wrap min-h-[60px]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">你的回答</label>
+                      <div className="bg-error-container/10 border border-error/20 rounded-2xl p-6 text-sm text-error font-bold min-h-[80px] leading-relaxed shadow-sm">
                         {m.userAnswer || '(未填写)'}
                       </div>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">正确答案</label>
-                      <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-sm text-emerald-900 font-medium min-h-[60px]">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1">正确答案</label>
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-sm text-emerald-900 font-bold min-h-[80px] leading-relaxed shadow-sm">
                         <AIResponse content={m.correctAnswer || '(待录入)'} />
                       </div>
                     </div>
@@ -243,12 +249,12 @@ export default function MistakesPage({ params }: { params: Promise<{ bookId: str
 
                   {/* AI Remediation */}
                   {m.remediation && (
-                    <div className="border-t border-gray-50 pt-6">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                        <label className="text-[10px] font-black text-gray-900 uppercase tracking-widest">AI 诊断与建议</label>
+                    <div className="border-t border-outline-variant/10 pt-8 mt-4">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(167,72,0,0.4)]"></div>
+                        <label className="text-[10px] font-black text-on-surface uppercase tracking-[0.2em]">AI 诊断与建议</label>
                       </div>
-                      <div className="prose-sm prose-blue bg-blue-50/30 rounded-2xl p-5 border border-blue-50">
+                      <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10 prose-sm max-w-none text-on-surface-variant font-medium leading-relaxed">
                         <AIResponse content={m.remediation} />
                       </div>
                     </div>

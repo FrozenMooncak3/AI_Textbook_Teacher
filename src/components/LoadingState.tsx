@@ -11,16 +11,18 @@ export default function LoadingState({ label, type = 'stage', current, total }: 
   return (
     <div className="flex flex-col items-center justify-center py-10">
       {type === 'progress' && total ? (
-        <div className="w-48 bg-gray-200 rounded-full h-2 mb-4">
+        <div className="w-48 bg-surface-container rounded-full h-2 mb-4 overflow-hidden shadow-inner">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+            className="bg-primary h-2 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(167,72,0,0.4)]"
             style={{ width: `${pct}%` }}
           />
         </div>
       ) : (
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-6" />
       )}
-      <p className="text-sm font-medium text-gray-600">{label}</p>
+      <p className="text-sm font-bold text-on-surface-variant font-headline tracking-wide uppercase opacity-70 animate-pulse">
+        {label}
+      </p>
     </div>
   )
 }

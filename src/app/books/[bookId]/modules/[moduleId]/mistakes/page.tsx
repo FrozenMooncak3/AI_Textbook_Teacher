@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import AIResponse from '@/components/AIResponse'
 import LoadingState from '@/components/LoadingState'
+import Link from 'next/link'
 
 interface Mistake {
   id: number
@@ -25,10 +26,10 @@ const ERROR_TYPE_LABELS: Record<string, string> = {
 }
 
 const ERROR_TYPE_COLORS: Record<string, string> = {
-  blind_spot: 'bg-red-50 text-red-700 border-red-100',
-  procedural: 'bg-amber-50 text-amber-700 border-amber-100',
-  confusion: 'bg-yellow-50 text-yellow-700 border-yellow-100',
-  careless: 'bg-slate-50 text-slate-700 border-slate-100',
+  blind_spot: 'bg-error-container/10 text-error border-error/20',
+  procedural: 'bg-tertiary-container/10 text-tertiary border-tertiary-container/20',
+  confusion: 'bg-secondary-container/10 text-secondary border-secondary-container/20',
+  careless: 'bg-surface-container text-on-surface-variant border-outline-variant/30',
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -68,7 +69,7 @@ export default function MistakesPage({
 
   if (loading) {
     return (
-      <div className="min-h-full flex items-center justify-center">
+      <div className="min-h-full bg-surface-container-low flex items-center justify-center">
         <LoadingState label="正在分析模块错题记录..." />
       </div>
     )
@@ -78,45 +79,47 @@ export default function MistakesPage({
   const resolvedMistakes = mistakes.filter(m => m.is_resolved)
 
   return (
-    <main className="min-h-full bg-slate-50">
+    <main className="min-h-full bg-surface-container-low pb-20">
       <div className="max-w-2xl mx-auto px-4 py-10">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-xs text-slate-400 mb-8">
-          <a href={`/books/${bookId}`} className="hover:text-slate-600 transition-colors">
+        <nav className="flex items-center gap-2 text-[10px] font-black text-on-surface-variant/50 mb-8 uppercase tracking-widest">
+          <Link href={`/books/${bookId}`} className="hover:text-primary transition-colors">
             书籍详情
-          </a>
-          <span className="text-slate-300">/</span>
-          <span className="text-slate-600 font-medium">模块错题诊断</span>
+          </Link>
+          <span className="material-symbols-outlined text-xs">chevron_right</span>
+          <span className="text-on-surface font-bold">模块错题诊断</span>
         </nav>
 
         <div className="mb-10">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">错题诊断报告</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-3xl font-black text-on-surface font-headline tracking-tight mb-2">错题诊断报告</h1>
+          <p className="text-sm text-on-surface-variant font-medium">
             AI 已根据你的错误模式自动分析了知识盲点，并生成了补救建议。
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm mb-6">
-            {error}
+          <div className="bg-error-container/10 border border-error/20 rounded-2xl p-6 text-error text-sm font-bold mb-8 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined">error</span>
+              {error}
+            </div>
           </div>
         )}
 
         {mistakes.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-            <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+          <div className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/10 p-16 text-center shadow-sm shadow-orange-900/5">
+            <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+              <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-1">暂无错题记录</h3>
-            <p className="text-sm text-slate-500">继续保持！本模块的知识点你掌握得很扎实。</p>
-            <a
+            <h3 className="text-xl font-black text-on-surface font-headline mb-2">暂无错题记录</h3>
+            <p className="text-sm text-on-surface-variant font-medium">继续保持！本模块的知识点你掌握得很扎实。</p>
+            <Link
               href={`/books/${bookId}`}
-              className="inline-block mt-6 text-sm font-bold text-blue-600 hover:text-blue-700"
+              className="inline-flex items-center gap-2 mt-8 text-sm font-bold text-primary hover:underline"
             >
-              返回模块地图 →
-            </a>
+              返回教材中心
+              <span className="material-symbols-outlined text-sm">arrow_forward</span>
+            </Link>
           </div>
         ) : (
           <div className="space-y-12">
@@ -124,12 +127,12 @@ export default function MistakesPage({
             {unresolvedMistakes.length > 0 && (
               <section className="space-y-6">
                 <div className="flex items-center justify-between px-2">
-                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <h2 className="text-lg font-black text-on-surface font-headline flex items-center gap-3 uppercase tracking-wider">
                     <span>待补救</span>
-                    <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{unresolvedMistakes.length}</span>
+                    <span className="text-[10px] bg-error text-on-error px-2.5 py-0.5 rounded-full font-black">{unresolvedMistakes.length}</span>
                   </h2>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {unresolvedMistakes.map(m => (
                     <MistakeCard key={m.id} mistake={m} />
                   ))}
@@ -141,12 +144,12 @@ export default function MistakesPage({
             {resolvedMistakes.length > 0 && (
               <section className="space-y-6">
                 <div className="flex items-center justify-between px-2">
-                  <h2 className="text-lg font-semibold text-slate-500 flex items-center gap-2">
+                  <h2 className="text-lg font-black text-on-surface-variant/50 font-headline flex items-center gap-3 uppercase tracking-wider">
                     <span>已标记解决</span>
-                    <span className="text-xs bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">{resolvedMistakes.length}</span>
+                    <span className="text-[10px] bg-surface-container-highest text-on-surface-variant px-2.5 py-0.5 rounded-full font-black">{resolvedMistakes.length}</span>
                   </h2>
                 </div>
-                <div className="space-y-4 opacity-75">
+                <div className="space-y-6 opacity-60 grayscale-[0.5]">
                   {resolvedMistakes.map(m => (
                     <MistakeCard key={m.id} mistake={m} />
                   ))}
@@ -162,41 +165,42 @@ export default function MistakesPage({
 
 function MistakeCard({ mistake }: { mistake: Mistake }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-      <div className="p-5">
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${ERROR_TYPE_COLORS[mistake.error_type]}`}>
+    <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant/10 overflow-hidden shadow-sm shadow-orange-900/5">
+      <div className="p-8">
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <span className={`text-[10px] font-black px-3 py-1 rounded-lg border uppercase tracking-widest ${ERROR_TYPE_COLORS[mistake.error_type]}`}>
             {ERROR_TYPE_LABELS[mistake.error_type]}
           </span>
-          <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full uppercase tracking-wider">
-            来源：{SOURCE_LABELS[mistake.source]}
+          <span className="text-[10px] font-black bg-surface-container-low text-on-surface-variant/70 px-3 py-1 rounded-lg uppercase tracking-widest border border-outline-variant/10">
+            {SOURCE_LABELS[mistake.source]}
           </span>
-          <span className="text-xs text-slate-400 ml-auto">
-            {new Date(mistake.created_at).toLocaleDateString()}
+          <span className="text-[10px] font-black text-on-surface-variant/30 ml-auto uppercase tracking-widest">
+            {new Date(mistake.created_at).toLocaleDateString('zh-CN')}
           </span>
         </div>
 
-        <div className="mb-4">
-          <p className="text-sm font-semibold text-slate-900 mb-1">
+        <div className="mb-6">
+          <p className="text-lg font-black text-on-surface font-headline mb-1 tracking-tight">
             {mistake.knowledge_point || '未命名知识点'}
           </p>
           {mistake.kp_code && (
-            <p className="text-xs text-slate-400 font-mono">
-              KP Code: {mistake.kp_code}
+            <p className="text-[10px] text-primary font-black uppercase tracking-widest opacity-60">
+              Code: {mistake.kp_code}
             </p>
           )}
           {mistake.kp_description && (
-            <div className="text-xs text-slate-500 mt-2 leading-relaxed">
+            <div className="text-sm text-on-surface-variant mt-3 leading-relaxed font-medium">
               <AIResponse content={mistake.kp_description} />
             </div>
           )}
         </div>
 
-        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-bold text-blue-700 uppercase tracking-widest">补救方案</span>
+        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 shadow-inner">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(167,72,0,0.4)]"></div>
+            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">补救方案</span>
           </div>
-          <div className="text-sm text-slate-700 leading-relaxed">
+          <div className="text-sm text-on-surface-variant leading-relaxed font-medium">
             <AIResponse content={mistake.remediation} />
           </div>
         </div>
