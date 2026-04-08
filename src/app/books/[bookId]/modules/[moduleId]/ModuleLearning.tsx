@@ -104,10 +104,21 @@ export default function ModuleLearning({
     setStatus('completed')
   }
 
+  // ── QA stage: QASession has its own SplitPanelLayout, render directly ──────
+  if (status === 'qa') {
+    return (
+      <QASession 
+        moduleId={module.id} 
+        moduleTitle={module.title} 
+        bookId={bookId}
+        bookTitle={bookTitle}
+        onComplete={handleCompleteNotes}
+      />
+    )
+  }
+
   // ── KP Sidebar Derivation ───────────────────────────────────
-  const kpStatus = (status === 'qa') 
-    ? 'current' as const 
-    : (status === 'notes_generated' || status === 'completed') 
+  const kpStatus = (status === 'notes_generated' || status === 'completed') 
       ? 'done' as const 
       : 'pending' as const
 
@@ -124,79 +135,66 @@ export default function ModuleLearning({
   ]
 
   // ── 渲染视图 ──────────────────────────────────────────────
-  
-  if (isTransitioning) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-surface">
-        <LoadingState label="AI 正在为你准备下一步学习内容..." />
-      </div>
-    )
-  }
-
   return (
     <SplitPanelLayout
       breadcrumbs={breadcrumbs}
       knowledgePoints={knowledgePoints}
     >
-      <div className="max-w-4xl mx-auto p-6 lg:p-12">
-        {error && (
-          <div className="mb-8 p-6 bg-error-container/10 border border-error/20 rounded-[32px] text-center shadow-sm">
-            <span className="material-symbols-outlined text-error text-4xl mb-3" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
-            <p className="text-lg font-bold text-error font-headline">{error}</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="mt-4 px-8 py-2 bg-primary text-on-primary rounded-full font-bold shadow-lg shadow-orange-900/10 active:scale-95 transition-all"
-            >
-              重试
-            </button>
-          </div>
-        )}
-
-        {/* Learning Status Router */}
-        {(status === 'unstarted' || status === 'reading') && (
-          <ReadingPhase 
-            module={module} 
-            bookRawText={bookRawText} 
-            onDone={handleStartQA}
-            isGenerating={isTransitioning}
-            error={error}
-          />
-        )}
-
-        {status === 'qa' && (
-          <QASession 
-            moduleId={module.id} 
-            moduleTitle={module.title} 
-            bookId={bookId}
-            bookTitle={bookTitle}
-            onComplete={handleCompleteNotes}
-          />
-        )}
-
-        {status === 'notes_generated' && (
-          <NotesDisplay 
-            moduleId={module.id} 
-            bookId={bookId} 
-            onComplete={handleFinalComplete}
-          />
-        )}
-
-        {status === 'completed' && (
-          <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant/10 p-12 text-center shadow-xl">
-            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-sm">
-              <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+      {isTransitioning ? (
+        <div className="flex-1 flex items-center justify-center p-12">
+          <LoadingState label="AI 正在为你准备下一步学习内容..." />
+        </div>
+      ) : (
+        <div className="max-w-4xl mx-auto p-6 lg:p-12">
+          {error && (
+            <div className="mb-8 p-6 bg-error-container/10 border border-error/20 rounded-[32px] text-center shadow-sm">
+              <span className="material-symbols-outlined text-error text-4xl mb-3" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+              <p className="text-lg font-bold text-error font-headline">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="mt-4 px-8 py-2 bg-primary text-on-primary rounded-full font-bold shadow-lg shadow-orange-900/10 active:scale-95 transition-all"
+              >
+                重试
+              </button>
             </div>
-            <h2 className="text-3xl font-black text-on-surface mb-4 font-headline tracking-tight">恭喜完成模块学习！</h2>
-            <p className="text-on-surface-variant mb-10 font-medium text-lg">你已经成功完成了《{module.title}》的所有学习环节。</p>
-            <button 
-              onClick={() => router.push(`/books/${bookId}`)}
-              className="w-full sm:w-auto amber-glow text-on-primary font-bold py-4 px-12 rounded-full shadow-xl shadow-orange-900/10 transition-all font-headline tracking-wide active:scale-95"
-            >
-              返回教材首页
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+
+          {/* Learning Status Router */}
+          {(status === 'unstarted' || status === 'reading') && (
+            <ReadingPhase 
+              module={module} 
+              bookRawText={bookRawText} 
+              onDone={handleStartQA}
+              isGenerating={isTransitioning}
+              error={error}
+            />
+          )}
+
+          {status === 'notes_generated' && (
+            <NotesDisplay 
+              moduleId={module.id} 
+              bookId={bookId} 
+              onComplete={handleFinalComplete}
+            />
+          )}
+
+          {status === 'completed' && (
+            <div className="bg-surface-container-lowest rounded-[32px] border border-outline-variant/10 p-12 text-center shadow-xl">
+              <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-sm">
+                <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+              </div>
+              <h2 className="text-3xl font-black text-on-surface mb-4 font-headline tracking-tight">恭喜完成模块学习！</h2>
+              <p className="text-on-surface-variant mb-10 font-medium text-lg">你已经成功完成了《{module.title}》的所有学习环节。</p>
+              <button 
+                onClick={() => router.push(`/books/${bookId}`)}
+                className="w-full sm:w-auto amber-glow text-on-primary font-bold py-4 px-12 rounded-full shadow-xl shadow-orange-900/10 transition-all font-headline tracking-wide active:scale-95"
+              >
+                返回教材首页
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </SplitPanelLayout>
   )
 }

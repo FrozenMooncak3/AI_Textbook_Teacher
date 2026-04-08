@@ -1555,3 +1555,14 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 
 **修改文件**:
 - 修改: `src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`, `src/app/books/[bookId]/modules/[moduleId]/NotesDisplay.tsx`, `docs/changelog.md`
+
+---
+
+## 2026-04-08 | Fix: 解决 ModuleLearning 嵌套布局与过渡态闪烁
+
+**完成内容**: 修复了 T5 引入的两个关键布局问题。
+- **防止嵌套布局**: 当模块处于 Q&A 阶段时，`ModuleLearning.tsx` 现在会直接返回 `QASession` 及其自带的 `SplitPanelLayout`，避免了双重侧边栏和双重面包屑的出现。
+- **过渡态布局保持**: 将 `isTransitioning` 的加载状态移至 `SplitPanelLayout` 内部渲染，确保在 AI 出题等异步过程中，侧边栏和整体框架依然可见，解决了过渡时的界面闪烁问题。
+
+**修改文件**:
+- 修改: `src/app/books/[bookId]/modules/[moduleId]/ModuleLearning.tsx`, `docs/changelog.md`
