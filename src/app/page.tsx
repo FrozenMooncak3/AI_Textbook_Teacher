@@ -130,16 +130,24 @@ export default async function HomePage() {
                     </div>
 
                     <div className="relative flex-shrink-0">
-                      <svg className="w-48 h-48 md:w-64 md:h-64 transform -rotate-90">
-                        <circle className="text-surface-container" cx="50%" cy="50%" fill="transparent" r="45%" stroke="currentColor" strokeWidth="12"></circle>
-                        <circle 
-                          className="text-primary transition-all duration-1000 ease-out" 
-                          cx="50%" cy="50%" fill="transparent" r="45%" stroke="currentColor" 
-                          strokeDasharray="440" 
-                          strokeDashoffset={dashOffset} 
-                          strokeLinecap="round" strokeWidth="12"
-                        ></circle>
-                      </svg>
+                      {(() => {
+                        const radius = 70
+                        const circumference = 2 * Math.PI * radius
+                        const dashOffset = circumference - (circumference * progress) / 100
+                        
+                        return (
+                          <svg className="w-48 h-48 md:w-64 md:h-64 transform -rotate-90" viewBox="0 0 160 160">
+                            <circle className="text-surface-container" cx="80" cy="80" fill="transparent" r={radius} stroke="currentColor" strokeWidth="12"></circle>
+                            <circle 
+                              className="text-primary transition-all duration-1000 ease-out" 
+                              cx="80" cy="80" fill="transparent" r={radius} stroke="currentColor" 
+                              strokeDasharray={circumference} 
+                              strokeDashoffset={dashOffset} 
+                              strokeLinecap="round" strokeWidth="12"
+                            ></circle>
+                          </svg>
+                        )
+                      })()}
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-4xl md:text-5xl font-black font-headline text-on-surface">{progress}%</span>
                         <span className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant mt-1">总完成度</span>
