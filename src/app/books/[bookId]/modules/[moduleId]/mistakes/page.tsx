@@ -197,7 +197,7 @@ function MistakeCard({ mistake }: { mistake: Mistake }) {
 
         <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 shadow-inner">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(167,72,0,0.4)]"></div>
+            <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
             <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">补救方案</span>
           </div>
           <div className="text-sm text-on-surface-variant leading-relaxed font-medium">

@@ -61,3 +61,6 @@ next-env.d.ts
 .ccb/inbox/**
 !.ccb/inbox/*/
 !.ccb/inbox/*/.gitkeep
+
+# MCP config (contains API keys)
+.mcp.json

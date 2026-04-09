@@ -4,6 +4,21 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-09 | Component Library — 33 组件落地 + 全页面重写
+
+**从 Stitch 设计稿实现完整组件库，全部页面使用组件库重写**。
+
+核心变更：
+- **组件库建设**（T0-T5）：33 个 UI 组件写入 `src/components/ui/`，统一规范（data-slot、cn()、shadow tokens、直接 import）。L1 原子 16 个 + L1 组合 5 个 + L2 考试 4 个 + L2 其他 8 个
+- **设计基础**（T0-T1）：`src/lib/utils.ts` cn() 工具函数（clsx + tailwind-merge），globals.css 8 个 shadow tokens + surface-bright 色值。npm 依赖：clsx、tailwind-merge、@radix-ui/react-radio-group、@radix-ui/react-switch
+- **页面重写**（T6-T12）：auth（FormCard 登录/注册）、首页（AppSidebar + HeroCard + CourseCard）、Action Hub（HeroCard + ContentCard + StatusBadge）、Q&A（SplitPanel + MCOptionCard + FeedbackPanel）、考试（ExamTopBar + QuestionNavigator + FlagButton）、错题（FilterBar + MistakeCard + ToggleSwitch）、复习（BriefingCard + MasteryBars + FeedbackPanel variant='review'）、上传/模块学习/笔记页
+- **旧组件清理**（T12）：删除 sidebar/*（4 文件）、SplitPanelLayout、FeedbackPanel（旧）、QuestionNavigator（旧）、ExamShell。root layout 移除 SidebarLayout 包裹
+- **Bug 修复**：全站中文化（移除所有英文字符串）、KP 侧栏使用真实知识点名称、score 计算修正、console.error 清理
+
+CCB 协作统计：Codex 1 任务（utils.ts）、Gemini 12 任务（组件+页面）、Claude 1 任务（docs），7 次 dispatch，2 次 fix dispatch，0 次 escalation。
+
+---
+
 ## 2026-04-07 | M6-hotfix — OCR 管道修复 + 启动初始化
 
 **修复 M6 审计发现的 4 个严重断裂**：

@@ -10,44 +10,38 @@
 ### 页面
 
 ```
-/ (首页：单书 Hero / 多书网格 / 空状态 + 复习提醒横幅)
-├── /upload (上传 PDF)
+/ (首页：AppSidebar + HeroCard + CourseCard 网格 + FAB)
+├── /upload (上传 PDF：AppSidebar + ContentCard 拖拽区 + AmberButton)
 ├── /logs (系统日志)
 └── /books/[bookId]
-    ├── / (Action Hub：合并原 module-map + dashboard，进度+模块列表+复习入口)
+    ├── / (Action Hub：AppSidebar + HeroCard + ContentCard 模块列表 + StatusBadge + ProgressBar)
     ├── /reader (PDF 阅读器 + 截图问 AI：OCR→提问→回答两步流程)
     ├── /module-map → 重定向到 /books/[bookId]（已废弃）
     ├── /dashboard → 重定向到 /books/[bookId]（已废弃）
-    ├── /mistakes (书级错题诊断本：Amber 风格多维筛选)
+    ├── /mistakes (书级错题诊断本：AppSidebar + FilterBar + MistakeCard + ToggleSwitch + ResolvedCard)
     └── /modules/[moduleId]
-        ├── / (模块学习：SplitPanelLayout shell，指引→阅读→QA→笔记)
-        ├── /qa (QA session：SplitPanelLayout + FeedbackPanel)
-        ├── /test (测试 session：ExamShell 全屏模式 + QuestionNavigator 自由导航)
-        ├── /review?scheduleId=X (复习 session：ReviewBriefing → SplitPanelLayout + FeedbackPanel)
+        ├── / (模块学习：AppSidebar + Breadcrumb + ContentCard + StatusBadge + ProgressBar)
+        ├── /qa (QA session：SplitPanel + KnowledgePointList + GlassHeader + MCOptionCard + FeedbackPanel)
+        ├── /test (测试 session：ExamTopBar + MCOptionCard + QuestionNavigator + FlagButton)
+        ├── /review?scheduleId=X (复习：ReviewBriefing(BriefingCard+MasteryBars) → ReviewSession(SplitPanel+FeedbackPanel))
+        ├── /notes (学习笔记：ContentCard + Badge + AmberButton)
         └── /mistakes (错题页：Amber 风格)
 
-App Shell（UX Redesign 更新）:
-├── src/app/layout.tsx → 包裹 SidebarLayout
-├── src/components/sidebar/SidebarProvider.tsx → 侧栏状态 Context（展开/折叠/移动端）
-├── src/components/sidebar/Sidebar.tsx → 两层路由感知导航（全局→书），Amber Companion 视觉
-├── src/components/sidebar/SidebarLayout.tsx → flex h-screen，/login /register /test 路由跳过侧栏
-├── src/components/sidebar/SidebarToggle.tsx → 移动端汉堡菜单 + 桌面端折叠按钮
-├── src/components/SplitPanelLayout.tsx → 共享 KP 侧栏（240px）+ 面包屑 + 内容 + feedbackSlot + footerSlot
-├── src/components/FeedbackPanel.tsx → 滑入式答题反馈面板（isCorrect/score/content/onNext）
-├── src/components/QuestionNavigator.tsx → 测试底部导航栏（题号圆点+上下题+检查页按钮）
-├── src/app/books/[bookId]/modules/[moduleId]/test/ExamShell.tsx → 全屏考试容器（顶栏+进度+footer slot）
+App Shell:
+├── src/app/layout.tsx → 纯 HTML shell（字体 + globals.css），无全局侧栏包裹
 ├── src/components/LoadingState.tsx → 共享加载组件（Amber 风格 spinner + progress）
 ├── src/app/error.tsx → 根级错误边界
 ├── src/app/books/[bookId]/error.tsx → 书级错误边界
 ├── src/app/books/[bookId]/modules/[moduleId]/error.tsx → 模块级错误边界
 ├── src/app/books/[bookId]/layout.tsx → 书级 layout（薄包装）
 └── src/app/not-found.tsx → 全局 404 页面
-└── /(auth) (route group + layout.tsx，Amber 风格居中卡片)
+└── /(auth) (route group + layout.tsx，FormCard 居中卡片)
     ├── /login (登录页：中文 UI + auto_stories 图标)
     └── /register (邀请码注册页：?code= URL 自动填充)
 
-Design System（UX Redesign 新增）:
-├── src/app/globals.css → @theme inline Tailwind v4 tokens（Amber Companion 色板）
+Design System（Amber Companion）:
+├── src/app/globals.css → @theme inline Tailwind v4 tokens（色板 + 8 个 shadow tokens）
+├── src/lib/utils.ts → cn() = twMerge(clsx(...))，所有组件使用
 ├── 字体：Plus Jakarta Sans（headline）+ Be Vietnam Pro（body）通过 next/font/google
 ├── 图标：Material Symbols Outlined（全局 <link>）
 └── 主色：primary=#a74800，surface-container-low=#fefae8（cream）
@@ -131,7 +125,7 @@ unstarted → reading → qa → notes_generated → testing → completed
 - **P=1 跳级**：所有 cluster P=1 且 consecutive_correct ≥ 3 → 跳过一个间隔级别
 - **复习记录**：review_records 存每次每 cluster 的 p_value_before/after
 - **Briefing API**：`GET /api/review/[scheduleId]/briefing` → `{ data: { scheduleId, moduleId, moduleName, reviewRound, intervalDays, estimatedQuestions, lastReviewDaysAgo, masteryDistribution: { mastered, improving, weak }, clusters: [...] } }`
-- **前端（UX Redesign 更新）**：ReviewBriefing 展示轮次/间隔/掌握分布 → ReviewSession（SplitPanelLayout + FeedbackPanel），首页 ReviewButton 显示待复习列表
+- **前端（组件库更新）**：ReviewBriefing（SplitPanel + BriefingCard + MasteryBars）→ ReviewSession（SplitPanel + KnowledgePointList(activeColor='orange') + FeedbackPanel(variant='review')），首页 ReviewButton 显示待复习列表
 
 ### 错题流转
 
@@ -172,22 +166,40 @@ unstarted → reading → qa → notes_generated → testing → completed
 - 覆盖范围：QA 反馈、测试评分、复习反馈、截图问答、读前指引、学习笔记、模块摘要、错题诊断
 - MarkdownRenderer 已删除，不再使用
 
-### App Shell 与导航（M5.5 → UX Redesign 更新）
+### 组件库（Component Library，UX Redesign → 组件库里程碑）
 
-- **侧栏导航**：SidebarLayout 包裹 root layout，`flex h-screen overflow-hidden`。侧栏固定左侧（Amber Companion 视觉），内容区 `flex-1 overflow-auto` 独立滚动
-- **两层导航**：L1 全局（首页/上传）→ L2 书级（阅读/Action Hub/错题），路由感知自动展开。原 L3 模块级导航移入 SplitPanelLayout KP 侧栏
-- **路由跳过**：/login、/register、/test 路由跳过侧栏（`SidebarLayout` 直接返回 `<>{children}</>`）
-- **移动端**：< 1024px 侧栏隐藏，汉堡菜单触发 overlay。ESC / backdrop 关闭
-- **折叠状态**：localStorage 持久化，折叠时显示图标 + hover tooltip
-- **共享布局组件**：
-  - SplitPanelLayout：KP 侧栏（240px，可折叠）+ 面包屑 + 内容区 + feedbackSlot（绝对定位底部）+ footerSlot（粘性底部）。用于 QA、模块学习、复习
-  - FeedbackPanel：滑入式底部面板，props: visible/isCorrect/score/content(string)/onNext/nextLabel。content 通过 AIResponse 渲染 markdown
-  - ExamShell：全屏考试容器（跳过侧栏），顶栏显示模块名 + EXAM MODE 徽章 + 分段进度条 + 题数统计
-  - QuestionNavigator：底部导航栏，题号圆点（已答/当前/标记/未答四种状态），上下题箭头，"检查页"按钮
-- **页面布局**：所有页面使用 `min-h-full`（不再使用 `min-h-screen`），唯一 `h-screen` 在 SidebarLayout
-- **错误边界**：三级 error.tsx（根/书/模块）+ not-found.tsx，捕获所有未处理异常，显示中文友好提示
-- **LoadingState**：共享加载组件（Amber 风格），stage 模式（border-primary spinner + pulse 标签）和 progress 模式（primary 进度条）
-- **Design System**：Amber Companion — Tailwind v4 @theme inline tokens，Plus Jakarta Sans + Be Vietnam Pro 字体，Material Symbols Outlined 图标
+所有 UI 组件位于 `src/components/ui/`，遵循统一规范：
+- 每个组件必须有 `data-slot` 属性、`className?: string` prop、使用 `cn()` 合并样式
+- 使用 shadow tokens（`shadow-card`、`shadow-cta` 等），禁止 `shadow-[...]` arbitrary values
+- 直接 import（如 `from '@/components/ui/AmberButton'`），无 barrel exports
+
+**L1 原子组件（16 个）**：
+AmberButton（主操作按钮）、TextInput（表单输入）、Badge（标签/变体：primary/correct/incorrect/neutral）、StatusBadge（状态徽章：6 种状态）、ProgressBar（进度条）、UserAvatar（用户头像+姓名首字母）、DecorativeBlur（装饰模糊圆）、FAB（浮动操作按钮）、ContentCard（通用卡片容器）、FormCard（表单卡片：登录/注册）、Breadcrumb（面包屑导航）、GlassHeader（毛玻璃顶栏）、SegmentedProgress（分段进度条：correct/incorrect/current/unanswered）、StatCard（统计卡片：icon+value+label）、ProgressRing（SVG 进度环）、ChatBubble（对话气泡：ai/user 角色）
+
+**L1 组合组件（5 个）**：
+KnowledgePointList（知识点列表：done/active/pending 状态，activeColor 可配）、FeedbackPanel（答题反馈面板：variant qa/review/test，滑入动画）、SplitPanel（分栏布局：sidebar+content+feedbackSlot）、AppSidebar（全站侧栏：两层路由感知导航，ml-72 页面偏移）、CourseCard（课程卡片：书名+进度+复习状态）
+
+**L2 考试专用（4 个）**：
+ExamTopBar（考试顶栏：模块名+进度+退出）、MCOptionCard + MCOptionGroup（选择题选项：Radix Radio Group）、QuestionNavigator（底部题号导航：answered/current/flagged/unanswered）、FlagButton（标记按钮）
+
+**L2 其他（8 个）**：
+ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、FilterBar（多组筛选栏）、MistakeCard（错题卡片：展开/折叠）、ResolvedCard（已解决错题卡片）、MasteryBars（掌握度柱状图）、BriefingCard（复习简报卡片）、HeroCard（英雄卡片：大标题+装饰）
+
+**已删除的旧组件**（被组件库替代）：
+- `src/components/sidebar/*`（4 个文件）→ AppSidebar
+- `src/components/SplitPanelLayout.tsx` → SplitPanel
+- `src/components/FeedbackPanel.tsx` → ui/FeedbackPanel
+- `src/components/QuestionNavigator.tsx` → ui/QuestionNavigator
+- `src/app/.../test/ExamShell.tsx` → ExamTopBar
+
+### App Shell 与导航
+
+- **侧栏**：AppSidebar 组件（`src/components/ui/AppSidebar.tsx`），各页面独立引入，非全局包裹。两层路由感知导航（L1 全局 → L2 书级），Amber Companion 视觉
+- **学习布局**：SplitPanel 组件（sidebar + content + feedbackSlot），用于 QA、复习 session
+- **考试布局**：ExamTopBar 全屏模式（跳过侧栏），QuestionNavigator 底部自由导航
+- **错误边界**：三级 error.tsx（根/书/模块）+ not-found.tsx
+- **LoadingState**：共享加载组件（Amber 风格），stage 模式 + progress 模式
+- **Design System**：Amber Companion — Tailwind v4 @theme inline tokens + 8 shadow tokens + cn() 工具函数
 
 ### 上传自动化流程（M5.5）
 

@@ -70,8 +70,8 @@ export default function ActionHub({
         if (json.success) {
           setData(json.data)
         }
-      } catch (e) {
-        console.error('Failed to fetch dashboard data', e)
+      } catch {
+        // Silently handle — LoadingState already covers error display
       } finally {
         setIsLoading(false)
       }

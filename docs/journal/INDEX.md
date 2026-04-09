@@ -39,12 +39,13 @@
 - **T2** 优先面向扫描版 PDF 用户群体 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 
 ### 工程流程
-（无）
+- **T2** 记忆清除 skill——将已关闭的记忆文件合并压缩为摘要文档，减少每次 session 读文件的 token 消耗 → 用户提出 2026-04-09
 
 ### 已决策归档
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [audit:resolved] Component Library milestone-audit 通过：33 组件 + 全页面重写 + 旧组件清理，architecture.md 全量验证一致（2026-04-09）→ [2026-04-09-component-library-milestone-audit.md](./2026-04-09-component-library-milestone-audit.md)
 - [brainstorm-chain:resolved] UX 重设计 chain 全 4 次完成（scope + tokens + 后端分析 + 前端映射），spec + plan 已出（2026-04-08）→ chain 文件 `docs/superpowers/specs/2026-04-07-ux-redesign-chain.md`
 - [audit:resolved] M6-hotfix 完成：OCR 管道迁移 + initDb 启动初始化 + 端口统一 + SESSION_SECRET 清理（2026-04-07）→ [2026-04-07-m6-milestone-audit-redo.md](./2026-04-07-m6-milestone-audit-redo.md)
 - [decision:resolved] MVP 方向确定 + M6 spec/plan 完成 → M6 全部 11 任务已完成（2026-04-06）→ [2026-04-06-mvp-direction-brainstorming.md](./2026-04-06-mvp-direction-brainstorming.md)

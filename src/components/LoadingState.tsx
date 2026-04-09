@@ -13,7 +13,7 @@ export default function LoadingState({ label, type = 'stage', current, total }: 
       {type === 'progress' && total ? (
         <div className="w-48 bg-surface-container rounded-full h-2 mb-4 overflow-hidden shadow-inner">
           <div
-            className="bg-primary h-2 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(167,72,0,0.4)]"
+            className="bg-primary h-2 rounded-full transition-all duration-500"
             style={{ width: `${pct}%` }}
           />
         </div>

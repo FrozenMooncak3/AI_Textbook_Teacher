@@ -9,15 +9,15 @@
 
 **方向**：MVP 已上线 + UX 全面升级——完整学习流程 + 多用户 + Docker 部署 + Amber Companion 设计系统
 
-**当前里程碑**：UX Redesign — **已完成**
+**当前里程碑**：Component Library — **已完成**
 
 **最新完成**：
-- UX Redesign 全部 13 个任务完成（T0-T12），Amber Companion 设计系统覆盖全部页面
-- 新增共享组件：SplitPanelLayout、FeedbackPanel、QuestionNavigator、ExamShell
-- 合并页面：module-map + dashboard → Action Hub（/books/[bookId]）
-- 考试模式重写：自由导航 + 标记 + localStorage 持久化 + 检查页 + 批量提交
-- 复习系统升级：新增 Briefing 画面（API + 前端） + SplitPanelLayout session
-- 全站中文 UI + Material Symbols 图标 + Plus Jakarta Sans / Be Vietnam Pro 字体
+- 组件库里程碑 14 个任务完成（T0-T13），33 个 UI 组件从 Stitch 设计稿落地
+- 组件规范：data-slot 属性、cn() 样式合并、shadow tokens、直接 import
+- 全部页面使用组件库重写：auth、首页、Action Hub、Q&A、考试、错题、复习、上传、模块学习、笔记
+- 删除旧组件：sidebar/*、SplitPanelLayout、FeedbackPanel、QuestionNavigator、ExamShell
+- 新增 Radix UI 集成：MCOptionCard（Radio Group）、ToggleSwitch（Switch）
+- cn() 工具函数 + 8 个 shadow tokens + surface-bright 色值
 
 **下一步**：部署更新 + 用户测试验证
 
@@ -41,6 +41,7 @@
 | M5.5 | 稳固 & App Shell：侧栏导航 + 白屏修复 + OCR 自动触发 + 进度显示 + LoadingState | **已完成**（2026-04-04） |
 | M6 | MVP Launch：PostgreSQL 迁移 + 用户账号 + 大 PDF 分块 + PDF 阅读器 + 部署上线 | **已完成**（2026-04-06） |
 | UX Redesign | Amber Companion 设计系统全覆盖 + 页面合并 + 考试/复习重写 + 共享组件 | **已完成**（2026-04-09） |
+| Component Library | 33 组件从 Stitch 落地 + 全页面重写 + 旧组件清理 + Radix UI | **已完成**（2026-04-09） |
 
 ### M6 完成内容
 

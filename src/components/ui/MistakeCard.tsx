@@ -31,7 +31,7 @@ export default function MistakeCard({ mistake, expanded, onToggle, onResolve, on
       data-slot="mistake-card"
       className={cn(
         "bg-surface-container-lowest rounded-3xl border-l-[6px] border-error transition-shadow",
-        expanded ? 'p-8 shadow-mistake' : 'p-6 shadow-[0_4px_24px_rgba(167,72,0,0.04)] hover:shadow-[0_12px_32px_rgba(167,72,0,0.08)] cursor-pointer',
+        expanded ? 'p-8 shadow-mistake' : 'p-6 shadow-card hover:shadow-card-lg cursor-pointer',
         className
       )}
       onClick={!expanded ? onToggle : undefined}

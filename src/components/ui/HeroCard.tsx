@@ -18,6 +18,7 @@ interface HeroCardProps {
 
 export default function HeroCard({ progress, currentModule, reviewsDue, mistakesCount, onContinue, onReview, onMistakes, className }: HeroCardProps) {
   return (
+    <div data-slot="hero-card">
     <ContentCard className={cn("flex items-center gap-10", className)}>
       <ProgressRing value={progress} label="完成" />
       <div className="flex-1">
@@ -45,5 +46,6 @@ export default function HeroCard({ progress, currentModule, reviewsDue, mistakes
         </button>
       </div>
     </ContentCard>
+    </div>
   )
 }

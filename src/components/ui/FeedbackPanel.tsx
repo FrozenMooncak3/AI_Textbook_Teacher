@@ -22,7 +22,7 @@ export default function FeedbackPanel({ isCorrect, explanation, onNext, variant 
       <div
         data-slot="feedback-panel"
         className={cn(
-          "border-l-[6px] p-8 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] rounded-2xl",
+          "border-l-[6px] p-8 shadow-feedback rounded-2xl",
           bgColor,
           borderColor,
           className
