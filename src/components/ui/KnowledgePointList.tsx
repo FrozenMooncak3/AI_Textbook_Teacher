@@ -15,7 +15,7 @@ interface KnowledgePointListProps {
   className?: string
 }
 
-const dotColors = { done: 'bg-emerald-500', pending: 'bg-surface-container-high' }
+const dotColors: Record<string, string> = { done: 'bg-emerald-500', pending: 'bg-surface-container-high' }
 const activeStyles = {
   blue: { bg: 'bg-blue-50 border border-blue-100/50 shadow-sm', dot: 'bg-blue-500', text: 'text-blue-900' },
   orange: { bg: 'bg-orange-100 ring-1 ring-primary/20', dot: 'bg-orange-500 animate-pulse', text: 'text-on-surface' },
