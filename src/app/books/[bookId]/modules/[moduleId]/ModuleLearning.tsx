@@ -10,7 +10,7 @@ import LoadingState from '@/components/LoadingState'
 
 // --- Types ---
 
-type LearningStatus = 'unstarted' | 'reading' | 'qa' | 'notes_generated' | 'completed'
+type LearningStatus = 'unstarted' | 'reading' | 'qa' | 'notes_generated' | 'testing' | 'completed'
 
 interface Module {
   id: number
@@ -114,6 +114,16 @@ export default function ModuleLearning({
         bookTitle={bookTitle}
         onComplete={handleCompleteNotes}
       />
+    )
+  }
+
+  // ── Testing stage: Redirect to test page ──────
+  if (status === 'testing') {
+    router.push(`/books/${bookId}/modules/${module.id}/test`)
+    return (
+      <div className="h-screen flex items-center justify-center bg-surface-container-low">
+        <LoadingState label="正在前往测试页面..." />
+      </div>
     )
   }
 

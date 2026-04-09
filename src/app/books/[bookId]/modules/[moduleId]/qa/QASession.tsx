@@ -3,14 +3,23 @@
 import { useState, useEffect } from 'react'
 import AIResponse from '@/components/AIResponse'
 import LoadingState from '@/components/LoadingState'
-import SplitPanelLayout from '@/components/SplitPanelLayout'
-import FeedbackPanel from '@/components/FeedbackPanel'
+import SplitPanel from '@/components/ui/SplitPanel'
+import KnowledgePointList from '@/components/ui/KnowledgePointList'
+import GlassHeader from '@/components/ui/GlassHeader'
+import SegmentedProgress from '@/components/ui/SegmentedProgress'
+import FeedbackPanel from '@/components/ui/FeedbackPanel'
+import Breadcrumb from '@/components/ui/Breadcrumb'
+import Badge from '@/components/ui/Badge'
+import { MCOptionGroup, MCOptionCard } from '@/components/ui/MCOptionCard'
+import AmberButton from '@/components/ui/AmberButton'
+import ChatBubble from '@/components/ui/ChatBubble'
 
 // --- Types ---
 
 interface Question {
   id: number
   kp_id: number | null
+  kp_name?: string
   question_type: 'worked_example' | 'scaffolded_mc' | 'short_answer' | 'comparison' | string
   question_text: string
   correct_answer: string | null
@@ -61,7 +70,6 @@ export default function QASession({
     const initQA = async () => {
       setIsLoading(true)
       try {
-        // 1. Load/Generate questions
         const qRes = await fetch(`/api/modules/${moduleId}/generate-questions`, { method: 'POST' })
         const qResult = await qRes.json()
         if (!qResult.success) {
@@ -71,10 +79,8 @@ export default function QASession({
         }
         const fetchedQuestions = qResult.data.questions as Question[]
         
-        // MC Option Parsing (if any)
         const processedQuestions = fetchedQuestions.map(q => {
           if (q.question_type === 'scaffolded_mc' && q.scaffolding) {
-            // Attempt simple line-based parsing for options if scaffolding looks like a list
             const options = q.scaffolding.split('\n').filter(line => /^[A-D][.．]/.test(line.trim()))
             if (options.length >= 2) return { ...q, options }
           }
@@ -82,7 +88,6 @@ export default function QASession({
         })
         setQuestions(processedQuestions)
 
-        // 2. Resume progress
         try {
           const rRes = await fetch(`/api/modules/${moduleId}/qa-feedback`)
           const rResult = await rRes.json()
@@ -147,10 +152,9 @@ export default function QASession({
     if (onComplete) onComplete()
   }
 
-  // ── Derivations ──────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-surface">
+      <div className="h-screen flex items-center justify-center bg-surface-container-low">
         <LoadingState label="AI 正在准备你的 Q&A 练习..." />
       </div>
     )
@@ -158,17 +162,12 @@ export default function QASession({
 
   if (error && questions.length === 0) {
     return (
-      <div className="h-screen flex items-center justify-center bg-surface p-6">
+      <div className="h-screen flex items-center justify-center bg-surface-container-low p-6">
         <div className="bg-surface-container-lowest rounded-[32px] border border-error/20 p-12 text-center shadow-xl max-w-md">
           <span className="material-symbols-outlined text-error text-6xl mb-6" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
           <h3 className="text-2xl font-black text-on-surface mb-4 font-headline">练习准备失败</h3>
           <p className="text-on-surface-variant mb-8 leading-relaxed">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="w-full bg-primary text-on-primary font-bold py-4 rounded-full shadow-lg shadow-orange-900/20 active:scale-95 transition-all font-headline"
-          >
-            重试
-          </button>
+          <AmberButton onClick={() => window.location.reload()} fullWidth>重试</AmberButton>
         </div>
       </div>
     )
@@ -180,173 +179,153 @@ export default function QASession({
   const currentFeedback = feedback || responses[question.id]
 
   // KP Sidebar Logic
-  const kpMap = new Map<number, { code: string; name: string; questionIds: number[] }>()
+  const kpMap = new Map<number, { name: string; questionIds: number[] }>()
   for (const q of questions) {
-    if (q.kp_id) {
-      if (!kpMap.has(q.kp_id)) {
-        kpMap.set(q.kp_id, { 
-          code: `KP${kpMap.size + 1}`, 
-          name: `知识点 ${kpMap.size + 1}`, 
-          questionIds: [] 
-        })
-      }
-      kpMap.get(q.kp_id)!.questionIds.push(q.id)
+    const kpId = q.kp_id || 0
+    if (!kpMap.has(kpId)) {
+      kpMap.set(kpId, { 
+        name: q.kp_name || `知识点 ${kpMap.size + 1}`, 
+        questionIds: [] 
+      })
     }
+    kpMap.get(kpId)!.questionIds.push(q.id)
   }
 
-  const knowledgePoints = Array.from(kpMap.entries()).map(([kpId, kp]) => {
+  const kpData = Array.from(kpMap.entries()).map(([kpId, kp]) => {
     const allAnswered = kp.questionIds.every(qId => responses[qId])
     const isCurrent = kp.questionIds.includes(questions[currentIdx]?.id)
     return {
-      id: kpId,
-      code: kp.code,
       name: kp.name,
-      status: allAnswered ? 'done' as const : isCurrent ? 'current' as const : 'pending' as const,
+      status: allAnswered ? 'done' as const : isCurrent ? 'active' as const : 'pending' as const,
     }
   })
 
+  const questionSegments = questions.map((q, i) => {
+    const resp = responses[q.id]
+    if (i === currentIdx && !resp) return { status: 'current' as const }
+    if (!resp) return { status: 'unanswered' as const }
+    return { status: resp.is_correct ? 'correct' as const : 'incorrect' as const }
+  })
+
   return (
-    <SplitPanelLayout
-      breadcrumbs={[
-        { label: bookTitle, href: `/books/${bookId}` },
-        { label: `${moduleTitle} Q&A` },
-      ]}
-      knowledgePoints={knowledgePoints}
-      onKpClick={() => {}} // Could implement jump-to-kp if needed
+    <SplitPanel
+      sidebar={
+        <div className="flex flex-col h-full">
+          <div className="p-6 border-b border-outline-variant/10">
+            <h2 className="font-headline font-bold text-on-surface truncate">{moduleTitle}</h2>
+            <p className="text-xs text-on-surface-variant mt-1">Q&A 知识练习</p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <KnowledgePointList 
+              items={kpData} 
+              activeColor="blue" 
+              onItemClick={() => {}} 
+            />
+          </div>
+        </div>
+      }
+      content={
+        <div className="flex flex-col h-full">
+          <GlassHeader className="px-8 py-4">
+            <div className="flex items-center justify-between mb-4">
+              <Breadcrumb items={[
+                { label: bookTitle, href: `/books/${bookId}` },
+                { label: `${moduleTitle} Q&A` },
+              ]} />
+              <Badge variant="primary">{QUESTION_TYPE_LABELS[question.question_type] || '知识练习'}</Badge>
+            </div>
+            <SegmentedProgress segments={questionSegments} />
+          </GlassHeader>
+
+          <div className="flex-1 overflow-y-auto p-8 lg:p-12 pb-40 space-y-10">
+            {/* Question */}
+            <ChatBubble role="ai">
+              <div className="text-lg font-bold font-headline mb-4">
+                <AIResponse content={question.question_text} />
+              </div>
+            </ChatBubble>
+
+            {/* Answer Input */}
+            {question.question_type === 'scaffolded_mc' && question.options ? (
+              <MCOptionGroup 
+                value={isAnswered ? currentFeedback?.user_answer || '' : currentAnswer} 
+                onValueChange={(val) => !isAnswered && !isSubmitting && setCurrentAnswer(val)}
+                disabled={isAnswered || isSubmitting}
+                className="max-w-2xl"
+              >
+                {question.options.map((opt, i) => {
+                  const letter = opt.trim().charAt(0).toUpperCase()
+                  return (
+                    <MCOptionCard 
+                      key={i} 
+                      value={letter} 
+                      label={letter} 
+                      text={opt.substring(opt.indexOf('.') + 1).trim() || opt} 
+                    />
+                  )
+                })}
+              </MCOptionGroup>
+            ) : (
+              <div className="relative group max-w-2xl">
+                <textarea
+                  value={isAnswered ? currentFeedback?.user_answer || '(已提交)' : currentAnswer}
+                  onChange={(e) => { setCurrentAnswer(e.target.value); setError(null); }}
+                  disabled={isAnswered || isSubmitting}
+                  placeholder="输入你的回答或分析过程..."
+                  rows={6}
+                  className="w-full bg-surface-container-low border border-outline-variant/10 rounded-2xl px-8 py-6 text-on-surface text-lg leading-relaxed focus:outline-none focus:ring-4 focus:ring-primary/5 focus:bg-surface-bright transition-all placeholder:text-on-surface-variant/30 resize-none shadow-sm"
+                />
+              </div>
+            )}
+
+            {/* Scaffolding / Hint */}
+            {question.scaffolding && !currentFeedback && (
+              <div className="animate-in fade-in duration-700">
+                <ChatBubble role="ai">
+                  <div className="flex items-center gap-2 mb-2 text-primary opacity-70">
+                    <span className="material-symbols-outlined text-sm">lightbulb</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">学习启发</span>
+                  </div>
+                  <div className="italic text-on-surface-variant">
+                    <AIResponse content={question.scaffolding} />
+                  </div>
+                </ChatBubble>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-error/10 text-error p-4 rounded-xl text-sm font-medium animate-in fade-in slide-in-from-top-1">
+                {error}
+              </div>
+            )}
+          </div>
+
+          {!feedback && (
+            <footer className="absolute bottom-0 left-0 w-full bg-white/80 backdrop-blur-md border-t border-outline-variant/10 p-6 flex items-center justify-between z-20">
+              <span className="text-sm font-bold text-on-surface-variant">
+                进度 {Object.keys(responses).length} / {questions.length}
+              </span>
+              <AmberButton 
+                onClick={handleSubmit} 
+                disabled={!currentAnswer.trim() || isSubmitting || isAnswered}
+              >
+                {isSubmitting ? '正在评分...' : '提交回答'}
+              </AmberButton>
+            </footer>
+          )}
+        </div>
+      }
       feedbackSlot={
         feedback && (
           <FeedbackPanel
-            visible={!!feedback}
             isCorrect={feedback.is_correct}
-            score={feedback.score}
-            content={feedback.feedback}
+            explanation={feedback.feedback}
             onNext={isLastQuestion ? handleFinalize : handleNext}
             nextLabel={isLastQuestion ? '完成 Q&A' : '下一题'}
+            variant="qa"
           />
         )
       }
-      footerSlot={
-        !feedback && (
-          <div className="flex items-center justify-between max-w-4xl mx-auto">
-            <span className="text-sm text-on-surface-variant font-headline font-bold">
-              进度 {Object.keys(responses).length}/{questions.length}
-            </span>
-            <button
-              onClick={handleSubmit}
-              disabled={!currentAnswer.trim() || isSubmitting || isAnswered}
-              className="px-10 py-3.5 amber-glow text-on-primary rounded-full font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-orange-900/20 font-headline tracking-wide active:scale-95 transition-transform"
-            >
-              {isSubmitting ? '正在评分...' : '提交回答'}
-            </button>
-          </div>
-        )
-      }
-    >
-      <div className="max-w-4xl mx-auto p-6 lg:p-12 pb-32">
-        {/* Question Type & Progress */}
-        <div className="flex flex-col gap-6 mb-10">
-          <div className="flex items-center justify-between">
-            <span className="bg-primary/10 text-primary rounded-full px-4 py-1.5 text-xs font-black font-headline tracking-widest uppercase">
-              {QUESTION_TYPE_LABELS[question.question_type] || '知识练习'}
-            </span>
-            <span className="text-sm font-bold text-on-surface-variant font-headline">
-              题目 {currentIdx + 1} / {questions.length}
-            </span>
-          </div>
-
-          <div className="flex gap-1.5 h-1.5">
-            {questions.map((q, i) => {
-              const answered = !!responses[q.id]
-              const current = i === currentIdx
-              return (
-                <div 
-                  key={q.id}
-                  className={`flex-1 rounded-full h-full transition-all duration-500 ${
-                    answered ? 'bg-primary-fixed-dim' : current ? 'bg-tertiary-container shadow-[0_0_8px_rgba(254,187,40,0.4)]' : 'bg-surface-variant'
-                  }`}
-                />
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Question Content */}
-        <div className="mb-10">
-          <div className="text-xl text-on-surface leading-relaxed font-bold font-headline mb-8">
-            <AIResponse content={question.question_text} />
-          </div>
-
-          {/* MC Options UI (if parsed) */}
-          {question.question_type === 'scaffolded_mc' && question.options && (
-            <div className="grid gap-4 mb-8">
-              {question.options.map((opt, i) => {
-                const isSelected = currentAnswer === opt
-                return (
-                  <div
-                    key={i}
-                    onClick={() => !isAnswered && !isSubmitting && setCurrentAnswer(opt)}
-                    className={`
-                      p-5 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4
-                      ${isSelected ? 'border-primary bg-primary/5 shadow-sm' : 'border-outline-variant/30 hover:border-outline-variant bg-surface-container-lowest'}
-                      ${isAnswered ? 'opacity-80 cursor-default' : ''}
-                    `}
-                  >
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
-                      {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                    </div>
-                    <span className={`text-base ${isSelected ? 'text-on-surface font-bold' : 'text-on-surface-variant'}`}>{opt}</span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Free Text Input */}
-          {(!question.options || question.question_type !== 'scaffolded_mc') && (
-            <div className="relative group">
-              <textarea 
-                value={isAnswered ? currentFeedback?.user_answer || '(已提交)' : currentAnswer}
-                onChange={(e) => { setCurrentAnswer(e.target.value); setError(null); }}
-                disabled={isAnswered || isSubmitting}
-                placeholder="输入你的回答或分析过程..."
-                rows={6}
-                className="w-full bg-surface-container-lowest border border-outline-variant rounded-[32px] px-8 py-6 text-on-surface text-lg leading-relaxed focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all placeholder:text-on-surface-variant/30 resize-none shadow-sm group-hover:shadow-md disabled:bg-surface-container-low/50 disabled:text-on-surface-variant/70"
-              />
-              {isAnswered && (
-                <div className="absolute top-4 right-6">
-                  <span className="material-symbols-outlined text-primary/40 select-none">lock</span>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {error && (
-            <div className="mt-4 px-6 py-3 bg-error-container/10 border border-error/20 rounded-2xl flex items-center gap-3 text-error text-sm font-bold animate-in fade-in slide-in-from-top-1">
-              <span className="material-symbols-outlined text-lg">error</span>
-              {error}
-            </div>
-          )}
-        </div>
-
-        {/* Hint Section (Scaffolding) */}
-        {question.scaffolding && !currentFeedback && (
-          <div className="bg-tertiary-container/10 border border-tertiary-container/30 rounded-3xl p-8 shadow-sm">
-            <div className="flex items-center gap-3 mb-4 text-tertiary">
-              <span className="material-symbols-outlined">lightbulb</span>
-              <h4 className="font-black font-headline tracking-wide uppercase text-xs">学习启发</h4>
-            </div>
-            <div className="text-on-surface-variant leading-relaxed italic">
-              <AIResponse content={question.scaffolding} />
-            </div>
-          </div>
-        )}
-
-        <div className="mt-12 pt-8 border-t border-outline-variant/10 text-center">
-          <p className="text-[10px] text-on-surface-variant/40 font-bold uppercase tracking-[0.2em] font-headline">
-            Product Invariant #2: Answered questions cannot be modified
-          </p>
-        </div>
-      </div>
-    </SplitPanelLayout>
+    />
   )
 }
