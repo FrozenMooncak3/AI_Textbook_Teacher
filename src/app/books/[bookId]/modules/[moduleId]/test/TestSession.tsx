@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
 import AIResponse from '@/components/AIResponse'
 import LoadingState from '@/components/LoadingState'
 import ExamTopBar from '@/components/ui/ExamTopBar'

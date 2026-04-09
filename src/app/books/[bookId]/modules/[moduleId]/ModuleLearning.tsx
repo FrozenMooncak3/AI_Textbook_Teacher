@@ -156,7 +156,11 @@ export default function ModuleLearning({
         <div className="max-w-4xl mx-auto relative z-10 space-y-10">
           <header className="flex items-center justify-between">
             <Breadcrumb items={breadcrumbs} />
-            <StatusBadge status={status === 'unstarted' ? 'not-started' : status} />
+            <StatusBadge status={
+              status === 'completed' ? 'completed' :
+              status === 'unstarted' ? 'not-started' :
+              'in-progress'
+            } />
           </header>
 
           {isTransitioning ? (

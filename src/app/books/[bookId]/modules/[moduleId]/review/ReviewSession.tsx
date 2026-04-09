@@ -14,6 +14,7 @@ import AmberButton from '@/components/ui/AmberButton'
 import Breadcrumb from '@/components/ui/Breadcrumb'
 import ContentCard from '@/components/ui/ContentCard'
 import MasteryBars from '@/components/ui/MasteryBars'
+import Badge from '@/components/ui/Badge'
 
 // --- Types ---
 
