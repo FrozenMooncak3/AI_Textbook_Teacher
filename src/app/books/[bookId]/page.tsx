@@ -29,7 +29,7 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
   if (!book) notFound()
 
   return (
-    <main className="min-h-full bg-surface-container-low">
+    <main className="min-h-full bg-surface-container-low">      
       {book.parse_status === 'processing' ? (
         <div className="max-w-2xl mx-auto px-4 py-10">
           <ProcessingPoller bookId={book.id} />
@@ -47,7 +47,10 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
           </div>
         </div>
       ) : (
-        <ActionHub bookId={book.id} />
+        <ActionHub 
+          bookId={book.id} 
+          userName={user.display_name || user.email} 
+        />
       )}
     </main>
   )
