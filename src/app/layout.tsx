@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
-import SidebarLayout from "@/components/sidebar/SidebarLayout";
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -36,9 +35,7 @@ export default function RootLayout({
       <body
         className={`${plusJakarta.variable} ${beVietnam.variable} antialiased font-body bg-surface-container-low text-on-surface`}
       >
-        <SidebarLayout>
-          {children}
-        </SidebarLayout>
+        {children}
       </body>
     </html>
   );

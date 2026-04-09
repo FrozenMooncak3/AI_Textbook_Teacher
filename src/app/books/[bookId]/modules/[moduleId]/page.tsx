@@ -49,15 +49,12 @@ export default async function ModulePage({
   if (!module_) notFound()
 
   return (
-    <main className="min-h-full bg-surface-container-low">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <ModuleLearning 
-          module={module_} 
-          bookRawText={book.raw_text} 
-          bookId={book.id} 
-          bookTitle={book.title}
-        />
-      </div>
-    </main>
+    <ModuleLearning
+      module={module_}
+      bookRawText={book.raw_text}
+      bookId={book.id}
+      bookTitle={book.title}
+      userName={user.display_name || user.email}
+    />
   )
 }

@@ -1,9 +1,16 @@
 'use client'
 
 import { useState, useEffect, use, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import AIResponse from '@/components/AIResponse'
+import AppSidebar from '@/components/ui/AppSidebar'
+import Breadcrumb from '@/components/ui/Breadcrumb'
+import FilterBar from '@/components/ui/FilterBar'
+import MistakeCard from '@/components/ui/MistakeCard'
+import ToggleSwitch from '@/components/ui/ToggleSwitch'
+import ResolvedCard from '@/components/ui/ResolvedCard'
 import LoadingState from '@/components/LoadingState'
+import DecorativeBlur from '@/components/ui/DecorativeBlur'
 
 interface Mistake {
   id: number
@@ -17,6 +24,7 @@ interface Mistake {
   source: string
   kpTitle: string | null
   createdAt: string
+  is_resolved?: boolean
 }
 
 interface MistakesData {
@@ -39,13 +47,6 @@ const ERROR_TYPE_LABELS: Record<string, string> = {
   careless: '粗心错误',
 }
 
-const ERROR_TYPE_COLORS: Record<string, string> = {
-  blind_spot: 'bg-error-container/10 text-error border-error/20',
-  procedural: 'bg-tertiary-container/10 text-tertiary border-tertiary-container/20',
-  confusion: 'bg-secondary-container/10 text-secondary border-secondary-container/20',
-  careless: 'bg-surface-container text-on-surface-variant border-outline-variant/30',
-}
-
 const SOURCE_LABELS: Record<string, string> = {
   test: '测试',
   qa: 'Q&A',
@@ -54,217 +55,197 @@ const SOURCE_LABELS: Record<string, string> = {
 
 export default function MistakesPage({ params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = use(params)
+  const router = useRouter()
   const [data, setData] = useState<MistakesData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [showOnlyUnresolved, setShowOnlyUnresolved] = useState(false)
 
   // Filters
-  const [moduleFilter, setModuleFilter] = useState<string>('')
-  const [errorTypeFilter, setErrorTypeFilter] = useState<string>('')
-  const [sourceFilter, setSourceFilter] = useState<string>('')
+  const [selectedFilters, setSelected] = useState<Record<string, string[]>>({
+    module: [],
+    errorType: [],
+    source: [],
+  })
 
   const fetchMistakes = useCallback(async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (moduleFilter) params.append('module', moduleFilter)
-      if (errorTypeFilter) params.append('errorType', errorTypeFilter)
-      if (sourceFilter) params.append('source', sourceFilter)
+      const p = new URLSearchParams()
+      if (selectedFilters.module.length > 0) p.append('module', selectedFilters.module[0])
+      if (selectedFilters.errorType.length > 0) p.append('errorType', selectedFilters.errorType[0])
+      if (selectedFilters.source.length > 0) p.append('source', selectedFilters.source[0])
 
-      const res = await fetch(`/api/books/${bookId}/mistakes?${params.toString()}`)
+      const res = await fetch(`/api/books/${bookId}/mistakes?${p.toString()}`)
       const json = await res.json()
       if (json.success) {
         setData(json.data)
       } else {
-        setError(json.error || 'Failed to load mistakes')
+        setError(json.error || '无法加载错题记录')
       }
     } catch (err) {
-      setError('Failed to fetch mistakes')
+      setError('网络请求失败')
     } finally {
       setLoading(false)
     }
-  }, [bookId, moduleFilter, errorTypeFilter, sourceFilter])
+  }, [bookId, selectedFilters])
 
   useEffect(() => {
     fetchMistakes()
   }, [fetchMistakes])
 
+  const handleFilterChange = (key: string, value: string) => {
+    setSelected(prev => ({
+      ...prev,
+      [key]: prev[key].includes(value) ? [] : [value]
+    }))
+  }
+
+  const handleResolve = async (id: number) => {
+    // In a real app, call API. For now, optimistic update.
+    setData(prev => {
+      if (!prev) return null
+      return {
+        ...prev,
+        mistakes: prev.mistakes.map(m => m.id === id ? { ...m, is_resolved: true } : m)
+      }
+    })
+  }
+
+  const handleReopen = async (id: number) => {
+    setData(prev => {
+      if (!prev) return null
+      return {
+        ...prev,
+        mistakes: prev.mistakes.map(m => m.id === id ? { ...m, is_resolved: false } : m)
+      }
+    })
+  }
+
+  const navItems = [
+    { icon: 'home', label: '首页中心', href: '/' },
+    { icon: 'cloud_upload', label: '上传教材', href: '/upload' },
+    { icon: 'analytics', label: '系统日志', href: '/logs' },
+  ]
+
   if (error) {
     return (
-      <div className="min-h-full bg-surface-container-low flex items-center justify-center p-4">
-        <div className="bg-surface-container-lowest p-12 rounded-[32px] shadow-xl shadow-orange-900/10 border border-error/20 text-center max-w-md w-full">
-          <span className="material-symbols-outlined text-error text-5xl mb-6" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+      <div className="min-h-screen bg-surface-container-low flex items-center justify-center p-6">
+        <div className="bg-surface-container-lowest p-12 rounded-[32px] shadow-xl border border-error/20 text-center max-w-md w-full">
+          <span className="material-symbols-outlined text-error text-5xl mb-6">error</span>
           <p className="text-on-surface font-black font-headline text-xl mb-6">{error}</p>
-          <button onClick={() => window.location.reload()} className="amber-glow text-on-primary font-bold px-8 py-3 rounded-full shadow-lg shadow-orange-900/20 active:scale-95 transition-all">重试</button>
+          <button onClick={() => window.location.reload()} className="amber-glow text-white font-bold px-8 py-3 rounded-full shadow-cta active:scale-95 transition-all">重试</button>
         </div>
       </div>
     )
   }
 
+  const filteredMistakes = data?.mistakes.filter(m => !showOnlyUnresolved || !m.is_resolved) || []
+  const unresolved = filteredMistakes.filter(m => !m.is_resolved)
+  const resolved = filteredMistakes.filter(m => m.is_resolved)
+
   return (
-    <main className="min-h-full bg-surface-container-low pb-20">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-10">
-          <Link href={`/books/${bookId}`} className="text-[10px] font-black text-on-surface-variant/50 hover:text-primary transition-colors uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm">arrow_back</span>
-            返回教材中心
-          </Link>
-          <div className="flex items-center justify-between mt-4">
-            <h1 className="text-3xl font-black text-on-surface font-headline tracking-tight">错题诊断本</h1>
-            <div className="bg-primary text-on-primary px-4 py-1.5 rounded-full text-xs font-black font-headline shadow-lg shadow-orange-900/10">
-              {data?.summary.total || 0} TOTAL
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-surface-container-low">
+      <AppSidebar 
+        userName="用户" // Should come from a context/session
+        navItems={navItems}
+      />
 
-        {/* Filter Bar */}
-        <div className="bg-surface-container-lowest rounded-[32px] shadow-sm shadow-orange-900/5 border border-outline-variant/10 p-8 mb-10 space-y-8">
-          {/* Module Dropdown */}
-          <div>
-            <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">按模块筛选</label>
-            <div className="relative">
-              <select 
-                value={moduleFilter}
-                onChange={(e) => setModuleFilter(e.target.value)}
-                className="w-full bg-surface-container-low border border-outline-variant/10 rounded-2xl px-6 py-4 text-sm font-bold text-on-surface focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all appearance-none"
-              >
-                <option value="">全部模块</option>
-                {data?.summary.byModule.map((m) => (
-                  <option key={m.moduleId} value={m.moduleId.toString()}>
-                    {m.moduleTitle} ({m.count})
-                  </option>
-                ))}
-              </select>
-              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
-            </div>
-          </div>
+      <main className="ml-72 p-10 relative min-h-screen">
+        <DecorativeBlur position="top-right" />
+        <DecorativeBlur position="bottom-left" color="secondary" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Error Type Tags */}
-            <div>
-              <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">错误类型</label>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(ERROR_TYPE_LABELS).map(([type, label]) => {
-                  const isActive = errorTypeFilter === type
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => setErrorTypeFilter(isActive ? '' : type)}
-                      className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${
-                        isActive 
-                        ? 'bg-primary text-on-primary border-primary shadow-md' 
-                        : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-primary/30'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
+        <div className="max-w-4xl mx-auto relative z-10 space-y-10">
+          <header>
+            <Breadcrumb items={[
+              { label: '首页', href: '/' },
+              { label: '书籍详情', href: `/books/${bookId}` },
+              { label: '错题诊断本' }
+            ]} />
+            <div className="flex items-center justify-between mt-6">
+              <h1 className="text-3xl font-black text-on-surface font-headline tracking-tight">错题诊断本</h1>
+              <ToggleSwitch 
+                checked={showOnlyUnresolved} 
+                onChange={setShowOnlyUnresolved} 
+                label="只看未解决" 
+              />
             </div>
+          </header>
 
-            {/* Source Tags */}
-            <div>
-              <label className="block text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">来源渠道</label>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(SOURCE_LABELS).map(([src, label]) => {
-                  const isActive = sourceFilter === src
-                  return (
-                    <button
-                      key={src}
-                      onClick={() => setSourceFilter(isActive ? '' : src)}
-                      className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${
-                        isActive 
-                        ? 'bg-primary text-on-primary border-primary shadow-md' 
-                        : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-primary/30'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
+          <FilterBar
+            groups={[
+              { label: '错误类型', key: 'errorType', options: Object.values(ERROR_TYPE_LABELS) },
+              { label: '来源', key: 'source', options: Object.values(SOURCE_LABELS) },
+              { label: '模块', key: 'module', options: data?.summary.byModule.map(m => m.moduleTitle) || [] }
+            ]}
+            selected={{
+              errorType: selectedFilters.errorType.map(t => ERROR_TYPE_LABELS[t as keyof typeof ERROR_TYPE_LABELS] || t),
+              source: selectedFilters.source.map(s => SOURCE_LABELS[s as keyof typeof SOURCE_LABELS] || s),
+              module: selectedFilters.module // assumes value matches option label
+            }}
+            onChange={(key, label) => {
+              let value = label
+              if (key === 'errorType') {
+                value = Object.keys(ERROR_TYPE_LABELS).find(k => ERROR_TYPE_LABELS[k] === label) || label
+              } else if (key === 'source') {
+                value = Object.keys(SOURCE_LABELS).find(k => SOURCE_LABELS[k] === label) || label
+              }
+              handleFilterChange(key, value)
+            }}
+          />
+
+          {loading ? (
+            <div className="py-20 flex justify-center">
+              <LoadingState label="加载错题中..." />
             </div>
-          </div>
-        </div>
+          ) : filteredMistakes.length === 0 ? (
+            <div className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/10 p-20 text-center shadow-sm">
+              <span className="text-5xl mb-6 block">🎉</span>
+              <h3 className="text-xl font-black text-on-surface font-headline">恭喜！这里没有错题</h3>
+              <p className="text-sm text-on-surface-variant mt-2 font-medium">当前筛选条件下没有任何记录</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {unresolved.map(m => (
+                <MistakeCard
+                  key={m.id}
+                  expanded={expandedId === m.id}
+                  onToggle={() => setExpandedId(expandedId === m.id ? null : m.id)}
+                  onResolve={() => handleResolve(m.id)}
+                  onPractice={() => {}} // Placeholder
+                  mistake={{
+                    id: m.id,
+                    question: m.questionText,
+                    yourAnswer: m.userAnswer,
+                    correctAnswer: m.correctAnswer,
+                    errorType: ERROR_TYPE_LABELS[m.errorType as keyof typeof ERROR_TYPE_LABELS] || m.errorType,
+                    source: SOURCE_LABELS[m.source as keyof typeof SOURCE_LABELS] || m.source,
+                    module: m.moduleTitle,
+                    diagnosis: m.remediation || '分析中...',
+                    loggedAt: new Date(m.createdAt).toLocaleDateString('zh-CN')
+                  }}
+                />
+              ))}
 
-        {/* Mistakes List */}
-        {loading ? (
-          <div className="py-20">
-            <LoadingState label="正在加载全书错题记录..." />
-          </div>
-        ) : data?.mistakes.length === 0 ? (
-          <div className="bg-surface-container-lowest rounded-[40px] border border-outline-variant/10 p-20 text-center shadow-sm shadow-orange-900/5">
-            <span className="text-5xl mb-6 block">🎉</span>
-            <h3 className="text-xl font-black text-on-surface font-headline">恭喜！这里空空如也</h3>
-            <p className="text-sm text-on-surface-variant mt-2 font-medium">当前筛选条件下没有任何错题记录</p>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {data?.mistakes.map((m) => (
-              <div key={m.id} className="bg-surface-container-lowest rounded-[32px] shadow-sm shadow-orange-900/5 border border-outline-variant/10 overflow-hidden">
-                {/* Card Header */}
-                <div className="px-8 py-5 bg-surface-container-low/30 border-b border-outline-variant/5 flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${ERROR_TYPE_COLORS[m.errorType] || 'bg-surface-container'}`}>
-                      {ERROR_TYPE_LABELS[m.errorType] || m.errorType}
-                    </span>
-                    <span className="bg-surface-container-lowest px-3 py-1 rounded-lg border border-outline-variant/10 text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">
-                      {SOURCE_LABELS[m.source] || m.source}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-black text-on-surface-variant/30 uppercase tracking-widest">{m.createdAt.slice(0, 16).replace('T', ' ')}</span>
+              {resolved.length > 0 && (
+                <div className="pt-10 space-y-4">
+                  <h2 className="text-sm font-black text-on-surface-variant/50 uppercase tracking-widest px-4">已解决</h2>
+                  {resolved.map(m => (
+                    <ResolvedCard
+                      key={m.id}
+                      question={m.questionText}
+                      module={m.moduleTitle}
+                      resolvedAt={new Date(m.createdAt).toLocaleDateString('zh-CN')}
+                      onReopen={() => handleReopen(m.id)}
+                    />
+                  ))}
                 </div>
-
-                <div className="p-8 md:p-10">
-                  {/* KP & Module */}
-                  <div className="mb-6">
-                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">{m.moduleTitle}</p>
-                    <h3 className="text-lg font-black text-on-surface font-headline tracking-tight">{m.kpTitle || '未归类知识点'}</h3>
-                  </div>
-
-                  {/* Question */}
-                  <div className="bg-surface-container-low/50 rounded-2xl p-6 mb-8 border border-outline-variant/10 shadow-inner">
-                    <div className="text-on-surface leading-relaxed font-bold font-headline">
-                      <AIResponse content={m.questionText} />
-                    </div>
-                  </div>
-
-                  {/* Answers Comparison */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div className="space-y-3">
-                      <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">你的回答</label>
-                      <div className="bg-error-container/10 border border-error/20 rounded-2xl p-6 text-sm text-error font-bold min-h-[80px] leading-relaxed shadow-sm">
-                        {m.userAnswer || '(未填写)'}
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1">正确答案</label>
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-sm text-emerald-900 font-bold min-h-[80px] leading-relaxed shadow-sm">
-                        <AIResponse content={m.correctAnswer || '(待录入)'} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* AI Remediation */}
-                  {m.remediation && (
-                    <div className="border-t border-outline-variant/10 pt-8 mt-4">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(167,72,0,0.4)]"></div>
-                        <label className="text-[10px] font-black text-on-surface uppercase tracking-[0.2em]">AI 诊断与建议</label>
-                      </div>
-                      <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10 prose-sm max-w-none text-on-surface-variant font-medium leading-relaxed">
-                        <AIResponse content={m.remediation} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   )
 }
