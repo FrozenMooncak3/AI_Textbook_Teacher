@@ -7,7 +7,7 @@ interface BadgeProps {
 }
 
 const variantClasses = {
-  primary: 'bg-primary-container text-on-primary-container',
+  primary: 'bg-primary-container text-on-primary-container',    
   success: 'bg-emerald-100 text-emerald-700',
   error: 'bg-error/10 text-error',
   warning: 'bg-tertiary-container/20 text-tertiary',
@@ -19,7 +19,7 @@ export default function Badge({ children, variant = 'primary', className }: Badg
     <span
       data-slot="badge"
       className={cn(
-        "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border border-transparent",
+        "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider",
         variantClasses[variant],
         className
       )}

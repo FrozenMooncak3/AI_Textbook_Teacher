@@ -1,35 +1,41 @@
 import { cn } from '@/lib/utils'
 
 interface UserAvatarProps {
-  name?: string
   src?: string
+  name: string
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }
 
-export default function UserAvatar({ name, src, size = 'md', className }: UserAvatarProps) {
-  const sizeClasses = {
-    sm: 'w-8 h-8 text-xs',
-    md: 'w-10 h-10 text-sm',
-    lg: 'w-12 h-12 text-base',
-  }
+const sizeClasses = {
+  sm: 'w-8 h-8 text-xs',
+  md: 'w-10 h-10 text-sm',
+  lg: 'w-14 h-14 text-lg',
+}
 
-  return (
+export default function UserAvatar({ src, name, size = 'md', className }: UserAvatarProps) {
+  const initials = name.slice(0, 2).toUpperCase()
+  return src ? (
+    <img
+      data-slot="user-avatar"
+      src={src}
+      alt={name}
+      className={cn(
+        "rounded-full border-2 border-primary-container object-cover",
+        sizeClasses[size],
+        className
+      )}
+    />
+  ) : (
     <div
       data-slot="user-avatar"
       className={cn(
-        "rounded-full bg-surface-container-highest flex items-center justify-center shrink-0 overflow-hidden border border-outline-variant/10",
+        "rounded-full border-2 border-primary-container bg-primary-container/20 text-primary font-bold flex items-center justify-center",
         sizeClasses[size],
         className
       )}
     >
-      {src ? (
-        <img src={src} alt={name || 'User'} className="w-full h-full object-cover" />
-      ) : (
-        <span className="material-symbols-outlined text-on-surface-variant">
-          account_circle
-        </span>
-      )}
+      {initials}
     </div>
   )
 }
