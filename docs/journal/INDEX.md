@@ -1,6 +1,9 @@
 # Journal Index
 
 ## open（需要关注）
+- [idea] 用户留存与学习动机：需要核心留存机制，MVP 前确定方案 → [2026-04-10-retention-motivation.md](./2026-04-10-retention-motivation.md)
+- [decision] MVP 必做：AI 再教一遍环节（阅读→**教学**→QA），参考月饼投资项目调研 → [2026-04-10-teaching-phase.md](./2026-04-10-teaching-phase.md)
+- [decision] MVP 范围扩展：扫描版 PDF（主功能）+ 多书种类（至少教案课件型）必须上线前具备 → [2026-04-10-mvp-scope-expansion.md](./2026-04-10-mvp-scope-expansion.md)
 - [testing] M6 用户测试：多个问题待收集（Date.slice 已修复，其他问题待 brainstorm）→ [2026-04-07-m6-user-testing.md](./2026-04-07-m6-user-testing.md)
 - [bug] M5.5 验收：test_ch1_2 显示 PDF 处理失败 + 读财报模块地图白屏 → [2026-04-04-m5.5-user-testing.md](./2026-04-04-m5.5-user-testing.md)
 

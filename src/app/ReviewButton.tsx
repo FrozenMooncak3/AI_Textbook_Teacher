@@ -27,13 +27,27 @@ export default function ReviewButton() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading || reviews.length === 0) return null
+  if (loading) return null
+
+  if (reviews.length === 0) {
+    return (
+      <div className="w-full flex items-center gap-4 bg-surface-container-high/50 border border-outline-variant/10 px-6 py-4 rounded-3xl">
+        <div className="w-10 h-10 bg-tertiary-container/20 rounded-full flex items-center justify-center">
+          <span className="material-symbols-outlined text-xl text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+        </div>
+        <div>
+          <span className="text-sm font-bold text-on-surface font-headline">暂无待复习</span>
+          <p className="text-xs text-on-surface-variant mt-0.5">继续学习，复习任务会自动安排</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between bg-surface-container-high border border-primary/10 hover:bg-surface-container transition-all px-6 py-5 rounded-3xl shadow-sm group"       
+        className="w-full flex items-center justify-between bg-surface-container-high border border-primary/10 hover:bg-surface-container transition-all px-6 py-5 rounded-3xl shadow-sm group"
       >
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 bg-primary text-on-primary rounded-full flex items-center justify-center text-sm font-black shadow-md shadow-orange-900/20">

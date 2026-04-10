@@ -4,6 +4,19 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-10 | Page 1 Refinement — Multi-Column Dashboard 重写
+
+**首页从单栏布局重写为 Stitch Multi-Column Dashboard 双栏布局**。
+
+核心变更：
+- **HomeContent.tsx 全面重写**：固定顶栏（搜索框+用户头像）+ 双栏布局（左栏：欢迎语+书网格+本周概览 bento 统计；右栏：ReviewButton+学习统计+最近动态 timeline）
+- **CourseCard 增强**：新增 `icon`/`hoverStyle` props，渐变封面+右上角放大装饰图标（`text-black/[0.12]`）+左下角小学科图标，阴影从 `shadow-card` 改为双侧扩散 `shadow-[0_2px_20px_-2px_rgba(167,72,0,0.12)]`，hover 两种模式（shadow 阴影加深 / pedestal 底座椭圆模糊）
+- **ReviewButton 空状态**：0 条待复习时显示"暂无待复习"提示，不再返回 null
+- **FAB 缩小**：从 `w-16 h-16 bottom-24` 改为 `w-12 h-12 bottom-8`
+- **3 条 MVP 决策停车**：扫描版 PDF 主功能、AI 教学环节、用户留存机制 → journal
+
+---
+
 ## 2026-04-09 | Component Library — 33 组件落地 + 全页面重写
 
 **从 Stitch 设计稿实现完整组件库，全部页面使用组件库重写**。

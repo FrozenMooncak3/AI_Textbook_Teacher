@@ -204,11 +204,12 @@
 
 ### 3.21 CourseCard
 
-- **来源**：page0 (style-tile.html) + page1 (homepage.html)
-- **关键 CSS**：基于 ContentCard + 渐变封面 `bg-gradient-to-br rounded-t-3xl h-32` + ProgressBar + Badge + 元数据行
-- **用途**：首页书目列表
-- **Props**：`title`, `progress: number`, `lastStudied?: string`, `badges?: string[]`, `gradient?: string`, `onClick`
-- **组合**：内部使用 ContentCard + ProgressBar + Badge
+- **来源**：page0 (style-tile.html) + page1 (homepage.html) + Stitch Multi-Column Dashboard
+- **关键 CSS**：`rounded-3xl shadow-[0_2px_20px_-2px_rgba(167,72,0,0.12)]` + 渐变封面 `bg-gradient-to-br h-32` + 装饰图标（右上角放大 `text-[100px] text-black/[0.12]` + 左下角小图标 `text-white/50`）
+- **用途**：首页书目卡片
+- **Props**：`title`, `progress: number`, `lastStudied?: string`, `badges?: { label: string; color: string }[]`, `gradient?: string`, `icon?: string`（学科图标，默认 menu_book）, `hoverStyle?: 'shadow' | 'pedestal'`, `onClick`, `className?`
+- **hover**：外层 `<div className="relative group">`，shadow 模式 `group-hover:-translate-y-2 + 加深阴影`，pedestal 模式用椭圆 blur div
+- **组合**：内部使用 ProgressBar
 
 ---
 
@@ -313,7 +314,7 @@
 | **登录** | FormCard, TextInput, AmberButton, DecorativeBlur | — |
 | **注册** | FormCard, TextInput, AmberButton, Badge, DecorativeBlur | — |
 | **忘记密码** | FormCard, TextInput, AmberButton, DecorativeBlur | — |
-| **首页（书目列表）** | AppSidebar, CourseCard, StatCard, StatusBadge, ProgressBar, FAB, DecorativeBlur | — |
+| **首页（Multi-Column Dashboard）** | AppSidebar, CourseCard, ProgressBar, FAB, ReviewButton | 固定顶栏（搜索+头像）+ 双栏（书网格+本周概览 / 复习+统计+最近动态） |
 | **Action Hub** | AppSidebar, Breadcrumb, ProgressRing, StatCard, ContentCard, DecorativeBlur | HeroCard |
 | **Q&A 学习** | SplitPanel, KnowledgePointList, GlassHeader, SegmentedProgress, FeedbackPanel, Breadcrumb, Badge | MCOptionCard |
 | **考试模式** | GlassHeader, SegmentedProgress, Badge | ExamTopBar, MCOptionCard, QuestionNavigator, FlagButton |

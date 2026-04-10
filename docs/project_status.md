@@ -5,21 +5,19 @@
 
 ---
 
-## 当前状态（2026-04-09）
+## 当前状态（2026-04-10）
 
-**方向**：MVP 已上线 + UX 全面升级——完整学习流程 + 多用户 + Docker 部署 + Amber Companion 设计系统
+**方向**：MVP 大改准备中——用户正在逐页 UI 精修 + 3 项重大 MVP 范围扩展待规划
 
-**当前里程碑**：Component Library — **已完成**
+**当前里程碑**：Page-by-Page UI Refinement — **进行中**（Page 1 完成）
 
 **最新完成**：
-- 组件库里程碑 14 个任务完成（T0-T13），33 个 UI 组件从 Stitch 设计稿落地
-- 组件规范：data-slot 属性、cn() 样式合并、shadow tokens、直接 import
-- 全部页面使用组件库重写：auth、首页、Action Hub、Q&A、考试、错题、复习、上传、模块学习、笔记
-- 删除旧组件：sidebar/*、SplitPanelLayout、FeedbackPanel、QuestionNavigator、ExamShell
-- 新增 Radix UI 集成：MCOptionCard（Radio Group）、ToggleSwitch（Switch）
-- cn() 工具函数 + 8 个 shadow tokens + surface-bright 色值
+- 首页重写为 Stitch Multi-Column Dashboard 双栏布局（固定顶栏+搜索+书网格+统计+最近动态 timeline）
+- CourseCard 增强：学科图标装饰、双侧阴影、hover 动效（shadow/pedestal A/B 测试中）
+- ReviewButton 空状态、FAB 缩小重定位
+- 3 条 MVP 重大决策已停车：扫描版 PDF 为主功能、AI 教学环节（reading→teaching→qa）、用户留存机制
 
-**下一步**：部署更新 + 用户测试验证
+**下一步**：MVP 大改规划——用户准备启动 MVP 范围扩展（扫描 PDF + 教学环节 + 留存机制），需 brainstorm + 里程碑规划
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 

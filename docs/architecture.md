@@ -10,7 +10,7 @@
 ### 页面
 
 ```
-/ (首页：AppSidebar + HeroCard + CourseCard 网格 + FAB)
+/ (首页 Multi-Column Dashboard：AppSidebar + 固定顶栏(搜索+头像) + 双栏(CourseCard 网格+本周概览 / ReviewButton+统计+最近动态 timeline) + FAB)
 ├── /upload (上传 PDF：AppSidebar + ContentCard 拖拽区 + AmberButton)
 ├── /logs (系统日志)
 └── /books/[bookId]
@@ -177,7 +177,7 @@ unstarted → reading → qa → notes_generated → testing → completed
 AmberButton（主操作按钮）、TextInput（表单输入）、Badge（标签/变体：primary/correct/incorrect/neutral）、StatusBadge（状态徽章：6 种状态）、ProgressBar（进度条）、UserAvatar（用户头像+姓名首字母）、DecorativeBlur（装饰模糊圆）、FAB（浮动操作按钮）、ContentCard（通用卡片容器）、FormCard（表单卡片：登录/注册）、Breadcrumb（面包屑导航）、GlassHeader（毛玻璃顶栏）、SegmentedProgress（分段进度条：correct/incorrect/current/unanswered）、StatCard（统计卡片：icon+value+label）、ProgressRing（SVG 进度环）、ChatBubble（对话气泡：ai/user 角色）
 
 **L1 组合组件（5 个）**：
-KnowledgePointList（知识点列表：done/active/pending 状态，activeColor 可配）、FeedbackPanel（答题反馈面板：variant qa/review/test，滑入动画）、SplitPanel（分栏布局：sidebar+content+feedbackSlot）、AppSidebar（全站侧栏：两层路由感知导航，ml-72 页面偏移）、CourseCard（课程卡片：书名+进度+复习状态）
+KnowledgePointList（知识点列表：done/active/pending 状态，activeColor 可配）、FeedbackPanel（答题反馈面板：variant qa/review/test，滑入动画）、SplitPanel（分栏布局：sidebar+content+feedbackSlot）、AppSidebar（全站侧栏：两层路由感知导航，ml-72 页面偏移）、CourseCard（课程卡片：渐变封面+学科图标装饰+进度条+hover 动效，shadow/pedestal 两种悬停模式）
 
 **L2 考试专用（4 个）**：
 ExamTopBar（考试顶栏：模块名+进度+退出）、MCOptionCard + MCOptionGroup（选择题选项：Radix Radio Group）、QuestionNavigator（底部题号导航：answered/current/flagged/unanswered）、FlagButton（标记按钮）
