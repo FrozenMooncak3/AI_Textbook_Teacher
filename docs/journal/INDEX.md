@@ -24,9 +24,6 @@
 
 ### 交互 / UX
 - **T1** QA/复习时旁边可以看原文 → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
-- **T1** 全局缺导航：所有页面没有返回键，需导航 sidebar + 面包屑 → [2026-04-03-m5-testing-ux.md](./2026-04-03-m5-testing-ux.md)
-- **T1** PDF 阅读器太弱：替换为成熟库（react-pdf-viewer 等），补齐缩放/搜索/书签 → [2026-04-03-m5-testing-ux.md](./2026-04-03-m5-testing-ux.md)
-- **T1** 大 PDF 分块提取：230K+ 字符文本需分块处理才能 KP 提取（369 页真实教材无法使用）→ [2026-04-03-m5-testing-ux.md](./2026-04-03-m5-testing-ux.md)
 - **T2** 模块阅读选文字问AI（选中文字→提问→AI回答，复用screenshot-ask第二步）→ [2026-04-03-module-text-ask-ai.md](./2026-04-03-module-text-ask-ai.md)
 - **T2** 笔记跳转原文 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - **T2** 右键选中多功能：做笔记、高亮等 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
@@ -34,12 +31,10 @@
 
 ### 基础设施
 - **T2** 预生成系统——后台预生成下一步内容，消灭等待 → [2026-04-04-pregeneration-system.md](./2026-04-04-pregeneration-system.md)
-- **T2** 支持 PPT + 扫描版 PDF（独立里程碑）→ [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - **T3** 语言模式系统——自动切换 prompt 语言，多国语言版本 → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
 
 ### 商业
 - **T2** Subscription 分级（hint access levels 等付费功能区分）→ [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
-- **T2** 优先面向扫描版 PDF 用户群体 → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 
 ### 工程流程
 - **T2** 记忆清除 skill——将已关闭的记忆文件合并压缩为摘要文档，减少每次 session 读文件的 token 消耗 → 用户提出 2026-04-09
@@ -49,6 +44,9 @@
 
 ## resolved（已解决）
 - [audit:resolved] Page 1 Refinement 审计：shadow 违规修复（+2 tokens），architecture.md 同步（2026-04-10）→ [2026-04-10-page1-refinement-audit.md](./2026-04-10-page1-refinement-audit.md)
+- [ux:resolved] 全局缺导航 → M5.5 AppSidebar + Component Library Breadcrumb 解决（6+ 页面已有导航）
+- [ux:resolved] PDF 阅读器太弱 → M6 react-pdf-viewer 替换（缩放/搜索/书签全具备）
+- [infra:resolved] 大 PDF 分块提取 → M6 text-chunker + kp-merger 解决（35K 字符分块 + bigram 去重）
 - [audit:resolved] Component Library milestone-audit 通过：33 组件 + 全页面重写 + 旧组件清理，architecture.md 全量验证一致（2026-04-09）→ [2026-04-09-component-library-milestone-audit.md](./2026-04-09-component-library-milestone-audit.md)
 - [brainstorm-chain:resolved] UX 重设计 chain 全 4 次完成（scope + tokens + 后端分析 + 前端映射），spec + plan 已出（2026-04-08）→ chain 文件 `docs/superpowers/specs/2026-04-07-ux-redesign-chain.md`
 - [audit:resolved] M6-hotfix 完成：OCR 管道迁移 + initDb 启动初始化 + 端口统一 + SESSION_SECRET 清理（2026-04-07）→ [2026-04-07-m6-milestone-audit-redo.md](./2026-04-07-m6-milestone-audit-redo.md)
