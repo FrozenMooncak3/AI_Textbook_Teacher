@@ -48,6 +48,7 @@
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [audit:resolved] Page 1 Refinement 审计：shadow 违规修复（+2 tokens），architecture.md 同步（2026-04-10）→ [2026-04-10-page1-refinement-audit.md](./2026-04-10-page1-refinement-audit.md)
 - [audit:resolved] Component Library milestone-audit 通过：33 组件 + 全页面重写 + 旧组件清理，architecture.md 全量验证一致（2026-04-09）→ [2026-04-09-component-library-milestone-audit.md](./2026-04-09-component-library-milestone-audit.md)
 - [brainstorm-chain:resolved] UX 重设计 chain 全 4 次完成（scope + tokens + 后端分析 + 前端映射），spec + plan 已出（2026-04-08）→ chain 文件 `docs/superpowers/specs/2026-04-07-ux-redesign-chain.md`
 - [audit:resolved] M6-hotfix 完成：OCR 管道迁移 + initDb 启动初始化 + 端口统一 + SESSION_SECRET 清理（2026-04-07）→ [2026-04-07-m6-milestone-audit-redo.md](./2026-04-07-m6-milestone-audit-redo.md)

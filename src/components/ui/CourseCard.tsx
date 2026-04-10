@@ -26,9 +26,9 @@ export default function CourseCard({ title, progress, lastStudied, badges, gradi
         data-slot="course-card"
         onClick={onClick}
         className={cn(
-          "bg-surface-container-lowest rounded-3xl shadow-[0_2px_20px_-2px_rgba(167,72,0,0.12)] border border-outline-variant/10 overflow-hidden text-left w-full relative z-10 transition-all duration-300",
+          "bg-surface-container-lowest rounded-3xl shadow-course border border-outline-variant/10 overflow-hidden text-left w-full relative z-10 transition-all duration-300",
           hoverStyle === 'shadow'
-            ? "group-hover:-translate-y-2 group-hover:shadow-[0_20px_40px_-10px_rgba(167,72,0,0.15)]"
+            ? "group-hover:-translate-y-2 group-hover:shadow-course-hover"
             : "group-hover:-translate-y-3",
           className
         )}

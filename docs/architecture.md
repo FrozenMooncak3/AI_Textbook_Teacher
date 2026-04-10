@@ -40,7 +40,7 @@ App Shell:
     └── /register (邀请码注册页：?code= URL 自动填充)
 
 Design System（Amber Companion）:
-├── src/app/globals.css → @theme inline Tailwind v4 tokens（色板 + 8 个 shadow tokens）
+├── src/app/globals.css → @theme inline Tailwind v4 tokens（色板 + 10 个 shadow tokens）
 ├── src/lib/utils.ts → cn() = twMerge(clsx(...))，所有组件使用
 ├── 字体：Plus Jakarta Sans（headline）+ Be Vietnam Pro（body）通过 next/font/google
 ├── 图标：Material Symbols Outlined（全局 <link>）
@@ -199,7 +199,7 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - **考试布局**：ExamTopBar 全屏模式（跳过侧栏），QuestionNavigator 底部自由导航
 - **错误边界**：三级 error.tsx（根/书/模块）+ not-found.tsx
 - **LoadingState**：共享加载组件（Amber 风格），stage 模式 + progress 模式
-- **Design System**：Amber Companion — Tailwind v4 @theme inline tokens + 8 shadow tokens + cn() 工具函数
+- **Design System**：Amber Companion — Tailwind v4 @theme inline tokens + 10 shadow tokens + cn() 工具函数
 
 ### 上传自动化流程（M5.5）
 

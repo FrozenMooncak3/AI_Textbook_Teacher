@@ -205,7 +205,7 @@
 ### 3.21 CourseCard
 
 - **来源**：page0 (style-tile.html) + page1 (homepage.html) + Stitch Multi-Column Dashboard
-- **关键 CSS**：`rounded-3xl shadow-[0_2px_20px_-2px_rgba(167,72,0,0.12)]` + 渐变封面 `bg-gradient-to-br h-32` + 装饰图标（右上角放大 `text-[100px] text-black/[0.12]` + 左下角小图标 `text-white/50`）
+- **关键 CSS**：`rounded-3xl shadow-course` + 渐变封面 `bg-gradient-to-br h-32` + 装饰图标（右上角放大 `text-[100px] text-black/[0.12]` + 左下角小图标 `text-white/50`），hover 用 `shadow-course-hover`
 - **用途**：首页书目卡片
 - **Props**：`title`, `progress: number`, `lastStudied?: string`, `badges?: { label: string; color: string }[]`, `gradient?: string`, `icon?: string`（学科图标，默认 menu_book）, `hoverStyle?: 'shadow' | 'pedestal'`, `onClick`, `className?`
 - **hover**：外层 `<div className="relative group">`，shadow 模式 `group-hover:-translate-y-2 + 加深阴影`，pedestal 模式用椭圆 blur div
