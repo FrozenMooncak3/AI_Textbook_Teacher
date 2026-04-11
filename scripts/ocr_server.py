@@ -14,6 +14,13 @@ from flask import Flask, jsonify, request
 from PIL import Image, ImageOps
 from paddleocr import PaddleOCR
 
+try:
+    import pymupdf4llm
+
+    HAS_PYMUPDF4LLM = True
+except ImportError:
+    HAS_PYMUPDF4LLM = False
+
 print("Loading PaddleOCR model...", flush=True)
 ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=False, show_log=False)
 ocr_lock = threading.Lock()
@@ -313,6 +320,67 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
             "scanned_count": scanned_count,
         }
     )
+
+
+@app.post("/extract-text")
+def extract_text_route() -> tuple[Any, int] | Any:
+    body = request.get_json(silent=True) or {}
+    pdf_path = str(body.get("pdf_path", "")).strip()
+    raw_book_id = body.get("book_id")
+    database_url = os.environ.get("DATABASE_URL")
+
+    if not pdf_path:
+        return jsonify({"error": "missing pdf_path"}), 400
+
+    if raw_book_id is None:
+        return jsonify({"error": "missing book_id"}), 400
+
+    try:
+        book_id = int(raw_book_id)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid book_id"}), 400
+
+    if not database_url:
+        return jsonify({"error": "missing DATABASE_URL"}), 500
+
+    with psycopg2.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT page_classifications FROM books WHERE id = %s", (book_id,))
+            row = cursor.fetchone()
+
+    if not row or not row[0]:
+        return jsonify({"error": "Run /classify-pdf first"}), 400
+
+    classifications = json.loads(row[0])
+    doc = fitz.open(pdf_path)
+    full_text_parts: list[str] = []
+    text_page_count = 0
+
+    try:
+        for page_index in range(len(doc)):
+            page_number = page_index + 1
+            classification = next((item for item in classifications if item["page"] == page_number), None)
+
+            if classification and classification["type"] == "text":
+                if HAS_PYMUPDF4LLM:
+                    page_markdown = pymupdf4llm.to_markdown(pdf_path, pages=[page_index])
+                else:
+                    page_markdown = doc[page_index].get_text().strip()
+
+                full_text_parts.append(f"--- PAGE {page_number} ---\n{page_markdown}")
+                text_page_count += 1
+                continue
+
+            full_text_parts.append(f"--- PAGE {page_number} ---\n[OCR_PENDING]")
+    finally:
+        doc.close()
+
+    full_text = "\n".join(full_text_parts)
+
+    with psycopg2.connect(database_url) as connection:
+        run_write(connection, "UPDATE books SET raw_text = %s WHERE id = %s", (full_text, book_id))
+
+    return jsonify({"text": full_text, "page_count": text_page_count})
 
 
 @app.post("/ocr-pdf")

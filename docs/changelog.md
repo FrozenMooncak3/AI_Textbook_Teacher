@@ -1691,3 +1691,9 @@ Files: `src/lib/schema.sql`, `Dockerfile.ocr`, `docker-compose.yml`
 ## 2026-04-12 | Scanned PDF T2: page classification endpoint
 Completed: Added `classify_page(page)` to detect `text` / `scanned` / `mixed` pages by character count and image coverage, and added `POST /classify-pdf` to classify all PDF pages and persist results into `books.page_classifications`, `books.text_pages_count`, and `books.scanned_pages_count`. Added a Python regression script covering the helper and endpoint behavior.
 Files: `scripts/ocr_server.py`, `scripts/test-scanned-pdf-task2.py`
+
+---
+
+## 2026-04-12 | Scanned PDF T3: structured text extraction endpoint
+Completed: Added optional `pymupdf4llm` import with `HAS_PYMUPDF4LLM` fallback and implemented `POST /extract-text` in the OCR server. The endpoint reads `books.page_classifications`, extracts only text pages with `--- PAGE N ---` markers, leaves `[OCR_PENDING]` placeholders for non-text pages, and writes the assembled content into `books.raw_text`. Added regression coverage for the Markdown path, fallback path, and missing-classification error.
+Files: `scripts/ocr_server.py`, `scripts/test-scanned-pdf-task3.py`
