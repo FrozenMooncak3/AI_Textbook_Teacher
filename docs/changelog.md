@@ -1680,3 +1680,8 @@ CCB 协作统计：Codex 8 任务、Gemini 2 任务、Claude 1 任务，共 27 a
 - **T11 首页**（32bb9c2, 6407aa1）：单书 Hero（SVG 进度环）/ 多书网格 / 空状态 + 复习提醒横幅
 
 CCB 协作统计：Gemini 11 任务（4 次 retry），Codex 1 任务，Claude 1 任务。Advisory 累计 22 条。
+---
+
+## 2026-04-12 | Scanned PDF T1: schema + OCR foundation
+Completed: Added scanned PDF page classification/count columns to `books`, module-level processing status columns to `modules`, and a backward-compatible migration block for existing rows. Updated the OCR image dependency list with `pymupdf4llm` and exposed OCR provider / Google OCR environment variables in compose.
+Files: `src/lib/schema.sql`, `Dockerfile.ocr`, `docker-compose.yml`

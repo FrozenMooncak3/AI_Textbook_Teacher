@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS books (
   kp_extraction_status TEXT NOT NULL DEFAULT 'pending',
   ocr_current_page INTEGER NOT NULL DEFAULT 0,
   ocr_total_pages INTEGER NOT NULL DEFAULT 0,
+  page_classifications TEXT DEFAULT NULL,
+  text_pages_count INTEGER DEFAULT 0,
+  scanned_pages_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -30,6 +33,9 @@ CREATE TABLE IF NOT EXISTS modules (
   page_start INTEGER,
   page_end INTEGER,
   learning_status TEXT NOT NULL DEFAULT 'unstarted',
+  text_status TEXT DEFAULT 'pending',
+  ocr_status TEXT DEFAULT 'pending',
+  kp_extraction_status TEXT DEFAULT 'pending',
   guide_json TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -256,3 +262,14 @@ CREATE TABLE IF NOT EXISTS sessions (
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Migration: scanned PDF upgrade (2026-04-12)
+-- ALTER TABLE defaults differ from CREATE TABLE defaults for backward compat:
+-- existing rows get 'ready'/'done'/'completed' (already-processed state),
+-- new rows get 'pending' (needs processing).
+ALTER TABLE books ADD COLUMN IF NOT EXISTS page_classifications TEXT DEFAULT NULL;
+ALTER TABLE books ADD COLUMN IF NOT EXISTS text_pages_count INTEGER DEFAULT 0;
+ALTER TABLE books ADD COLUMN IF NOT EXISTS scanned_pages_count INTEGER DEFAULT 0;
+ALTER TABLE modules ADD COLUMN IF NOT EXISTS text_status TEXT DEFAULT 'ready';
+ALTER TABLE modules ADD COLUMN IF NOT EXISTS ocr_status TEXT DEFAULT 'done';
+ALTER TABLE modules ADD COLUMN IF NOT EXISTS kp_extraction_status TEXT DEFAULT 'completed';

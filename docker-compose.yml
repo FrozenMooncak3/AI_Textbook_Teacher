@@ -32,6 +32,9 @@ services:
       - OCR_HOST=0.0.0.0
       - OCR_PORT=8000
       - DATABASE_URL=postgresql://dev:dev@db:5432/textbook_teacher
+      - OCR_PROVIDER=${OCR_PROVIDER:-paddle}
+      - GOOGLE_CLOUD_PROJECT_ID=${GOOGLE_CLOUD_PROJECT_ID:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
     volumes:
       - uploads:/app/data/uploads
 
