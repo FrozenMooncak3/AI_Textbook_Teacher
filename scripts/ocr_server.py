@@ -2,6 +2,7 @@
 """HTTP wrapper around PaddleOCR for screenshot recognition and PDF OCR."""
 
 import io
+import json
 import os
 import threading
 from typing import Any
@@ -126,6 +127,35 @@ def extract_page_text(page: fitz.Page) -> str:
     return "\n".join(lines).strip()
 
 
+def classify_page(page: fitz.Page) -> str:
+    """Classify a PDF page as text, scanned, or mixed."""
+    text = page.get_text().strip()
+    char_count = len(text)
+    images = page.get_images()
+    page_area = page.rect.width * page.rect.height
+    image_coverage = 0.0
+
+    if page_area > 0 and images:
+        for image in images:
+            xref = image[0]
+            try:
+                image_rects = page.get_image_rects(xref)
+            except Exception:
+                continue
+
+            for rect in image_rects:
+                image_coverage += rect.width * rect.height
+
+        image_coverage = image_coverage / page_area
+
+    if char_count > 50 and image_coverage < 0.5:
+        return "text"
+    if char_count < 10 and image_coverage > 0.7:
+        return "scanned"
+
+    return "mixed"
+
+
 def extract_text_from_pdf(pdf_path: str, connection: Any, book_id: int) -> str:
     doc = fitz.open(pdf_path)
     total_pages = doc.page_count
@@ -224,6 +254,65 @@ def ocr_image_route() -> tuple[Any, int] | Any:
         return jsonify({"text": "\n".join(lines), "confidence": confidence})
     except Exception as error:
         return jsonify({"error": str(error)}), 500
+
+
+@app.post("/classify-pdf")
+def classify_pdf_route() -> tuple[Any, int] | Any:
+    body = request.get_json(silent=True) or {}
+    pdf_path = str(body.get("pdf_path", "")).strip()
+    raw_book_id = body.get("book_id")
+    database_url = os.environ.get("DATABASE_URL")
+
+    if not pdf_path:
+        return jsonify({"error": "missing pdf_path"}), 400
+
+    if raw_book_id is None:
+        return jsonify({"error": "missing book_id"}), 400
+
+    try:
+        book_id = int(raw_book_id)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid book_id"}), 400
+
+    if not database_url:
+        return jsonify({"error": "missing DATABASE_URL"}), 500
+
+    doc = fitz.open(pdf_path)
+    pages: list[dict[str, Any]] = []
+    text_count = 0
+    scanned_count = 0
+
+    try:
+        for page_index in range(len(doc)):
+            page_number = page_index + 1
+            page_type = classify_page(doc[page_index])
+            pages.append({"page": page_number, "type": page_type})
+
+            if page_type == "text":
+                text_count += 1
+            else:
+                scanned_count += 1
+    finally:
+        doc.close()
+
+    with psycopg2.connect(database_url) as connection:
+        run_write(
+            connection,
+            """
+            UPDATE books
+            SET page_classifications = %s, text_pages_count = %s, scanned_pages_count = %s
+            WHERE id = %s
+            """,
+            (json.dumps(pages), text_count, scanned_count, book_id),
+        )
+
+    return jsonify(
+        {
+            "pages": pages,
+            "text_count": text_count,
+            "scanned_count": scanned_count,
+        }
+    )
 
 
 @app.post("/ocr-pdf")

@@ -1685,3 +1685,9 @@ CCB 协作统计：Gemini 11 任务（4 次 retry），Codex 1 任务，Claude 1
 ## 2026-04-12 | Scanned PDF T1: schema + OCR foundation
 Completed: Added scanned PDF page classification/count columns to `books`, module-level processing status columns to `modules`, and a backward-compatible migration block for existing rows. Updated the OCR image dependency list with `pymupdf4llm` and exposed OCR provider / Google OCR environment variables in compose.
 Files: `src/lib/schema.sql`, `Dockerfile.ocr`, `docker-compose.yml`
+
+---
+
+## 2026-04-12 | Scanned PDF T2: page classification endpoint
+Completed: Added `classify_page(page)` to detect `text` / `scanned` / `mixed` pages by character count and image coverage, and added `POST /classify-pdf` to classify all PDF pages and persist results into `books.page_classifications`, `books.text_pages_count`, and `books.scanned_pages_count`. Added a Python regression script covering the helper and endpoint behavior.
+Files: `scripts/ocr_server.py`, `scripts/test-scanned-pdf-task2.py`
