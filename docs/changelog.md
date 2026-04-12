@@ -1697,3 +1697,9 @@ Files: `scripts/ocr_server.py`, `scripts/test-scanned-pdf-task2.py`
 ## 2026-04-12 | Scanned PDF T3: structured text extraction endpoint
 Completed: Added optional `pymupdf4llm` import with `HAS_PYMUPDF4LLM` fallback and implemented `POST /extract-text` in the OCR server. The endpoint reads `books.page_classifications`, extracts only text pages with `--- PAGE N ---` markers, leaves `[OCR_PENDING]` placeholders for non-text pages, and writes the assembled content into `books.raw_text`. Added regression coverage for the Markdown path, fallback path, and missing-classification error.
 Files: `scripts/ocr_server.py`, `scripts/test-scanned-pdf-task3.py`
+
+---
+
+## 2026-04-12 | Scanned PDF T4: scanned-only OCR processing
+Completed: Added OCR provider abstraction with `OCR_PROVIDER`, `ocr_page_image()`, `paddle_ocr()`, and a Google Document AI stub that falls back to PaddleOCR. Added helpers to replace page placeholders and mark module OCR completion. Rewrote `process_pdf_ocr()` to use page classifications for scanned-only processing while keeping the legacy full-OCR fallback path for books without classifications. Added regression coverage for provider routing, helper behavior, and both new and legacy OCR processing flows.
+Files: `scripts/ocr_server.py`, `scripts/test-scanned-pdf-task4.py`

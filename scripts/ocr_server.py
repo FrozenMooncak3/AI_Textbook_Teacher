@@ -21,6 +21,8 @@ try:
 except ImportError:
     HAS_PYMUPDF4LLM = False
 
+OCR_PROVIDER = os.environ.get("OCR_PROVIDER", "paddle")
+
 print("Loading PaddleOCR model...", flush=True)
 ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=False, show_log=False)
 ocr_lock = threading.Lock()
@@ -121,17 +123,56 @@ def render_pdf_page(page: fitz.Page) -> Image.Image:
     return Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
 
 
+def ocr_page_image(page_image: Image.Image) -> str:
+    """Route OCR to the configured provider."""
+    if OCR_PROVIDER == "google":
+        return google_ocr(page_image)
+
+    return paddle_ocr(page_image)
+
+
+def paddle_ocr(page_image: Image.Image) -> str:
+    """Run OCR with PaddleOCR."""
+    with ocr_lock:
+        result = ocr_engine.ocr(np.array(page_image), cls=True)
+
+    lines, _ = extract_lines(result)
+    return "\n".join(lines).strip()
+
+
+def google_ocr(page_image: Image.Image) -> str:
+    """Google Document AI OCR stub with Paddle fallback."""
+    try:
+        from google.cloud import documentai_v1 as documentai
+
+        project_id = os.environ.get("GOOGLE_CLOUD_PROJECT_ID")
+        processor_id = os.environ.get("GOOGLE_DOCUMENT_AI_PROCESSOR_ID", "")
+        location = os.environ.get("GOOGLE_DOCUMENT_AI_LOCATION", "us")
+
+        client = documentai.DocumentProcessorServiceClient()
+        name = client.processor_path(project_id, location, processor_id)
+
+        image_buffer = io.BytesIO()
+        page_image.save(image_buffer, format="PNG")
+        raw_document = documentai.RawDocument(
+            content=image_buffer.getvalue(),
+            mime_type="image/png",
+        )
+        request_payload = documentai.ProcessRequest(name=name, raw_document=raw_document)
+        result = client.process_document(request_payload)
+        return result.document.text
+    except Exception as error:
+        print(f"Google OCR failed: {error}, falling back to PaddleOCR", flush=True)
+        return paddle_ocr(page_image)
+
+
 def extract_page_text(page: fitz.Page) -> str:
     text = page.get_text().strip()
     if text:
         return text
 
     image = render_pdf_page(page)
-    with ocr_lock:
-        result = ocr_engine.ocr(np.array(image), cls=True)
-
-    lines, _ = extract_lines(result)
-    return "\n".join(lines).strip()
+    return paddle_ocr(image)
 
 
 def classify_page(page: fitz.Page) -> str:
@@ -209,13 +250,112 @@ def extract_text_from_pdf(pdf_path: str, connection: Any, book_id: int) -> str:
     return "\n\n".join(marked_parts).strip()
 
 
+def replace_page_placeholder(book_id: int, page_num: int, ocr_text: str, connection: Any) -> None:
+    """Replace a single OCR placeholder inside raw_text."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT raw_text FROM books WHERE id = %s", (book_id,))
+        row = cursor.fetchone()
+
+    raw_text = (row[0] if row else "") or ""
+    placeholder = f"--- PAGE {page_num} ---\n[OCR_PENDING]"
+    replacement = f"--- PAGE {page_num} ---\n{ocr_text}"
+    updated_text = raw_text.replace(placeholder, replacement)
+    run_write(connection, "UPDATE books SET raw_text = %s WHERE id = %s", (updated_text, book_id))
+
+
+def check_module_ocr_completion(book_id: int, completed_page: int, connection: Any) -> None:
+    """Mark processing modules done once their last scanned page is OCRed."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, page_start, page_end FROM modules WHERE book_id = %s AND ocr_status = 'processing'",
+            (book_id,),
+        )
+        modules = cursor.fetchall()
+
+        cursor.execute("SELECT page_classifications FROM books WHERE id = %s", (book_id,))
+        row = cursor.fetchone()
+
+    if not row or not row[0]:
+        return
+
+    classifications = json.loads(row[0])
+
+    for module_id, page_start, page_end in modules:
+        if page_start is None or page_end is None:
+            continue
+
+        module_scanned_pages = [
+            page_info["page"]
+            for page_info in classifications
+            if page_start <= page_info["page"] <= page_end and page_info["type"] in ("scanned", "mixed")
+        ]
+        if not module_scanned_pages:
+            continue
+
+        if completed_page >= max(module_scanned_pages):
+            run_write(connection, "UPDATE modules SET ocr_status = 'done' WHERE id = %s", (module_id,))
+
+    connection.commit()
+
+
 def process_pdf_ocr(pdf_path: str, book_id: int, database_url: str) -> None:
     try:
         with psycopg2.connect(database_url) as connection:
             log_to_db(connection, "info", "OCR started", f"bookId={book_id}, file={pdf_path}")
-            raw_text = extract_text_from_pdf(pdf_path, connection, book_id)
-            write_ocr_result(connection, book_id, raw_text)
-            log_to_db(connection, "info", "OCR finished", f"bookId={book_id}, chars={len(raw_text)}")
+
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT page_classifications FROM books WHERE id = %s", (book_id,))
+                row = cursor.fetchone()
+
+            classifications = json.loads(row[0]) if row and row[0] else None
+            if not classifications:
+                raw_text = extract_text_from_pdf(pdf_path, connection, book_id)
+                write_ocr_result(connection, book_id, raw_text)
+                log_to_db(connection, "info", "OCR finished (legacy)", f"bookId={book_id}")
+                return
+
+            scanned_pages = [
+                page_info for page_info in classifications if page_info["type"] in ("scanned", "mixed")
+            ]
+            if not scanned_pages:
+                set_parse_status(connection, book_id, "done")
+                log_to_db(connection, "info", "OCR skipped (all text)", f"bookId={book_id}")
+                return
+
+            run_write(
+                connection,
+                "UPDATE books SET ocr_total_pages = %s, parse_status = 'processing' WHERE id = %s",
+                (len(scanned_pages), book_id),
+            )
+
+            doc = fitz.open(pdf_path)
+            ocr_count = 0
+            try:
+                for page_info in scanned_pages:
+                    page_number = page_info["page"]
+                    page_index = page_number - 1
+                    page = doc[page_index]
+                    page_image = render_pdf_page(page)
+                    page_text = ocr_page_image(page_image)
+
+                    replace_page_placeholder(book_id, page_number, page_text, connection)
+
+                    ocr_count += 1
+                    update_ocr_progress(connection, book_id, ocr_count, len(scanned_pages))
+                    check_module_ocr_completion(book_id, page_number, connection)
+
+                    if ocr_count % 5 == 0 or ocr_count == len(scanned_pages):
+                        log_to_db(
+                            connection,
+                            "info",
+                            "OCR progress",
+                            f"bookId={book_id}, scanned={ocr_count}/{len(scanned_pages)}",
+                        )
+            finally:
+                doc.close()
+
+            set_parse_status(connection, book_id, "done")
+            log_to_db(connection, "info", "OCR finished", f"bookId={book_id}, scanned={ocr_count}")
     except Exception as error:
         print(f"OCR failed for book {book_id}: {error}", flush=True)
         try:
