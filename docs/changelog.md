@@ -1703,3 +1703,9 @@ Files: `scripts/ocr_server.py`, `scripts/test-scanned-pdf-task3.py`
 ## 2026-04-12 | Scanned PDF T4: scanned-only OCR processing
 Completed: Added OCR provider abstraction with `OCR_PROVIDER`, `ocr_page_image()`, `paddle_ocr()`, and a Google Document AI stub that falls back to PaddleOCR. Added helpers to replace page placeholders and mark module OCR completion. Rewrote `process_pdf_ocr()` to use page classifications for scanned-only processing while keeping the legacy full-OCR fallback path for books without classifications. Added regression coverage for provider routing, helper behavior, and both new and legacy OCR processing flows.
 Files: `scripts/ocr_server.py`, `scripts/test-scanned-pdf-task4.py`
+
+---
+
+## 2026-04-12 | Scanned PDF T5: page-aware text chunking
+Completed: Updated `text-chunker.ts` to treat `--- PAGE N ---` lines as metadata instead of headings, added Markdown heading detection for `#`/`##`/`###`, stripped page markers from chunk text, and tracked `pageStart` / `pageEnd` on every chunk while preserving original `startLine` / `endLine`. Added regression coverage for short-text page metadata, Markdown heading chunking, and the no-page-marker-boundary behavior.
+Files: `src/lib/text-chunker.ts`, `scripts/test-scanned-pdf-task5.mjs`

@@ -4,11 +4,14 @@ export interface TextChunk {
   text: string
   startLine: number
   endLine: number
+  pageStart: number | null
+  pageEnd: number | null
 }
 
 const MAX_CHUNK_CHARS = 35_000
 const OVERLAP_LINES = 20
 const MAX_HEADING_LENGTH = 120
+const PAGE_MARKER = /^--- PAGE (\d+) ---$/
 
 interface Boundary {
   lineIndex: number
@@ -21,6 +24,26 @@ function splitLines(fullText: string): string[] {
 
 function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, ' ').trim()
+}
+
+function buildPageMap(lines: string[]): (number | null)[] {
+  const pageByLine: (number | null)[] = []
+  let currentPage: number | null = null
+
+  for (const line of lines) {
+    const match = line.match(PAGE_MARKER)
+    if (match) {
+      currentPage = parseInt(match[1], 10)
+    }
+
+    pageByLine.push(currentPage)
+  }
+
+  return pageByLine
+}
+
+function isPageMarker(line: string): boolean {
+  return PAGE_MARKER.test(line)
 }
 
 function isAllCapsHeading(line: string): boolean {
@@ -38,12 +61,12 @@ function isHeadingLine(line: string): boolean {
   }
 
   return (
+    /^#{1,3}\s+\S/.test(normalized) ||
     /^chapter\s+\d+/i.test(normalized) ||
     /^unit\s+\d+/i.test(normalized) ||
     /^第[一二三四五六七八九十百零〇\d]+[章节篇部分单元]/.test(normalized) ||
     /^[IVXLC]+\.\s+\S+/.test(normalized) ||
     /^\d+(\.\d+){0,2}\s+\S+/.test(normalized) ||
-    /^---+\s*page\s+\d+\s*---+$/i.test(normalized) ||
     isAllCapsHeading(normalized)
   )
 }
@@ -52,7 +75,12 @@ function findHeadingBoundaries(lines: string[]): Boundary[] {
   const boundaries = new Map<number, string>()
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-    const normalized = normalizeWhitespace(lines[lineIndex])
+    const currentLine = lines[lineIndex]
+    if (isPageMarker(currentLine)) {
+      continue
+    }
+
+    const normalized = normalizeWhitespace(currentLine)
     if (!normalized) {
       continue
     }
@@ -84,14 +112,24 @@ function buildChunk(
   index: number,
   startLine: number,
   endLine: number,
-  title: string
+  title: string,
+  pageByLine: (number | null)[]
 ): TextChunk {
+  const chunkLines = lines
+    .slice(startLine, endLine + 1)
+    .filter((line) => !isPageMarker(line))
+  const pagesInRange = pageByLine
+    .slice(startLine, endLine + 1)
+    .filter((page): page is number => page !== null)
+
   return {
     index,
     title,
-    text: lines.slice(startLine, endLine + 1).join('\n'),
+    text: chunkLines.join('\n'),
     startLine,
     endLine,
+    pageStart: pagesInRange.length > 0 ? pagesInRange[0] : null,
+    pageEnd: pagesInRange.length > 0 ? pagesInRange[pagesInRange.length - 1] : null,
   }
 }
 
@@ -100,13 +138,14 @@ function splitOversizedSection(
   startLine: number,
   endLine: number,
   title: string,
-  nextIndex: number
+  nextIndex: number,
+  pageByLine: (number | null)[]
 ): TextChunk[] {
   const sectionLines = lines.slice(startLine, endLine + 1)
   const sectionText = sectionLines.join('\n')
 
   if (sectionText.length <= MAX_CHUNK_CHARS) {
-    return [buildChunk(lines, nextIndex, startLine, endLine, title)]
+    return [buildChunk(lines, nextIndex, startLine, endLine, title, pageByLine)]
   }
 
   if (sectionLines.length === 1) {
@@ -114,6 +153,7 @@ function splitOversizedSection(
     const chunks: TextChunk[] = []
     let cursor = 0
     let localIndex = 0
+    const singleLinePage = pageByLine[startLine] ?? null
 
     while (cursor < rawLine.length) {
       const segment = rawLine.slice(cursor, cursor + MAX_CHUNK_CHARS)
@@ -123,6 +163,8 @@ function splitOversizedSection(
         text: segment,
         startLine,
         endLine,
+        pageStart: singleLinePage,
+        pageEnd: singleLinePage,
       })
 
       if (segment.length >= rawLine.length - cursor) {
@@ -136,7 +178,7 @@ function splitOversizedSection(
     return chunks
   }
 
-  return splitBySize(lines, startLine, endLine, title, nextIndex)
+  return splitBySize(lines, startLine, endLine, title, nextIndex, pageByLine)
 }
 
 function splitBySize(
@@ -144,7 +186,8 @@ function splitBySize(
   startLine = 0,
   endLine = lines.length - 1,
   baseTitle = 'Part',
-  startingIndex = 0
+  startingIndex = 0,
+  pageByLine: (number | null)[]
 ): TextChunk[] {
   const chunks: TextChunk[] = []
   let chunkIndex = startingIndex
@@ -179,7 +222,8 @@ function splitBySize(
         chunkIndex,
         currentStart,
         currentEnd,
-        `${baseTitle} ${chunkIndex - startingIndex + 1}`
+        `${baseTitle} ${chunkIndex - startingIndex + 1}`,
+        pageByLine
       )
     )
 
@@ -194,7 +238,11 @@ function splitBySize(
   return chunks
 }
 
-function groupByBoundaries(lines: string[], boundaries: Boundary[]): TextChunk[] {
+function groupByBoundaries(
+  lines: string[],
+  boundaries: Boundary[],
+  pageByLine: (number | null)[]
+): TextChunk[] {
   const chunks: TextChunk[] = []
   let chunkStart = boundaries[0].lineIndex
   let chunkTitles = [boundaries[0].title]
@@ -217,7 +265,7 @@ function groupByBoundaries(lines: string[], boundaries: Boundary[]): TextChunk[]
         const title = chunkTitles.length === 1
           ? chunkTitles[0]
           : `${chunkTitles[0]} - ${chunkTitles[chunkTitles.length - 1]}`
-        chunks.push(buildChunk(lines, chunkIndex, chunkStart, boundary.lineIndex - 1, title))
+        chunks.push(buildChunk(lines, chunkIndex, chunkStart, boundary.lineIndex - 1, title, pageByLine))
         chunkIndex += 1
       }
 
@@ -226,7 +274,8 @@ function groupByBoundaries(lines: string[], boundaries: Boundary[]): TextChunk[]
         boundary.lineIndex,
         sectionEnd,
         boundary.title,
-        chunkIndex
+        chunkIndex,
+        pageByLine
       )
       chunks.push(...oversizedChunks)
       chunkIndex += oversizedChunks.length
@@ -246,7 +295,7 @@ function groupByBoundaries(lines: string[], boundaries: Boundary[]): TextChunk[]
         ? chunkTitles[0]
         : `${chunkTitles[0]} - ${chunkTitles[chunkTitles.length - 1]}`
 
-      chunks.push(buildChunk(lines, chunkIndex, chunkStart, previousEnd, title))
+      chunks.push(buildChunk(lines, chunkIndex, chunkStart, previousEnd, title, pageByLine))
       chunkIndex += 1
       chunkStart = boundary.lineIndex
       chunkTitles = [boundary.title]
@@ -258,7 +307,7 @@ function groupByBoundaries(lines: string[], boundaries: Boundary[]): TextChunk[]
       const title = chunkTitles.length === 1
         ? chunkTitles[0]
         : `${chunkTitles[0]} - ${chunkTitles[chunkTitles.length - 1]}`
-      chunks.push(buildChunk(lines, chunkIndex, chunkStart, sectionEnd, title))
+      chunks.push(buildChunk(lines, chunkIndex, chunkStart, sectionEnd, title, pageByLine))
     }
   }
 
@@ -266,31 +315,35 @@ function groupByBoundaries(lines: string[], boundaries: Boundary[]): TextChunk[]
 }
 
 export function chunkText(fullText: string): TextChunk[] {
+  const lines = splitLines(fullText)
+  const pageByLine = buildPageMap(lines)
+
   if (fullText.length <= MAX_CHUNK_CHARS) {
-    const lines = splitLines(fullText)
+    const pagesInRange = pageByLine.filter((page): page is number => page !== null)
     return [
       {
         index: 0,
         title: 'Full Text',
-        text: fullText,
+        text: lines.filter((line) => !isPageMarker(line)).join('\n'),
         startLine: 0,
         endLine: Math.max(0, lines.length - 1),
+        pageStart: pagesInRange.length > 0 ? pagesInRange[0] : null,
+        pageEnd: pagesInRange.length > 0 ? pagesInRange[pagesInRange.length - 1] : null,
       },
     ]
   }
 
-  const lines = splitLines(fullText)
   const boundaries = findHeadingBoundaries(lines)
 
   if (boundaries.length <= 1) {
     if (lines.length === 1 && lines[0].length > MAX_CHUNK_CHARS) {
-      return splitOversizedSection(lines, 0, 0, 'Part', 0)
+      return splitOversizedSection(lines, 0, 0, 'Part', 0, pageByLine)
     }
 
-    return splitBySize(lines)
+    return splitBySize(lines, 0, lines.length - 1, 'Part', 0, pageByLine)
   }
 
-  return groupByBoundaries(lines, boundaries)
+  return groupByBoundaries(lines, boundaries, pageByLine)
 }
 
 export { MAX_CHUNK_CHARS, OVERLAP_LINES }
