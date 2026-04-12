@@ -4,6 +4,15 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-12 | Scanned PDF Advisory 清理
+
+**里程碑收尾清理 2 条可修 Advisory**（其余 9 条按 spec 保留或已是改进，不动）：
+
+- **Codex 277738d**：`kp-extraction-service.ts` 3 处 catch handler 的 `${String(error)}` 改用 `error instanceof Error ? error.message : String(error)` 模式，保留 Error stack
+- **Gemini 40f895b**：`ProcessingPoller.tsx` 删除重写时遗留的未使用 `useRef` import
+
+---
+
 ## 2026-04-12 | Scanned PDF Processing Upgrade — T1-T8 实现
 
 **让扫描版 PDF 和文字版 PDF 走同一条渐进式处理管道，模块级文字一就绪就解锁"可阅读"状态**。
