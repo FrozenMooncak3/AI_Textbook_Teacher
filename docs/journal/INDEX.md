@@ -1,6 +1,8 @@
 # Journal Index
 
 ## open（需要关注）
+- [milestone:brainstorm-wip] **云部署**（基础设施里程碑，决策 1-10 待拍，下一步决策 1 OCR 处理方式）→ [specs/2026-04-12-cloud-deployment-brainstorm-state.md](../superpowers/specs/2026-04-12-cloud-deployment-brainstorm-state.md)
+- [milestone:brainstorm-wip] **教学系统**（冻结中，决策 1-2 已拍，决策 3-9 待，云部署结束后恢复）→ [specs/2026-04-12-teaching-system-brainstorm-state.md](../superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md)
 - [idea] 两种学习模式：课件→教学模式（只教不考），教材→完整模式（教+考+复习），解决课件 vs 教材产品难题 → [2026-04-11-two-learning-modes.md](./2026-04-11-two-learning-modes.md)
 - [idea] 用户留存与学习动机：需要核心留存机制，MVP 前确定方案 → [2026-04-10-retention-motivation.md](./2026-04-10-retention-motivation.md)
 - [decision] MVP 必做：AI 再教一遍环节（阅读→**教学**→QA），参考月饼投资项目调研 → [2026-04-10-teaching-phase.md](./2026-04-10-teaching-phase.md)
@@ -45,6 +47,7 @@
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [audit:resolved] Scanned PDF 里程碑审计：architecture.md 补齐 OCR_PROVIDER 等环境变量 + 4 端点清单 + 上云约束 ⚠️（2026-04-12）→ [2026-04-12-scanned-pdf-milestone-audit.md](./2026-04-12-scanned-pdf-milestone-audit.md)
 - [audit:resolved] Page 1 Refinement 审计：shadow 违规修复（+2 tokens），architecture.md 同步（2026-04-10）→ [2026-04-10-page1-refinement-audit.md](./2026-04-10-page1-refinement-audit.md)
 - [ux:resolved] 全局缺导航 → M5.5 AppSidebar + Component Library Breadcrumb 解决（6+ 页面已有导航）
 - [ux:resolved] PDF 阅读器太弱 → M6 react-pdf-viewer 替换（缩放/搜索/书签全具备）

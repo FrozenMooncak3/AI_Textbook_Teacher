@@ -22,9 +22,17 @@
 - 两种学习模式洞察 → `docs/journal/2026-04-11-two-learning-modes.md`
 - MVP 扩展时间线 → `docs/superpowers/plans/2026-04-11-mvp-expansion-timeline.md`
 
-**下一步**：MVP 扩展第二线——**教学系统设计**（teaching brainstorm WIP 在 `docs/superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md`）；或先端到端人工验证扫描 PDF 流程（需要用户上传真实 PDF 测试）
+**下一步**：**云部署里程碑**（基础设施，新立项）— 本地测试环境痛苦，产品负责人拍板切换"独立开发者云部署模式"。brainstorm WIP 在 `docs/superpowers/specs/2026-04-12-cloud-deployment-brainstorm-state.md`，下一步决策 1（OCR 处理方式）。
 
-**Advisory 累计**：11 条（T6: 3 + T7: 3 + T8: 5），主要为命名/边缘 case，不阻塞。建议下一里程碑开始前安排一个 cleanup task 处理。
+**冻结中的里程碑**：
+- **教学系统**（决策 1-2 已拍，3-9 待）：WIP 在 `docs/superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md`，云部署结束后恢复
+- **扫描 PDF 端到端人工测试**：因本地 OCR server 起不来推迟，改为云环境测试
+
+**里程碑收尾**：
+- ✅ milestone-audit 已完成（2026-04-12，架构 ⚠️ 4 条新增约束已写入 architecture.md）
+- ⏳ claudemd-check 待跑
+
+**Advisory 累计**：11 条（T6: 3 + T7: 3 + T8: 5），其中 2 条已在清理任务修复（40f895b + 277738d），剩余 9 条经人工评估为 by-design，不单独追修。
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 

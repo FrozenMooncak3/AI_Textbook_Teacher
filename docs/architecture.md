@@ -295,9 +295,18 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - `initDb()` 读 `schema.sql`（CREATE TABLE IF NOT EXISTS）+ `seedTemplates()`（幂等 UPSERT）
 - 保护条件：`NEXT_RUNTIME === 'nodejs'`，避免 Edge runtime 导入 pg
 
-### 部署架构（M6）
+### 部署架构（M6 + Scanned PDF 升级 2026-04-12）
 
-- **三容器 Docker Compose**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（PaddleOCR + PyMuPDF + psycopg2）
-- **环境变量**：DATABASE_URL, ANTHROPIC_API_KEY, AI_MODEL, OCR_SERVER_HOST, OCR_SERVER_PORT
+- **三容器 Docker Compose**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（PaddleOCR + PyMuPDF + psycopg2 + pymupdf4llm）
+- **环境变量**：
+  - **App**：`DATABASE_URL`, `ANTHROPIC_API_KEY`, `AI_MODEL`, `OCR_SERVER_HOST`, `OCR_SERVER_PORT`
+  - **OCR**：`OCR_PROVIDER`（默认 `paddle`，可切 `google`）, `GOOGLE_CLOUD_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS`（仅 google provider 需要）, `DATABASE_URL`
 - **持久化卷**：pgdata（数据库）+ uploads（用户 PDF，app 和 ocr 共享）
-- **OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/ocr-pdf`，本地默认 127.0.0.1:8000
+- **OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/{classify-pdf,extract-text,ocr-pdf,ocr}`，本地默认 127.0.0.1:8000
+- **副产品字段**：`books.text_pages_count` / `scanned_pages_count` 由 OCR 的 classify 阶段填入，TypeScript 代码目前未消费（云上可用于成本监控）
+
+**⚠️ 上云部署约束**（下个里程碑「云部署」brainstorm 入口）：
+- OCR server 内存需求 ≥ 1GB（PaddleOCR 模型加载）；首次启动需下载模型，冷启动慢
+- `uploads` volume 共享依赖：若 app 与 ocr 分开部署（跨主机），PDF 文件传递方式需重设计（URL / 对象存储 / 流式上传）
+- OCR server 端点当前无认证，Docker 内网可用；暴露到公网必须加 auth 或放 VPC 内
+- `DATABASE_URL` 被 app 和 ocr 两侧都直连，Neon pooler 连接数限制要考虑
