@@ -317,6 +317,153 @@ async function writeResultsToDB(
   }
 }
 
+async function writeModuleResults(
+  moduleId: number,
+  stage2: Stage2Result
+): Promise<void> {
+  const client = await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+    await client.query('DELETE FROM knowledge_points WHERE module_id = $1', [moduleId])
+    await client.query('DELETE FROM clusters WHERE module_id = $1', [moduleId])
+
+    const clusterIdByName = new Map<string, number>()
+
+    for (const cluster of stage2.clusters) {
+      if (clusterIdByName.has(cluster.name)) {
+        continue
+      }
+
+      const result = await client.query<{ id: number }>(
+        'INSERT INTO clusters (module_id, name) VALUES ($1, $2) RETURNING id',
+        [moduleId, cluster.name]
+      )
+
+      clusterIdByName.set(cluster.name, result.rows[0].id)
+    }
+
+    for (const kp of stage2.final_knowledge_points) {
+      const clusterId = clusterIdByName.get(kp.cluster_name) ?? null
+
+      await client.query(
+        `
+          INSERT INTO knowledge_points (
+            module_id,
+            kp_code,
+            section_name,
+            description,
+            type,
+            importance,
+            detailed_content,
+            cluster_id,
+            ocr_quality
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `,
+        [
+          moduleId,
+          kp.kp_code,
+          kp.section_name,
+          kp.description,
+          kp.type,
+          kp.importance,
+          kp.detailed_content,
+          clusterId,
+          kp.ocr_quality,
+        ]
+      )
+    }
+
+    await client.query(
+      'UPDATE modules SET kp_count = $1, cluster_count = $2 WHERE id = $3',
+      [stage2.final_knowledge_points.length, clusterIdByName.size, moduleId]
+    )
+
+    await client.query('COMMIT')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+export async function extractModule(
+  bookId: number,
+  moduleId: number,
+  moduleText: string,
+  moduleName: string
+): Promise<void> {
+  await run(
+    "UPDATE modules SET kp_extraction_status = 'processing' WHERE id = $1",
+    [moduleId]
+  )
+
+  try {
+    await logAction(
+      'Module KP extraction started',
+      `bookId=${bookId}, moduleId=${moduleId}, title=${moduleName}`
+    )
+
+    if (!moduleText.trim()) {
+      await logAction(
+        'Module KP extraction skipped',
+        `bookId=${bookId}, moduleId=${moduleId}: empty text`,
+        'warn'
+      )
+      await run(
+        "UPDATE modules SET kp_extraction_status = 'completed', kp_count = 0, cluster_count = 0 WHERE id = $1",
+        [moduleId]
+      )
+      return
+    }
+
+    const chunks = chunkText(moduleText)
+    let stage2: Stage2Result
+
+    if (chunks.length === 1) {
+      const extracted = await extractChunk(moduleText, `module ${moduleId}: ${moduleName}`)
+      stage2 = extracted.stage2
+    } else {
+      await logAction(
+        'Module KP extraction chunking',
+        `bookId=${bookId}, moduleId=${moduleId}, chunks=${chunks.length}`
+      )
+
+      const chunkStage2Results: Stage2Result[] = []
+      for (const [chunkIndex, chunk] of chunks.entries()) {
+        const chunkLabel = `module ${moduleId} chunk ${chunkIndex + 1}/${chunks.length}: ${chunk.title}`
+        const extracted = await extractChunk(chunk.text, chunkLabel)
+        chunkStage2Results.push(extracted.stage2)
+      }
+
+      stage2 = mergeChunkResults(chunkStage2Results)
+    }
+
+    await writeModuleResults(moduleId, stage2)
+    await run(
+      "UPDATE modules SET kp_extraction_status = 'completed' WHERE id = $1",
+      [moduleId]
+    )
+
+    await logAction(
+      'Module KP extraction completed',
+      `bookId=${bookId}, moduleId=${moduleId}, final_kps=${stage2.final_knowledge_points.length}, clusters=${stage2.clusters.length}`
+    )
+  } catch (error) {
+    await run(
+      "UPDATE modules SET kp_extraction_status = 'failed' WHERE id = $1",
+      [moduleId]
+    )
+    await logAction(
+      'Module KP extraction failed',
+      `bookId=${bookId}, moduleId=${moduleId}: ${String(error)}`,
+      'error'
+    )
+    throw error
+  }
+}
+
 export async function extractKPs(bookId: number): Promise<void> {
   const book = await queryOne<{ id: number; title: string; raw_text: string | null }>(
     'SELECT id, title, raw_text FROM books WHERE id = $1',

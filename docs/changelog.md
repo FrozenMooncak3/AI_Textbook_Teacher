@@ -1709,3 +1709,9 @@ Files: `scripts/ocr_server.py`, `scripts/test-scanned-pdf-task4.py`
 ## 2026-04-12 | Scanned PDF T5: page-aware text chunking
 Completed: Updated `text-chunker.ts` to treat `--- PAGE N ---` lines as metadata instead of headings, added Markdown heading detection for `#`/`##`/`###`, stripped page markers from chunk text, and tracked `pageStart` / `pageEnd` on every chunk while preserving original `startLine` / `endLine`. Added regression coverage for short-text page metadata, Markdown heading chunking, and the no-page-marker-boundary behavior.
 Files: `src/lib/text-chunker.ts`, `scripts/test-scanned-pdf-task5.mjs`
+
+---
+
+## 2026-04-12 | Scanned PDF T6: per-module KP extraction writes
+Completed: Added `extractModule(bookId, moduleId, moduleText, moduleName)` to reuse the existing 3-stage extraction pipeline for a single module while tracking `modules.kp_extraction_status` through processing, completed, skipped, and failed paths. Added `writeModuleResults(moduleId, stage2)` to replace only the target module's clusters and knowledge points inside a transaction, collapse merged chunk results onto the single module row, and refresh `kp_count` / `cluster_count`. Added regression coverage for the new export, empty-module short circuit, failure handling, and module-scoped transactional writes.
+Files: `src/lib/services/kp-extraction-service.ts`, `scripts/test-scanned-pdf-task6.mjs`
