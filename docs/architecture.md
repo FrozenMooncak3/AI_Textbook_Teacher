@@ -52,7 +52,7 @@ Design System（Amber Companion）:
 ```
 auth/               — register, login, logout, me
 books/              — list/create
-books/[bookId]/     — extract, status, pdf, module-map(+confirm/regenerate), screenshot-ocr, screenshot-ask, notes, highlights, toc, dashboard, mistakes
+books/[bookId]/     — extract(+?moduleId=N), module-status, status, pdf, module-map(+confirm/regenerate), screenshot-ocr, screenshot-ask, notes, highlights, toc, dashboard, mistakes
 modules/            — list
 modules/[moduleId]/ — status, guide, generate-questions, qa-feedback, questions, reading-notes,
                       generate-notes, evaluate, test/generate, test/submit, test/, mistakes
@@ -223,11 +223,15 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - **所有权链**：requireUser → requireBookOwner → requireModuleOwner → requireReviewScheduleOwner（JOIN 链验证）
 - **数据隔离**：books.user_id NOT NULL，所有 API 按 user_id 过滤
 
-### 大 PDF 分块（M6）
+### 大 PDF 分块（M6 + Scanned PDF 升级）
 
-- **text-chunker.ts**：标题检测（Chapter N, 第N章, 编号节, 全大写）→ 按标题边界分组 → 超大段按 35K 字符切割（20 行 overlap）
+- **text-chunker.ts**：标题检测（Markdown `# / ## / ###`、Chapter N, 第N章, 编号节, 全大写）→ 按标题边界分组 → 每 chunk 带 `pageStart/pageEnd`（基于 `--- PAGE N ---` 标记）→ 超大段按 35K 字符切割（20 行 overlap）
 - **kp-merger.ts**：多 chunk KP 提取后合并，Dice 系数 bigram 相似度去重（阈值 0.8），kp_code 重编号
-- **kp-extraction-service.ts**：单 chunk 直走，多 chunk 逐 chunk 提取 → mergeChunkResults → 写 DB
+- **kp-extraction-service.ts**：
+  - 老接口 `extractKPs(bookId)` — 整书提取 + merge
+  - 新接口 `extractModule(bookId, moduleId, moduleText, moduleName)` — 模块级 UPSERT + module-scoped DELETE + `syncBookKpStatus` 汇总
+  - 新接口 `triggerReadyModulesExtraction(bookId)` — 扫所有 `text_status='ready' AND ocr_status IN ('done','skipped')` 的模块逐个 fire-and-forget
+  - 新辅助 `getModuleText(bookId, pageStart, pageEnd)` — 基于 `--- PAGE N ---` 标记切片 raw_text
 
 ### PDF 阅读器（M6）
 
@@ -236,15 +240,54 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - pdfjs-dist@3.11.174 Worker（CDN）
 - ScreenshotOverlay + AiChatDialog 保持不变
 
-### PDF OCR 管道（M6-hotfix 修复）
+### PDF OCR 管道（Scanned PDF 升级 2026-04-12）
 
-- **上传流程**：`books/route.ts` 通过 HTTP POST 调用 OCR 服务 `/ocr-pdf` 端点（fire-and-forget）
-- **OCR 服务**：`scripts/ocr_server.py` Flask 应用，提供 `/ocr`（单图）和 `/ocr-pdf`（整 PDF）两个端点
-- **PDF OCR**：`/ocr-pdf` 接收 `{ pdf_path, book_id }`，后台线程处理，逐页 text extraction + PaddleOCR fallback，通过 psycopg2 写 PostgreSQL
-- **进度更新**：每页更新 `books.ocr_current_page`/`ocr_total_pages`，完成写 `raw_text` + `parse_status='done'`
-- **线程安全**：`ocr_lock` 保护 PaddleOCR 引擎（非线程安全）
-- **parse_status 值**：`pending` → `processing` → `done` / `error`
-- **端口统一**：OCR 服务默认 8000，`screenshot-ocr.ts` 默认 8000
+**4 步上传流程**（替代原单步 `/ocr-pdf`）：
+1. **classify**：`POST /classify-pdf { pdf_path, book_id }` → 逐页分类（text/scanned/mixed），写入 `books.page_classifications`
+2. **extract-text**：`POST /extract-text { pdf_path, book_id }` → 基于 pymupdf4llm 提取所有 text/mixed 页的 Markdown 文本，scanned 页用 `[OCR_PENDING]` 占位，页间用 `--- PAGE N ---` 标记分隔，写入 `books.raw_text`
+3. **建模块**：`books/route.ts` 对 rawText 调用 `chunkText()` → 每个 chunk 带 `pageStart/pageEnd` → 插入 modules 表（`text_status='ready'`, `ocr_status=nonTextPages>0?'pending':'skipped'`, `kp_extraction_status='pending'`）
+4. **fire-and-forget OCR**：只对非纯文字 PDF 调用 `/ocr-pdf`，后台处理 scanned/mixed 页；同时调用 `triggerReadyModulesExtraction(bookId)` 并行触发已就绪模块的 KP 提取
+
+**OCR 服务端点**（scripts/ocr_server.py）：
+- `/classify-pdf` — 页面分类
+- `/extract-text` — pymupdf4llm 提取 Markdown
+- `/ocr-pdf` — 只处理 scanned/mixed 页（提取后替换 `[OCR_PENDING]` 占位）
+- `/ocr` — 单图 OCR（截图问 AI 使用）
+- **Provider 抽象**：PaddleOCR 为默认 provider，接口可换
+
+**进度更新**：`books.ocr_current_page`/`ocr_total_pages` 书级；模块级 text_status/ocr_status/kp_extraction_status 独立追踪
+
+**parse_status 取值**：`pending` → `processing` → `done` / `error`
+**kp_extraction_status 取值（books + modules 都有）**：`pending` → `processing` → `completed` / `failed`
+
+### 渐进式处理（Scanned PDF 2026-04-12）
+
+**设计目标**：文字页先解锁阅读，扫描页后台 OCR 不阻塞；模块一就绪就可用。
+
+**模块级状态三元组**（modules 表）：
+- `text_status`: `pending`（等 OCR）| `ready`（文本可读）
+- `ocr_status`: `pending` | `processing` | `done` | `skipped` | `failed`
+- `kp_extraction_status`: `pending` | `processing` | `completed` | `failed`
+
+**书级汇总**（`syncBookKpStatus(bookId)` 优先级）：
+- 所有模块 `completed` → `completed`
+- 有模块 `processing` → `processing`
+- 有模块 `failed`（且无 processing）→ `failed`
+- 否则 → `pending`
+
+**API 契约**：
+- `GET /api/books/[bookId]/module-status` → `{ bookId, parseStatus, kpExtractionStatus, ocrCurrentPage, ocrTotalPages, modules: [{ id, title, orderIndex, textStatus, ocrStatus, kpStatus, pageStart, pageEnd }] }`
+- `POST /api/books/[bookId]/extract` → 触发所有 text_status='ready' 且 ocr_status 为 'done'/'skipped' 的模块（202 fire-and-forget）
+- `POST /api/books/[bookId]/extract?moduleId=N` → 单模块重跑
+
+**前端渲染**：
+- `ProcessingPoller` 轮询 module-status（4s）→ 所有模块 kpStatus='completed' 且 parseStatus='done' 时调 `router.refresh()`
+- `ActionHub` 模块网格并行拉 dashboard + module-status，按三元组决定 badge 和可点击性：
+  - `kpStatus=completed` → `completed`/`in-progress`/`not-started` badge，跳转 `/modules/[id]`
+  - `textStatus=ready`, `kpStatus` in (pending, processing) → `readable` badge，跳转 `/reader`
+  - `ocrStatus=processing` → `processing` badge（脉冲），不可点击
+  - `textStatus=pending` → `locked` badge，不可点击
+- 404 回退：老书（无模块级字段）自动降级到 `/api/books/[bookId]/status` 单条进度条
 
 ### 启动初始化（M6-hotfix 修复）
 

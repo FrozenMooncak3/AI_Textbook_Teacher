@@ -4,6 +4,24 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-12 | Scanned PDF Processing Upgrade — T1-T8 实现
+
+**让扫描版 PDF 和文字版 PDF 走同一条渐进式处理管道，模块级文字一就绪就解锁"可阅读"状态**。
+
+核心变更：
+- **T1 DB schema**（fd257f5）：modules 表新增 `text_status`/`ocr_status`/`kp_extraction_status`、`page_start`/`page_end`；books 新增 `kp_extraction_status`；Docker Compose + init-db 支持 scanned-PDF 字段
+- **T2 OCR Server — 页面分类**（19d92f0）：ocr_server.py 新增 `/classify-pdf`（识别 text/scanned/mixed 页）
+- **T3 OCR Server — 文本提取**（3d78a48）：`/extract-text` 基于 pymupdf4llm，输出 Markdown + `--- PAGE N ---` 分页标记；scanned/mixed 页用 `[OCR_PENDING]` 占位
+- **T4 OCR Server — 仅扫描页 OCR + Provider 抽象**（74ae59f）：`/ocr-pdf` 只处理 scanned/mixed 页；抽出 Provider 接口，PaddleOCR 为默认实现
+- **T5 text-chunker 页范围追踪**（32b16a4）：chunker 基于 Markdown 标题切分，每个 chunk 带 page_start/page_end
+- **T6 kp-extraction 按模块重写**（46f5a0e）：`extractModule(bookId, moduleId, moduleText, moduleName)` + `writeModuleResults`，module-scoped UPSERT + status 追踪
+- **T7 API 路由**（b0c696c）：上传改为 4 步（classify → extract-text → 建模块 → fire-and-forget OCR）；`POST /api/books/[bookId]/extract?moduleId=N` 支持单模块重跑；新增 `GET /api/books/[bookId]/module-status` 返回每模块 text/ocr/kp 状态；`syncBookKpStatus` 汇总 precedence（completed > processing > failed > pending）
+- **T8 前端模块级处理 UI**（25e97ba + cdc5481）：StatusBadge 新增 `processing`（脉冲动画）+ `readable`（"可以阅读"）；ProcessingPoller 改用 `/module-status`、每模块独立状态、404 回退旧接口；ActionHub 模块网格并行拉取 module-status、按 kpStatus/textStatus/ocrStatus 决定 badge 和可点击性
+
+CCB 协作统计：Codex 7 任务（T1-T7）、Gemini 1 任务 + 1 次 fix（T8 违反 `any`/console 红线）、Claude 1 任务（T9 文档 + 验证）。本轮累计 Advisory 11 条（大多为命名差异或边缘 case，不阻塞）。
+
+---
+
 ## 2026-04-10 | Page 1 Refinement — Multi-Column Dashboard 重写
 
 **首页从单栏布局重写为 Stitch Multi-Column Dashboard 双栏布局**。

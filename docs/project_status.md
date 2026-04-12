@@ -7,21 +7,24 @@
 
 ## 当前状态（2026-04-12）
 
-**方向**：MVP 扩展三线推进——扫描 PDF（设计完成，待执行）→ 教学系统 → 留存机制，串行执行
+**方向**：MVP 扩展三线推进——扫描 PDF（**已完成**）→ 教学系统 → 留存机制，串行执行
 
-**当前里程碑**：扫描 PDF 实施 — **待执行**
+**当前里程碑**：扫描 PDF 实施 — **已完成**（9 tasks 全通过）
 
 **最新完成**：
-- 扫描 PDF 设计 spec 完成（含 2 轮 spec review）→ `docs/superpowers/specs/2026-04-12-scanned-pdf-design.md`
-- 扫描 PDF 实施计划完成（含 2 轮 plan review，修复 9 个问题）→ `docs/superpowers/plans/2026-04-12-scanned-pdf-plan.md`
-- PDF 处理技术调研完成 → `docs/research/2026-04-11-pdf-processing-research.md`
-- Task ledger 已创建，9 个 task 全部 ready → `.ccb/task-ledger.json`
-- T1 dispatch 文件已写好 → `.ccb/inbox/codex/016-dispatch.md`
+- **扫描 PDF 9 tasks 全部完成**：T1-T7（Codex 后端）+ T8（Gemini 前端，1 次 retry 修 `any`/`console.error` 红线）+ T9（Claude 文档验证）
+- 实际效果：文字页立即解锁阅读，扫描页后台 OCR 不阻塞；模块级独立状态追踪（text/ocr/kp），一就绪就可用
+- 新 API：`GET /api/books/[bookId]/module-status` + `POST /api/books/[bookId]/extract?moduleId=N`
+- 新 UI：StatusBadge 6 状态（加了 processing/readable）+ ProcessingPoller 模块级渲染 + ActionHub 按三元组 badge/可点击性
+- 扫描 PDF 设计 spec + 实施计划（含 2 轮 review）存档于 `docs/superpowers/specs/` 和 `docs/superpowers/plans/`
+- PDF 处理技术调研 → `docs/research/2026-04-11-pdf-processing-research.md`
 - MVP 扩展首轮调研完成（竞品/学习科学/AI成本/护城河/用户定位）→ `docs/research/`
 - 两种学习模式洞察 → `docs/journal/2026-04-11-two-learning-modes.md`
 - MVP 扩展时间线 → `docs/superpowers/plans/2026-04-11-mvp-expansion-timeline.md`
 
-**下一步**：新 session 执行扫描 PDF 计划（9 tasks: T1-T7 Codex, T8 Gemini, T9 Claude）
+**下一步**：MVP 扩展第二线——**教学系统设计**（teaching brainstorm WIP 在 `docs/superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md`）；或先端到端人工验证扫描 PDF 流程（需要用户上传真实 PDF 测试）
+
+**Advisory 累计**：11 条（T6: 3 + T7: 3 + T8: 5），主要为命名/边缘 case，不阻塞。建议下一里程碑开始前安排一个 cleanup task 处理。
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 
@@ -44,6 +47,21 @@
 | M6 | MVP Launch：PostgreSQL 迁移 + 用户账号 + 大 PDF 分块 + PDF 阅读器 + 部署上线 | **已完成**（2026-04-06） |
 | UX Redesign | Amber Companion 设计系统全覆盖 + 页面合并 + 考试/复习重写 + 共享组件 | **已完成**（2026-04-09） |
 | Component Library | 33 组件从 Stitch 落地 + 全页面重写 + 旧组件清理 + Radix UI | **已完成**（2026-04-09） |
+| Scanned PDF | 文字+扫描混合 PDF 渐进处理 + 模块级状态 + 前端可阅读态 | **已完成**（2026-04-12） |
+
+### Scanned PDF 完成内容
+
+| 任务 | 描述 | 执行者 | 状态 |
+|------|------|--------|------|
+| T1 | DB Schema + Docker Foundation | Codex | ✅ |
+| T2 | OCR Server — /classify-pdf | Codex | ✅ |
+| T3 | OCR Server — /extract-text (pymupdf4llm) | Codex | ✅ |
+| T4 | OCR Server — 仅扫描页 OCR + Provider 抽象 | Codex | ✅ |
+| T5 | text-chunker 页范围追踪 | Codex | ✅ |
+| T6 | kp-extraction 按模块重写 | Codex | ✅ |
+| T7 | API 路由（upload + extract + module-status） | Codex | ✅ |
+| T8 | 前端模块级处理 UI | Gemini | ✅ (1 retry: any/console 红线) |
+| T9 | 集成验证 + 文档 | Claude | ✅ |
 
 ### M6 完成内容
 
