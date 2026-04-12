@@ -24,12 +24,19 @@ interface ModuleStatusResponse {
   modules: ModuleStatus[]
 }
 
+interface LegacyStatus {
+  parse_status: string
+  kp_extraction_status: string
+  ocr_current_page: number | null
+  ocr_total_pages: number | null
+}
+
 export default function ProcessingPoller({ bookId }: { bookId: number }) {
   const router = useRouter()
   const [data, setData] = useState<ModuleStatusResponse | null>(null)
   const [error, setError] = useState('')
   const [isLegacy, setIsLegacy] = useState(false)
-  const [legacyStatus, setLegacyStatus] = useState<any>(null)
+  const [legacyStatus, setLegacyStatus] = useState<LegacyStatus | null>(null)
   
   const poll = useCallback(async () => {
     try {
@@ -71,8 +78,8 @@ export default function ProcessingPoller({ bookId }: { bookId: number }) {
       if (allModulesDone && statusData.parseStatus === 'done') {
         router.refresh()
       }
-    } catch (err) {
-      console.error('Polling error:', err)
+    } catch {
+      // Silent — next 4s poll cycle will retry
     }
   }, [bookId, isLegacy, router])
 

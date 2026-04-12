@@ -57,6 +57,13 @@ interface ModuleStatus {
   kpStatus: string
 }
 
+interface ModuleStatusApiRow {
+  id: number
+  textStatus: string
+  ocrStatus: string
+  kpStatus: string
+}
+
 export default function ActionHub({ 
   bookId, 
   userName 
@@ -86,7 +93,7 @@ export default function ActionHub({
         if (statusRes.ok) {
           const statusJson = await statusRes.json()
           const statuses: Record<number, ModuleStatus> = {}
-          statusJson.data.modules.forEach((m: any) => {
+          statusJson.data.modules.forEach((m: ModuleStatusApiRow) => {
             statuses[m.id] = {
               id: m.id,
               textStatus: m.textStatus,
@@ -96,8 +103,8 @@ export default function ActionHub({
           })
           setModuleStatuses(statuses)
         }
-      } catch (err) {
-        console.error('Fetch error:', err)
+      } catch {
+        // Silently handle — LoadingState already covers error display
       } finally {
         setIsLoading(false)
       }
