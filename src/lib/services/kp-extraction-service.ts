@@ -523,9 +523,10 @@ export async function extractModule(
       [moduleId]
     )
     await syncBookKpStatus(bookId)
+    const errorMessage = error instanceof Error ? error.message : String(error)
     await logAction(
       'Module KP extraction failed',
-      `bookId=${bookId}, moduleId=${moduleId}: ${String(error)}`,
+      `bookId=${bookId}, moduleId=${moduleId}: ${errorMessage}`,
       'error'
     )
     throw error
@@ -556,9 +557,10 @@ export async function triggerReadyModulesExtraction(bookId: number): Promise<voi
       const moduleText = await getModuleText(bookId, moduleRow.page_start, moduleRow.page_end)
       await extractModule(bookId, moduleRow.id, moduleText, moduleRow.title)
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
       await logAction(
         'Ready-modules extraction error',
-        `bookId=${bookId}, moduleId=${moduleRow.id}: ${String(error)}`,
+        `bookId=${bookId}, moduleId=${moduleRow.id}: ${errorMessage}`,
         'error'
       )
     }
@@ -642,7 +644,8 @@ export async function extractKPs(bookId: number): Promise<void> {
     )
   } catch (error) {
     await run("UPDATE books SET kp_extraction_status = 'failed' WHERE id = $1", [bookId])
-    await logAction('KP extraction failed', `bookId=${bookId}: ${String(error)}`, 'error')
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    await logAction('KP extraction failed', `bookId=${bookId}: ${errorMessage}`, 'error')
     throw error
   }
 }
