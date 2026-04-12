@@ -659,6 +659,58 @@ Response `202`:
 
 Note: this endpoint is used by the backend upload flow, reads `DATABASE_URL` from environment variables only, and performs background OCR that updates `books.raw_text`, `books.parse_status`, `books.ocr_current_page`, and `books.ocr_total_pages`.
 
+### `POST /api/books/[bookId]/extract?moduleId=1`
+
+Request body:
+
+```json
+{}
+```
+
+Response `202`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "status": "processing",
+    "bookId": 1,
+    "moduleId": 1
+  }
+}
+```
+
+Note: `moduleId` is optional. Without it, the route triggers extraction for all ready modules in the book and returns the same envelope without `moduleId`.
+
+### `GET /api/books/[bookId]/module-status`
+
+Response `200`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "bookId": 1,
+    "parseStatus": "processing",
+    "kpExtractionStatus": "pending",
+    "ocrCurrentPage": 3,
+    "ocrTotalPages": 12,
+    "modules": [
+      {
+        "id": 1,
+        "title": "Chapter 1",
+        "orderIndex": 0,
+        "textStatus": "ready",
+        "ocrStatus": "pending",
+        "kpStatus": "pending",
+        "pageStart": 1,
+        "pageEnd": 4
+      }
+    ]
+  }
+}
+```
+
 ## Change Log
 
 - [2026-03-28] [Codex] Added reading notes CRUD API contract for M2.
@@ -671,3 +723,4 @@ Note: this endpoint is used by the backend upload flow, reads `DATABASE_URL` fro
 - [2026-04-03] [Codex] Added book-level dashboard and mistakes API contracts, and updated review respond response fields.
 - [2026-04-06] [Codex] Added auth register/login/logout/me API contracts for M6 invite-code authentication.
 - [2026-04-07] [Codex] Added the internal `/ocr-pdf` OCR service contract for the M6 OCR hotfix.
+- [2026-04-12] [Codex] Added per-module extract and module-status API contracts for the scanned PDF upload flow.

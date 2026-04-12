@@ -1,6 +1,6 @@
 import { generateText } from 'ai'
 import { getModel, timeout } from '../ai'
-import { pool, queryOne, run } from '../db'
+import { pool, query, queryOne, run } from '../db'
 import { SystemError } from '../errors'
 import { mergeChunkResults, mergeModuleGroups } from '../kp-merger'
 import { logAction } from '../log'
@@ -388,6 +388,71 @@ async function writeModuleResults(
   }
 }
 
+export async function syncBookKpStatus(bookId: number): Promise<void> {
+  const rows = await query<{ kp_extraction_status: string }>(
+    'SELECT kp_extraction_status FROM modules WHERE book_id = $1',
+    [bookId]
+  )
+
+  if (rows.length === 0) {
+    return
+  }
+
+  const statuses = rows.map((row) => row.kp_extraction_status)
+  let bookStatus: string
+
+  if (statuses.every((status) => status === 'completed')) {
+    bookStatus = 'completed'
+  } else if (statuses.some((status) => status === 'processing')) {
+    bookStatus = 'processing'
+  } else if (statuses.some((status) => status === 'failed')) {
+    bookStatus = 'failed'
+  } else {
+    bookStatus = 'pending'
+  }
+
+  await run('UPDATE books SET kp_extraction_status = $1 WHERE id = $2', [bookStatus, bookId])
+}
+
+/**
+ * Slice book raw_text between `--- PAGE pageStart ---` and `--- PAGE pageEnd+1 ---` markers.
+ * If pageStart or pageEnd is null, returns empty string.
+ */
+export async function getModuleText(
+  bookId: number,
+  pageStart: number | null,
+  pageEnd: number | null
+): Promise<string> {
+  if (pageStart === null || pageEnd === null) {
+    return ''
+  }
+
+  const book = await queryOne<{ raw_text: string | null }>(
+    'SELECT raw_text FROM books WHERE id = $1',
+    [bookId]
+  )
+  const rawText = book?.raw_text ?? ''
+
+  if (!rawText) {
+    return ''
+  }
+
+  const startMarker = `--- PAGE ${pageStart} ---`
+  const endMarker = `--- PAGE ${pageEnd + 1} ---`
+  const startIndex = rawText.indexOf(startMarker)
+
+  if (startIndex < 0) {
+    return ''
+  }
+
+  const endIndex = rawText.indexOf(endMarker, startIndex + startMarker.length)
+  if (endIndex < 0) {
+    return rawText.slice(startIndex).trim()
+  }
+
+  return rawText.slice(startIndex, endIndex).trim()
+}
+
 export async function extractModule(
   bookId: number,
   moduleId: number,
@@ -415,6 +480,7 @@ export async function extractModule(
         "UPDATE modules SET kp_extraction_status = 'completed', kp_count = 0, cluster_count = 0 WHERE id = $1",
         [moduleId]
       )
+      await syncBookKpStatus(bookId)
       return
     }
 
@@ -445,6 +511,7 @@ export async function extractModule(
       "UPDATE modules SET kp_extraction_status = 'completed' WHERE id = $1",
       [moduleId]
     )
+    await syncBookKpStatus(bookId)
 
     await logAction(
       'Module KP extraction completed',
@@ -455,12 +522,46 @@ export async function extractModule(
       "UPDATE modules SET kp_extraction_status = 'failed' WHERE id = $1",
       [moduleId]
     )
+    await syncBookKpStatus(bookId)
     await logAction(
       'Module KP extraction failed',
       `bookId=${bookId}, moduleId=${moduleId}: ${String(error)}`,
       'error'
     )
     throw error
+  }
+}
+
+export async function triggerReadyModulesExtraction(bookId: number): Promise<void> {
+  const readyModules = await query<{
+    id: number
+    title: string
+    page_start: number | null
+    page_end: number | null
+  }>(
+    `
+      SELECT id, title, page_start, page_end
+      FROM modules
+      WHERE book_id = $1
+        AND text_status = 'ready'
+        AND ocr_status IN ('done', 'skipped')
+        AND kp_extraction_status = 'pending'
+      ORDER BY order_index ASC
+    `,
+    [bookId]
+  )
+
+  for (const moduleRow of readyModules) {
+    try {
+      const moduleText = await getModuleText(bookId, moduleRow.page_start, moduleRow.page_end)
+      await extractModule(bookId, moduleRow.id, moduleText, moduleRow.title)
+    } catch (error) {
+      await logAction(
+        'Ready-modules extraction error',
+        `bookId=${bookId}, moduleId=${moduleRow.id}: ${String(error)}`,
+        'error'
+      )
+    }
   }
 }
 

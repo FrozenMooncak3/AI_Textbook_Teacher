@@ -1715,3 +1715,9 @@ Files: `src/lib/text-chunker.ts`, `scripts/test-scanned-pdf-task5.mjs`
 ## 2026-04-12 | Scanned PDF T6: per-module KP extraction writes
 Completed: Added `extractModule(bookId, moduleId, moduleText, moduleName)` to reuse the existing 3-stage extraction pipeline for a single module while tracking `modules.kp_extraction_status` through processing, completed, skipped, and failed paths. Added `writeModuleResults(moduleId, stage2)` to replace only the target module's clusters and knowledge points inside a transaction, collapse merged chunk results onto the single module row, and refresh `kp_count` / `cluster_count`. Added regression coverage for the new export, empty-module short circuit, failure handling, and module-scoped transactional writes.
 Files: `src/lib/services/kp-extraction-service.ts`, `scripts/test-scanned-pdf-task6.mjs`
+
+---
+
+## 2026-04-12 | Scanned PDF T7: 4-step upload flow and module-level extraction APIs
+Completed: Rewired `POST /api/books` for PDFs to run classify, extract-text, module creation, background OCR, and background module extraction orchestration. Added `syncBookKpStatus`, `getModuleText`, and `triggerReadyModulesExtraction` to keep book-level KP state aligned with per-module extraction. Replaced `POST /api/books/[bookId]/extract` with module-aware fire-and-forget behavior and added `GET /api/books/[bookId]/module-status` for OCR/KP progress polling. Updated the API contract and added regression coverage for the new service helpers and route shapes.
+Files: `src/lib/services/kp-extraction-service.ts`, `src/app/api/books/route.ts`, `src/app/api/books/[bookId]/extract/route.ts`, `src/app/api/books/[bookId]/module-status/route.ts`, `.agents/API_CONTRACT.md`, `scripts/test-scanned-pdf-task6.mjs`, `scripts/test-scanned-pdf-task7.mjs`

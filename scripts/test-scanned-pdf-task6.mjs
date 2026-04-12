@@ -69,6 +69,7 @@ async function read(relativePath) {
 function createHarnessState() {
   const clientQueries = []
   const runCalls = []
+  const queryCalls = []
   const logCalls = []
   const chunkTextCalls = []
   const mergeCalls = []
@@ -95,6 +96,7 @@ function createHarnessState() {
   const state = {
     clientQueries,
     runCalls,
+    queryCalls,
     logCalls,
     chunkTextCalls,
     mergeCalls,
@@ -175,6 +177,11 @@ async function loadServiceModule(sourceText, state) {
         '  const state = globalThis.__TASK6_STATE__',
         '  state.queryOneCalls.push({ sql, params })',
         '  return state.queryOneResult',
+        '}',
+        'export async function query(sql, params = []) {',
+        '  const state = globalThis.__TASK6_STATE__',
+        '  state.queryCalls.push({ sql, params })',
+        '  return []',
         '}',
         'export async function run(sql, params = []) {',
         '  const state = globalThis.__TASK6_STATE__',

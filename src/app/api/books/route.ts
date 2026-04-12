@@ -6,6 +6,8 @@ import { insert, query, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
+import { triggerReadyModulesExtraction } from '@/lib/services/kp-extraction-service'
+import { chunkText } from '@/lib/text-chunker'
 
 const UPLOADS_DIR = join(process.cwd(), 'data', 'uploads')
 
@@ -105,32 +107,97 @@ export async function POST(req: NextRequest) {
 
   const ocrHost = process.env.OCR_SERVER_HOST || '127.0.0.1'
   const ocrPort = process.env.OCR_SERVER_PORT || '8000'
-  const ocrUrl = `http://${ocrHost}:${ocrPort}/ocr-pdf`
+  const ocrBase = `http://${ocrHost}:${ocrPort}`
 
-  void fetch(ocrUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      pdf_path: pdfPath,
-      book_id: bookId,
-    }),
-  })
-    .then(async (response) => {
-      if (response.ok) {
-        return
+  try {
+    const classifyRes = await fetch(`${ocrBase}/classify-pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pdf_path: pdfPath, book_id: bookId }),
+    })
+    if (!classifyRes.ok) {
+      await markOcrFailure(`classify-pdf HTTP ${classifyRes.status}`)
+      return NextResponse.json({ bookId, processing: true }, { status: 201 })
+    }
+
+    const classifyJson = (await classifyRes.json()) as {
+      text_count: number
+      scanned_count: number
+      mixed_count: number
+    }
+    const { text_count, scanned_count, mixed_count } = classifyJson
+    const nonTextPages = scanned_count + mixed_count
+
+    const extractRes = await fetch(`${ocrBase}/extract-text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pdf_path: pdfPath, book_id: bookId }),
+    })
+    if (!extractRes.ok) {
+      await markOcrFailure(`extract-text HTTP ${extractRes.status}`)
+      return NextResponse.json({ bookId, processing: true }, { status: 201 })
+    }
+
+    const extractJson = (await extractRes.json()) as { text: string }
+    const rawText = extractJson.text ?? ''
+
+    if (rawText) {
+      const chunks = chunkText(rawText)
+      for (let index = 0; index < chunks.length; index += 1) {
+        const chunk = chunks[index]
+        await insert(
+          `INSERT INTO modules (book_id, title, order_index, page_start, page_end, text_status, ocr_status, kp_extraction_status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [
+            bookId,
+            chunk.title,
+            index,
+            chunk.pageStart,
+            chunk.pageEnd,
+            'ready',
+            nonTextPages > 0 ? 'pending' : 'skipped',
+            'pending',
+          ]
+        )
       }
+    }
 
-      const responseText = await response.text().catch(() => '')
-      const failureDetails = responseText.trim()
-        ? `OCR service responded with HTTP ${response.status}: ${responseText.trim().slice(0, 500)}`
-        : `OCR service responded with HTTP ${response.status}`
+    if (nonTextPages > 0) {
+      void fetch(`${ocrBase}/ocr-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pdf_path: pdfPath, book_id: bookId }),
+      })
+        .then(async (response) => {
+          if (response.ok) {
+            return
+          }
 
-      await markOcrFailure(failureDetails)
+          const responseText = await response.text().catch(() => '')
+          const failureDetails = responseText.trim()
+            ? `ocr-pdf HTTP ${response.status}: ${responseText.trim().slice(0, 500)}`
+            : `ocr-pdf HTTP ${response.status}`
+
+          await markOcrFailure(failureDetails)
+        })
+        .catch(async (error) => {
+          await markOcrFailure(`ocr-pdf call failed: ${String(error)}`)
+        })
+    } else {
+      await run("UPDATE books SET parse_status = 'done' WHERE id = $1", [bookId])
+    }
+
+    void triggerReadyModulesExtraction(bookId).catch(async (error) => {
+      await logAction('triggerReadyModulesExtraction error', `bookId=${bookId}: ${String(error)}`, 'error')
     })
-    .catch(async (error) => {
-      await markOcrFailure(`OCR service call failed: ${String(error)}`)
-    })
 
-  await logAction('book_ocr_started', `bookId=${bookId}, title=${title}`)
-  return NextResponse.json({ bookId, processing: true }, { status: 201 })
+    await logAction(
+      'book_upload_classified',
+      `bookId=${bookId}, text=${text_count}, scanned=${scanned_count}, mixed=${mixed_count}`
+    )
+    return NextResponse.json({ bookId, processing: true }, { status: 201 })
+  } catch (error) {
+    await markOcrFailure(`upload flow error: ${String(error)}`)
+    return NextResponse.json({ bookId, processing: true }, { status: 201 })
+  }
 }
