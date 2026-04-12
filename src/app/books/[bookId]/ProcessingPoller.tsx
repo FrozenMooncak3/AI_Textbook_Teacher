@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import LoadingState from '@/components/LoadingState'
 import ContentCard from '@/components/ui/ContentCard'
