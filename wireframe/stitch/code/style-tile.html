@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Textbook Teacher - Style Tile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed-dim": "#efad16",
+                    "primary-container": "#ff7a23",
+                    "surface-tint": "#a74800",
+                    "tertiary-dim": "#755200",
+                    "secondary-fixed": "#ffc69d",
+                    "surface-bright": "#fffbff",
+                    "on-secondary-container": "#703900",
+                    "error-container": "#f95630",
+                    "surface-container-highest": "#ece9d4",
+                    "outline-variant": "#bcb9ab",
+                    "on-tertiary-fixed": "#3c2900",
+                    "on-error-container": "#520c00",
+                    "error": "#be2d06",
+                    "primary-dim": "#943f00",
+                    "surface-container": "#f8f4e2",
+                    "inverse-primary": "#f77113",
+                    "on-tertiary": "#ffffff",
+                    "primary": "#a74800",
+                    "tertiary": "#845d00",
+                    "surface-variant": "#ece9d4",
+                    "primary-fixed": "#ff7a23",
+                    "on-surface-variant": "#666558",
+                    "on-primary": "#ffffff",
+                    "outline": "#838174",
+                    "surface": "#fffbff",
+                    "on-surface": "#39382d",
+                    "secondary-dim": "#894700",
+                    "inverse-surface": "#0f0f06",
+                    "on-secondary-fixed-variant": "#7e4000",
+                    "surface-container-low": "#fefae8",
+                    "on-secondary-fixed": "#542900",
+                    "inverse-on-surface": "#a09d8f",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#e7e3ce",
+                    "on-tertiary-fixed-variant": "#614400",
+                    "secondary-container": "#ffc69d",
+                    "on-background": "#39382d",
+                    "on-error": "#ffffff",
+                    "tertiary-container": "#febb28",
+                    "background": "#fffbff",
+                    "surface-container-high": "#f2eedb",
+                    "secondary-fixed-dim": "#ffb379",
+                    "error-dim": "#b92902",
+                    "tertiary-fixed": "#febb28",
+                    "on-primary-fixed-variant": "#4e1e00",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed": "#000000",
+                    "secondary": "#9b5100",
+                    "on-primary-container": "#3f1700",
+                    "primary-fixed-dim": "#f06c0b",
+                    "on-tertiary-container": "#563b00"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Be Vietnam Pro"],
+                    "label": ["Plus Jakarta Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; background-color: #fffbff; color: #39382d; }
+        .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .amber-glow-shadow { shadow-[0_40px_40px_-15px_rgba(167,72,0,0.06)]; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Shell -->
+<header class="flex justify-between items-center px-8 w-full fixed top-0 z-50 h-16 no-line tonal-transition bg-white/80 backdrop-blur-md shadow-[0_40px_40px_-15px_rgba(167,72,0,0.06)] font-['Plus_Jakarta_Sans'] font-medium">
+<div class="text-xl font-bold text-[#f97316]">AI 教材精学老师</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-[#a74800] font-bold border-b-2 border-[#a74800] py-1 transition-colors duration-200" href="#">Dashboard</a>
+<a class="text-[#39382d] hover:text-[#f97316] transition-colors duration-200" href="#">Library</a>
+<a class="text-[#39382d] hover:text-[#f97316] transition-colors duration-200" href="#">AI Tutor</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-full font-bold scale-95 active:scale-90 transition-transform">Start Learning</button>
+<img alt="User profile" class="w-10 h-10 rounded-full object-cover border-2 border-primary-container" data-alt="Professional portrait of a young male educator with a friendly smile, warm studio lighting, blurred library background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBe4IlgnlIOEpbNtZDqefpKMK9b0feWVJSh8aPmIHxwRWtHzgPzyBAuwVVreSZNoX0bKHzcsjHWqf7gdopif4BYwIjSIx_OJRkPqQmM_c4oQZH0jnYIjXV3V5GNyz-N9x_elFxasRYz8LEMplzZsJuTGk3zPkreAyGPPA0LwhM3jwCSB8rq3F0jQ1sOPiohhIre6o646hamuE7--Kxw9RRYA8wywGabScDlAWgvMsm_RCq1oCI12g7Aa76w7jxLC-yp4z1ghJH5KM"/>
+</div>
+</header>
+<main class="pt-32 pb-20 px-6 max-w-7xl mx-auto flex gap-8">
+<!-- Sidebar Navigation Shell -->
+<aside class="hidden lg:flex flex-col fixed left-0 top-0 h-screen w-64 py-6 border-r border-orange-100/20 bg-gradient-to-r from-[#fefae8] to-[#fffbff] rounded-r-[32px] shadow-xl shadow-orange-900/5 z-40">
+<div class="px-8 mb-10">
+<div class="text-lg font-black text-[#a74800] font-headline">AI Teacher</div>
+<div class="text-xs text-on-surface-variant opacity-70">Your Learning Companion</div>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="bg-[#ffffff] text-[#a74800] font-bold rounded-full shadow-sm m-2 flex items-center gap-3 px-4 py-3 hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-['Plus_Jakarta_Sans'] text-sm tracking-wide">Dashboard</span>
+</div>
+<div class="text-[#39382d] opacity-70 m-2 flex items-center gap-3 px-4 py-3 hover:bg-white/50 hover:rounded-full transition-all duration-300 hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-['Plus_Jakarta_Sans'] text-sm tracking-wide">My Courses</span>
+</div>
+<div class="text-[#39382d] opacity-70 m-2 flex items-center gap-3 px-4 py-3 hover:bg-white/50 hover:rounded-full transition-all duration-300 hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-['Plus_Jakarta_Sans'] text-sm tracking-wide">AI Tutor</span>
+</div>
+<div class="text-[#39382d] opacity-70 m-2 flex items-center gap-3 px-4 py-3 hover:bg-white/50 hover:rounded-full transition-all duration-300 hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined">edit_note</span>
+<span class="font-['Plus_Jakarta_Sans'] text-sm tracking-wide">Study Notes</span>
+</div>
+<div class="text-[#39382d] opacity-70 m-2 flex items-center gap-3 px-4 py-3 hover:bg-white/50 hover:rounded-full transition-all duration-300 hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined">auto_stories</span>
+<span class="font-['Plus_Jakarta_Sans'] text-sm tracking-wide">Library</span>
+</div>
+</nav>
+<div class="mt-auto px-4">
+<div class="bg-primary-container/10 p-6 rounded-3xl mb-6">
+<p class="text-xs font-bold text-primary mb-2">PRO PLAN</p>
+<p class="text-sm font-medium mb-4">Unlock advanced AI analysis &amp; unlimited notes.</p>
+<button class="w-full bg-primary text-on-primary py-3 rounded-full text-sm font-bold shadow-lg shadow-orange-900/10">Upgrade to Pro</button>
+</div>
+<div class="space-y-1">
+<div class="text-[#39382d] opacity-70 m-1 flex items-center gap-3 px-4 py-2 text-sm">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span>Settings</span>
+</div>
+<div class="text-[#39382d] opacity-70 m-1 flex items-center gap-3 px-4 py-2 text-sm">
+<span class="material-symbols-outlined text-lg">contact_support</span>
+<span>Support</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="lg:ml-64 flex-1">
+<!-- Hero Bento Section -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<div class="md:col-span-2 bg-surface-container-low rounded-[40px] p-10 flex flex-col justify-center relative overflow-hidden">
+<div class="relative z-10">
+<span class="inline-block px-4 py-1 rounded-full bg-primary-container text-on-primary-container text-xs font-bold mb-4">WELCOME BACK</span>
+<h1 class="text-4xl md:text-5xl font-headline font-extrabold text-on-surface leading-tight tracking-tight mb-6">
+                            Master your <span class="text-primary italic">textbooks</span> with AI.
+                        </h1>
+<p class="text-lg text-on-surface-variant max-w-md mb-8 leading-relaxed">
+                            Your tactile digital companion for deep learning. We turn dense chapters into interactive journeys.
+                        </p>
+<div class="flex gap-4">
+<button class="px-8 py-4 bg-gradient-to-r from-primary to-primary-container text-on-primary rounded-full font-bold shadow-xl shadow-orange-900/20 flex items-center gap-2">
+                                Resume Chapter 4 <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="absolute right-0 top-0 w-1/3 h-full bg-primary-container/5 rounded-l-full -mr-20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[120px] text-primary/10">auto_stories</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-[40px] p-8 shadow-[0_40px_40px_-15px_rgba(167,72,0,0.06)] flex flex-col items-center text-center justify-center border border-outline-variant/10">
+<div class="w-20 h-20 bg-tertiary-container rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-on-tertiary-container text-4xl" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+<h3 class="text-2xl font-headline font-bold mb-2">Daily Goal</h3>
+<p class="text-on-surface-variant text-sm mb-6">You've completed 75% of your study goal for today.</p>
+<div class="w-full bg-surface-container h-3 rounded-full mb-6">
+<div class="bg-primary h-full rounded-full w-3/4 shadow-sm shadow-orange-900/30"></div>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">View Progress</button>
+</div>
+</section>
+<!-- Learning Path Header -->
+<div class="flex items-end justify-between mb-8">
+<div>
+<h2 class="text-3xl font-headline font-bold">Your Learning Journey</h2>
+<p class="text-on-surface-variant">Pick up where you left off in your active courses.</p>
+</div>
+<button class="px-6 py-2 rounded-full border-2 border-outline-variant/30 font-bold text-sm hover:bg-surface-container transition-colors">Browse All</button>
+</div>
+<!-- Status Indicators & Course Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">
+<!-- Course Card 1: Completed -->
+<div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_40px_40px_-15px_rgba(167,72,0,0.06)] border border-outline-variant/10 group hover:-translate-y-1 transition-transform">
+<div class="flex justify-between items-start mb-6">
+<div class="px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wider">Completed</div>
+<span class="material-symbols-outlined text-emerald-600">check_circle</span>
+</div>
+<h4 class="text-xl font-headline font-bold mb-3">Intro to Quantum Physics</h4>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-2">Fundamental principles of quantum mechanics, wave-particle duality, and the uncertainty principle.</p>
+<div class="pt-6 border-t border-surface-container-highest flex justify-between items-center">
+<span class="text-xs font-bold text-on-surface-variant">12 Chapters</span>
+<button class="text-primary material-symbols-outlined transition-transform group-hover:translate-x-1">play_circle</button>
+</div>
+</div>
+<!-- Course Card 2: In Progress -->
+<div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_40px_40px_-15px_rgba(167,72,0,0.06)] border border-outline-variant/10 group hover:-translate-y-1 transition-transform">
+<div class="flex justify-between items-start mb-6">
+<div class="px-4 py-1.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold uppercase tracking-wider">In Progress</div>
+<span class="material-symbols-outlined text-blue-600">pending</span>
+</div>
+<h4 class="text-xl font-headline font-bold mb-3">Modern Art History</h4>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-2">Exploring the evolution of art from Impressionism to the digital age and contemporary movements.</p>
+<div class="pt-6 border-t border-surface-container-highest flex justify-between items-center">
+<span class="text-xs font-bold text-on-surface-variant">Chapter 4 of 8</span>
+<button class="text-primary material-symbols-outlined transition-transform group-hover:translate-x-1">play_circle</button>
+</div>
+</div>
+<!-- Course Card 3: Q&A Focus -->
+<div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_40px_40px_-15px_rgba(167,72,0,0.06)] border border-outline-variant/10 group hover:-translate-y-1 transition-transform">
+<div class="flex justify-between items-start mb-6">
+<div class="px-4 py-1.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-bold uppercase tracking-wider">Q&amp;A Active</div>
+<span class="material-symbols-outlined text-indigo-600">forum</span>
+</div>
+<h4 class="text-xl font-headline font-bold mb-3">Global Economics 101</h4>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-2">Understanding macro trends, market dynamics, and international trade policies in the 21st century.</p>
+<div class="pt-6 border-t border-surface-container-highest flex justify-between items-center">
+<span class="text-xs font-bold text-on-surface-variant">3 New Insights</span>
+<button class="text-primary material-symbols-outlined transition-transform group-hover:translate-x-1">play_circle</button>
+</div>
+</div>
+</div>
+<!-- Interaction & Details -->
+<section class="flex flex-col xl:flex-row gap-8">
+<!-- AI Chat Simulation -->
+<div class="flex-1 bg-surface-container-low rounded-[40px] p-8 min-h-[400px] flex flex-col">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary">smart_toy</span>
+</div>
+<div>
+<h3 class="font-headline font-bold">Ask AI Teacher</h3>
+<p class="text-xs text-on-surface-variant">Context: Chapter 4 - Supply &amp; Demand</p>
+</div>
+</div>
+<div class="flex-1 space-y-4 mb-8">
+<div class="bg-surface-container-lowest p-5 rounded-2xl rounded-tl-none mr-12 text-sm shadow-sm">
+                            Can you explain how price ceilings affect market equilibrium?
+                        </div>
+<div class="bg-primary/5 p-5 rounded-2xl rounded-tr-none ml-12 text-sm border border-primary/10">
+                            Great question! A price ceiling keeps prices from rising above a certain level. When set below the equilibrium price, it leads to a <strong>shortage</strong> because quantity demanded exceeds quantity supplied.
+                        </div>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border-none rounded-full py-4 px-8 focus:ring-2 focus:ring-primary shadow-sm text-sm placeholder:text-outline" placeholder="Type your follow-up question..." type="text"/>
+<button class="absolute right-2 top-2 bg-primary text-on-primary p-2 rounded-full material-symbols-outlined">send</button>
+</div>
+</div>
+<!-- Study Resources Bento -->
+<div class="xl:w-1/3 grid grid-cols-1 gap-6">
+<div class="bg-white rounded-[40px] p-8 shadow-[0_40px_40px_-15px_rgba(167,72,0,0.06)] border border-outline-variant/10">
+<div class="flex items-center gap-4 mb-4">
+<div class="w-10 h-10 bg-tertiary-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<h4 class="font-headline font-bold">Key Insights</h4>
+</div>
+<ul class="space-y-4">
+<li class="flex items-center gap-3 text-sm">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>Equilibrium point shift analysis</span>
+</li>
+<li class="flex items-center gap-3 text-sm">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Elasticity of Luxury Goods</span>
+</li>
+</ul>
+</div>
+<div class="bg-gradient-to-br from-primary to-primary-dim rounded-[40px] p-8 text-on-primary relative overflow-hidden group">
+<h4 class="text-xl font-headline font-bold mb-4 relative z-10">Testing Zone</h4>
+<p class="text-sm opacity-90 mb-6 relative z-10">Test your knowledge with a generated quiz for Chapter 4.</p>
+<button class="w-full py-3 bg-white text-primary rounded-full font-bold text-sm relative z-10 hover:bg-surface-container transition-colors">Start Quick Quiz</button>
+<span class="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl opacity-10 rotate-12 group-hover:rotate-0 transition-transform">quiz</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Navigation Shell for Mobile -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t-0 px-6 py-4 flex justify-between items-center z-50 shadow-[0_-10px_30px_rgba(167,72,0,0.05)]">
+<button class="flex flex-col items-center gap-1 text-[#a74800]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-[10px]">Courses</span>
+</button>
+<div class="-mt-12">
+<button class="w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg shadow-orange-900/40 flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">smart_toy</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">auto_stories</span>
+<span class="text-[10px]">Library</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px]">Settings</span>
+</button>
+</nav>
+<!-- Floating Action Button Contextually Suppressed on Subpages but shown on Home -->
+<button class="fixed bottom-24 right-8 w-16 h-16 bg-primary text-on-primary rounded-full shadow-[0_40px_40px_-15px_rgba(167,72,0,0.4)] flex items-center justify-center group hidden md:flex">
+<span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">add</span>
+</button>
+</body></html>

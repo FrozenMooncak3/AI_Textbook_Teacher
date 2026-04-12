@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .amber-glow {
+            background: linear-gradient(135deg, #a74800 0%, #ff7a23 100%);
+        }
+        body {
+            font-family: 'Be+Vietnam+Pro', sans-serif;
+            background-color: #fffbff;
+            color: #39382d;
+        }
+        h1, h2, h3, .headline-font {
+            font-family: 'Plus+Jakarta+Sans', sans-serif;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "error": "#be2d06",
+                        "primary-fixed-dim": "#f06c0b",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#fefae8",
+                        "primary-container": "#ff7a23",
+                        "on-secondary-fixed": "#542900",
+                        "outline-variant": "#bcb9ab",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#ece9d4",
+                        "secondary-dim": "#894700",
+                        "surface-container-high": "#f2eedb",
+                        "on-tertiary-fixed-variant": "#614400",
+                        "on-secondary-fixed-variant": "#7e4000",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#febb28",
+                        "on-secondary-container": "#703900",
+                        "on-surface-variant": "#666558",
+                        "tertiary-fixed-dim": "#efad16",
+                        "outline": "#838174",
+                        "secondary": "#9b5100",
+                        "secondary-container": "#ffc69d",
+                        "on-tertiary-container": "#563b00",
+                        "secondary-fixed": "#ffc69d",
+                        "inverse-on-surface": "#a09d8f",
+                        "on-background": "#39382d",
+                        "primary-dim": "#943f00",
+                        "tertiary": "#845d00",
+                        "inverse-primary": "#f77113",
+                        "error-container": "#f95630",
+                        "on-surface": "#39382d",
+                        "secondary-fixed-dim": "#ffb379",
+                        "surface-bright": "#fffbff",
+                        "primary": "#a74800",
+                        "inverse-surface": "#0f0f06",
+                        "error-dim": "#b92902",
+                        "on-primary-fixed-variant": "#4e1e00",
+                        "on-primary-container": "#3f1700",
+                        "surface": "#fffbff",
+                        "on-error-container": "#520c00",
+                        "surface-tint": "#a74800",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#ff7a23",
+                        "background": "#fffbff",
+                        "surface-variant": "#ece9d4",
+                        "surface-dim": "#e7e3ce",
+                        "tertiary-dim": "#755200",
+                        "on-tertiary-fixed": "#3c2900",
+                        "on-primary-fixed": "#000000",
+                        "tertiary-fixed": "#febb28",
+                        "surface-container": "#f8f4e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Plus Jakarta Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-orange-100/20 shadow-[0_40px_40px_-15px_rgba(167,72,0,0.06)]">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-orange-600 dark:text-orange-500 font-['Plus_Jakarta_Sans']">The Illuminated Companion</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-orange-600 dark:text-orange-400 border-b-2 border-orange-600 font-['Plus_Jakarta_Sans'] font-semibold py-1" href="#">Modules</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-orange-500 transition-colors font-['Plus_Jakarta_Sans'] font-semibold py-1" href="#">Library</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-orange-500 transition-colors font-['Plus_Jakarta_Sans'] font-semibold py-1" href="#">Flashcards</a>
+<a class="text-zinc-500 dark:text-zinc-400 hover:text-orange-500 transition-colors font-['Plus_Jakarta_Sans'] font-semibold py-1" href="#">Resources</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-zinc-500 hover:text-orange-500 transition-all active:scale-95 duration-200">notifications</button>
+<button class="material-symbols-outlined text-zinc-500 hover:text-orange-500 transition-all active:scale-95 duration-200">settings</button>
+<img alt="User profile" class="w-8 h-8 rounded-full border border-orange-100 shadow-sm" data-alt="Portrait of a professional student wearing glasses and a light sweater, warm interior lighting, soft library background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAP_AcZolC6ZjfD8RJ0YvXx6FftcTD0jJp4WgW0OngYTLm3zFBZJvsKiu0_RSMzk_gZRahQSk4o36FwuDqt4PpaOfDVILtjfGOJpeMGaGR52bUOlolxC1oGx7AEsT8MHnwbGWtXp3-4Ri6PRORge3ZaZiy1SVXoKZ2hM10wfYc6ULpNl4R2A2fXl9HQBiqYN0iNVgPsb8M8Obkhx_sLwjOGph_5Z4BUf91pNX8dGVA6RIOf9Yl1GiUQg08ElfsFXajfvQJCSBqgAIM"/>
+</div>
+</header>
+<div class="flex min-h-[calc(100vh-64px)]">
+<!-- Left Panel: Curriculum/Knowledge Points -->
+<aside class="w-[280px] bg-surface-container-low border-r border-orange-100/10 flex flex-col p-6 sticky top-16 h-[calc(100vh-64px)]">
+<div class="mb-8">
+<p class="text-xs font-bold uppercase tracking-widest text-orange-700/60 mb-2 font-headline">Selected Context</p>
+<h3 class="text-lg font-extrabold text-orange-800 leading-tight font-headline">Module 3: Market Equilibrium</h3>
+</div>
+<nav class="flex-1 space-y-4">
+<p class="text-xs font-semibold text-on-surface-variant font-label px-2">KNOWLEDGE POINTS</p>
+<div class="space-y-1">
+<div class="flex items-center gap-3 p-3 rounded-full hover:bg-orange-50 transition-all cursor-pointer group">
+<span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+<span class="text-sm font-medium text-zinc-600 group-hover:text-orange-800">Demand Curve Dynamics</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-full hover:bg-orange-50 transition-all cursor-pointer group">
+<span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+<span class="text-sm font-medium text-zinc-600 group-hover:text-orange-800">Supply Shifts</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-full hover:bg-orange-50 transition-all cursor-pointer group">
+<span class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]"></span>
+<span class="text-sm font-medium text-zinc-600 group-hover:text-orange-800">Price Ceilings</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-full hover:bg-orange-50 transition-all cursor-pointer group">
+<span class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]"></span>
+<span class="text-sm font-medium text-zinc-600 group-hover:text-orange-800">Price Floors</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-full hover:bg-orange-50 transition-all cursor-pointer group">
+<span class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]"></span>
+<span class="text-sm font-medium text-zinc-600 group-hover:text-orange-800">Surplus Calculation</span>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-full hover:bg-orange-50 transition-all cursor-pointer group">
+<span class="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.4)]"></span>
+<span class="text-sm font-medium text-zinc-600 group-hover:text-orange-800">Market Shortages</span>
+</div>
+</div>
+</nav>
+<div class="mt-auto pt-6 border-t border-orange-100/20">
+<button class="w-full py-4 px-6 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 rounded-full font-bold text-sm flex items-center justify-center gap-2 active:translate-x-1 duration-150">
+<span class="material-symbols-outlined text-lg">play_circle</span>
+                    Resume Review
+                </button>
+</div>
+</aside>
+<!-- Right Panel: Main Content -->
+<main class="flex-1 bg-surface-container flex flex-col p-8 overflow-y-auto">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant/60 mb-12 uppercase tracking-widest font-label">
+<span>Macroeconomics</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span>Module 3</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span class="text-orange-600">Review Session</span>
+</nav>
+<!-- Center Content -->
+<div class="max-w-[600px] mx-auto w-full">
+<section class="bg-surface-container-lowest rounded-3xl p-10 shadow-[0_40px_80px_-30px_rgba(167,72,0,0.08)] flex flex-col items-center text-center">
+<!-- Hero Icon -->
+<div class="w-20 h-20 rounded-full bg-indigo-50 flex items-center justify-center mb-8">
+<span class="material-symbols-outlined text-indigo-500 text-4xl" style="font-variation-settings: 'wght' 600;">refresh</span>
+</div>
+<!-- Headings -->
+<h1 class="text-3xl font-black text-on-surface mb-2 font-headline tracking-tight">Review Session — Round 2</h1>
+<p class="text-lg font-medium text-on-surface-variant/70 mb-12 font-body">Module 3: Market Equilibrium</p>
+<!-- Info Grid -->
+<div class="grid grid-cols-2 gap-x-12 gap-y-8 w-full mb-12 text-left px-4">
+<div>
+<p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Questions</p>
+<p class="text-xl font-extrabold text-on-surface font-headline">6</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Est. Time</p>
+<p class="text-xl font-extrabold text-on-surface font-headline">~8 min</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Last Review</p>
+<p class="text-xl font-extrabold text-on-surface font-headline">3 days ago</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Schedule</p>
+<div class="flex items-baseline gap-1">
+<span class="text-xl font-extrabold text-orange-600 font-headline">Day 7</span>
+<span class="text-[10px] font-medium text-zinc-400">of 3/7/15/30</span>
+</div>
+</div>
+</div>
+<!-- Mastery Summary -->
+<div class="w-full bg-surface-container-low rounded-2xl p-6 mb-12">
+<p class="text-xs font-bold text-on-surface-variant/60 uppercase tracking-widest mb-6 text-center">Mastery Distribution</p>
+<div class="space-y-4">
+<!-- Mastered -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-center text-[10px] font-bold">
+<span class="text-emerald-700">MASTERED: 2</span>
+<span class="text-on-surface-variant/40">33%</span>
+</div>
+<div class="w-full h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-1/3 rounded-full"></div>
+</div>
+</div>
+<!-- Improving -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-center text-[10px] font-bold">
+<span class="text-blue-700">IMPROVING: 3</span>
+<span class="text-on-surface-variant/40">50%</span>
+</div>
+<div class="w-full h-1.5 bg-blue-100 rounded-full overflow-hidden">
+<div class="h-full bg-blue-500 w-1/2 rounded-full"></div>
+</div>
+</div>
+<!-- Weak -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-center text-[10px] font-bold">
+<span class="text-orange-700">WEAK: 1</span>
+<span class="text-on-surface-variant/40">17%</span>
+</div>
+<div class="w-full h-1.5 bg-orange-100 rounded-full overflow-hidden">
+<div class="h-full bg-orange-400 w-1/6 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex flex-col items-center gap-6 w-full">
+<button class="w-full py-5 rounded-full text-white font-bold text-lg amber-glow shadow-[0_20px_40px_-10px_rgba(167,72,0,0.3)] hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
+                            Start Review
+                            <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<a class="text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors py-2" href="#">Back to Module</a>
+</div>
+</section>
+<!-- Decorative Subtle Background Image for Ambiance -->
+<div class="mt-12 flex justify-center opacity-20 grayscale transition-all hover:grayscale-0 hover:opacity-40">
+<img class="w-32 h-auto" data-alt="Subtle abstract illustration of interlocking geometric gears and organic leaf shapes in warm amber and indigo tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWbRV10uNNTscmlR42bbGE-XPnQIoaXfuuAA6RGgbnt7mJiOASe_L8suCiwKBg8rfp0Bu_58SUOcIqET9bjmUaTArInPr-4G-gSIBnLtESrd4kgzkaVLfL5Q02_el3ENrfUlu3frPsMaaSMqFbasL2AXNkjp4WlAH_iwfD2OZMEbfUvGIZ8sbv8UC8iP2dsqfOGDza6j_A9lJHkiHgv_ytikzzB1eVdzH8jmcDPnS-xpAaU4aTIDTguIltPADp9_AeUcnufGXDOL0"/>
+</div>
+</div>
+</main>
+</div>
+<!-- Mobile Navigation (Suppressed based on desktop primary view context but included for structure) -->
+<div class="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md flex items-center justify-around h-16 border-t border-orange-100/20 z-[100]">
+<button class="flex flex-col items-center text-orange-600">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center text-zinc-400">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-[10px] font-bold">Modules</span>
+</button>
+<button class="flex flex-col items-center text-zinc-400">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="text-[10px] font-bold">Progress</span>
+</button>
+<button class="flex flex-col items-center text-zinc-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold">Profile</span>
+</button>
+</div>
+</body></html>

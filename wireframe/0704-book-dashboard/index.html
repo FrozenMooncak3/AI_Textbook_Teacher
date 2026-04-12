@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Action Dashboard — 0704 Wireframes</title>
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles-opt1.css">
+  <link rel="stylesheet" href="styles-opt2.css">
+  <link rel="stylesheet" href="styles-opt3.css">
+  <link rel="stylesheet" href="styles-opt4.css">
+  <link rel="stylesheet" href="styles-opt5.css">
+</head>
+<body>
+
+<div class="completion-banner" id="completion-banner" style="display:none;">
+  ✦ Visual designs complete — all options now have Clean + Polished variants
+  <button onclick="this.parentElement.style.display='none'" style="float:right;background:none;border:none;cursor:pointer;font-size:16px;">×</button>
+</div>
+
+<div class="page-wrapper">
+
+  <div class="title-bar">
+    <span><span id="feature-name">Book Action Dashboard</span> — <span id="project-name">AI 教辅精学</span></span>
+    <span class="rec">★ Recommended: Option <span id="rec-number">3</span></span>
+  </div>
+
+  <nav class="main-tabs">
+    <button class="tab-btn active" data-tab="option-1">1: Safe Merge</button>
+    <button class="tab-btn" data-tab="option-2">2: Action Hub</button>
+    <button class="tab-btn" data-tab="option-3">3: Status Grid</button>
+    <button class="tab-btn" data-tab="option-4">4: Learning Path</button>
+    <button class="tab-btn" data-tab="option-5">5: Split Panel</button>
+    <button class="tab-btn" data-tab="summary">Summary</button>
+  </nav>
+
+  <!-- ===== OPTION 1 ===== -->
+  <div class="option-panel active" id="option-1">
+    <h2>Option 1: <span class="opt-name">Safe Merge</span></h2>
+    <p class="option-description">Current list layout with dashboard stats merged into a top summary bar and enriched module cards.</p>
+    <div class="sub-tab-bar" id="frame-opt1-tabs">
+      <button class="sub-tab-btn active" data-variant="wireframe" data-frame="frame-opt1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTsketch1"><g fill="#555" stroke="#fff" stroke-linejoin="round" stroke-width="4"><rect width="36" height="36" x="6" y="6" rx="3"/><path stroke-linecap="round" d="M18.6 16h10.8l3.6 4.706L24 32l-9-11.294z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTsketch1)"/></svg>
+        <span class="sub-tab-label">Wireframe</span>
+      </button>
+      <button class="sub-tab-btn" data-variant="clean" data-frame="frame-opt1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTpaint1"><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="m15.536 22.898l9.899 9.9m-9.899-9.9L7.05 31.383a7 7 0 1 0 9.9 9.9l8.485-8.486m-9.899 0l-4.243 4.243"/><path fill="#555" d="m25.435 32.797l14.907-6.432c2.688-1.16 3.809-4.379 2.086-6.745C38.264 13.903 32.65 8.89 28.51 5.823c-2.29-1.696-5.33-.64-6.46 1.975l-6.514 15.1z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTpaint1)"/></svg>
+        <span class="sub-tab-label">Clean</span>
+        <span class="sub-tab-badge">generating...</span>
+      </button>
+      <button class="sub-tab-btn" data-variant="polished" data-frame="frame-opt1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTdiamond1"><path fill="#555" stroke="#fff" stroke-width="4" d="M5.939 13.934L23.036 4.53a2 2 0 0 1 1.928 0l17.097 9.404a2 2 0 0 1 .683 2.888l-17.098 24.79a2 2 0 0 1-3.292 0L5.256 16.823a2 2 0 0 1 .683-2.888Z"/></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTdiamond1)"/></svg>
+        <span class="sub-tab-label">Polished</span>
+        <span class="sub-tab-badge">generating...</span>
+      </button>
+    </div>
+    <div class="browser-frame wireframe" id="frame-opt1">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">yourapp.com/books/1</div>
+        <div class="browser-controls">─ □ ✕</div>
+      </div>
+      <div class="browser-content">
+        <!-- Option 1: Safe Merge — stats bar + enriched module list -->
+        <div class="wf-app-shell">
+          <div class="wf-sidebar">
+            <div class="wf-sidebar-logo">AI 教辅精学</div>
+            <a href="#" class="wf-sidebar-item">首页</a>
+            <a href="#" class="wf-sidebar-item">上传教材</a>
+            <div class="wf-sidebar-divider"></div>
+            <a href="#" class="wf-sidebar-item">阅读原文</a>
+            <a href="#" class="wf-sidebar-item">系统日志</a>
+          </div>
+          <div class="wf-main">
+            <!-- Book Header -->
+            <div class="wf-book-header">
+              <div class="wf-book-title">手把手教你读财报 <span class="wf-marker">1</span></div>
+              <div class="wf-progress-row">
+                <div class="wf-progress-bar"><div class="wf-progress-fill" style="width:37%"></div></div>
+                <span class="wf-progress-text">3/8 模块已通过</span>
+              </div>
+            </div>
+            <!-- Stats Bar -->
+            <div class="wf-stats-bar">
+              <div class="wf-stat-item">
+                <div class="wf-stat-number">8</div>
+                <div class="wf-stat-label">总模块</div>
+              </div>
+              <div class="wf-stat-item">
+                <div class="wf-stat-number">42</div>
+                <div class="wf-stat-label">知识点</div>
+              </div>
+              <div class="wf-stat-item wf-stat-alert">
+                <div class="wf-stat-number">2</div>
+                <div class="wf-stat-label">待复习</div>
+              </div>
+              <div class="wf-stat-item">
+                <div class="wf-stat-number">5</div>
+                <div class="wf-stat-label">错题</div>
+              </div>
+            </div>
+            <!-- Alert Banner -->
+            <div class="wf-alert-banner">
+              <span>今日待复习：模块 1 利润表基础、模块 2 资产负债表</span>
+              <a href="#" class="wf-alert-action">立即复习 →</a>
+            </div>
+            <!-- Module List -->
+            <div class="wf-module-list">
+              <div class="wf-module-card wf-status-completed">
+                <div class="wf-module-left">
+                  <div class="wf-module-index">1</div>
+                  <div class="wf-module-info">
+                    <div class="wf-module-name">利润表基础</div>
+                    <div class="wf-module-meta">6 个知识点 · 测试 85 分 · 已通过</div>
+                  </div>
+                </div>
+                <div class="wf-module-right">
+                  <span class="wf-badge wf-badge-pass">已过关</span>
+                  <span class="wf-module-arrow">→</span>
+                </div>
+              </div>
+              <div class="wf-module-card wf-status-completed">
+                <div class="wf-module-left">
+                  <div class="wf-module-index">2</div>
+                  <div class="wf-module-info">
+                    <div class="wf-module-name">资产负债表结构</div>
+                    <div class="wf-module-meta">5 个知识点 · 测试 90 分 · 已通过</div>
+                  </div>
+                </div>
+                <div class="wf-module-right">
+                  <span class="wf-badge wf-badge-pass">已过关</span>
+                  <span class="wf-module-arrow">→</span>
+                </div>
+              </div>
+              <div class="wf-module-card wf-status-completed">
+                <div class="wf-module-left">
+                  <div class="wf-module-index">3</div>
+                  <div class="wf-module-info">
+                    <div class="wf-module-name">现金流量表解读</div>
+                    <div class="wf-module-meta">7 个知识点 · 测试 82 分 · 已通过</div>
+                  </div>
+                </div>
+                <div class="wf-module-right">
+                  <span class="wf-badge wf-badge-pass">已过关</span>
+                  <span class="wf-module-arrow">→</span>
+                </div>
+              </div>
+              <div class="wf-module-card wf-status-qa wf-current">
+                <div class="wf-module-left">
+                  <div class="wf-module-index">4</div>
+                  <div class="wf-module-info">
+                    <div class="wf-module-name">三表联动分析 <span class="wf-marker">2</span></div>
+                    <div class="wf-module-meta">5 个知识点 · Q&A 进度 3/5</div>
+                    <div class="wf-module-progress"><div class="wf-module-progress-fill" style="width:60%"></div></div>
+                  </div>
+                </div>
+                <div class="wf-module-right">
+                  <a href="#" class="wf-btn-continue">继续学习</a>
+                </div>
+              </div>
+              <div class="wf-module-card wf-status-unstarted">
+                <div class="wf-module-left">
+                  <div class="wf-module-index">5</div>
+                  <div class="wf-module-info">
+                    <div class="wf-module-name">财务比率计算</div>
+                    <div class="wf-module-meta">6 个知识点 · 未开始</div>
+                  </div>
+                </div>
+                <div class="wf-module-right">
+                  <span class="wf-badge wf-badge-locked">未开始</span>
+                </div>
+              </div>
+              <div class="wf-module-card wf-status-unstarted">
+                <div class="wf-module-left">
+                  <div class="wf-module-index">6</div>
+                  <div class="wf-module-info">
+                    <div class="wf-module-name">盈利能力分析</div>
+                    <div class="wf-module-meta">4 个知识点 · 未开始</div>
+                  </div>
+                </div>
+                <div class="wf-module-right">
+                  <span class="wf-badge wf-badge-locked">未开始</span>
+                </div>
+              </div>
+            </div>
+            <!-- Collapsible Stats -->
+            <details class="wf-details">
+              <summary class="wf-details-summary">最近考试成绩 <span class="wf-marker">3</span></summary>
+              <div class="wf-details-content">
+                <div class="wf-test-row"><span>模块 3 · 现金流量表</span><span>82 分 · 通过</span></div>
+                <div class="wf-test-row"><span>模块 2 · 资产负债表</span><span>90 分 · 通过</span></div>
+                <div class="wf-test-row"><span>模块 1 · 利润表</span><span>85 分 · 通过</span></div>
+              </div>
+            </details>
+            <details class="wf-details">
+              <summary class="wf-details-summary">错题统计 (5 题)</summary>
+              <div class="wf-details-content">
+                <div class="wf-mistake-row"><span>概念混淆</span><span>2 题</span></div>
+                <div class="wf-mistake-row"><span>程序性失误</span><span>2 题</span></div>
+                <div class="wf-mistake-row"><span>粗心错误</span><span>1 题</span></div>
+                <a href="#" class="wf-link">查看全部错题 →</a>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wf-annotations">
+      <h3>UX Notes</h3>
+      <ul>
+        <li><strong>1</strong> — Book title + progress bar always visible at top, replacing separate dashboard page</li>
+        <li><strong>2</strong> — Current module highlighted with inline progress bar and "Continue" CTA</li>
+        <li><strong>3</strong> — Test scores and mistakes in collapsible &lt;details&gt; — always accessible but not cluttering the view</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== OPTION 2 ===== -->
+  <div class="option-panel" id="option-2">
+    <h2>Option 2: <span class="opt-name">Action Hub</span></h2>
+    <p class="option-description">One big CTA drives the next action; module list and stats are secondary, accessed by scrolling.</p>
+    <div class="sub-tab-bar" id="frame-opt2-tabs">
+      <button class="sub-tab-btn active" data-variant="wireframe" data-frame="frame-opt2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTsketch2"><g fill="#555" stroke="#fff" stroke-linejoin="round" stroke-width="4"><rect width="36" height="36" x="6" y="6" rx="3"/><path stroke-linecap="round" d="M18.6 16h10.8l3.6 4.706L24 32l-9-11.294z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTsketch2)"/></svg>
+        <span class="sub-tab-label">Wireframe</span>
+      </button>
+      <button class="sub-tab-btn" data-variant="clean" data-frame="frame-opt2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTpaint2"><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="m15.536 22.898l9.899 9.9m-9.899-9.9L7.05 31.383a7 7 0 1 0 9.9 9.9l8.485-8.486m-9.899 0l-4.243 4.243"/><path fill="#555" d="m25.435 32.797l14.907-6.432c2.688-1.16 3.809-4.379 2.086-6.745C38.264 13.903 32.65 8.89 28.51 5.823c-2.29-1.696-5.33-.64-6.46 1.975l-6.514 15.1z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTpaint2)"/></svg>
+        <span class="sub-tab-label">Clean</span>
+        <span class="sub-tab-badge">generating...</span>
+      </button>
+      <button class="sub-tab-btn" data-variant="polished" data-frame="frame-opt2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTdiamond2"><path fill="#555" stroke="#fff" stroke-width="4" d="M5.939 13.934L23.036 4.53a2 2 0 0 1 1.928 0l17.097 9.404a2 2 0 0 1 .683 2.888l-17.098 24.79a2 2 0 0 1-3.292 0L5.256 16.823a2 2 0 0 1 .683-2.888Z"/></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTdiamond2)"/></svg>
+        <span class="sub-tab-label">Polished</span>
+        <span class="sub-tab-badge">generating...</span>
+      </button>
+    </div>
+    <div class="browser-frame wireframe" id="frame-opt2">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">yourapp.com/books/1</div>
+        <div class="browser-controls">─ □ ✕</div>
+      </div>
+      <div class="browser-content">
+        <!-- Option 2: Action Hub — big CTA + secondary content -->
+        <div class="wf-app-shell">
+          <div class="wf-sidebar">
+            <div class="wf-sidebar-logo">AI 教辅精学</div>
+            <a href="#" class="wf-sidebar-item">首页</a>
+            <a href="#" class="wf-sidebar-item">上传教材</a>
+            <div class="wf-sidebar-divider"></div>
+            <a href="#" class="wf-sidebar-item">阅读原文</a>
+          </div>
+          <div class="wf-main">
+            <!-- Hero CTA -->
+            <div class="wf-hero-cta">
+              <div class="wf-hero-left">
+                <div class="wf-hero-subtitle">手把手教你读财报</div>
+                <div class="wf-hero-title">继续学习：三表联动分析 <span class="wf-marker">1</span></div>
+                <div class="wf-hero-meta">Q&A 进度 3/5 · 第 4 模块（共 8 个）</div>
+                <a href="#" class="wf-hero-btn">继续学习 →</a>
+              </div>
+              <div class="wf-hero-right">
+                <div class="wf-ring-progress">
+                  <div class="wf-ring-text">37%</div>
+                </div>
+              </div>
+            </div>
+            <!-- Action Alerts Row -->
+            <div class="wf-action-row">
+              <div class="wf-action-card wf-action-review">
+                <div class="wf-action-icon">!</div>
+                <div class="wf-action-text">
+                  <div class="wf-action-title">2 个复习到期</div>
+                  <div class="wf-action-desc">利润表基础、资产负债表</div>
+                </div>
+                <a href="#" class="wf-action-go">去复习</a>
+              </div>
+              <div class="wf-action-card wf-action-mistakes">
+                <div class="wf-action-icon">5</div>
+                <div class="wf-action-text">
+                  <div class="wf-action-title">错题待巩固</div>
+                  <div class="wf-action-desc">概念混淆 2 · 程序性 2 · 粗心 1</div>
+                </div>
+                <a href="#" class="wf-action-go">查看</a>
+              </div>
+            </div>
+            <!-- Module Grid (compact) -->
+            <div class="wf-section-title">全部模块 <span class="wf-marker">2</span></div>
+            <div class="wf-compact-grid">
+              <div class="wf-compact-card wf-cg-done"><span class="wf-cg-num">1</span><span class="wf-cg-name">利润表基础</span><span class="wf-cg-score">85</span></div>
+              <div class="wf-compact-card wf-cg-done"><span class="wf-cg-num">2</span><span class="wf-cg-name">资产负债表</span><span class="wf-cg-score">90</span></div>
+              <div class="wf-compact-card wf-cg-done"><span class="wf-cg-num">3</span><span class="wf-cg-name">现金流量表</span><span class="wf-cg-score">82</span></div>
+              <div class="wf-compact-card wf-cg-active"><span class="wf-cg-num">4</span><span class="wf-cg-name">三表联动</span><span class="wf-cg-status">Q&A中</span></div>
+              <div class="wf-compact-card wf-cg-locked"><span class="wf-cg-num">5</span><span class="wf-cg-name">财务比率</span><span class="wf-cg-status">-</span></div>
+              <div class="wf-compact-card wf-cg-locked"><span class="wf-cg-num">6</span><span class="wf-cg-name">盈利分析</span><span class="wf-cg-status">-</span></div>
+              <div class="wf-compact-card wf-cg-locked"><span class="wf-cg-num">7</span><span class="wf-cg-name">偿债分析</span><span class="wf-cg-status">-</span></div>
+              <div class="wf-compact-card wf-cg-locked"><span class="wf-cg-num">8</span><span class="wf-cg-name">综合案例</span><span class="wf-cg-status">-</span></div>
+            </div>
+            <!-- Recent Tests -->
+            <div class="wf-section-title">最近考试</div>
+            <div class="wf-test-list">
+              <div class="wf-test-row"><span>模块 3 · 现金流量表</span><span>82 分 · P</span></div>
+              <div class="wf-test-row"><span>模块 2 · 资产负债表</span><span>90 分 · P</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wf-annotations">
+      <h3>UX Notes</h3>
+      <ul>
+        <li><strong>1</strong> — Hero CTA: the single most important action. User opens the page and immediately knows what to do next</li>
+        <li><strong>2</strong> — Compact module grid shows all 8 modules at a glance with color-coded status (done/active/locked)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== OPTION 3 ===== -->
+  <div class="option-panel" id="option-3">
+    <h2>Option 3: <span class="opt-name">Status Grid</span></h2>
+    <p class="option-description">Khan Academy-style colored grid — each module is a status card, progress visible at a glance.</p>
+    <div class="sub-tab-bar" id="frame-opt3-tabs">
+      <button class="sub-tab-btn active" data-variant="wireframe" data-frame="frame-opt3">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTsketch3"><g fill="#555" stroke="#fff" stroke-linejoin="round" stroke-width="4"><rect width="36" height="36" x="6" y="6" rx="3"/><path stroke-linecap="round" d="M18.6 16h10.8l3.6 4.706L24 32l-9-11.294z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTsketch3)"/></svg>
+        <span class="sub-tab-label">Wireframe</span>
+      </button>
+      <button class="sub-tab-btn" data-variant="clean" data-frame="frame-opt3">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTpaint3"><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="m15.536 22.898l9.899 9.9m-9.899-9.9L7.05 31.383a7 7 0 1 0 9.9 9.9l8.485-8.486m-9.899 0l-4.243 4.243"/><path fill="#555" d="m25.435 32.797l14.907-6.432c2.688-1.16 3.809-4.379 2.086-6.745C38.264 13.903 32.65 8.89 28.51 5.823c-2.29-1.696-5.33-.64-6.46 1.975l-6.514 15.1z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTpaint3)"/></svg>
+        <span class="sub-tab-label">Clean</span>
+        <span class="sub-tab-badge">generating...</span>
+      </button>
+      <button class="sub-tab-btn" data-variant="polished" data-frame="frame-opt3">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTdiamond3"><path fill="#555" stroke="#fff" stroke-width="4" d="M5.939 13.934L23.036 4.53a2 2 0 0 1 1.928 0l17.097 9.404a2 2 0 0 1 .683 2.888l-17.098 24.79a2 2 0 0 1-3.292 0L5.256 16.823a2 2 0 0 1 .683-2.888Z"/></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTdiamond3)"/></svg>
+        <span class="sub-tab-label">Polished</span>
+        <span class="sub-tab-badge">generating...</span>
+      </button>
+    </div>
+    <div class="browser-frame wireframe" id="frame-opt3">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">yourapp.com/books/1</div>
+        <div class="browser-controls">─ □ ✕</div>
+      </div>
+      <div class="browser-content">
+        <!-- Option 3: Status Grid — Khan Academy style module cards -->
+        <div class="wf-app-shell">
+          <div class="wf-sidebar">
+            <div class="wf-sidebar-logo">AI 教辅精学</div>
+            <a href="#" class="wf-sidebar-item">首页</a>
+            <a href="#" class="wf-sidebar-item">上传教材</a>
+            <div class="wf-sidebar-divider"></div>
+            <a href="#" class="wf-sidebar-item">阅读原文</a>
+          </div>
+          <div class="wf-main">
+            <!-- Book Header + Inline Progress -->
+            <div class="wf-grid-header">
+              <div class="wf-grid-header-left">
+                <div class="wf-grid-book-title">手把手教你读财报</div>
+                <div class="wf-grid-progress-text">已完成 3/8 模块 · 42 个知识点 · 5 道错题</div>
+              </div>
+              <div class="wf-grid-header-right">
+                <div class="wf-circle-progress"><span>37%</span></div>
+              </div>
+            </div>
+            <!-- Alert Strip -->
+            <div class="wf-grid-alerts">
+              <a href="#" class="wf-grid-alert-chip wf-chip-review">复习 · 2 到期 <span class="wf-marker">1</span></a>
+              <a href="#" class="wf-grid-alert-chip wf-chip-mistakes">错题 · 5 题</a>
+              <a href="#" class="wf-grid-alert-chip wf-chip-reader">阅读原文</a>
+            </div>
+            <!-- Module Status Grid -->
+            <div class="wf-status-grid">
+              <a href="#" class="wf-grid-card wf-gc-completed">
+                <div class="wf-gc-top">
+                  <span class="wf-gc-num">01</span>
+                  <span class="wf-gc-check">&#10003;</span>
+                </div>
+                <div class="wf-gc-title">利润表基础</div>
+                <div class="wf-gc-detail">6 KP · 85 分</div>
+                <div class="wf-gc-bar"><div class="wf-gc-bar-fill" style="width:100%"></div></div>
+              </a>
+              <a href="#" class="wf-grid-card wf-gc-completed">
+                <div class="wf-gc-top">
+                  <span class="wf-gc-num">02</span>
+                  <span class="wf-gc-check">&#10003;</span>
+                </div>
+                <div class="wf-gc-title">资产负债表结构</div>
+                <div class="wf-gc-detail">5 KP · 90 分</div>
+                <div class="wf-gc-bar"><div class="wf-gc-bar-fill" style="width:100%"></div></div>
+              </a>
+              <a href="#" class="wf-grid-card wf-gc-completed">
+                <div class="wf-gc-top">
+                  <span class="wf-gc-num">03</span>
+                  <span class="wf-gc-check">&#10003;</span>
+                </div>
+                <div class="wf-gc-title">现金流量表解读</div>
+                <div class="wf-gc-detail">7 KP · 82 分</div>
+                <div class="wf-gc-bar"><div class="wf-gc-bar-fill" style="width:100%"></div></div>
+              </a>
+              <a href="#" class="wf-grid-card wf-gc-active">
+                <div class="wf-gc-top">
+                  <span class="wf-gc-num">04</span>
+                  <span class="wf-gc-pulse"></span>
+                </div>
+                <div class="wf-gc-title">三表联动分析 <span class="wf-marker">2</span></div>
+                <div class="wf-gc-detail">5 KP · Q&A 3/5</div>
+                <div class="wf-gc-bar"><div class="wf-gc-bar-fill" style="width:60%"></div></div>
+                <div class="wf-gc-cta">继续学习 →</div>
+              </a>
+              <a href="#" class="wf-grid-card wf-gc-locked">
+                <div class="wf-gc-top"><span class="wf-gc-num">05</span></div>
+                <div class="wf-gc-title">财务比率计算</div>
+                <div class="wf-gc-detail">6 KP · 未开始</div>
+                <div class="wf-gc-bar"><div class="wf-gc-bar-fill" style="width:0%"></div></div>
+              </a>
+              <a href="#" class="wf-grid-card wf-gc-locked">
+                <div class="wf-gc-top"><span class="wf-gc-num">06</span></div>
+                <div class="wf-gc-title">盈利能力分析</div>
+                <div class="wf-gc-detail">4 KP · 未开始</div>
+                <div class="wf-gc-bar"><div class="wf-gc-bar-fill" style="width:0%"></div></div>
+              </a>
+              <a href="#" class="wf-grid-card wf-gc-locked">
+                <div class="wf-gc-top"><span class="wf-gc-num">07</span></div>
+                <div class="wf-gc-title">偿债能力分析</div>
+                <div class="wf-gc-detail">5 KP · 未开始</div>
+                <div class="wf-gc-bar"><div class="wf-gc-bar-fill" style="width:0%"></div></div>
+              </a>
+              <a href="#" class="wf-grid-card wf-gc-locked">
+                <div class="wf-gc-top"><span class="wf-gc-num">08</span></div>
+                <div class="wf-gc-title">综合案例分析</div>
+                <div class="wf-gc-detail">4 KP · 未开始</div>
+                <div class="wf-gc-bar"><div class="wf-gc-bar-fill" style="width:0%"></div></div>
+              </a>
+            </div>
+            <!-- Bottom Collapsible -->
+            <details class="wf-details">
+              <summary class="wf-details-summary">考试成绩 & 复习日程 <span class="wf-marker">3</span></summary>
+              <div class="wf-details-content">
+                <div class="wf-test-row"><span>模块 3 · 82 分</span><span>模块 1 复习到期 · 4月8日</span></div>
+                <div class="wf-test-row"><span>模块 2 · 90 分</span><span>模块 2 复习到期 · 4月10日</span></div>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wf-annotations">
+      <h3>UX Notes</h3>
+      <ul>
+        <li><strong>1</strong> — Alert chips at top: actionable items (reviews, mistakes, reader) as clickable pills</li>
+        <li><strong>2</strong> — Module grid cards: status is communicated through card styling (fill, border, opacity), not separate badges</li>
+        <li><strong>3</strong> — Detailed stats collapsed by default — the grid IS the dashboard</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== OPTION 4 ===== -->
+  <div class="option-panel" id="option-4">
+    <h2>Option 4: <span class="opt-name">Learning Path</span></h2>
+    <p class="option-description">Duolingo-style vertical path with milestone nodes — gamified progression through the textbook.</p>
+    <div class="sub-tab-bar" id="frame-opt4-tabs">
+      <button class="sub-tab-btn active" data-variant="wireframe" data-frame="frame-opt4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTsketch4"><g fill="#555" stroke="#fff" stroke-linejoin="round" stroke-width="4"><rect width="36" height="36" x="6" y="6" rx="3"/><path stroke-linecap="round" d="M18.6 16h10.8l3.6 4.706L24 32l-9-11.294z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTsketch4)"/></svg>
+        <span class="sub-tab-label">Wireframe</span>
+      </button>
+      <button class="sub-tab-btn" data-variant="clean" data-frame="frame-opt4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTpaint4"><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="m15.536 22.898l9.899 9.9m-9.899-9.9L7.05 31.383a7 7 0 1 0 9.9 9.9l8.485-8.486m-9.899 0l-4.243 4.243"/><path fill="#555" d="m25.435 32.797l14.907-6.432c2.688-1.16 3.809-4.379 2.086-6.745C38.264 13.903 32.65 8.89 28.51 5.823c-2.29-1.696-5.33-.64-6.46 1.975l-6.514 15.1z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTpaint4)"/></svg>
+        <span class="sub-tab-label">Clean</span>
+        <span class="sub-tab-badge">generating...</span>
+      </button>
+      <button class="sub-tab-btn" data-variant="polished" data-frame="frame-opt4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTdiamond4"><path fill="#555" stroke="#fff" stroke-width="4" d="M5.939 13.934L23.036 4.53a2 2 0 0 1 1.928 0l17.097 9.404a2 2 0 0 1 .683 2.888l-17.098 24.79a2 2 0 0 1-3.292 0L5.256 16.823a2 2 0 0 1 .683-2.888Z"/></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTdiamond4)"/></svg>
+        <span class="sub-tab-label">Polished</span>
+        <span class="sub-tab-badge">generating...</span>
+      </button>
+    </div>
+    <div class="browser-frame wireframe" id="frame-opt4">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">yourapp.com/books/1</div>
+        <div class="browser-controls">─ □ ✕</div>
+      </div>
+      <div class="browser-content">
+        <!-- Option 4: Learning Path — Duolingo-style vertical journey -->
+        <div class="wf-app-shell">
+          <div class="wf-sidebar">
+            <div class="wf-sidebar-logo">AI 教辅精学</div>
+            <a href="#" class="wf-sidebar-item">首页</a>
+            <a href="#" class="wf-sidebar-item">上传教材</a>
+            <div class="wf-sidebar-divider"></div>
+            <a href="#" class="wf-sidebar-item">阅读原文</a>
+          </div>
+          <div class="wf-main wf-path-main">
+            <!-- Sticky Header -->
+            <div class="wf-path-header">
+              <div class="wf-path-title">手把手教你读财报</div>
+              <div class="wf-path-stats">
+                <span>3/8 模块</span>
+                <span>·</span>
+                <span>2 待复习</span>
+                <span>·</span>
+                <span>5 错题</span>
+              </div>
+            </div>
+            <!-- Action Bubbles (floating) -->
+            <div class="wf-path-actions">
+              <a href="#" class="wf-bubble wf-bubble-review">复习 <strong>2</strong></a>
+              <a href="#" class="wf-bubble wf-bubble-mistakes">错题 <strong>5</strong></a>
+              <a href="#" class="wf-bubble wf-bubble-reader">原文</a>
+            </div>
+            <!-- The Path -->
+            <div class="wf-path-container">
+              <div class="wf-path-line"></div>
+              <div class="wf-path-node wf-pn-done">
+                <div class="wf-pn-circle">&#10003;</div>
+                <div class="wf-pn-content">
+                  <div class="wf-pn-title">利润表基础</div>
+                  <div class="wf-pn-score">85 分 · 已通过</div>
+                </div>
+              </div>
+              <div class="wf-path-node wf-pn-done">
+                <div class="wf-pn-circle">&#10003;</div>
+                <div class="wf-pn-content">
+                  <div class="wf-pn-title">资产负债表结构</div>
+                  <div class="wf-pn-score">90 分 · 已通过</div>
+                </div>
+              </div>
+              <div class="wf-path-node wf-pn-done">
+                <div class="wf-pn-circle">&#10003;</div>
+                <div class="wf-pn-content">
+                  <div class="wf-pn-title">现金流量表解读</div>
+                  <div class="wf-pn-score">82 分 · 已通过</div>
+                </div>
+              </div>
+              <div class="wf-path-node wf-pn-active">
+                <div class="wf-pn-circle wf-pn-pulse">4</div>
+                <div class="wf-pn-content">
+                  <div class="wf-pn-title">三表联动分析 <span class="wf-marker">1</span></div>
+                  <div class="wf-pn-score">Q&A 3/5</div>
+                  <a href="#" class="wf-pn-btn">继续学习 →</a>
+                </div>
+              </div>
+              <div class="wf-path-node wf-pn-locked">
+                <div class="wf-pn-circle">5</div>
+                <div class="wf-pn-content">
+                  <div class="wf-pn-title">财务比率计算</div>
+                </div>
+              </div>
+              <div class="wf-path-node wf-pn-locked">
+                <div class="wf-pn-circle">6</div>
+                <div class="wf-pn-content">
+                  <div class="wf-pn-title">盈利能力分析</div>
+                </div>
+              </div>
+              <div class="wf-path-node wf-pn-locked">
+                <div class="wf-pn-circle">7</div>
+                <div class="wf-pn-content">
+                  <div class="wf-pn-title">偿债能力分析</div>
+                </div>
+              </div>
+              <div class="wf-path-node wf-pn-locked wf-pn-final">
+                <div class="wf-pn-circle">8</div>
+                <div class="wf-pn-content">
+                  <div class="wf-pn-title">综合案例分析</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wf-annotations">
+      <h3>UX Notes</h3>
+      <ul>
+        <li><strong>1</strong> — Active node is visually prominent with pulse animation and CTA button</li>
+        <li>Vertical path creates a sense of progression and achievement</li>
+        <li>Floating action bubbles keep review/mistakes accessible without breaking the path flow</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== OPTION 5 ===== -->
+  <div class="option-panel" id="option-5">
+    <h2>Option 5: <span class="opt-name">Split Panel</span></h2>
+    <p class="option-description">Left panel: scrollable module list. Right panel: contextual detail for the selected module or overall stats.</p>
+    <div class="sub-tab-bar" id="frame-opt5-tabs">
+      <button class="sub-tab-btn active" data-variant="wireframe" data-frame="frame-opt5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTsketch5"><g fill="#555" stroke="#fff" stroke-linejoin="round" stroke-width="4"><rect width="36" height="36" x="6" y="6" rx="3"/><path stroke-linecap="round" d="M18.6 16h10.8l3.6 4.706L24 32l-9-11.294z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTsketch5)"/></svg>
+        <span class="sub-tab-label">Wireframe</span>
+      </button>
+      <button class="sub-tab-btn" data-variant="clean" data-frame="frame-opt5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTpaint5"><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"><path d="m15.536 22.898l9.899 9.9m-9.899-9.9L7.05 31.383a7 7 0 1 0 9.9 9.9l8.485-8.486m-9.899 0l-4.243 4.243"/><path fill="#555" d="m25.435 32.797l14.907-6.432c2.688-1.16 3.809-4.379 2.086-6.745C38.264 13.903 32.65 8.89 28.51 5.823c-2.29-1.696-5.33-.64-6.46 1.975l-6.514 15.1z"/></g></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTpaint5)"/></svg>
+        <span class="sub-tab-label">Clean</span>
+        <span class="sub-tab-badge">generating...</span>
+      </button>
+      <button class="sub-tab-btn" data-variant="polished" data-frame="frame-opt5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><defs><mask id="ipTdiamond5"><path fill="#555" stroke="#fff" stroke-width="4" d="M5.939 13.934L23.036 4.53a2 2 0 0 1 1.928 0l17.097 9.404a2 2 0 0 1 .683 2.888l-17.098 24.79a2 2 0 0 1-3.292 0L5.256 16.823a2 2 0 0 1 .683-2.888Z"/></mask></defs><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTdiamond5)"/></svg>
+        <span class="sub-tab-label">Polished</span>
+        <span class="sub-tab-badge">generating...</span>
+      </button>
+    </div>
+    <div class="browser-frame wireframe" id="frame-opt5">
+      <div class="browser-chrome">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">yourapp.com/books/1</div>
+        <div class="browser-controls">─ □ ✕</div>
+      </div>
+      <div class="browser-content">
+        <!-- Option 5: Split Panel — master-detail layout -->
+        <div class="wf-app-shell">
+          <div class="wf-sidebar">
+            <div class="wf-sidebar-logo">AI 教辅精学</div>
+            <a href="#" class="wf-sidebar-item">首页</a>
+            <a href="#" class="wf-sidebar-item">上传教材</a>
+          </div>
+          <div class="wf-split-layout">
+            <!-- Left: Module List -->
+            <div class="wf-split-left">
+              <div class="wf-split-header">
+                <div class="wf-split-book-title">手把手教你读财报</div>
+                <div class="wf-split-progress">3/8 已过关</div>
+              </div>
+              <div class="wf-split-list">
+                <a href="#" class="wf-split-item wf-si-done">
+                  <span class="wf-si-num">1</span>
+                  <span class="wf-si-name">利润表基础</span>
+                  <span class="wf-si-badge wf-si-pass">85</span>
+                </a>
+                <a href="#" class="wf-split-item wf-si-done">
+                  <span class="wf-si-num">2</span>
+                  <span class="wf-si-name">资产负债表</span>
+                  <span class="wf-si-badge wf-si-pass">90</span>
+                </a>
+                <a href="#" class="wf-split-item wf-si-done">
+                  <span class="wf-si-num">3</span>
+                  <span class="wf-si-name">现金流量表</span>
+                  <span class="wf-si-badge wf-si-pass">82</span>
+                </a>
+                <a href="#" class="wf-split-item wf-si-active wf-si-selected">
+                  <span class="wf-si-num">4</span>
+                  <span class="wf-si-name">三表联动</span>
+                  <span class="wf-si-badge wf-si-prog">60%</span>
+                </a>
+                <a href="#" class="wf-split-item wf-si-locked">
+                  <span class="wf-si-num">5</span>
+                  <span class="wf-si-name">财务比率</span>
+                </a>
+                <a href="#" class="wf-split-item wf-si-locked">
+                  <span class="wf-si-num">6</span>
+                  <span class="wf-si-name">盈利分析</span>
+                </a>
+                <a href="#" class="wf-split-item wf-si-locked">
+                  <span class="wf-si-num">7</span>
+                  <span class="wf-si-name">偿债分析</span>
+                </a>
+                <a href="#" class="wf-split-item wf-si-locked">
+                  <span class="wf-si-num">8</span>
+                  <span class="wf-si-name">综合案例</span>
+                </a>
+              </div>
+              <!-- Quick links -->
+              <div class="wf-split-quick">
+                <a href="#" class="wf-split-quick-btn">阅读原文</a>
+                <a href="#" class="wf-split-quick-btn">错题本 (5)</a>
+              </div>
+            </div>
+            <!-- Right: Detail Panel -->
+            <div class="wf-split-right">
+              <div class="wf-detail-header">
+                <div class="wf-detail-title">模块 4：三表联动分析 <span class="wf-marker">1</span></div>
+                <div class="wf-detail-status">Q&A 练习中 · 5 个知识点</div>
+              </div>
+              <div class="wf-detail-progress-section">
+                <div class="wf-detail-progress-label">Q&A 进度</div>
+                <div class="wf-detail-progress-bar"><div class="wf-detail-progress-fill" style="width:60%"></div></div>
+                <div class="wf-detail-progress-text">3/5 已完成</div>
+              </div>
+              <a href="#" class="wf-detail-cta">继续学习 →</a>
+              <div class="wf-detail-section">
+                <div class="wf-detail-section-title">知识点列表</div>
+                <div class="wf-detail-kp">利润表与现金流量表的对应关系</div>
+                <div class="wf-detail-kp">资产负债表与利润表的勾稽关系</div>
+                <div class="wf-detail-kp">三表交叉验证方法</div>
+                <div class="wf-detail-kp">间接法编制现金流量表</div>
+                <div class="wf-detail-kp">虚假利润的三表识别</div>
+              </div>
+              <!-- Alerts at bottom of detail -->
+              <div class="wf-detail-alerts">
+                <div class="wf-detail-alert">
+                  <span class="wf-marker">2</span> <strong>复习提醒</strong>：模块 1、2 待复习
+                  <a href="#">去复习 →</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wf-annotations">
+      <h3>UX Notes</h3>
+      <ul>
+        <li><strong>1</strong> — Right panel shows contextual detail for whichever module is selected in the left list</li>
+        <li><strong>2</strong> — Review alerts in the detail panel, contextual to the overall book or selected module</li>
+        <li>Good for desktop power users; may need rethinking for mobile (stack panels vertically)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SUMMARY ===== -->
+  <div class="option-panel" id="summary">
+    <h2>Summary</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin:16px 0;">
+      <tr style="border-bottom:1px solid #eee;"><th style="text-align:left;padding:8px;">Option</th><th style="text-align:left;padding:8px;">Approach</th><th style="text-align:center;padding:8px;">Score</th></tr>
+      <tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">1: Safe Merge</td><td style="padding:8px;">Current list + stats bar + enriched cards</td><td style="text-align:center;padding:8px;">&#9733;&#9733;&#9733;</td></tr>
+      <tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">2: Action Hub</td><td style="padding:8px;">Hero CTA + action alerts + compact grid</td><td style="text-align:center;padding:8px;">&#9733;&#9733;&#9733;&#9733;</td></tr>
+      <tr style="border-bottom:1px solid #eee;background:#f9f9f9;"><td style="padding:8px;"><strong>3: Status Grid ★</strong></td><td style="padding:8px;">Khan Academy grid — status IS the dashboard</td><td style="text-align:center;padding:8px;">&#9733;&#9733;&#9733;&#9733;&#9733;</td></tr>
+      <tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">4: Learning Path</td><td style="padding:8px;">Duolingo vertical path — gamified journey</td><td style="text-align:center;padding:8px;">&#9733;&#9733;&#9733;&#9733;</td></tr>
+      <tr><td style="padding:8px;">5: Split Panel</td><td style="padding:8px;">Master-detail — module list + contextual panel</td><td style="text-align:center;padding:8px;">&#9733;&#9733;&#9733;</td></tr>
+    </table>
+    <p style="font-size:13px;color:#333;line-height:1.6;"><strong>Recommendation: Option 3 (Status Grid)</strong> — Best balance of information density and actionability. The grid serves as both module map AND dashboard simultaneously, eliminating the need for separate pages. Alert chips at the top keep review/mistake actions one click away. Scales well from 4 to 20+ modules and works on mobile by switching to a single-column stack.</p>
+  </div>
+
+</div>
+
+<footer class="skill-footer">
+  This design was crafted by the <a href="https://github.com/Magdoub/claude-wireframe-skill">Wireframe skill</a> — follow on GitHub
+</footer>
+
+<script>
+(function() {
+  // Main tab switching
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  var panels = document.querySelectorAll('.option-panel');
+  tabBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      tabBtns.forEach(function(b) { b.classList.remove('active'); });
+      panels.forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      var target = document.getElementById(btn.dataset.tab);
+      if (target) target.classList.add('active');
+    });
+  });
+
+  // Sub-tab switching
+  var subBtns = document.querySelectorAll('.sub-tab-btn');
+  subBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var frameId = btn.dataset.frame;
+      var siblings = btn.parentElement.querySelectorAll('.sub-tab-btn');
+      siblings.forEach(function(s) { s.classList.remove('active'); });
+      btn.classList.add('active');
+      var frame = document.getElementById(frameId);
+      if (frame) {
+        frame.classList.remove('wireframe', 'clean', 'polished');
+        frame.classList.add(btn.dataset.variant);
+      }
+    });
+  });
+
+  // Completion banner — one-time load check
+  window.addEventListener('load', function() {
+    var badges = document.querySelectorAll('.sub-tab-badge');
+    var anyVisible = false;
+    badges.forEach(function(b) {
+      if (getComputedStyle(b).display !== 'none') anyVisible = true;
+    });
+    if (!anyVisible && badges.length > 0) {
+      var banner = document.getElementById('completion-banner');
+      if (banner) {
+        banner.style.display = 'block';
+        setTimeout(function() { banner.style.display = 'none'; }, 8000);
+      }
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

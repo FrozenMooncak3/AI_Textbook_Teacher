@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#fefae8",
+                        "secondary": "#855236",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f5f1df",
+                        "on-tertiary-fixed": "#001b3c",
+                        "on-primary-fixed": "#341100",
+                        "inverse-primary": "#ffb690",
+                        "secondary-fixed": "#ffdbca",
+                        "primary-fixed": "#ffdbca",
+                        "secondary-container": "#feba97",
+                        "inverse-surface": "#323125",
+                        "secondary-fixed-dim": "#fbb795",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#dedac9",
+                        "outline": "#8a7267",
+                        "outline-variant": "#ddc1b4",
+                        "surface-container-highest": "#e6e3d1",
+                        "on-surface": "#1d1c11",
+                        "background": "#fefae8",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#a74800",
+                        "on-tertiary-container": "#d5e3ff",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#a8c8ff",
+                        "surface": "#fefae8",
+                        "primary-fixed-dim": "#ffb690",
+                        "on-background": "#1d1c11",
+                        "surface-tint": "#9d4300",
+                        "surface-container-high": "#ece8d7",
+                        "surface-container-low": "#f8f4e2",
+                        "on-surface-variant": "#564239",
+                        "on-secondary-container": "#79482d",
+                        "primary": "#813600",
+                        "tertiary": "#004c93",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#d5e3ff",
+                        "on-primary-container": "#ffdbca",
+                        "surface-container": "#f2eedc",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#341100",
+                        "on-secondary-fixed-variant": "#693b21",
+                        "tertiary-container": "#0064be",
+                        "surface-variant": "#e6e3d1",
+                        "on-tertiary-fixed-variant": "#004689",
+                        "on-primary-fixed-variant": "#783200"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Be Vietnam Pro"]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; background-color: #fefae8; color: #1d1c11; }
+        h1, h2, h3, .brand-font { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar Component -->
+<aside class="w-[288px] h-screen fixed left-0 top-0 border-r border-[#ddc1b4]/20 bg-[#ffffff] dark:bg-stone-900 shadow-[40px_0_40px_rgba(29,28,17,0.06)] flex flex-col py-8 z-50">
+<div class="px-8 mb-10">
+<h1 class="text-2xl font-bold text-[#813600] dark:text-[#ffdbca] tracking-tight">The Learning Space</h1>
+<p class="text-sm font-label text-on-surface-variant/70 mt-1">Intellectual Sanctuary</p>
+</div>
+<nav class="flex-1 space-y-2 px-2">
+<!-- Active: Dashboard -->
+<a class="flex items-center gap-3 bg-[#ffdbca] text-[#813600] rounded-full px-4 py-3 mx-2 transition-all scale-98 active:opacity-80" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-headline font-bold tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-[#1d1c11] dark:text-stone-300 px-4 py-3 mx-2 hover:bg-[#f2eedc] dark:hover:bg-stone-800 transition-colors" href="#">
+<span class="material-symbols-outlined">auto_stories</span>
+<span class="font-headline font-bold tracking-tight">Library</span>
+</a>
+<a class="flex items-center gap-3 text-[#1d1c11] dark:text-stone-300 px-4 py-3 mx-2 hover:bg-[#f2eedc] dark:hover:bg-stone-800 transition-colors" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-headline font-bold tracking-tight">Reading List</span>
+</a>
+<a class="flex items-center gap-3 text-[#1d1c11] dark:text-stone-300 px-4 py-3 mx-2 hover:bg-[#f2eedc] dark:hover:bg-stone-800 transition-colors" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-headline font-bold tracking-tight">Insights</span>
+</a>
+<a class="flex items-center gap-3 text-[#1d1c11] dark:text-stone-300 px-4 py-3 mx-2 hover:bg-[#f2eedc] dark:hover:bg-stone-800 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-headline font-bold tracking-tight">Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full bg-primary text-on-primary rounded-full py-4 font-headline font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform active:scale-95">
+<span class="material-symbols-outlined">add</span>
+                New Chapter
+            </button>
+<div class="mt-6 border-t border-outline-variant/10 pt-4">
+<a class="flex items-center gap-3 text-[#1d1c11] dark:text-stone-300 px-4 py-3 hover:bg-[#f2eedc] transition-colors rounded-full" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-headline font-bold tracking-tight">Help Center</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Component -->
+<header class="fixed top-0 right-0 left-[288px] h-16 z-40 bg-[#fefae8]/80 backdrop-blur-md dark:bg-stone-950/80 flex justify-between items-center px-12 w-full">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md focus-within:ring-2 focus-within:ring-[#813600]/20 rounded-full transition-all">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-lowest border-none rounded-full pl-12 pr-4 py-2 text-sm focus:ring-0 text-on-surface placeholder-on-surface-variant/50" placeholder="搜索我的图书馆..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="relative text-[#813600] hover:text-[#a74800] transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant/20">
+<div class="text-right">
+<p class="text-sm font-bold text-on-surface leading-none">林睿远</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider mt-1">高级馆长</p>
+</div>
+<img alt="User Avatar" class="w-10 h-10 rounded-full bg-surface-container-high object-cover ring-2 ring-primary-fixed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdGHTYPvbnS3kXpIp_coapFKRmi95TZGrJ3TVy9dRBO3O3Xox8Dv0cYIAtUwJzny8DRqBVee3KpUIVf3sVqKbrKjqXSuyySrTAsLWKSTsLf934YUZmTqGxWJtl_AB0umCupyxciXpMSPlvifX5YpRWmFcJvAq1D22hk70EupMg-Hu9l5NvFk4iaCm9lVfHud1G5heMdnUJJKUjfJ7C9igGdUKbFl_FqLRdVNibIRPV1iP9eFnSuV0bv_iZWTtOrWdvu-8Yt1oTUPk"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[288px] pt-16 min-h-screen">
+<div class="p-12 flex gap-8">
+<!-- Left Column: Welcome & Books -->
+<div class="flex-1 space-y-10">
+<section>
+<h2 class="text-4xl font-headline font-extrabold text-primary leading-tight tracking-tight">
+                        欢迎回来，睿远。<br/>
+<span class="text-on-surface-variant font-medium text-2xl">今天想探索哪方面的智慧？</span>
+</h2>
+</section>
+<!-- Book Grid: Vertical & Compact -->
+<section>
+<div class="flex justify-between items-end mb-6">
+<h3 class="text-xl font-headline font-bold text-on-surface">正在研读</h3>
+<a class="text-sm font-bold text-primary hover:underline" href="#">查看全部</a>
+</div>
+<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Book Card 1 -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden group hover:shadow-xl transition-all cursor-pointer">
+<div class="aspect-[3/4] relative overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="close-up of an old leather bound book with gold foil details on a wooden table with soft candle light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL0rFYjMO9V9_UdrNOfWOhzVX4oHkv6Q4ImwnlFnPoZ2yab1zp7mT21nUy6tkZjDhzAUy2cieuow21PTGpExoxyvhXvvAJnove_G11apbVBfP_ARlgh_kNvsCo1LdCUDzZZj9kmXQv80hMztU3pi4nXzW0EWn4zVm-diSAd1ukb2PsgU6P62tbcwWoOmXaflsX-c-ODbetBYVpW_cF203f434wFkIMpvYfU9RCskSfgK6y1CKKKI04gB_DoHo49A3W_cyvlKvW-VY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+<span class="text-white text-xs font-bold uppercase tracking-widest">继续阅读</span>
+</div>
+</div>
+<div class="p-4">
+<p class="text-xs text-primary font-bold mb-1">哲学</p>
+<h4 class="font-headline font-bold text-on-surface line-clamp-1">沉思录：生活之道</h4>
+<div class="mt-3 w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[65%]"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant mt-2">已完成 65%</p>
+</div>
+</div>
+<!-- Book Card 2 -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden group hover:shadow-xl transition-all cursor-pointer">
+<div class="aspect-[3/4] relative overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="stack of diverse modern books against a clean white wall with minimalist aesthetic and bright natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZU7LnCWuxKz01Lxq69kjowqEiTSB_KDX-QG_Y5bhjwhzHvu6ZR2dq4vYaJtQ-5ZJQiiAtnF0cs8zXSpuI-dV6-6OIn9GFCU1cDcEcP3bGUUxSusXXYHMpnJFpfWw8ZFC9utbgcUnqdYTVKPN1Qv8lLsQLjRwvu_ycX-yH8E7zujJOaxI7DZ6GNT5tdbji-GHs03eVi1cmJmq_Qp0-5udyNg1VE5Df_0WnzmdftxeX8nwDceSNVMo96OcRslLj8WzTfYlAa7HowpI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+<span class="text-white text-xs font-bold uppercase tracking-widest">继续阅读</span>
+</div>
+</div>
+<div class="p-4">
+<p class="text-xs text-tertiary font-bold mb-1">社会学</p>
+<h4 class="font-headline font-bold text-on-surface line-clamp-1">群体心理学</h4>
+<div class="mt-3 w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-[22%]"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant mt-2">已完成 22%</p>
+</div>
+</div>
+<!-- Book Card 3 -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden group hover:shadow-xl transition-all cursor-pointer">
+<div class="aspect-[3/4] relative overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="vintage typewriter on a dark oak desk with scattered papers and a single reading lamp creating warm moody lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAErwCeGEziTMscpDNXiYMOtdOfv08so3L2uIorn91AzS0augbG0mRHKb6F7kBUFVSmYqSGOifG7QyNoIgn_040siMBYI0gLZF6s_7i5I62vYxAT6s0sXXCxEL9T05-9j7wx4YhREmli9J12eaFy2LkErjNZEXPFX89mXOCBtPBC2gWBCVGMqHPMhXHNf-Z2SCaAEVJt3wOClmifa1Wd6kJn47Z0fWQhyr7EP1I-Gks5em4wvtIPRGcAASKp50LPX4ci5T1C3wSDh4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+<span class="text-white text-xs font-bold uppercase tracking-widest">继续阅读</span>
+</div>
+</div>
+<div class="p-4">
+<p class="text-xs text-[#A8B085] font-bold mb-1">文学</p>
+<h4 class="font-headline font-bold text-on-surface line-clamp-1">百年孤独</h4>
+<div class="mt-3 w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-[#A8B085] h-full w-[88%]"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant mt-2">已完成 88%</p>
+</div>
+</div>
+<!-- Book Card 4 -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden group hover:shadow-xl transition-all cursor-pointer">
+<div class="aspect-[3/4] relative overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="a bright open book with glowing particles rising from the pages in a dark ethereal library setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCO5WUKjgm8eUBp-7653ih8WPflxlBLYyK7VXDAbi2bCrRvQEfO22yoehZqjl5SIqcdg1dk02xcu0QUvK_fAVGCJY9LW135BHVhWcDQW5gFz1umWVue3QmpjEWBkNdF4Rv0avZxNyY-pS3gQk1eML3QIDRMhnauByOhsW_41HEuipTYhMM_P0w0pVbahEbWDiUqJKGD0nb_SF52JxTkm6lKMjZGo4eaYH2G0tOSe8IfwFh1BXamoHHj7f_byF9pnNamKE3PtCYizOU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+<span class="text-white text-xs font-bold uppercase tracking-widest">继续阅读</span>
+</div>
+</div>
+<div class="p-4">
+<p class="text-xs text-secondary font-bold mb-1">历史</p>
+<h4 class="font-headline font-bold text-on-surface line-clamp-1">万历十五年</h4>
+<div class="mt-3 w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[41%]"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant mt-2">已完成 41%</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Insights Bento Section -->
+<section>
+<h3 class="text-xl font-headline font-bold text-on-surface mb-6">本周洞察</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-[#E6D5B8] p-6 rounded-lg col-span-1 min-h-[160px] flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary">auto_graph</span>
+<span class="text-[10px] font-bold uppercase text-primary/60 tracking-widest">知识留存</span>
+</div>
+<div>
+<p class="text-3xl font-headline font-extrabold text-on-primary-fixed">84%</p>
+<p class="text-xs text-on-primary-fixed/70">比上周提升了 12%</p>
+</div>
+</div>
+<div class="bg-[#C3C9A6] p-6 rounded-lg col-span-1 min-h-[160px] flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-on-secondary-fixed">timer</span>
+<span class="text-[10px] font-bold uppercase text-on-secondary-fixed/60 tracking-widest">专注时长</span>
+</div>
+<div>
+<p class="text-3xl font-headline font-extrabold text-on-secondary-fixed">14h</p>
+<p class="text-xs text-on-secondary-fixed/70">平均每日阅读 2 小时</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Review Center Widget -->
+<aside class="w-80 space-y-6">
+<!-- Review Status Banner -->
+<div class="bg-primary rounded-lg p-6 text-on-primary shadow-xl shadow-primary/20 relative overflow-hidden">
+<div class="relative z-10">
+<h4 class="font-headline font-bold text-lg mb-2">复盘时刻</h4>
+<p class="text-sm opacity-90 mb-4 leading-relaxed">有 3 个核心概念需要您今天巩固，以确保长期记忆。</p>
+<button class="w-full bg-white text-primary rounded-full py-3 text-xs font-bold hover:bg-opacity-90 transition-all">
+                            进入复盘模式
+                        </button>
+</div>
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-9xl opacity-10 rotate-12">psychology</span>
+</div>
+<!-- Quick Stats -->
+<div class="bg-surface-container-low rounded-lg p-6">
+<h4 class="font-headline font-bold text-on-surface mb-6">学习统计</h4>
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">menu_book</span>
+</div>
+<div class="flex-1">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">已读书籍</p>
+<p class="text-lg font-headline font-extrabold">24 本</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">edit_note</span>
+</div>
+<div class="flex-1">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">读书笔记</p>
+<p class="text-lg font-headline font-extrabold">142 条</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">workspace_premium</span>
+</div>
+<div class="flex-1">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">知识勋章</p>
+<p class="text-lg font-headline font-extrabold">8 枚</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity Timeline (Editorial Style) -->
+<div class="bg-surface-container-lowest rounded-lg p-6 shadow-sm">
+<h4 class="font-headline font-bold text-on-surface mb-6">最近动态</h4>
+<div class="relative pl-6 space-y-8 before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-outline-variant/30">
+<div class="relative">
+<div class="absolute -left-[27px] top-1 w-2 h-2 rounded-full bg-primary ring-4 ring-surface-container-lowest"></div>
+<p class="text-[10px] font-bold text-primary mb-1 uppercase tracking-widest">3小时前</p>
+<p class="text-sm font-medium text-on-surface leading-tight">标记了《沉思录》中的段落</p>
+</div>
+<div class="relative">
+<div class="absolute -left-[27px] top-1 w-2 h-2 rounded-full bg-outline-variant ring-4 ring-surface-container-lowest"></div>
+<p class="text-[10px] font-bold text-on-surface-variant mb-1 uppercase tracking-widest">昨天</p>
+<p class="text-sm font-medium text-on-surface leading-tight">完成了《群体心理学》第一章</p>
+</div>
+<div class="relative">
+<div class="absolute -left-[27px] top-1 w-2 h-2 rounded-full bg-outline-variant ring-4 ring-surface-container-lowest"></div>
+<p class="text-[10px] font-bold text-on-surface-variant mb-1 uppercase tracking-widest">3天前</p>
+<p class="text-sm font-medium text-on-surface leading-tight">在图书馆添加了 2 本新书</p>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-10 right-10 w-16 h-16 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-50">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</body></html>

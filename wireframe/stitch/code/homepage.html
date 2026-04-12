@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI 教材精学老师 - The Illuminated Companion</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be_Vietnam_Pro:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#845d00",
+                        "secondary": "#9b5100",
+                        "primary-fixed": "#ff7a23",
+                        "error-container": "#f95630",
+                        "tertiary-dim": "#755200",
+                        "secondary-fixed": "#ffc69d",
+                        "on-surface-variant": "#666558",
+                        "surface-container-highest": "#ece9d4",
+                        "on-surface": "#39382d",
+                        "primary-fixed-dim": "#f06c0b",
+                        "background": "#fffbff",
+                        "surface-variant": "#ece9d4",
+                        "surface-container-low": "#fefae8",
+                        "on-primary-container": "#3f1700",
+                        "outline-variant": "#bcb9ab",
+                        "surface-bright": "#fffbff",
+                        "error-dim": "#b92902",
+                        "tertiary-fixed-dim": "#efad16",
+                        "surface-dim": "#e7e3ce",
+                        "on-tertiary-fixed": "#3c2900",
+                        "tertiary-fixed": "#febb28",
+                        "inverse-primary": "#f77113",
+                        "surface-container": "#f8f4e2",
+                        "secondary-dim": "#894700",
+                        "secondary-fixed-dim": "#ffb379",
+                        "inverse-on-surface": "#a09d8f",
+                        "tertiary-container": "#febb28",
+                        "on-secondary-container": "#703900",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#0f0f06",
+                        "on-primary-fixed-variant": "#4e1e00",
+                        "surface": "#fffbff",
+                        "primary-container": "#ff7a23",
+                        "on-secondary-fixed-variant": "#7e4000",
+                        "on-secondary-fixed": "#542900",
+                        "surface-tint": "#a74800",
+                        "error": "#be2d06",
+                        "primary": "#a74800",
+                        "outline": "#838174",
+                        "secondary-container": "#ffc69d",
+                        "on-background": "#39382d",
+                        "on-tertiary-container": "#563b00",
+                        "primary-dim": "#943f00",
+                        "on-tertiary-fixed-variant": "#614400",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#f2eedb",
+                        "on-primary-fixed": "#000000",
+                        "on-error-container": "#520c00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Plus Jakarta Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; background-color: #fffbff; color: #39382d; }
+        .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .amber-glow { background: linear-gradient(135deg, #a74800 0%, #ff7a23 100%); }
+        .custom-shadow { shadow-[40px_0_40px_rgba(167,72,0,0.06)] }
+    </style>
+</head>
+<body class="flex min-h-screen">
+<!-- SideNavBar (Execution from JSON) -->
+<aside class="hidden md:flex flex-col h-screen w-72 rounded-r-3xl bg-[#fefae8] dark:bg-zinc-900 border-r border-orange-100/20 dark:border-zinc-800 shadow-[40px_0_40px_rgba(167,72,0,0.06)] sticky top-0 font-['Be_Vietnam_Pro'] text-lg p-6 gap-4">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-orange-100">
+<img alt="Scholar Profile" data-alt="close-up profile photo of a young male scholar with a friendly expression in a soft-lit library setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQK-8-BidiCrjmrKiY_EBC9LWNPdJVOIB_p1xxSEmklrKeym-ULNBwt3JGaLMlWaq7iF2NAG_oeAWAcLv82ZebG8XEmyxf3Ej1CaPCPNsKYMS7pG4t0KFhg_WF-xCmOLzNRnuXI9taLvUAPJQTKySUyM-ZiAgbhAVd_IU-gXx532SMcZvbeAN-9hpGZa6wEGk2L0F0vgAp2ZpO2V4Bkgqt-Wkxqx8Flef1B4mWRHr013_aazBk0jsssN8rFZItNMIDQxIKlwfFqcM"/>
+</div>
+<div>
+<h3 class="text-xl font-black text-orange-800 leading-tight">The Scholar</h3>
+<p class="text-sm text-zinc-600 dark:text-zinc-400">Level 12 Researcher</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 flex-grow">
+<!-- Active Tab: Home -->
+<a class="flex items-center gap-4 px-4 py-3 bg-[#ffffff] dark:bg-zinc-800 text-orange-700 dark:text-orange-400 rounded-full font-semibold shadow-sm hover:translate-x-1 transition-transform duration-300 cursor-pointer tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span>Home</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-zinc-600 dark:text-zinc-400 hover:text-orange-600 hover:translate-x-1 transition-transform duration-300 cursor-pointer tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="cloud_upload">cloud_upload</span>
+<span>Upload</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-zinc-600 dark:text-zinc-400 hover:text-orange-600 hover:translate-x-1 transition-transform duration-300 cursor-pointer tap-highlight-none" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<button class="mt-auto amber-glow text-white font-bold py-4 px-6 rounded-full shadow-lg shadow-orange-900/10 hover:scale-105 active:scale-95 transition-all">
+            Upgrade to Pro
+        </button>
+</aside>
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopAppBar (Execution from JSON) -->
+<header class="w-full top-0 sticky z-40 bg-[#fffbff] dark:bg-zinc-950 flex justify-between items-center px-6 py-4 bg-gradient-to-b from-[#fefae8] to-transparent">
+<div class="flex items-center gap-2">
+<h1 class="font-['Plus_Jakarta_Sans'] tracking-tight text-2xl font-bold text-orange-700 dark:text-orange-500">
+                    AI 教材精学老师
+                </h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-zinc-600 dark:text-zinc-400 hover:bg-orange-50 dark:hover:bg-zinc-900 transition-colors rounded-full scale-95 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="w-10 h-10 rounded-full border-2 border-orange-200 overflow-hidden cursor-pointer scale-95 active:scale-90 transition-transform">
+<img alt="User Avatar" data-alt="stylized user avatar of a creative professional in a warm sun-drenched studio environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCflUAZdb4gnIJ9dCC3cj0nmgQAMgFsQr3lSmWnFpfXJ2A24ZSxr4JgD_57ELusQ__pMQKhuyNXFjNhuAR6M9M7mKtoVUNvcHFK3_P6UPbpCdjpXcpPyHs5sjxmaPSBT4HmjFd1peCKw48vOHzNnXkJTbFc9bLjOAWqzN-Ym2XAuchKjakKKu__4dz9zAd269LFIz1_IOIXBWrNUAUf7bfoF_JjAZzifrZ9kgajxIV5FXIiRJhvXVHhQoX33xKdW-uZoHj1nOetvRk"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-6 md:p-10 max-w-7xl mx-auto w-full space-y-10">
+<!-- Header Section -->
+<section class="space-y-1">
+<h2 class="text-4xl md:text-5xl font-headline font-extrabold text-on-surface tracking-tight">Welcome back, Sean</h2>
+<p class="text-lg text-on-surface-variant font-body">Continue where you left off</p>
+</section>
+<!-- Review Bar -->
+<section class="bg-surface-container-high rounded-3xl p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+</div>
+<div>
+<p class="font-headline font-bold text-xl">Reviews Due Today: 3</p>
+<p class="text-sm text-on-surface-variant">Recommended for long-term retention</p>
+</div>
+</div>
+<button class="amber-glow text-white font-bold py-3 px-8 rounded-full shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all w-full md:w-auto">
+                    Start Review
+                </button>
+</section>
+<!-- Bookshelf Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1: Macroeconomics -->
+<div class="bg-surface-container-lowest rounded-3xl overflow-hidden flex flex-col hover:translate-y-[-4px] transition-transform duration-300 cursor-pointer">
+<div class="h-40 bg-gradient-to-br from-blue-600 to-blue-400 relative p-6 flex items-end">
+<span class="absolute top-4 right-4 bg-tertiary-container text-on-tertiary-container text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                            3 reviews due
+                        </span>
+<div class="text-white">
+<span class="material-symbols-outlined text-4xl opacity-50" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+</div>
+<div class="p-6 space-y-4">
+<h3 class="font-headline font-bold text-lg leading-tight text-on-surface">Macroeconomics: Principles and Policy</h3>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+<span>Completion</span>
+<span>45%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 rounded-full" style="width: 45%;"></div>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">schedule</span>
+                            Last studied: 2 days ago
+                        </p>
+</div>
+</div>
+<!-- Card 2: Psychology -->
+<div class="bg-surface-container-lowest rounded-3xl overflow-hidden flex flex-col hover:translate-y-[-4px] transition-transform duration-300 cursor-pointer">
+<div class="h-40 bg-gradient-to-br from-purple-600 to-purple-400 relative p-6 flex items-end">
+<div class="text-white">
+<span class="material-symbols-outlined text-4xl opacity-50" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+</div>
+<div class="p-6 space-y-4">
+<h3 class="font-headline font-bold text-lg leading-tight text-on-surface">Introduction to Psychology</h3>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+<span>Completion</span>
+<span>12%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 rounded-full" style="width: 12%;"></div>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">schedule</span>
+                            Last studied: 2 days ago
+                        </p>
+</div>
+</div>
+<!-- Card 3: Accounting -->
+<div class="bg-surface-container-lowest rounded-3xl overflow-hidden flex flex-col hover:translate-y-[-4px] transition-transform duration-300 cursor-pointer">
+<div class="h-40 bg-gradient-to-br from-teal-600 to-teal-400 relative p-6 flex items-end">
+<span class="absolute top-4 right-4 bg-error text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                            5 mistakes
+                        </span>
+<div class="text-white">
+<span class="material-symbols-outlined text-4xl opacity-50" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</div>
+</div>
+<div class="p-6 space-y-4">
+<h3 class="font-headline font-bold text-lg leading-tight text-on-surface">Financial Accounting Standards</h3>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+<span>Completion</span>
+<span>78%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 rounded-full" style="width: 78%;"></div>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">schedule</span>
+                            Last studied: 2 days ago
+                        </p>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-8 right-8 w-16 h-16 amber-glow text-white rounded-full flex items-center justify-center shadow-[0_12px_40px_rgba(167,72,0,0.3)] hover:scale-110 active:scale-90 transition-transform z-50">
+<span class="material-symbols-outlined text-3xl font-bold" data-icon="add">add</span>
+</button>
+</body></html>

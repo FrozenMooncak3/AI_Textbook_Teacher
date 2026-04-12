@@ -1,6 +1,7 @@
 # Journal Index
 
 ## open（需要关注）
+- [idea] 两种学习模式：课件→教学模式（只教不考），教材→完整模式（教+考+复习），解决课件 vs 教材产品难题 → [2026-04-11-two-learning-modes.md](./2026-04-11-two-learning-modes.md)
 - [idea] 用户留存与学习动机：需要核心留存机制，MVP 前确定方案 → [2026-04-10-retention-motivation.md](./2026-04-10-retention-motivation.md)
 - [decision] MVP 必做：AI 再教一遍环节（阅读→**教学**→QA），参考月饼投资项目调研 → [2026-04-10-teaching-phase.md](./2026-04-10-teaching-phase.md)
 - [decision] MVP 范围扩展：扫描版 PDF（主功能）+ 多书种类（至少教案课件型）必须上线前具备 → [2026-04-10-mvp-scope-expansion.md](./2026-04-10-mvp-scope-expansion.md)
@@ -38,6 +39,7 @@
 
 ### 工程流程
 - **T2** 记忆清除 skill——将已关闭的记忆文件合并压缩为摘要文档，减少每次 session 读文件的 token 消耗 → 用户提出 2026-04-09
+- **T2** 深度调研派发 agent skill——来源分级+质量标准+格式模板产品化 → [2026-04-12-research-dispatch-skill.md](./2026-04-12-research-dispatch-skill.md)
 
 ### 已决策归档
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)

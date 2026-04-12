@@ -5,19 +5,23 @@
 
 ---
 
-## 当前状态（2026-04-10）
+## 当前状态（2026-04-12）
 
-**方向**：MVP 大改准备中——用户正在逐页 UI 精修 + 3 项重大 MVP 范围扩展待规划
+**方向**：MVP 扩展三线推进——扫描 PDF（设计完成，待执行）→ 教学系统 → 留存机制，串行执行
 
-**当前里程碑**：Page-by-Page UI Refinement — **进行中**（Page 1 完成）
+**当前里程碑**：扫描 PDF 实施 — **待执行**
 
 **最新完成**：
-- 首页重写为 Stitch Multi-Column Dashboard 双栏布局（固定顶栏+搜索+书网格+统计+最近动态 timeline）
-- CourseCard 增强：学科图标装饰、双侧阴影、hover 动效（shadow/pedestal A/B 测试中）
-- ReviewButton 空状态、FAB 缩小重定位
-- 3 条 MVP 重大决策已停车：扫描版 PDF 为主功能、AI 教学环节（reading→teaching→qa）、用户留存机制
+- 扫描 PDF 设计 spec 完成（含 2 轮 spec review）→ `docs/superpowers/specs/2026-04-12-scanned-pdf-design.md`
+- 扫描 PDF 实施计划完成（含 2 轮 plan review，修复 9 个问题）→ `docs/superpowers/plans/2026-04-12-scanned-pdf-plan.md`
+- PDF 处理技术调研完成 → `docs/research/2026-04-11-pdf-processing-research.md`
+- Task ledger 已创建，9 个 task 全部 ready → `.ccb/task-ledger.json`
+- T1 dispatch 文件已写好 → `.ccb/inbox/codex/016-dispatch.md`
+- MVP 扩展首轮调研完成（竞品/学习科学/AI成本/护城河/用户定位）→ `docs/research/`
+- 两种学习模式洞察 → `docs/journal/2026-04-11-two-learning-modes.md`
+- MVP 扩展时间线 → `docs/superpowers/plans/2026-04-11-mvp-expansion-timeline.md`
 
-**下一步**：MVP 大改规划——用户准备启动 MVP 范围扩展（扫描 PDF + 教学环节 + 留存机制），需 brainstorm + 里程碑规划
+**下一步**：新 session 执行扫描 PDF 计划（9 tasks: T1-T7 Codex, T8 Gemini, T9 Claude）
 
 **架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
 

@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 interface StatusBadgeProps {
-  status: 'completed' | 'in-progress' | 'not-started' | 'locked'
+  status: 'completed' | 'in-progress' | 'not-started' | 'locked' | 'processing' | 'readable'
   className?: string
 }
 
@@ -10,6 +10,8 @@ const config = {
   'in-progress': { label: '进行中', classes: 'bg-primary-container/20 text-primary' },
   'not-started': { label: '未开始', classes: 'bg-surface-container text-on-surface-variant' },
   'locked': { label: '未解锁', classes: 'bg-surface-container text-on-surface-variant/50' },
+  'processing': { label: '正在识别', classes: 'bg-amber-50 text-amber-700 animate-pulse' },
+  'readable': { label: '可以阅读', classes: 'bg-primary/10 text-primary' },
 }
 
 export default function StatusBadge({ status, className }: StatusBadgeProps) {

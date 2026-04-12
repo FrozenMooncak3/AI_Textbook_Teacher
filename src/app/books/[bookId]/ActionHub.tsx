@@ -50,6 +50,13 @@ interface DashboardData {
   }
 }
 
+interface ModuleStatus {
+  id: number
+  textStatus: string
+  ocrStatus: string
+  kpStatus: string
+}
+
 export default function ActionHub({ 
   bookId, 
   userName 
@@ -58,6 +65,7 @@ export default function ActionHub({
   userName: string 
 }) {
   const [data, setData] = useState<DashboardData | null>(null)
+  const [moduleStatuses, setModuleStatuses] = useState<Record<number, ModuleStatus>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [isRecentTestsOpen, setIsRecentTestsOpen] = useState(false)
   const router = useRouter()
@@ -65,13 +73,31 @@ export default function ActionHub({
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`/api/books/${bookId}/dashboard`)
-        const json = await res.json()
-        if (json.success) {
-          setData(json.data)
+        const [dashRes, statusRes] = await Promise.all([
+          fetch(`/api/books/${bookId}/dashboard`),
+          fetch(`/api/books/${bookId}/module-status`)
+        ])
+
+        const dashJson = await dashRes.json()
+        if (dashJson.success) {
+          setData(dashJson.data)
         }
-      } catch {
-        // Silently handle — LoadingState already covers error display
+
+        if (statusRes.ok) {
+          const statusJson = await statusRes.json()
+          const statuses: Record<number, ModuleStatus> = {}
+          statusJson.data.modules.forEach((m: any) => {
+            statuses[m.id] = {
+              id: m.id,
+              textStatus: m.textStatus,
+              ocrStatus: m.ocrStatus,
+              kpStatus: m.kpStatus
+            }
+          })
+          setModuleStatuses(statuses)
+        }
+      } catch (err) {
+        console.error('Fetch error:', err)
       } finally {
         setIsLoading(false)
       }
@@ -148,44 +174,79 @@ export default function ActionHub({
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {modules.map((module) => (
-                <ContentCard
-                  key={module.id}
-                  className="p-6 cursor-pointer hover:shadow-md transition-all flex flex-col justify-between min-h-[180px]"
-                  onClick={() => router.push(`/books/${bookId}/modules/${module.id}`)}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-8 h-8 amber-glow text-white rounded-lg flex items-center justify-center font-black font-headline text-sm shadow-sm">
-                      {String(module.orderIndex).padStart(2, '0')}
+              {modules.map((module) => {
+                const status = moduleStatuses[module.id]
+                
+                let badgeStatus: 'completed' | 'in-progress' | 'not-started' | 'locked' | 'processing' | 'readable' = 'not-started'
+                let clickUrl = `/books/${bookId}/modules/${module.id}`
+                let isClickable = true
+
+                if (status) {
+                  if (status.kpStatus === 'completed') {
+                    if (module.learningStatus === 'completed') {
+                      badgeStatus = 'completed'
+                    } else if (module.qaProgress.answered > 0) {
+                      badgeStatus = 'in-progress'
+                    } else {
+                      badgeStatus = 'not-started'
+                    }
+                  } else if (status.textStatus === 'ready') {
+                    badgeStatus = 'readable'
+                    clickUrl = `/books/${bookId}/reader`
+                  } else if (status.ocrStatus === 'processing') {
+                    badgeStatus = 'processing'
+                    isClickable = false
+                  } else if (status.textStatus === 'pending') {
+                    badgeStatus = 'locked'
+                    isClickable = false
+                  }
+                } else {
+                  // Fallback to legacy logic
+                  badgeStatus = module.learningStatus === 'completed' ? 'completed' :
+                                module.learningStatus === 'unstarted' ? 'not-started' : 'in-progress'
+                }
+
+                return (
+                  <ContentCard
+                    key={module.id}
+                    className={`
+                      p-6 transition-all flex flex-col justify-between min-h-[180px]
+                      ${isClickable ? 'cursor-pointer hover:shadow-md' : 'opacity-60 cursor-not-allowed'}
+                    `}
+                    onClick={() => isClickable && router.push(clickUrl)}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`
+                        w-8 h-8 rounded-lg flex items-center justify-center font-black font-headline text-sm shadow-sm
+                        ${isClickable ? 'amber-glow text-white' : 'bg-surface-container text-on-surface-variant/40'}
+                      `}>
+                        {String(module.orderIndex).padStart(2, '0')}
+                      </div>
+                      <StatusBadge status={badgeStatus} />
                     </div>
-                    <StatusBadge status={
-                      module.learningStatus === 'completed' ? 'completed' :
-                      module.learningStatus === 'unstarted' ? 'not-started' :
-                      'in-progress'
-                    } />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-bold font-headline mb-3 line-clamp-2 leading-snug">{module.title}</h4>
-                    <div className="space-y-3">
-                      {module.qaProgress.total > 0 && (
-                        <ProgressBar 
-                          value={(module.qaProgress.answered / module.qaProgress.total) * 100} 
-                          className="h-1"
-                        />
-                      )}
-                      <div className="flex items-center gap-3 text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">
-                        {module.testScore !== null && (
-                          <span className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">assignment_turned_in</span>
-                            测试: {module.testScore}分
-                          </span>
+                    <div>
+                      <h4 className="text-lg font-bold font-headline mb-3 line-clamp-2 leading-snug">{module.title}</h4>
+                      <div className="space-y-3">
+                        {module.qaProgress.total > 0 && (
+                          <ProgressBar 
+                            value={(module.qaProgress.answered / module.qaProgress.total) * 100} 
+                            className="h-1"
+                          />
                         )}
-                        <span>Q&A: {module.qaProgress.answered}/{module.qaProgress.total}</span>
+                        <div className="flex items-center gap-3 text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">
+                          {module.testScore !== null && (
+                            <span className="flex items-center gap-1">
+                              <span className="material-symbols-outlined text-xs">assignment_turned_in</span>
+                              测试: {module.testScore}分
+                            </span>
+                          )}
+                          <span>Q&A: {module.qaProgress.answered}/{module.qaProgress.total}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </ContentCard>
-              ))}
+                  </ContentCard>
+                )
+              })}
             </div>
           </section>
 

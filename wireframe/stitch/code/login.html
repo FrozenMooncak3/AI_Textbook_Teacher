@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#f06c0b",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "tertiary-fixed-dim": "#efad16",
+                      "background": "#fffbff",
+                      "on-primary-fixed-variant": "#4e1e00",
+                      "outline-variant": "#bcb9ab",
+                      "primary": "#a74800",
+                      "primary-fixed": "#ff7a23",
+                      "secondary-fixed": "#ffc69d",
+                      "primary-dim": "#943f00",
+                      "surface-container-high": "#f2eedb",
+                      "secondary-container": "#ffc69d",
+                      "secondary": "#9b5100",
+                      "surface": "#fffbff",
+                      "surface-container": "#f8f4e2",
+                      "on-error-container": "#520c00",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-low": "#fefae8",
+                      "surface-dim": "#e7e3ce",
+                      "on-surface-variant": "#666558",
+                      "tertiary-dim": "#755200",
+                      "secondary-fixed-dim": "#ffb379",
+                      "primary-container": "#ff7a23",
+                      "on-tertiary-fixed-variant": "#614400",
+                      "on-background": "#39382d",
+                      "error": "#be2d06",
+                      "on-primary-fixed": "#000000",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-fixed": "#febb28",
+                      "outline": "#838174",
+                      "inverse-on-surface": "#a09d8f",
+                      "error-dim": "#b92902",
+                      "secondary-dim": "#894700",
+                      "on-secondary-fixed-variant": "#7e4000",
+                      "on-secondary-fixed": "#542900",
+                      "surface-tint": "#a74800",
+                      "surface-container-highest": "#ece9d4",
+                      "on-surface": "#39382d",
+                      "on-secondary-container": "#703900",
+                      "surface-variant": "#ece9d4",
+                      "on-tertiary-fixed": "#3c2900",
+                      "on-primary-container": "#3f1700",
+                      "error-container": "#f95630",
+                      "surface-bright": "#fffbff",
+                      "on-primary": "#ffffff",
+                      "tertiary": "#845d00",
+                      "on-tertiary-container": "#563b00",
+                      "tertiary-container": "#febb28",
+                      "inverse-surface": "#0f0f06",
+                      "inverse-primary": "#f77113"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Plus Jakarta Sans"],
+                      "body": ["Be Vietnam Pro"],
+                      "label": ["Plus Jakarta Sans"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; }
+        h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .amber-glow {
+            background: linear-gradient(135deg, #a74800 0%, #ff7a23 100%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-[#fffbeb] text-on-surface min-h-screen flex flex-col items-center justify-center p-6 selection:bg-primary-container selection:text-on-primary-container">
+<!-- Login Container -->
+<main class="w-full max-w-[420px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+<!-- Login Card -->
+<div class="bg-surface-container-lowest rounded-xl p-10 shadow-[0_40px_40px_0_rgba(167,72,0,0.06)] border border-outline-variant/10">
+<!-- App Identity -->
+<div class="flex flex-col items-center text-center mb-8">
+<div class="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center mb-4 text-primary">
+<span class="material-symbols-outlined text-4xl" data-icon="auto_stories">auto_stories</span>
+<span class="material-symbols-outlined text-xl absolute translate-x-5 -translate-y-4" data-icon="sparkles" style="font-variation-settings: 'FILL' 1;">colors_spark</span>
+</div>
+<h1 class="text-2xl font-bold tracking-tight text-on-surface mb-2">AI 教材精学老师</h1>
+<p class="text-on-surface-variant text-sm font-medium">用 AI 帮你真正学扎实</p>
+</div>
+<!-- Form -->
+<form action="#" class="space-y-6" method="POST">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant px-1" for="email">邮箱</label>
+<div class="relative group">
+<input class="w-full bg-surface-container-low border-none rounded-lg py-4 px-5 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 focus:bg-surface-bright transition-all outline-none" id="email" name="email" placeholder="your@email.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant px-1" for="password">密码</label>
+<div class="relative group">
+<input class="w-full bg-surface-container-low border-none rounded-lg py-4 px-5 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/20 focus:bg-surface-bright transition-all outline-none" id="password" name="password" placeholder="输入密码" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="visibility">visibility</span>
+</button>
+</div>
+<div class="flex justify-end">
+<a class="text-xs font-bold text-primary hover:text-primary-dim transition-colors" href="#">忘记密码?</a>
+</div>
+</div>
+<!-- Login Button -->
+<button class="amber-glow w-full text-white font-bold py-4 rounded-lg shadow-lg shadow-primary/20 active:scale-[0.98] transition-all duration-200" type="submit">
+                    登录
+                </button>
+</form>
+<!-- Divider -->
+<div class="relative my-8">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant/20"></div>
+</div>
+<div class="relative flex justify-center text-xs uppercase">
+<span class="bg-surface-container-lowest px-4 text-outline font-medium tracking-widest">or</span>
+</div>
+</div>
+<!-- Footer Link -->
+<div class="text-center">
+<p class="text-sm text-on-surface-variant">
+                    还没有账号? <a class="text-primary font-bold hover:underline underline-offset-4 ml-1" href="#">注册</a>
+</p>
+</div>
+</div>
+</main>
+<!-- Global Footer -->
+<footer class="mt-12 text-center">
+<p class="text-xs font-medium text-outline/60 tracking-wider">
+            © 2026 AI 教材精学老师. Wisdom through tactile learning.
+        </p>
+</footer>
+<!-- Decorative Elements (The "Tactile Scholar" Vibe) -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+<div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl opacity-50"></div>
+<div class="absolute bottom-0 right-0 w-1/3 h-1/3 bg-secondary-container/10 rounded-full blur-3xl opacity-40 translate-x-1/4 translate-y-1/4"></div>
+</div>
+</body></html>

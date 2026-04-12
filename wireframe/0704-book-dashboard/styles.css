@@ -1,0 +1,171 @@
+/* === Wireframe Content CSS — Book Action Dashboard === */
+
+/* App Shell (shared across options) */
+.wf-app-shell { display: flex; min-height: 500px; }
+.wf-sidebar { width: 180px; border-right: 1px solid #ccc; padding: 12px; flex-shrink: 0; }
+.wf-sidebar-logo { font-size: 13px; font-weight: 700; color: #000; padding: 8px 4px 16px; }
+.wf-sidebar-item { display: block; font-size: 12px; color: #666; padding: 6px 8px; text-decoration: none; border-radius: 4px; margin-bottom: 2px; }
+.wf-sidebar-item:hover { background: #eee; color: #333; }
+.wf-sidebar-divider { height: 1px; background: #eee; margin: 8px 0; }
+.wf-main { flex: 1; padding: 16px; overflow-y: auto; }
+
+/* Book Header */
+.wf-book-header { margin-bottom: 12px; }
+.wf-book-title { font-size: 18px; font-weight: 700; color: #000; margin-bottom: 8px; }
+.wf-progress-row { display: flex; align-items: center; gap: 12px; }
+.wf-progress-bar { flex: 1; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
+.wf-progress-fill { height: 100%; background: #666; border-radius: 3px; }
+.wf-progress-text { font-size: 11px; color: #666; white-space: nowrap; }
+
+/* Stats Bar */
+.wf-stats-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+.wf-stat-item { flex: 1; border: 1px solid #eee; border-radius: 6px; padding: 10px; text-align: center; }
+.wf-stat-number { font-size: 20px; font-weight: 700; color: #000; }
+.wf-stat-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+.wf-stat-alert { border-color: #999; }
+.wf-stat-alert .wf-stat-number { color: #333; }
+
+/* Alert Banner */
+.wf-alert-banner { background: #eee; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #333; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.wf-alert-action { color: #000; font-weight: 600; text-decoration: none; white-space: nowrap; }
+
+/* Module List */
+.wf-module-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.wf-module-card { display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; border-radius: 8px; padding: 12px 14px; cursor: pointer; }
+.wf-module-card:hover { border-color: #ccc; background: #fafafa; }
+.wf-module-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.wf-module-index { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #666; flex-shrink: 0; }
+.wf-module-info { min-width: 0; }
+.wf-module-name { font-size: 13px; font-weight: 600; color: #000; }
+.wf-module-meta { font-size: 10px; color: #999; margin-top: 2px; }
+.wf-module-progress { height: 3px; background: #eee; border-radius: 2px; margin-top: 4px; width: 120px; }
+.wf-module-progress-fill { height: 100%; background: #666; border-radius: 2px; }
+.wf-module-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.wf-module-arrow { color: #ccc; font-size: 14px; }
+.wf-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.wf-badge-pass { background: #eee; color: #333; }
+.wf-badge-locked { background: #f5f5f5; color: #999; }
+.wf-btn-continue { font-size: 11px; padding: 5px 12px; background: #000; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600; }
+.wf-current { border-color: #999; border-width: 2px; }
+.wf-status-completed .wf-module-index { background: #eee; border-color: #ccc; }
+
+/* Details/Collapsible */
+.wf-details { border: 1px solid #eee; border-radius: 6px; margin-bottom: 6px; }
+.wf-details-summary { padding: 10px 14px; font-size: 12px; font-weight: 600; color: #333; cursor: pointer; }
+.wf-details-content { padding: 0 14px 10px; }
+.wf-test-row { display: flex; justify-content: space-between; font-size: 11px; color: #666; padding: 4px 0; border-bottom: 1px solid #f5f5f5; }
+.wf-mistake-row { display: flex; justify-content: space-between; font-size: 11px; color: #666; padding: 4px 0; }
+.wf-link { font-size: 11px; color: #000; display: block; margin-top: 6px; }
+
+/* === Option 2: Action Hub === */
+.wf-hero-cta { border: 1px solid #ccc; border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.wf-hero-subtitle { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+.wf-hero-title { font-size: 18px; font-weight: 700; color: #000; margin: 4px 0; }
+.wf-hero-meta { font-size: 11px; color: #666; margin-bottom: 10px; }
+.wf-hero-btn { display: inline-block; background: #000; color: #fff; padding: 8px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; }
+.wf-ring-progress { width: 64px; height: 64px; border: 4px solid #eee; border-top-color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.wf-ring-text { font-size: 14px; font-weight: 700; }
+.wf-action-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.wf-action-card { flex: 1; border: 1px solid #eee; border-radius: 6px; padding: 10px; display: flex; align-items: center; gap: 10px; }
+.wf-action-icon { width: 32px; height: 32px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.wf-action-title { font-size: 12px; font-weight: 600; color: #000; }
+.wf-action-desc { font-size: 10px; color: #999; }
+.wf-action-go { font-size: 11px; color: #000; font-weight: 600; text-decoration: none; margin-left: auto; white-space: nowrap; }
+.wf-section-title { font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 8px; }
+.wf-compact-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
+.wf-compact-card { border: 1px solid #eee; border-radius: 6px; padding: 8px; font-size: 11px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+.wf-compact-card:hover { border-color: #ccc; }
+.wf-cg-num { font-size: 10px; color: #999; }
+.wf-cg-name { font-weight: 600; color: #333; font-size: 11px; }
+.wf-cg-score { font-size: 14px; font-weight: 700; color: #000; }
+.wf-cg-status { font-size: 10px; color: #999; }
+.wf-cg-done { border-left: 3px solid #999; }
+.wf-cg-active { border-left: 3px solid #000; border-color: #999; }
+.wf-cg-locked { opacity: 0.5; }
+.wf-test-list { margin-bottom: 12px; }
+
+/* === Option 3: Status Grid === */
+.wf-grid-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.wf-grid-book-title { font-size: 18px; font-weight: 700; color: #000; }
+.wf-grid-progress-text { font-size: 11px; color: #666; margin-top: 2px; }
+.wf-circle-progress { width: 52px; height: 52px; border: 3px solid #eee; border-top-color: #000; border-right-color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+.wf-grid-alerts { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.wf-grid-alert-chip { font-size: 11px; padding: 5px 12px; border: 1px solid #ccc; border-radius: 20px; text-decoration: none; color: #333; font-weight: 500; }
+.wf-grid-alert-chip:hover { background: #eee; }
+.wf-chip-review { border-color: #999; font-weight: 600; }
+.wf-status-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+.wf-grid-card { border: 1px solid #eee; border-radius: 8px; padding: 14px; text-decoration: none; color: inherit; display: block; cursor: pointer; }
+.wf-grid-card:hover { border-color: #ccc; }
+.wf-gc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.wf-gc-num { font-size: 11px; color: #999; font-weight: 600; }
+.wf-gc-check { font-size: 14px; color: #666; }
+.wf-gc-title { font-size: 13px; font-weight: 600; color: #000; margin-bottom: 2px; }
+.wf-gc-detail { font-size: 10px; color: #999; margin-bottom: 6px; }
+.wf-gc-bar { height: 3px; background: #eee; border-radius: 2px; }
+.wf-gc-bar-fill { height: 100%; background: #999; border-radius: 2px; }
+.wf-gc-completed { border-left: 3px solid #999; }
+.wf-gc-completed .wf-gc-bar-fill { background: #666; }
+.wf-gc-active { border: 2px solid #000; }
+.wf-gc-active .wf-gc-bar-fill { background: #000; }
+.wf-gc-cta { font-size: 11px; font-weight: 600; color: #000; margin-top: 8px; }
+.wf-gc-locked { opacity: 0.4; }
+.wf-gc-pulse { width: 8px; height: 8px; background: #000; border-radius: 50%; }
+
+/* === Option 4: Learning Path === */
+.wf-path-main { display: flex; flex-direction: column; }
+.wf-path-header { text-align: center; padding-bottom: 12px; border-bottom: 1px solid #eee; margin-bottom: 12px; }
+.wf-path-title { font-size: 16px; font-weight: 700; color: #000; }
+.wf-path-stats { font-size: 11px; color: #666; display: flex; gap: 6px; justify-content: center; margin-top: 4px; }
+.wf-path-actions { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+.wf-bubble { font-size: 11px; padding: 5px 14px; border: 1px solid #ccc; border-radius: 20px; text-decoration: none; color: #333; }
+.wf-bubble:hover { background: #eee; }
+.wf-bubble strong { font-weight: 700; }
+.wf-path-container { position: relative; padding-left: 40px; }
+.wf-path-line { position: absolute; left: 18px; top: 0; bottom: 0; width: 2px; background: #eee; }
+.wf-path-node { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; position: relative; }
+.wf-pn-circle { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #999; background: #fff; flex-shrink: 0; z-index: 1; position: relative; left: -40px; margin-right: -40px; }
+.wf-pn-content { padding-top: 4px; }
+.wf-pn-title { font-size: 13px; font-weight: 600; color: #000; }
+.wf-pn-score { font-size: 10px; color: #666; margin-top: 2px; }
+.wf-pn-btn { display: inline-block; margin-top: 6px; background: #000; color: #fff; font-size: 11px; padding: 5px 14px; border-radius: 6px; text-decoration: none; font-weight: 600; }
+.wf-pn-done .wf-pn-circle { background: #eee; border-color: #999; color: #333; }
+.wf-pn-active .wf-pn-circle { border-color: #000; color: #000; border-width: 3px; }
+.wf-pn-locked .wf-pn-circle { border-style: solid; border-color: #eee; color: #ccc; }
+.wf-pn-locked .wf-pn-title { color: #999; }
+
+/* === Option 5: Split Panel === */
+.wf-split-layout { display: flex; flex: 1; min-height: 500px; }
+.wf-split-left { width: 220px; border-right: 1px solid #eee; display: flex; flex-direction: column; }
+.wf-split-header { padding: 12px; border-bottom: 1px solid #eee; }
+.wf-split-book-title { font-size: 13px; font-weight: 700; color: #000; }
+.wf-split-progress { font-size: 10px; color: #666; margin-top: 2px; }
+.wf-split-list { flex: 1; overflow-y: auto; padding: 4px; }
+.wf-split-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 6px; text-decoration: none; color: inherit; margin-bottom: 2px; }
+.wf-split-item:hover { background: #f5f5f5; }
+.wf-si-num { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; flex-shrink: 0; }
+.wf-si-name { font-size: 12px; flex: 1; color: #333; }
+.wf-si-badge { font-size: 10px; font-weight: 600; }
+.wf-si-pass { color: #666; }
+.wf-si-prog { color: #000; }
+.wf-si-done .wf-si-num { background: #eee; }
+.wf-si-active .wf-si-num { border-color: #000; color: #000; }
+.wf-si-locked { opacity: 0.4; }
+.wf-si-selected { background: #f0f0f0; }
+.wf-split-quick { padding: 8px; border-top: 1px solid #eee; display: flex; gap: 4px; }
+.wf-split-quick-btn { font-size: 10px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; text-decoration: none; color: #333; flex: 1; text-align: center; }
+.wf-split-right { flex: 1; padding: 16px; }
+.wf-detail-header { margin-bottom: 16px; }
+.wf-detail-title { font-size: 16px; font-weight: 700; color: #000; }
+.wf-detail-status { font-size: 11px; color: #666; margin-top: 2px; }
+.wf-detail-progress-section { margin-bottom: 14px; }
+.wf-detail-progress-label { font-size: 10px; color: #999; text-transform: uppercase; margin-bottom: 4px; }
+.wf-detail-progress-bar { height: 6px; background: #eee; border-radius: 3px; }
+.wf-detail-progress-fill { height: 100%; background: #000; border-radius: 3px; }
+.wf-detail-progress-text { font-size: 10px; color: #666; margin-top: 4px; }
+.wf-detail-cta { display: inline-block; background: #000; color: #fff; padding: 8px 20px; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; margin-bottom: 16px; }
+.wf-detail-section { margin-bottom: 14px; }
+.wf-detail-section-title { font-size: 10px; font-weight: 700; color: #666; text-transform: uppercase; margin-bottom: 6px; }
+.wf-detail-kp { font-size: 12px; color: #333; padding: 5px 0; border-bottom: 1px solid #f5f5f5; }
+.wf-detail-alerts { border-top: 1px solid #eee; padding-top: 12px; margin-top: 16px; }
+.wf-detail-alert { font-size: 11px; color: #666; padding: 8px; background: #f5f5f5; border-radius: 6px; }
+.wf-detail-alert a { color: #000; font-weight: 600; margin-left: 8px; }

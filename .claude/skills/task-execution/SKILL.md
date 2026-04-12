@@ -21,6 +21,35 @@ Orchestrate the full lifecycle of a multi-task implementation plan: dispatch eac
 
 ---
 
+## Execution Mode
+
+Two modes. Pick the one the user asked for.
+
+| Mode | Trigger | Dispatch approval | Review summary output | Escalation to user |
+|------|---------|-------------------|----------------------|--------------------|
+| **Interactive** (default) | User says "execute plan" without qualifier | Required (Step 1.4) | Required (Step 3.4) | Normal |
+| **Autonomous** | User says "全自动" / "autonomous" / "不用问我" / equivalent | **Skipped** (Step 1.4) | **Still required** (Step 3.4) | Normal |
+
+### Autonomous does NOT relax these hard rules
+
+Autonomous mode only removes the dispatch approval gate. Everything else stays:
+
+- **Full Review MUST run subagent pass** — never skip, never "eyeball it because we're going fast"
+- **Review summary output (Step 3.4) is mandatory** — autonomous ≠ silent
+- **Blocking issues still trigger recycle** — don't self-downgrade blocking to advisory to keep moving
+- **retry_count / escalation still applies** — after 2 failed retries OR any `spec_mismatch`, STOP and escalate to user
+- **Transition checklist still enforced** — ledger / changelog / project_status must be updated before state flips to `done`
+
+If user says "autonomous" but you feel a task is risky enough to want approval anyway, ask once. Autonomous is user convenience, not a skill bypass.
+
+### Mode transitions
+
+- User can interrupt autonomous at any time ("暂停" / "wait") → current task finishes its current phase, then pause before next phase
+- Interactive can upgrade to autonomous mid-plan ("后面的不用问了") → apply from next task
+- Autonomous cannot downgrade to interactive silently — acknowledge the switch
+
+---
+
 ## Phase 0: Initialize
 
 ```
@@ -145,7 +174,9 @@ After completing this task:
 
 ### Step 1.4: User Approval
 
-Show Chinese translation of the dispatch to user. Wait for approval.
+**Interactive mode:** Show Chinese translation of the dispatch (Context + Task + Acceptance Criteria — skip inline code) to user. Wait for approval before proceeding to Step 1.5.
+
+**Autonomous mode:** Skip this step. Proceed directly to Step 1.5. You still write a one-line dispatch announcement to the user ("已派发 T[N] 到 [target]: [one-line task summary]") when Step 1.5 finishes — that's in 1.5, not here.
 
 ### Step 1.5: Send
 
@@ -238,23 +269,59 @@ For each finding, assign one severity:
 
 Update ledger: `blocking_issues` array, `advisory_count` increment.
 
+### Step 3.4: Output Review Summary (MANDATORY)
+
+This step is required in BOTH interactive and autonomous modes. Autonomous does not mean silent.
+
+Output this block to the user verbatim (fill in the bracketed parts):
+
+```
+═══ T[N] Review ═══
+Level: [Full / Spot Check / Auto-Pass]  (upgraded from [X])   ← only if upgraded
+Diff: [N files, +X -Y]
+Files: [comma-separated file list]
+
+Subagent [full review only]:
+  • [finding 1 — classified]
+  • [finding 2 — classified]
+  • [if nothing: "clean — all N criteria ✅"]
+
+Claude quality pass:
+  • [finding 1 — classified]
+  • [if agreeing with subagent: "同意 subagent,无新增发现"]
+  • [if downgrading any subagent finding: "降级 X: 理由..."]
+
+Blocking: [N] | Advisory: [N] | Informational: [N]
+裁决: PASS / RETRY (attempt X/3) / ESCALATE
+════════════════════
+```
+
+**Rules:**
+1. Output BEFORE updating ledger state to `done` or recycling — user must see the verdict first
+2. If you downgrade a subagent finding, explicitly log the reason (prevents silent quality erosion)
+3. Write the full summary (subagent + Claude findings + verdict) into ledger `review_summary` field (see schema). This is how session recovery / future audits see what happened.
+4. If `review_level` was upgraded in Step 3.1, note it on the `Level:` line
+
+Also write the same summary content into the ledger entry (see updated schema below).
+
 ---
 
 ## Phase 4: Decide
 
 ### Path A: Pass (no Blocking issues)
 
+Step 3.4 already output the review summary with `裁决: PASS`. Don't repeat a "T[N] ✅ 完成" line — that's redundant noise.
+
 1. Run transition checklist (all must be checked):
    - [ ] Review passed (no Blocking)
    - [ ] Changelog updated (skip for Auto-Pass level)
-   - [ ] Ledger updated with commits
+   - [ ] Ledger updated with commits + `review_summary`
    - [ ] If **last task**: project_status.md updated + architecture.md verified
 
 2. If any checklist item is not done → do it now, then check it off
 3. Update state → `done`
-4. Output: "T[N] ✅ 完成"
-5. Check: is there a next `ready` task? → proceed to Phase 1
-6. All tasks done? → proceed to Phase 5
+4. Check: is there a next `ready` task? → proceed to Phase 1
+5. All tasks done? → proceed to Phase 5
 
 ### Path B: Recycle (Blocking issues found)
 
@@ -361,6 +428,7 @@ File: `.ccb/task-ledger.json` (runtime, not committed to git)
       "commits": [],
       "advisory_count": 0,
       "blocking_issues": [],
+      "review_summary": null,
       "checklist": {
         "changelog": false,
         "ledger_updated": false
@@ -369,6 +437,31 @@ File: `.ccb/task-ledger.json` (runtime, not committed to git)
   ]
 }
 ```
+
+### `review_summary` field
+
+Populated in Step 3.4 when a review completes. Null until then. Schema:
+
+```json
+"review_summary": {
+  "level_used": "full",
+  "diff_stat": "3 files, +529 -0",
+  "subagent_findings": [
+    "Advisory: ... — [reasoning]",
+    "Informational: ..."
+  ],
+  "claude_findings": [
+    "No new blocking. Agree with subagent.",
+    "Downgraded subagent's 'X' from Blocking to Advisory because [reason]"
+  ],
+  "verdict": "pass",
+  "notes": "Free-form short note, e.g., 'Retry #1 — fixed cluster dedup'"
+}
+```
+
+On retry, overwrite the previous review_summary (old one becomes the retry's reason, captured in `notes`).
+
+Purpose: allows session recovery / future audit to see what was reviewed and what decisions were made. Without this, "T3 是怎么 review 的" is unanswerable once the conversation scrolls away.
 
 Valid states: `ready`, `dispatched`, `in_review`, `done`, `escalated`, `skipped`
 
@@ -432,8 +525,21 @@ Informational = observation, suggestion                          → Note only
 ```
 → dispatched:  dispatch file written + ledger updated
 → in_review:   report received or user confirmed + commits recorded
-→ done:        review passed + changelog updated + ledger updated
+→ done:        review passed + Step 3.4 output done + ledger review_summary written + changelog updated
 → done (last): above + project_status updated + architecture.md checked
+```
+
+### Execution Mode
+
+```
+Interactive (default):  每个 dispatch 等批准 + 每个 review 输出汇报
+Autonomous (用户说全自动): 跳过 dispatch 批准 + 依然输出 review 汇报
+
+Autonomous 不能松的:
+  Full Review 必须跑 subagent
+  Review summary 必须输出 (Step 3.4)
+  Blocking 依然 recycle,不能私自 downgrade
+  Spec mismatch / retry >= 2 依然 escalate 找用户
 ```
 
 ---

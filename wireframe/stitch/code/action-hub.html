@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Macroeconomics: Principles and Policy - The Illuminated Companion</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#febb28",
+                        "tertiary": "#845d00",
+                        "on-primary-fixed-variant": "#4e1e00",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#efad16",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed-dim": "#f06c0b",
+                        "on-error-container": "#520c00",
+                        "inverse-on-surface": "#a09d8f",
+                        "secondary-container": "#ffc69d",
+                        "on-background": "#39382d",
+                        "on-secondary-fixed-variant": "#7e4000",
+                        "surface-container-high": "#f2eedb",
+                        "surface": "#fffbff",
+                        "tertiary-container": "#febb28",
+                        "outline-variant": "#bcb9ab",
+                        "secondary": "#9b5100",
+                        "on-secondary-container": "#703900",
+                        "secondary-dim": "#894700",
+                        "on-surface-variant": "#666558",
+                        "primary-dim": "#943f00",
+                        "inverse-surface": "#0f0f06",
+                        "surface-variant": "#ece9d4",
+                        "on-tertiary-container": "#563b00",
+                        "on-tertiary-fixed-variant": "#614400",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#838174",
+                        "on-primary-container": "#3f1700",
+                        "background": "#fffbff",
+                        "primary": "#a74800",
+                        "tertiary-dim": "#755200",
+                        "primary-fixed": "#ff7a23",
+                        "on-secondary-fixed": "#542900",
+                        "error-container": "#f95630",
+                        "surface-bright": "#fffbff",
+                        "primary-container": "#ff7a23",
+                        "on-error": "#ffffff",
+                        "on-surface": "#39382d",
+                        "surface-tint": "#a74800",
+                        "surface-container-highest": "#ece9d4",
+                        "on-tertiary-fixed": "#3c2900",
+                        "surface-container": "#f8f4e2",
+                        "secondary-fixed": "#ffc69d",
+                        "secondary-fixed-dim": "#ffb379",
+                        "on-primary": "#ffffff",
+                        "error-dim": "#b92902",
+                        "on-primary-fixed": "#000000",
+                        "surface-dim": "#e7e3ce",
+                        "error": "#be2d06",
+                        "surface-container-low": "#fefae8",
+                        "inverse-primary": "#f77113"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Plus Jakarta Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .amber-glow {
+            background: linear-gradient(135deg, #a74800 0%, #ff7a23 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- SideNavBar from JSON -->
+<aside class="fixed left-0 top-0 flex flex-col h-full py-8 bg-[#fefae8] h-screen w-72 rounded-r-[32px] shadow-xl shadow-orange-900/5 z-50">
+<div class="px-8 mb-10 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl amber-glow flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+</div>
+<div>
+<h1 class="text-xl font-bold text-orange-900 font-headline tracking-tight">The Scholar</h1>
+<p class="text-xs text-orange-700/60 font-medium">Your Learning Journey</p>
+</div>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Home (Active because it's the primary dashboard) -->
+<a class="flex items-center gap-4 bg-white text-orange-700 rounded-full shadow-sm mx-4 py-3 px-6 font-bold active:scale-98 transition-transform duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label">Home</span>
+</a>
+<a class="flex items-center gap-4 text-gray-500 mx-4 py-3 px-6 hover:translate-x-1 hover:text-orange-600 transition-all active:scale-98" href="#">
+<span class="material-symbols-outlined" data-icon="cloud_upload">cloud_upload</span>
+<span class="font-label">Upload</span>
+</a>
+<a class="flex items-center gap-4 text-gray-500 mx-4 py-3 px-6 hover:translate-x-1 hover:text-orange-600 transition-all active:scale-98" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label">Settings</span>
+</a>
+<div class="px-8 py-6">
+<button class="w-full amber-glow text-white py-4 rounded-full font-bold shadow-lg shadow-orange-700/20 active:scale-95 transition-all">
+                    New Entry
+                </button>
+</div>
+</nav>
+<div class="mt-auto space-y-1">
+<a class="flex items-center gap-4 text-gray-500 mx-4 py-3 px-6 hover:translate-x-1 hover:text-orange-600 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label">Help</span>
+</a>
+<a class="flex items-center gap-4 text-gray-500 mx-4 py-3 px-6 hover:translate-x-1 hover:text-orange-600 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label">Logout</span>
+</a>
+</div>
+</aside>
+<main class="ml-72 min-h-screen p-12 max-w-[1400px]">
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 text-on-surface-variant font-label text-sm mb-8">
+<span class="hover:text-primary cursor-pointer transition-colors">Home</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-on-surface font-semibold">Macroeconomics: Principles and Policy</span>
+</nav>
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-surface-container-low rounded-xl p-10 flex items-center justify-between gap-8 mb-12 shadow-sm">
+<!-- Background Decoration -->
+<div class="absolute -right-20 -top-20 w-80 h-80 bg-primary-container/10 rounded-full blur-3xl"></div>
+<div class="flex items-center gap-12 relative z-10 w-full">
+<!-- Left: Progress Ring -->
+<div class="relative flex-shrink-0">
+<svg class="w-40 h-40 transform -rotate-90">
+<circle class="text-surface-container-high" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="12"></circle>
+<circle class="text-primary-fixed" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="242" stroke-linecap="round" stroke-width="12"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-3xl font-black font-headline text-on-surface">45%</span>
+<span class="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Complete</span>
+</div>
+</div>
+<!-- Center: Text Info -->
+<div class="flex-1">
+<span class="text-primary-fixed-dim font-bold tracking-widest text-xs uppercase mb-2 block">Learning Path</span>
+<h2 class="text-4xl font-black font-headline text-on-surface mb-3 leading-tight tracking-tight">Continue Learning</h2>
+<div class="flex items-center gap-3 text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-primary">analytics</span>
+<p class="text-lg">Module 3: Market Equilibrium - Q&amp;A phase, 4 questions remaining</p>
+</div>
+</div>
+<!-- Right: CTA -->
+<button class="amber-glow text-white px-8 py-5 rounded-full font-bold flex items-center gap-3 shadow-xl shadow-orange-700/10 hover:shadow-orange-700/30 transition-all active:scale-95 whitespace-nowrap">
+                    Continue Learning
+                    <span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Bento Grid / Action Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Card 1: Reviews Due -->
+<div class="group bg-surface-container-low p-8 rounded-xl flex items-center gap-8 border border-transparent hover:bg-surface-container transition-colors relative overflow-hidden">
+<div class="absolute right-0 top-0 opacity-10 p-4 transform translate-x-1/4 -translate-y-1/4 scale-150">
+<span class="material-symbols-outlined text-[120px]" style="font-variation-settings: 'FILL' 1;">history_edu</span>
+</div>
+<div class="w-20 h-20 bg-tertiary-container/30 rounded-3xl flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-tertiary" style="font-variation-settings: 'FILL' 1;">history_edu</span>
+</div>
+<div class="flex-1">
+<div class="flex items-baseline gap-3 mb-1">
+<h3 class="text-5xl font-black font-headline text-tertiary">3</h3>
+<span class="text-xl font-bold font-headline text-tertiary/80">Reviews Due</span>
+</div>
+<p class="text-on-surface-variant font-medium leading-relaxed">3 knowledge points need review today</p>
+</div>
+<div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-tertiary shadow-sm group-hover:bg-tertiary group-hover:text-white transition-all cursor-pointer">
+<span class="material-symbols-outlined">arrow_forward</span>
+</div>
+</div>
+<!-- Card 2: Mistakes -->
+<div class="group bg-error-container/10 p-8 rounded-xl flex items-center gap-8 border border-transparent hover:bg-error-container/20 transition-colors relative overflow-hidden">
+<div class="absolute right-0 top-0 opacity-10 p-4 transform translate-x-1/4 -translate-y-1/4 scale-150">
+<span class="material-symbols-outlined text-[120px]" style="font-variation-settings: 'FILL' 1;">running_with_errors</span>
+</div>
+<div class="w-20 h-20 bg-error-container/40 rounded-3xl flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-error" style="font-variation-settings: 'FILL' 1;">running_with_errors</span>
+</div>
+<div class="flex-1">
+<div class="flex items-baseline gap-3 mb-1">
+<h3 class="text-5xl font-black font-headline text-error">5</h3>
+<span class="text-xl font-bold font-headline text-error/80">Mistakes</span>
+</div>
+<p class="text-on-surface-variant font-medium leading-relaxed">5 unresolved mistakes across 2 modules</p>
+</div>
+<div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-error shadow-sm group-hover:bg-error group-hover:text-white transition-all cursor-pointer">
+<span class="material-symbols-outlined">arrow_forward</span>
+</div>
+</div>
+</div>
+<!-- Asymmetric Content Section -->
+<div class="mt-16 flex flex-col md:flex-row gap-12">
+<!-- Main Content: Course Modules -->
+<div class="flex-1">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-2xl font-black font-headline tracking-tight">Course Curriculum</h3>
+<button class="text-primary font-bold flex items-center gap-1 hover:gap-2 transition-all">
+                        View Syllabus <span class="material-symbols-outlined">trending_flat</span>
+</button>
+</div>
+<div class="space-y-4">
+<!-- Module Item -->
+<div class="bg-surface-container-lowest p-6 rounded-xl flex items-center gap-6 shadow-sm shadow-orange-900/5 group hover:bg-surface-bright transition-colors">
+<div class="w-14 h-14 bg-surface-container rounded-2xl flex items-center justify-center text-on-surface-variant font-black font-headline text-lg">01</div>
+<div class="flex-1">
+<h4 class="text-lg font-bold font-headline mb-1">Introduction to Macro Thinking</h4>
+<p class="text-sm text-on-surface-variant">Core concepts, scarcity, and opportunity cost.</p>
+</div>
+<div class="flex items-center gap-2 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                            Mastered
+                        </div>
+</div>
+<!-- Module Item -->
+<div class="bg-surface-container-lowest p-6 rounded-xl flex items-center gap-6 shadow-sm shadow-orange-900/5 group hover:bg-surface-bright transition-colors">
+<div class="w-14 h-14 bg-surface-container rounded-2xl flex items-center justify-center text-on-surface-variant font-black font-headline text-lg">02</div>
+<div class="flex-1">
+<h4 class="text-lg font-bold font-headline mb-1">Supply and Demand Basics</h4>
+<p class="text-sm text-on-surface-variant">The mechanics of price discovery and market shifts.</p>
+</div>
+<div class="flex items-center gap-2 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                            Mastered
+                        </div>
+</div>
+<!-- Module Item Active -->
+<div class="bg-surface-container p-6 rounded-xl flex items-center gap-6 shadow-md shadow-orange-900/5 border-l-4 border-primary">
+<div class="w-14 h-14 amber-glow text-white rounded-2xl flex items-center justify-center font-black font-headline text-lg">03</div>
+<div class="flex-1">
+<h4 class="text-lg font-bold font-headline mb-1">Market Equilibrium</h4>
+<p class="text-sm text-on-surface-variant">Solving for clearing prices and handling surpluses.</p>
+</div>
+<div class="flex items-center gap-2 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">pending</span>
+                            In Progress
+                        </div>
+</div>
+</div>
+</div>
+<!-- Sidebar Content: Companion Wisdom -->
+<div class="w-full md:w-80">
+<div class="bg-surface-container-low rounded-xl p-8 sticky top-12">
+<h3 class="text-xl font-black font-headline mb-6">Companion Insight</h3>
+<div class="relative mb-6">
+<img alt="Study Visual" class="w-full h-48 object-cover rounded-2xl shadow-lg" data-alt="close-up of an old leather bound book open on a wooden table with soft morning light illuminating the pages" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzymBLQ7XpMvV2UV16GXqSrvCmZlasbnZ6wKHxCvDd8rbPCidgSikW2eDBumTS21ijCLU5qCvBf1K_4y_uzOqod_h9-KnBejA4F8gNFG9k0CPmJLKNG0pUHwFgefkNgG4l2ThJe4JwVNUliC2OiAvRRHlmP5nIoBa_oV7VM5kgp7tWgpOiSo2_I1a7Xw3-ohvt9Yl0emJTJjL6RWyS99Hm00V1Em663MVpOR3bGvqTGDaW4lc9feTa8mN_HHxwlW9UdyREZCKzUd0"/>
+<div class="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur px-4 py-3 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">lightbulb</span>
+<span class="text-xs font-bold">Concept Focus: Sticky Wages</span>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed mb-6">
+                        "Markets don't always clear instantly. In Macroeconomics, understanding <strong>why</strong> prices or wages might be 'sticky' is key to predicting long-term policy impacts."
+                    </p>
+<hr class="border-outline-variant/30 mb-6"/>
+<div class="space-y-4">
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined text-lg">menu_book</span>
+</div>
+<div>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Recommended Reading</p>
+<p class="text-sm font-bold group-hover:text-primary transition-colors">Keynes vs. Hayek Debate</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

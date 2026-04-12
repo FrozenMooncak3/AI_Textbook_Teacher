@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "surface-dim": "#e7e3ce",
+                  "outline-variant": "#bcb9ab",
+                  "background": "#fffbff",
+                  "secondary-dim": "#894700",
+                  "error": "#be2d06",
+                  "error-container": "#f95630",
+                  "surface": "#fffbff",
+                  "tertiary-fixed": "#febb28",
+                  "tertiary": "#845d00",
+                  "primary-fixed": "#ff7a23",
+                  "tertiary-fixed-dim": "#efad16",
+                  "surface-container-low": "#fefae8",
+                  "on-secondary-fixed": "#542900",
+                  "on-secondary-fixed-variant": "#7e4000",
+                  "surface-container-lowest": "#ffffff",
+                  "on-background": "#39382d",
+                  "primary-dim": "#943f00",
+                  "on-primary-fixed": "#000000",
+                  "on-error": "#ffffff",
+                  "secondary-container": "#ffc69d",
+                  "on-error-container": "#520c00",
+                  "secondary-fixed": "#ffc69d",
+                  "on-surface": "#39382d",
+                  "on-secondary-container": "#703900",
+                  "tertiary-container": "#febb28",
+                  "inverse-surface": "#0f0f06",
+                  "surface-variant": "#ece9d4",
+                  "inverse-primary": "#f77113",
+                  "on-primary-container": "#3f1700",
+                  "on-surface-variant": "#666558",
+                  "on-tertiary-fixed": "#3c2900",
+                  "inverse-on-surface": "#a09d8f",
+                  "on-tertiary-fixed-variant": "#614400",
+                  "on-primary-fixed-variant": "#4e1e00",
+                  "surface-container-high": "#f2eedb",
+                  "surface-tint": "#a74800",
+                  "surface-bright": "#fffbff",
+                  "tertiary-dim": "#755200",
+                  "on-secondary": "#ffffff",
+                  "primary": "#a74800",
+                  "outline": "#838174",
+                  "error-dim": "#b92902",
+                  "primary-fixed-dim": "#f06c0b",
+                  "on-primary": "#ffffff",
+                  "on-tertiary": "#ffffff",
+                  "primary-container": "#ff7a23",
+                  "secondary": "#9b5100",
+                  "surface-container": "#f8f4e2",
+                  "surface-container-highest": "#ece9d4",
+                  "on-tertiary-container": "#563b00",
+                  "secondary-fixed-dim": "#ffb379"
+          },
+          "borderRadius": {
+                  "DEFAULT": "1rem",
+                  "lg": "2rem",
+                  "xl": "3rem",
+                  "full": "9999px"
+          },
+          "fontFamily": {
+                  "headline": ["Plus Jakarta Sans"],
+                  "body": ["Be Vietnam Pro"],
+                  "label": ["Plus Jakarta Sans"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body { font-family: 'Be Vietnam Pro', sans-serif; background-color: #fffbff; color: #39382d; }
+    h1, h2, h3, .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .amber-glow { background: linear-gradient(135deg, #a74800 0%, #ff7a23 100%); }
+    .surface-tonal { background-color: #fefae8; }
+  </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar Shell -->
+<aside class="w-[56px] h-screen fixed left-0 top-0 rounded-r-3xl transition-all duration-300 overflow-hidden bg-[#fefae8] dark:bg-stone-950 flex flex-col items-center py-6 gap-8 z-50 shadow-[40px_0_40px_0_rgba(167,72,0,0.06)]">
+<div class="text-orange-700 dark:text-orange-500 font-bold text-xl">
+<span class="material-symbols-outlined text-3xl">school</span>
+</div>
+<nav class="flex flex-col gap-6 w-full">
+<div class="text-stone-500 dark:text-stone-400 hover:text-orange-600 flex items-center justify-center w-10 h-10 mx-auto hover:bg-orange-50 dark:hover:bg-stone-900 rounded-full transition-colors active:scale-90 duration-200 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</div>
+<div class="bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 rounded-full mx-auto w-10 h-10 flex items-center justify-center active:scale-90 transition-transform duration-200 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="upload" style="font-variation-settings: 'FILL' 1;">upload</span>
+</div>
+<div class="text-stone-500 dark:text-stone-400 hover:text-orange-600 flex items-center justify-center w-10 h-10 mx-auto hover:bg-orange-50 dark:hover:bg-stone-900 rounded-full transition-colors active:scale-90 duration-200 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</div>
+</nav>
+<div class="mt-auto">
+<img alt="User profile" class="w-8 h-8 rounded-full border-2 border-primary-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKTkPPrIMtk0faVossfCPq2WRy1bpPZ1KQN1B_DCbvof7YpujsBRdjBxBq0oTdYRbFJVSF6RY2pykpvXEH3L0vCOLuorIz0PDdwqYx7RoLoxnlaGsnxJ7yUJD9vYuP1hY5_LSztC2cPVA17Fw_OjI_1atiucnMcOuyU7AR51kZOMIT8u_i4GtHAcVbyZJsfIR0KFTAdrv2lVc2wiTFrVLek1vLLS-n-4lRO0b0qeVP-cpE7GKgzCVwikIsJjtJp1vmBDxiH4tZZEM"/>
+</div>
+</aside>
+<!-- TopAppBar Shell -->
+<header class="docked full-width top-0 sticky z-40 bg-white/80 dark:bg-stone-900/80 backdrop-blur-xl flex justify-between items-center w-full px-8 py-4 ml-[56px] max-w-[calc(100%-56px)]">
+<div class="flex items-center gap-4">
+<span class="text-orange-600 dark:text-orange-400 font-black font-headline text-lg">The Illuminated Companion</span>
+</div>
+<div class="flex items-center gap-8">
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-stone-500 dark:text-stone-400 hover:text-orange-600 dark:hover:text-orange-300 transition-colors font-label font-bold tracking-tight" href="#">Dashboard</a>
+<a class="text-orange-700 dark:text-orange-300 border-b-2 border-orange-500 pb-1 font-label font-bold tracking-tight" href="#">Resources</a>
+</nav>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-stone-500 cursor-pointer" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-stone-500 cursor-pointer" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[56px] min-h-screen px-6 py-8 flex justify-center">
+<div class="w-full max-w-[960px]">
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 text-on-surface-variant text-sm mb-6 font-label">
+<span class="hover:text-primary cursor-pointer transition-colors">Home</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="hover:text-primary cursor-pointer transition-colors">Macroeconomics</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-on-surface font-semibold">Mistakes</span>
+</nav>
+<!-- Page Header -->
+<header class="flex items-end justify-between mb-10">
+<div>
+<div class="flex items-center gap-4">
+<h1 class="text-4xl font-headline font-extrabold tracking-tight text-on-surface">Mistake Notebook (错题本)</h1>
+<span class="bg-error text-on-error px-3 py-1 rounded-full text-sm font-bold shadow-[0_4px_12px_rgba(190,45,6,0.2)]">12 unresolved</span>
+</div>
+<p class="text-on-surface-variant mt-2 text-lg">Track and review your conceptual gaps in Macroeconomics.</p>
+</div>
+<button class="amber-glow text-on-primary px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:opacity-90 transition-opacity shadow-[0_10px_20px_rgba(167,72,0,0.15)]">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+          Add Mistake
+        </button>
+</header>
+<!-- Filter Bar -->
+<section class="surface-container-low rounded-3xl p-6 mb-8 flex flex-col gap-6">
+<div class="flex flex-wrap items-center gap-x-8 gap-y-4">
+<div class="flex items-center gap-3">
+<span class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Error Type</span>
+<div class="flex gap-2">
+<span class="bg-surface-container-lowest text-primary px-4 py-1.5 rounded-full text-sm font-semibold cursor-pointer border border-primary/10 hover:bg-primary/5 transition-colors">Blind Spot</span>
+<span class="bg-surface-container-lowest text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-surface-variant transition-colors">Procedural</span>
+<span class="bg-surface-container-lowest text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-surface-variant transition-colors">Confusion</span>
+<span class="bg-surface-container-lowest text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-surface-variant transition-colors">Careless</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Source</span>
+<div class="flex gap-2">
+<span class="bg-surface-container-lowest text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-surface-variant transition-colors">Q&amp;A</span>
+<span class="bg-surface-container-lowest text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-surface-variant transition-colors">Test</span>
+<span class="bg-surface-container-lowest text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-surface-variant transition-colors">Review</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-outline-variant/15 pt-6">
+<div class="flex items-center gap-3">
+<span class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Module</span>
+<div class="flex gap-2">
+<span class="bg-surface-container-highest text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity">Module 1</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity">Module 2</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity">Module 3</span>
+</div>
+</div>
+<label class="flex items-center gap-3 cursor-pointer group">
+<span class="text-sm font-bold text-on-surface-variant">Show unresolved only</span>
+<div class="relative w-12 h-6 bg-emerald-600 rounded-full flex items-center px-1">
+<div class="w-4 h-4 bg-white rounded-full translate-x-6"></div>
+</div>
+</label>
+</div>
+</section>
+<!-- Mistake List -->
+<div class="space-y-6">
+<!-- Card 1 (Collapsed) -->
+<article class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0_4px_24px_rgba(167,72,0,0.04)] relative overflow-hidden flex items-center justify-between border-l-[6px] border-error transition-all hover:shadow-[0_12px_32px_rgba(167,72,0,0.08)] cursor-pointer">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-3">
+<span class="bg-error/10 text-error px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase">Blind Spot</span>
+<span class="bg-tertiary-container/20 text-tertiary px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase">Test</span>
+<span class="text-on-surface-variant text-xs font-medium ml-2">Module 2: National Income</span>
+</div>
+<h3 class="text-xl font-headline font-bold text-on-surface">Explain the difference between GDP and GNP in an open economy context...</h3>
+<p class="text-on-surface-variant text-sm mt-1">Logged 2 days ago</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</article>
+<!-- Card 2 (Expanded) -->
+<article class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0_16px_48px_rgba(167,72,0,0.1)] border-l-[6px] border-error relative">
+<div class="flex items-start justify-between mb-6">
+<div>
+<div class="flex items-center gap-3 mb-3">
+<span class="bg-error/10 text-error px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase">Blind Spot</span>
+<span class="bg-tertiary-container/20 text-tertiary px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase">Test</span>
+<span class="text-on-surface-variant text-xs font-medium ml-2">Module 2: National Income</span>
+</div>
+<h3 class="text-2xl font-headline font-extrabold text-on-surface leading-tight">Explain the difference between GDP and GNP in an open economy context...</h3>
+<p class="text-on-surface-variant text-sm mt-2">Logged 2 days ago</p>
+</div>
+<span class="material-symbols-outlined text-primary bg-primary-container/10 p-2 rounded-full" data-icon="expand_less">expand_less</span>
+</div>
+<div class="space-y-6">
+<div class="grid md:grid-cols-2 gap-6">
+<div class="bg-error/5 rounded-2xl p-6 border-l-4 border-error/20">
+<h4 class="text-error font-bold text-sm uppercase tracking-widest mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="close">close</span> Your Answer
+                </h4>
+<p class="text-on-surface leading-relaxed italic">"GDP includes all domestic production regardless of ownership. GNP is just GDP adjusted for taxes and subsidies which I thought applied here..."</p>
+</div>
+<div class="bg-emerald-50 rounded-2xl p-6 border-l-4 border-emerald-200">
+<h4 class="text-emerald-700 font-bold text-sm uppercase tracking-widest mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="check">check</span> Correct Answer
+                </h4>
+<p class="text-on-surface leading-relaxed font-medium">"GNP includes production by domestic residents abroad (Net Factor Income from Abroad), while GDP is location-based. GNP = GDP + NFIA."</p>
+</div>
+</div>
+<div class="bg-surface-container rounded-2xl p-6 flex gap-4 items-start">
+<div class="bg-primary-container p-3 rounded-xl shadow-lg">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div>
+<h4 class="text-on-primary-container font-headline font-bold text-lg mb-1">AI Diagnosis</h4>
+<p class="text-on-surface-variant leading-relaxed">You confused domestic production with national production. Focus on the <span class="text-primary font-bold">residency</span> of the factors of production rather than the geography. Review the flow of Net Factor Income (NFI).</p>
+</div>
+</div>
+<div class="flex items-center justify-end gap-4 pt-4">
+<button class="bg-transparent border-2 border-outline-variant text-on-surface-variant px-6 py-2.5 rounded-full font-bold hover:bg-surface-variant transition-colors flex items-center gap-2">
+                Mark as Resolved
+                <span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
+</button>
+<button class="bg-transparent border-2 border-primary text-primary px-6 py-2.5 rounded-full font-bold hover:bg-primary/5 transition-colors flex items-center gap-2">
+                Practice Similar
+                <span class="material-symbols-outlined text-lg" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 3 (Resolved) -->
+<article class="bg-surface-dim/30 rounded-3xl p-6 relative overflow-hidden flex items-center justify-between border-l-[6px] border-emerald-500/50 transition-all opacity-70 grayscale-[0.3]">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-3">
+<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="done_all">done_all</span> Resolved
+              </span>
+<span class="text-on-surface-variant text-xs font-medium">Module 1: Basics</span>
+</div>
+<h3 class="text-xl font-headline font-bold text-on-surface-variant line-through">What is the law of demand?</h3>
+<p class="text-on-surface-variant text-sm mt-1 italic">Solved 4 days ago</p>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings_backup_restore">settings_backup_restore</span>
+</button>
+</article>
+</div>
+<!-- Empty State / Footer Hint -->
+<footer class="mt-16 text-center py-12 border-t border-outline-variant/10">
+<div class="inline-flex items-center gap-4 text-on-surface-variant opacity-60">
+<span class="material-symbols-outlined text-3xl" data-icon="auto_stories">auto_stories</span>
+<p class="text-lg font-medium italic">Keep refining your logic. Mastery is built on corrected errors.</p>
+</div>
+</footer>
+</div>
+</main>
+<!-- Contextual FAB (Hidden on this view per rules but styled just in case of interaction) -->
+<div class="fixed bottom-8 right-8 hidden">
+<button class="amber-glow w-16 h-16 rounded-full shadow-[0_20px_40px_rgba(167,72,0,0.25)] flex items-center justify-center text-on-primary transform active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="edit">edit</span>
+</button>
+</div>
+</body></html>
