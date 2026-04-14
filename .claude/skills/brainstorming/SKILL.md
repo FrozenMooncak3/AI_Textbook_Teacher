@@ -22,15 +22,19 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — read the mandatory file list below, verify architecture.md accuracy
-2. **Assess brainstorm scope and open WIP state file if needed** — for multi-decision or multi-session brainstorms, open a WIP state file to survive context compact. See the "WIP State File Protocol" section below for trigger conditions and template.
+2. **Assess brainstorm scope and open WIP state file if needed** — for multi-decision or multi-session brainstorms, open a WIP state file to survive context compact. See the "WIP State File Protocol" section below. **If a WIP file is opened, ALSO initialize the spec skeleton (step 7a) now — do not wait until step 7.**
 3. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 4. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-5. **Propose 2-3 approaches** — with trade-offs and your recommendation
-6. **Present design and lock decisions** — in sections scaled to their complexity, get user approval after each section. **If WIP file opened, update it immediately after each locked decision — do NOT batch.**
-7. **Write design doc** — convert the WIP state file (if any) into a properly structured design spec at `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
-8. **Spec review loop** — dispatch spec-document-reviewer subagent with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
-9. **User reviews written spec** — ask user to review the spec file before proceeding
-10. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+5. **Research Trigger Check** — for each upcoming decision, triage against 🟢🟡🔴 (see "Research Trigger Check" section below). 🔴 → **invoke `research-before-decision` skill** and wait for its output before continuing. 🟡 → inline WebSearch/WebFetch in this conversation AND land a 🟡 light-template file at `docs/research/`. 🟢 → skip.
+6. **Propose 2-3 approaches** — with trade-offs and your recommendation
+7. **Present design and lock decisions** — in sections scaled to their complexity, get user approval after each section. **If WIP file opened, update it immediately after each locked decision — do NOT batch. ALSO append the locked decision's engineering unit to the spec file at this same trigger point (step 7b — see BS-1 Incremental Spec Write section).**
+8. **Write design doc** — this is now a 3-part discipline (see BS-1 section):
+   - **7a · Skeleton init** (done at step 2 if WIP opened, or at start of this step otherwise): create `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` with engineering-unit headings
+   - **7b · Per-decision append** (runs during step 7 via the locked-decisions trigger): each locked decision's engineering content appended immediately
+   - **7c · Final completeness check**: read the whole spec, confirm every WIP decision has a spec section, no "待定" markers, all cross-refs resolve
+9. **Spec review loop** — dispatch spec-document-reviewer subagent with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
+10. **User reviews written spec** — ask user to review the spec file before proceeding
+11. **Transition to implementation** — invoke writing-plans skill to create implementation plan
 
 ## Mandatory Read List (Milestone-Level Work)
 
@@ -147,7 +151,64 @@ When all decisions are locked, checklist step 7 ("Write design doc") converts th
 1. Organize the spec by engineering concern (data model / APIs / UI / testing), NOT by brainstorm decision order
 2. The WIP file can be deleted (all info migrated to spec) or retained as a decision trail — user preference
 3. Remove the MEMORY.md pointer created for this brainstorm
-4. Proceed to spec review loop (checklist step 8)
+4. Proceed to spec review loop (checklist step 9)
+
+## Research Trigger Check (step 5)
+
+Before proposing approaches, triage each upcoming decision to decide whether research is needed. Triage rules:
+
+| 档 | 触发条件（满足任一） | 动作 |
+|---|---|---|
+| 🟢 不调研 | 纯代码实现选择 / 项目内已有答案 / 仅影响当前模块（易反悔） | 直接 propose approaches |
+| 🟡 轻量调研 | 单点事实核对 / ≤2 选项 / 决策易反悔 / 结论只服务当前决策 | Inline WebSearch/WebFetch in this conversation **AND land a 🟡 light-template file at `docs/research/YYYY-MM-DD-<topic-slug>.md`** before locking the decision (see 🟡 Light Template below) |
+| 🔴 重度调研 | 3+ 选项对比 / 决策难反悔 / 跨领域专家知识 / 结论会被后续多决策引用 / 用户明确要求 | **Invoke `research-before-decision` skill** and wait for its output file before continuing |
+
+<HARD-GATE>
+CLAUDE.md-tagged "难以反悔" (hard to reverse) decisions **default to 🔴**. No downgrade.
+</HARD-GATE>
+
+### 🟡 Light Template (for inline lightweight research)
+
+When triage is 🟡, before locking the decision, write a lightweight knowledge-base file at `docs/research/YYYY-MM-DD-<topic-slug>.md` (slug ASCII-only).
+
+Frontmatter:
+
+```yaml
+---
+date: YYYY-MM-DD
+topic: <中文简述>
+triage: 🟡
+scope: <单点事实 | ≤2 选项 | 易反悔 | 只服务当前决策>
+budget: <实际耗时 min，通常 10-20>
+sources: { S: N, A: N, B: N }
+---
+```
+
+Body — 3 sections only:
+- **问题**（one sentence）
+- **发现**（bullets: quote + [URL] + [S/A/B]）
+- **结论**（one sentence; impact on current decision）
+
+Append a mandatory closing section: S/A/B source counts, URL openability (✅/❌), and the hallucination self-check declaration ("所有数字/引用来自引用源，非训练记忆").
+
+**Intent**: `docs/research/` is a reusable project knowledge base — every triage ≥ 🟡 lookup lands, so `grep triage: 🔴 docs/research/*.md` can one-shot filter all heavy research later. 🟢 does not land.
+
+**Why not skip the file for 🟡?** Because "我只是查个小事" accumulates into lost context a month later. Cheap to write (≤ 3 minutes), high re-use value.
+
+## BS-1: Incremental Spec Write (7a / 7b / 7c)
+
+**Problem the rule fixes**: Before BS-1, the spec was written as a final batch at the old "Write design doc" step. If the brainstorm compacted or a session broke mid-way, the WIP file survived but the spec never existed. Engineers downstream had no deliverable.
+
+**Rule** — three sub-steps distributed across the new checklist:
+
+- **7a · Spec skeleton init** — happens at checklist step 2 (if a WIP file is being opened) OR at the start of step 8 (if no WIP). Create `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` with engineering-concern section headings (e.g., `## Data Model`, `## APIs`, `## UI`, `## Testing`, `## Skill Files`) — NOT brainstorm decision order.
+- **7b · Per-decision append** — hooks off the existing checklist step 7 locked-decisions trigger. Every time a decision locks:
+  1. Update WIP file (existing rule)
+  2. **Also** append the locked decision's engineering content to the matching spec section (new rule)
+  3. WIP carries rationale + rejected alternatives + decision trail; spec carries engineering deliverables. **Dual-write, not either/or.**
+- **7c · Final completeness check** — at end of step 8, before dispatching spec-document-reviewer: re-read the spec end to end, confirm every WIP decision has a spec section, zero `待定` markers remain, all cross-section refs resolve.
+
+Step 9 (spec review loop) and everything after are unchanged.
 
 ## Process Flow
 
@@ -157,10 +218,13 @@ digraph brainstorming {
     "Visual questions ahead?" [shape=diamond];
     "Offer Visual Companion\n(own message, no other content)" [shape=box];
     "Ask clarifying questions" [shape=box];
+    "Research Trigger Check" [shape=diamond];
+    "Invoke research-before-decision\n(🔴)" [shape=box];
+    "Inline lookup + 🟡 file\n(🟡)" [shape=box];
     "Propose 2-3 approaches" [shape=box];
-    "Present design sections" [shape=box];
+    "Present design sections\n(7b: append to spec per decision)" [shape=box];
     "User approves design?" [shape=diamond];
-    "Write design doc" [shape=box];
+    "Final spec completeness check\n(7c)" [shape=box];
     "Spec review loop" [shape=box];
     "Spec review passed?" [shape=diamond];
     "User reviews spec?" [shape=diamond];
@@ -170,16 +234,21 @@ digraph brainstorming {
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
     "Visual questions ahead?" -> "Ask clarifying questions" [label="no"];
     "Offer Visual Companion\n(own message, no other content)" -> "Ask clarifying questions";
-    "Ask clarifying questions" -> "Propose 2-3 approaches";
-    "Propose 2-3 approaches" -> "Present design sections";
-    "Present design sections" -> "User approves design?";
-    "User approves design?" -> "Present design sections" [label="no, revise"];
-    "User approves design?" -> "Write design doc" [label="yes"];
-    "Write design doc" -> "Spec review loop";
+    "Ask clarifying questions" -> "Research Trigger Check";
+    "Research Trigger Check" -> "Invoke research-before-decision\n(🔴)" [label="🔴"];
+    "Research Trigger Check" -> "Inline lookup + 🟡 file\n(🟡)" [label="🟡"];
+    "Research Trigger Check" -> "Propose 2-3 approaches" [label="🟢"];
+    "Invoke research-before-decision\n(🔴)" -> "Propose 2-3 approaches";
+    "Inline lookup + 🟡 file\n(🟡)" -> "Propose 2-3 approaches";
+    "Propose 2-3 approaches" -> "Present design sections\n(7b: append to spec per decision)";
+    "Present design sections\n(7b: append to spec per decision)" -> "User approves design?";
+    "User approves design?" -> "Present design sections\n(7b: append to spec per decision)" [label="no, revise"];
+    "User approves design?" -> "Final spec completeness check\n(7c)" [label="yes"];
+    "Final spec completeness check\n(7c)" -> "Spec review loop";
     "Spec review loop" -> "Spec review passed?";
     "Spec review passed?" -> "Spec review loop" [label="issues found,\nfix and re-dispatch"];
     "Spec review passed?" -> "User reviews spec?" [label="approved"];
-    "User reviews spec?" -> "Write design doc" [label="changes requested"];
+    "User reviews spec?" -> "Final spec completeness check\n(7c)" [label="changes requested"];
     "User reviews spec?" -> "Invoke writing-plans skill" [label="approved"];
 }
 ```
