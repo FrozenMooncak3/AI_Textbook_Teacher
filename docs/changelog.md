@@ -4,6 +4,21 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-15 | Research Capability — 新 skill + brainstorming 升级
+
+**目的**：关键决策前不再凭训练记忆瞎说，改为显式调研流程，结果沉淀到 `docs/research/` 作为项目知识库。起因是 2026-04-14 云部署 OCR 决策时捏造了 Google Vision / Mistral OCR / Railway 定价被用户点破（"假装权威"）。
+
+核心变更：
+- **新 skill `research-before-decision`**（49946e9）：222 行 SKILL.md，含三级 triage（🟢 无 / 🟡 轻 / 🔴 重）、authority-weighted 源质量（S 级 = 6 条信号中满足 ≥3：持续产出 ≥5 年、机构联属、经典作品、被 S 级引用、方法论事件留名、keynote 记录）、10 步 run sequence、每维度 sub-agent 并行派发模板、5 问硬 gate（CLAUDE.md 现存格式，N/A 必须注明）、🔴/🟡 落盘文件模板
+- **brainstorming skill 升级**（99ee882）：checklist 10→11 项，新增 step 5 "Research Trigger Check"（按 triage 决定 🟢/🟡/🔴）+ BS-1 增量写 spec 协议（7a skeleton / 7b 每决策 append / 7c final check），防止 compact 丢设计决策；process flow DOT 图加了 3 个新节点
+- **CLAUDE.md**（03d206d）：在"Skill 使用"段补指针，把新 skill 接入 session-init 路由
+- **memory 清理**：`feedback_research-before-recommendation.md` 压缩为历史事故记录（规则权威源切到 skill 文件），`project_research-capability-brainstorm.md` WIP 指针删除
+- **设计资产**：spec `docs/superpowers/specs/2026-04-14-research-capability-design.md`（10 决策 D0-D9 + BS-1），plan `docs/superpowers/plans/2026-04-15-research-capability.md`（6 tasks），WIP state 文件保留作决策追溯
+
+触发条件：brainstorming step 5 自动 triage；3+ 选项 / 难反悔 / 跨领域 / 用户明确要求 → 强制进调研流程。
+
+---
+
 ## 2026-04-12 | Scanned PDF Advisory 清理
 
 **里程碑收尾清理 2 条可修 Advisory**（其余 9 条按 spec 保留或已是改进，不动）：

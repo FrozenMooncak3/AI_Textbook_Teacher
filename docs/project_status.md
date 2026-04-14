@@ -5,13 +5,17 @@
 
 ---
 
-## 当前状态（2026-04-12）
+## 当前状态（2026-04-15）
 
 **方向**：MVP 扩展三线推进——扫描 PDF（**已完成**）→ 教学系统 → 留存机制，串行执行
 
-**当前里程碑**：扫描 PDF 实施 — **已完成**（9 tasks 全通过）
+**当前里程碑**：云部署（基础设施） — 决策 1-6 已拍，决策 7（Secrets 管理）待启动
 
 **最新完成**：
+- **调研能力建设完成**（2026-04-15，3 commits 未 push）：新 skill `research-before-decision`（49946e9）+ brainstorming 升级 Research Trigger Check & BS-1 增量 spec（99ee882）+ CLAUDE.md 指针接入（03d206d）。解决 2026-04-14 OCR 决策捏造定价事件，关键决策前强制走 triage + S 级源 + sub-agent 并行 + 5 问硬 gate
+- 设计资产：`docs/superpowers/specs/2026-04-14-research-capability-design.md`（10 决策）+ `docs/superpowers/plans/2026-04-15-research-capability.md`（6 tasks, 全部执行完毕）
+
+**历史最近完成**：
 - **扫描 PDF 9 tasks 全部完成**：T1-T7（Codex 后端）+ T8（Gemini 前端，1 次 retry 修 `any`/`console.error` 红线）+ T9（Claude 文档验证）
 - 实际效果：文字页立即解锁阅读，扫描页后台 OCR 不阻塞；模块级独立状态追踪（text/ocr/kp），一就绪就可用
 - 新 API：`GET /api/books/[bookId]/module-status` + `POST /api/books/[bookId]/extract?moduleId=N`
@@ -22,7 +26,16 @@
 - 两种学习模式洞察 → `docs/journal/2026-04-11-two-learning-modes.md`
 - MVP 扩展时间线 → `docs/superpowers/plans/2026-04-11-mvp-expansion-timeline.md`
 
-**下一步**：**云部署里程碑**（基础设施，新立项）— 本地测试环境痛苦，产品负责人拍板切换"独立开发者云部署模式"。brainstorm WIP 在 `docs/superpowers/specs/2026-04-12-cloud-deployment-brainstorm-state.md`，下一步决策 1（OCR 处理方式）。
+**下一步**：**云部署里程碑**（基础设施，新立项）— 本地测试环境痛苦，产品负责人拍板切换"独立开发者云部署模式"。brainstorm WIP 在 `docs/superpowers/specs/2026-04-12-cloud-deployment-brainstorm-state.md`。
+- 决策 1（OCR 处理方式）已拍：**Google Vision**（2026-04-14，调研 `docs/research/2026-04-14-cloud-ocr-options.md`）
+- 决策 2（Next.js 部署平台）已拍：**Vercel Hobby**（2026-04-14，调研 `docs/research/2026-04-14-cloud-deployment-platform-options.md`）
+- 决策 3（轻量 Python 服务器部署平台）已拍：**Google Cloud Run**（2026-04-14，调研 `docs/research/2026-04-14-cloud-python-server-options.md`）— MVP $0/月（永久免费层够用）+ 同家调 Vision API 延迟最低 + scale-to-zero 原生
+- 决策 4（PDF 文件存储）已拍：**Cloudflare R2**（2026-04-14，调研 `docs/research/2026-04-14-cloud-object-storage-options.md`）— MVP $0/月 + egress 永久 0 费用 + S3 标准 API（保留模块化切换能力）
+- 决策 5（环境分离）已拍：**生产 + preview + Neon DB branch**（方案 B2）（2026-04-14）— Vercel 原生 preview + Neon 免费 10 个 branch + 官方集成自动克隆/销毁，月费 $0
+- 决策 6（CI/CD）已拍：**Cloud Run Continuous Deployment（UI 绑定 GitHub）**（2026-04-14，调研 `docs/research/2026-04-14-cloud-cicd-options.md`）— Cloud Build 120 min/天免费 + Artifact Registry 0.5 GB 免费 + 文件路径过滤 `scripts/**,Dockerfile*` 避免空跑 + 0 YAML 全 UI 配置，月费 $0
+- 产品策略：MVP 海外优先，国内走第三方平台（摩点/开始吧+微信公众号+小红书/视频号）承接，**MVP 完成后再启动国内链路**
+- 架构预留 4 条国内版分区硬约束（DB/文件存储/OCR/前端 i18n 配置化）
+- 下一步：决策 7（Secrets 管理：平台 env vars vs 统一 secret manager）
 
 **冻结中的里程碑**：
 - **教学系统**（决策 1-10 全部拍板 2026-04-14，design spec 已写，待 M4/M5 拆分详细 brainstorm）：WIP 在 `docs/superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md`，design spec 在 `docs/superpowers/specs/2026-04-12-teaching-system-design.md`，云部署结束后启动 M4/M5
