@@ -41,6 +41,9 @@ yarn-error.log*
 /data/*.db-shm
 /data/*.db-wal
 
+# user-uploaded PDFs (runtime test data; historical PDFs remain tracked)
+/data/uploads/*.pdf
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
