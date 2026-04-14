@@ -2,7 +2,7 @@
 
 ## open（需要关注）
 - [milestone:brainstorm-wip] **云部署**（基础设施里程碑，决策 1-10 待拍，下一步决策 1 OCR 处理方式）→ [specs/2026-04-12-cloud-deployment-brainstorm-state.md](../superpowers/specs/2026-04-12-cloud-deployment-brainstorm-state.md)
-- [milestone:brainstorm-wip] **教学系统**（冻结中，决策 1-2 已拍，决策 3-9 待，云部署结束后恢复）→ [specs/2026-04-12-teaching-system-brainstorm-state.md](../superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md)
+- [milestone:brainstorm-wip] **教学系统**（决策 1-10 全部拍板 2026-04-14，design spec 已写，待 M4/M5 拆分详细 brainstorm）→ [specs/2026-04-12-teaching-system-brainstorm-state.md](../superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md)
 - [idea] 两种学习模式：课件→教学模式（只教不考），教材→完整模式（教+考+复习），解决课件 vs 教材产品难题 → [2026-04-11-two-learning-modes.md](./2026-04-11-two-learning-modes.md)
 - [idea] 用户留存与学习动机：需要核心留存机制，MVP 前确定方案 → [2026-04-10-retention-motivation.md](./2026-04-10-retention-motivation.md)
 - [decision] MVP 必做：AI 再教一遍环节（阅读→**教学**→QA），参考月饼投资项目调研 → [2026-04-10-teaching-phase.md](./2026-04-10-teaching-phase.md)

@@ -25,7 +25,7 @@
 **下一步**：**云部署里程碑**（基础设施，新立项）— 本地测试环境痛苦，产品负责人拍板切换"独立开发者云部署模式"。brainstorm WIP 在 `docs/superpowers/specs/2026-04-12-cloud-deployment-brainstorm-state.md`，下一步决策 1（OCR 处理方式）。
 
 **冻结中的里程碑**：
-- **教学系统**（决策 1-2 已拍，3-9 待）：WIP 在 `docs/superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md`，云部署结束后恢复
+- **教学系统**（决策 1-10 全部拍板 2026-04-14，design spec 已写，待 M4/M5 拆分详细 brainstorm）：WIP 在 `docs/superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md`，design spec 在 `docs/superpowers/specs/2026-04-12-teaching-system-design.md`，云部署结束后启动 M4/M5
 - **扫描 PDF 端到端人工测试**：因本地 OCR server 起不来推迟，改为云环境测试
 
 **里程碑收尾**：
