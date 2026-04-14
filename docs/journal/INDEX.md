@@ -47,6 +47,7 @@
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [skill:resolved] brainstorming skill 加入 WIP 防 compact 机制：新增 WIP State File Protocol + checklist 扩展 + session-init 检测（2026-04-14）→ [2026-04-14-brainstorming-skill-wip-mechanism.md](./2026-04-14-brainstorming-skill-wip-mechanism.md)
 - [audit:resolved] Scanned PDF 里程碑审计：architecture.md 补齐 OCR_PROVIDER 等环境变量 + 4 端点清单 + 上云约束 ⚠️（2026-04-12）→ [2026-04-12-scanned-pdf-milestone-audit.md](./2026-04-12-scanned-pdf-milestone-audit.md)
 - [audit:resolved] Page 1 Refinement 审计：shadow 违规修复（+2 tokens），architecture.md 同步（2026-04-10）→ [2026-04-10-page1-refinement-audit.md](./2026-04-10-page1-refinement-audit.md)
 - [ux:resolved] 全局缺导航 → M5.5 AppSidebar + Component Library Breadcrumb 解决（6+ 页面已有导航）

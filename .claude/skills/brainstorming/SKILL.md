@@ -22,14 +22,15 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — read the mandatory file list below, verify architecture.md accuracy
-2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
-3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-4. **Propose 2-3 approaches** — with trade-offs and your recommendation
-5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
-7. **Spec review loop** — dispatch spec-document-reviewer subagent with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
-8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+2. **Assess brainstorm scope and open WIP state file if needed** — for multi-decision or multi-session brainstorms, open a WIP state file to survive context compact. See the "WIP State File Protocol" section below for trigger conditions and template.
+3. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
+4. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+5. **Propose 2-3 approaches** — with trade-offs and your recommendation
+6. **Present design and lock decisions** — in sections scaled to their complexity, get user approval after each section. **If WIP file opened, update it immediately after each locked decision — do NOT batch.**
+7. **Write design doc** — convert the WIP state file (if any) into a properly structured design spec at `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
+8. **Spec review loop** — dispatch spec-document-reviewer subagent with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
+9. **User reviews written spec** — ask user to review the spec file before proceeding
+10. **Transition to implementation** — invoke writing-plans skill to create implementation plan
 
 ## Mandatory Read List (Milestone-Level Work)
 
@@ -48,6 +49,105 @@ The first 4 are always read. The 5th is targeted based on architecture.md interf
 <HARD-GATE>
 For milestone-level work: if architecture.md and code are inconsistent, fix architecture.md FIRST before proceeding with design. Do not design on top of stale assumptions.
 </HARD-GATE>
+
+## WIP State File Protocol
+
+Large brainstorms often span multiple sessions and risk losing decisions when context compacts. The spec document (final product) is too late — you need a running state file that records each decision the moment it's locked, so a compact or session break doesn't erase progress.
+
+### When to open a WIP file
+
+**Must open** if any of these is true:
+- Estimated decision count ≥ 5
+- Likely to span multiple sessions (explicit user signal, or research phases that can't finish today)
+- Multiple distinct research investigations required before decisions can be made
+- User explicitly requests a state file
+
+**Skip** when:
+- Single-session brainstorm with < 5 decisions
+- Very simple scope (config change, single feature tweak)
+- Explicitly agreed with user to use lightweight process
+
+Make this judgment AFTER exploring project context (checklist step 1), BEFORE asking the first clarifying question (checklist step 4). Tell the user you're opening the file and will update it per-decision — the mechanism must be visible, not hidden.
+
+### File location and naming
+
+`docs/superpowers/specs/YYYY-MM-DD-<topic>-brainstorm-state.md`
+
+Same directory as the final design spec, with `-brainstorm-state` suffix. Use the date of brainstorm start (not today's date if brainstorm is resumed from a prior session).
+
+### Required structure (template)
+
+```markdown
+# <Topic> Brainstorm 进行中状态（WIP）
+
+**创建日期**: YYYY-MM-DD
+**用途**: compact 防御——记录 brainstorm 进度，避免 session 断档丢失状态
+**最终产出**: `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
+
+> ⚠️ compact 后恢复时**先读这个文件**，不要从 summary 重建——summary 会丢细节。
+
+---
+
+## 基础设定（不会变）
+
+[Invariants for this brainstorm — product constraints, strategic positioning, rules locked in before brainstorm or very early. Everything downstream depends on these; they must be stable.]
+
+---
+
+## 调研
+
+[List of research files relevant to this brainstorm, with a one-line note on what each found. Include paths so future sessions can re-read.]
+
+---
+
+## 已拍死的决策（不再讨论）
+
+### 决策 N：<标题> (YYYY-MM-DD 拍板)
+
+[Full detail of what was decided, why, and implications. NOT a summary — enough to reconstruct reasoning months later. Include rejected alternatives and the reason for rejection so the decision doesn't get re-opened naively.]
+
+---
+
+## 待 brainstorm 的决策（按依赖顺序）
+
+### 决策 N：<标题>【下一个】
+
+[Open questions, constraints, expected output format, what must be answered before downstream decisions can proceed.]
+
+### 决策 N+1：<标题>
+
+[Placeholder for future decisions; fill in progressively.]
+
+---
+
+## 当前进度
+
+- ✅ 决策 1（已拍板）
+- ✅ 决策 2（已拍板）
+- 🔄 下一步：决策 3
+- ⏳ 剩余：决策 4, 5, ...
+
+---
+
+## 最终产出
+
+[What will happen when brainstorm completes — transition path to formal spec, and whether this WIP file is deleted or archived.]
+```
+
+### Running rules (MUST follow)
+
+- **After each decision is locked**: immediately update the WIP file. Do NOT batch multiple decisions before updating — one compact can wipe the unsaved batch.
+- **At session start (including compact recovery)**: read the WIP file FIRST. Do NOT rebuild state from the conversation summary — summaries drop detail, especially sub-decision rationale and rejected alternatives.
+- **Memory pointer**: add a `project`-type entry to `MEMORY.md` pointing to the WIP file. This helps future sessions discover the in-progress brainstorm even if they don't read INDEX.md. Remove the pointer when brainstorm completes.
+- **Inform the user**: tell them you've opened a WIP file and will update it per-decision. This builds trust and makes the mechanism visible — users should not discover it accidentally.
+
+### Transition to formal spec
+
+When all decisions are locked, checklist step 7 ("Write design doc") converts the WIP file into the formal spec:
+1. Organize the spec by engineering concern (data model / APIs / UI / testing), NOT by brainstorm decision order
+2. The WIP file can be deleted (all info migrated to spec) or retained as a decision trail — user preference
+3. Remove the MEMORY.md pointer created for this brainstorm
+4. Proceed to spec review loop (checklist step 8)
 
 ## Process Flow
 
@@ -169,6 +269,7 @@ Wait for the user's response. If they request changes, make them and re-run the 
 - **Explore alternatives** - Always propose 2-3 approaches before settling
 - **Incremental validation** - Present design, get approval before moving on
 - **Be flexible** - Go back and clarify when something doesn't make sense
+- **WIP state file for large brainstorms** - If the brainstorm has 5+ decisions or may span sessions, open a WIP state file (see "WIP State File Protocol") after exploring context and update it after every locked decision. Spec documents are the final product; WIP files are the lifeline that protects progress from context compact.
 
 ## Visual Companion
 

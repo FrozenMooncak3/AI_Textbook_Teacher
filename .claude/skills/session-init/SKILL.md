@@ -35,6 +35,7 @@ Also run:
 | `git status` | Uncommitted changes, unpushed commits |
 | `ls .ccb/inbox/claude/ 2>/dev/null` | Unread messages from Codex/Gemini (completion reports, questions) |
 | `ls .codex-report.md .gemini-report.md 2>/dev/null` | Fallback reports (wezterm notification failed) |
+| `ls docs/superpowers/specs/*-brainstorm-state.md 2>/dev/null` | WIP brainstorm state files — if any exist, read FIRST before rebuilding context from conversation summary |
 
 ---
 
@@ -52,6 +53,7 @@ Check for these signals:
 | project_status mentions "未开始" for next milestone | Ready to start next milestone |
 | Files in `.ccb/inbox/claude/` | Unread messages — check for completion reports or blockers |
 | `.codex-report.md` or `.gemini-report.md` exists | Fallback report — wezterm notification failed, read and process |
+| `*-brainstorm-state.md` in specs/ | WIP brainstorm in progress — read the WIP file FIRST for full decision history (summary will drop sub-decision rationale); also check MEMORY.md for a matching pointer |
 
 **停车场深度扫描**：逐条读取 journal INDEX 中每个 parked 项的**完整 journal 文件**（不只看标题），按以下三个维度检查：
 
