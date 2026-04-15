@@ -4,12 +4,15 @@
 import io
 import json
 import os
+import tempfile
 import threading
 from typing import Any
 
+import boto3
 import fitz
 import numpy as np
 import psycopg2
+from botocore.client import Config
 from flask import Flask, jsonify, request
 from PIL import Image, ImageOps
 from paddleocr import PaddleOCR
@@ -29,6 +32,42 @@ ocr_lock = threading.Lock()
 print("PaddleOCR model loaded", flush=True)
 
 app = Flask(__name__)
+
+
+def _r2_client():
+    account_id = os.environ.get("R2_ACCOUNT_ID")
+    access_key = os.environ.get("R2_ACCESS_KEY_ID")
+    secret_key = os.environ.get("R2_SECRET_ACCESS_KEY")
+    if not account_id or not access_key or not secret_key:
+        raise RuntimeError(
+            "R2 env vars missing: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY all required"
+        )
+    return boto3.client(
+        "s3",
+        endpoint_url=f"https://{account_id}.r2.cloudflarestorage.com",
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        config=Config(signature_version="s3v4"),
+    )
+
+
+def _download_pdf_from_r2(object_key: str) -> str:
+    """Download PDF from R2 to a temp file, return the local path. Caller must os.unlink."""
+    bucket = os.environ.get("R2_BUCKET")
+    if not bucket:
+        raise RuntimeError("R2_BUCKET env var missing")
+    tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+    tmp.close()
+    _r2_client().download_file(bucket, object_key, tmp.name)
+    return tmp.name
+
+
+def _cleanup_if_temp(path: str, downloaded: bool) -> None:
+    if downloaded:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
 
 
 def preprocess_image(image_path: str) -> Image.Image:
@@ -298,7 +337,7 @@ def check_module_ocr_completion(book_id: int, completed_page: int, connection: A
     connection.commit()
 
 
-def process_pdf_ocr(pdf_path: str, book_id: int, database_url: str) -> None:
+def process_pdf_ocr(pdf_path: str, book_id: int, database_url: str, downloaded: bool = False) -> None:
     try:
         with psycopg2.connect(database_url) as connection:
             log_to_db(connection, "info", "OCR started", f"bookId={book_id}, file={pdf_path}")
@@ -373,6 +412,8 @@ def process_pdf_ocr(pdf_path: str, book_id: int, database_url: str) -> None:
                 )
         except Exception as db_error:
             print(f"Failed to record OCR failure for book {book_id}: {db_error}", flush=True)
+    finally:
+        _cleanup_if_temp(pdf_path, downloaded)
 
 
 @app.get("/health")
@@ -406,12 +447,13 @@ def ocr_image_route() -> tuple[Any, int] | Any:
 @app.post("/classify-pdf")
 def classify_pdf_route() -> tuple[Any, int] | Any:
     body = request.get_json(silent=True) or {}
-    pdf_path = str(body.get("pdf_path", "")).strip()
+    r2_key = str(body.get("r2_object_key", "")).strip()
+    legacy_path = str(body.get("pdf_path", "")).strip()
     raw_book_id = body.get("book_id")
     database_url = os.environ.get("DATABASE_URL")
 
-    if not pdf_path:
-        return jsonify({"error": "missing pdf_path"}), 400
+    if not r2_key and not legacy_path:
+        return jsonify({"error": "missing r2_object_key (or legacy pdf_path)"}), 400
 
     if raw_book_id is None:
         return jsonify({"error": "missing book_id"}), 400
@@ -424,12 +466,19 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
     if not database_url:
         return jsonify({"error": "missing DATABASE_URL"}), 500
 
-    doc = fitz.open(pdf_path)
+    downloaded = bool(r2_key)
+    try:
+        pdf_path = _download_pdf_from_r2(r2_key) if r2_key else legacy_path
+    except Exception as error:
+        return jsonify({"error": f"R2 download failed: {error}"}), 500
+
+    doc = None
     pages: list[dict[str, Any]] = []
     text_count = 0
     scanned_count = 0
 
     try:
+        doc = fitz.open(pdf_path)
         for page_index in range(len(doc)):
             page_number = page_index + 1
             page_type = classify_page(doc[page_index])
@@ -440,7 +489,9 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
             else:
                 scanned_count += 1
     finally:
-        doc.close()
+        if doc is not None:
+            doc.close()
+        _cleanup_if_temp(pdf_path, downloaded)
 
     with psycopg2.connect(database_url) as connection:
         run_write(
@@ -465,12 +516,13 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
 @app.post("/extract-text")
 def extract_text_route() -> tuple[Any, int] | Any:
     body = request.get_json(silent=True) or {}
-    pdf_path = str(body.get("pdf_path", "")).strip()
+    r2_key = str(body.get("r2_object_key", "")).strip()
+    legacy_path = str(body.get("pdf_path", "")).strip()
     raw_book_id = body.get("book_id")
     database_url = os.environ.get("DATABASE_URL")
 
-    if not pdf_path:
-        return jsonify({"error": "missing pdf_path"}), 400
+    if not r2_key and not legacy_path:
+        return jsonify({"error": "missing r2_object_key (or legacy pdf_path)"}), 400
 
     if raw_book_id is None:
         return jsonify({"error": "missing book_id"}), 400
@@ -483,6 +535,12 @@ def extract_text_route() -> tuple[Any, int] | Any:
     if not database_url:
         return jsonify({"error": "missing DATABASE_URL"}), 500
 
+    downloaded = bool(r2_key)
+    try:
+        pdf_path = _download_pdf_from_r2(r2_key) if r2_key else legacy_path
+    except Exception as error:
+        return jsonify({"error": f"R2 download failed: {error}"}), 500
+
     with psycopg2.connect(database_url) as connection:
         with connection.cursor() as cursor:
             cursor.execute("SELECT page_classifications FROM books WHERE id = %s", (book_id,))
@@ -492,11 +550,12 @@ def extract_text_route() -> tuple[Any, int] | Any:
         return jsonify({"error": "Run /classify-pdf first"}), 400
 
     classifications = json.loads(row[0])
-    doc = fitz.open(pdf_path)
+    doc = None
     full_text_parts: list[str] = []
     text_page_count = 0
 
     try:
+        doc = fitz.open(pdf_path)
         for page_index in range(len(doc)):
             page_number = page_index + 1
             classification = next((item for item in classifications if item["page"] == page_number), None)
@@ -513,7 +572,9 @@ def extract_text_route() -> tuple[Any, int] | Any:
 
             full_text_parts.append(f"--- PAGE {page_number} ---\n[OCR_PENDING]")
     finally:
-        doc.close()
+        if doc is not None:
+            doc.close()
+        _cleanup_if_temp(pdf_path, downloaded)
 
     full_text = "\n".join(full_text_parts)
 
@@ -526,12 +587,13 @@ def extract_text_route() -> tuple[Any, int] | Any:
 @app.post("/ocr-pdf")
 def ocr_pdf_route() -> tuple[Any, int] | Any:
     body = request.get_json(silent=True) or {}
-    pdf_path = str(body.get("pdf_path", "")).strip()
+    r2_key = str(body.get("r2_object_key", "")).strip()
+    legacy_path = str(body.get("pdf_path", "")).strip()
     raw_book_id = body.get("book_id")
     database_url = os.environ.get("DATABASE_URL")
 
-    if not pdf_path:
-        return jsonify({"error": "missing pdf_path"}), 400
+    if not r2_key and not legacy_path:
+        return jsonify({"error": "missing r2_object_key (or legacy pdf_path)"}), 400
 
     if raw_book_id is None:
         return jsonify({"error": "missing book_id"}), 400
@@ -544,12 +606,18 @@ def ocr_pdf_route() -> tuple[Any, int] | Any:
     if not database_url:
         return jsonify({"error": "missing DATABASE_URL"}), 500
 
+    downloaded = bool(r2_key)
+    try:
+        pdf_path = _download_pdf_from_r2(r2_key) if r2_key else legacy_path
+    except Exception as error:
+        return jsonify({"error": f"R2 download failed: {error}"}), 500
+
     if not os.path.isfile(pdf_path):
         return jsonify({"error": "pdf_path not found"}), 404
 
     worker = threading.Thread(
         target=process_pdf_ocr,
-        args=(pdf_path, book_id, database_url),
+        args=(pdf_path, book_id, database_url, downloaded),
         daemon=True,
     )
     worker.start()
