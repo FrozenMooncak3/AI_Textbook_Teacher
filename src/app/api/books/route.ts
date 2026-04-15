@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
     const classifyRes = await fetch(`${ocrBase}/classify-pdf`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pdf_path: r2ObjectKey, book_id: bookId }),
+      body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId }),
     })
     if (!classifyRes.ok) {
       await markOcrFailure(`classify-pdf HTTP ${classifyRes.status}`)
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     const extractRes = await fetch(`${ocrBase}/extract-text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pdf_path: r2ObjectKey, book_id: bookId }),
+      body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId }),
     })
     if (!extractRes.ok) {
       await markOcrFailure(`extract-text HTTP ${extractRes.status}`)
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
       void fetch(`${ocrBase}/ocr-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pdf_path: r2ObjectKey, book_id: bookId }),
+        body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId }),
       })
         .then(async (response) => {
           if (response.ok) {
