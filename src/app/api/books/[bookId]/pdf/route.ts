@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireBookOwner } from '@/lib/auth'
 import { queryOne } from '@/lib/db'
 import { UserError } from '@/lib/errors'
-import { readFile } from 'fs/promises'
-import { join } from 'path'
+import { buildObjectKey, getSignedPdfUrl } from '@/lib/r2-client'
 
 export async function GET(
   _req: NextRequest,
@@ -30,17 +29,14 @@ export async function GET(
     return NextResponse.json({ error: 'Book not found', code: 'NOT_FOUND' }, { status: 404 })
   }
 
-  const pdfPath = join(process.cwd(), 'data', 'uploads', `${id}.pdf`)
+  const objectKey = buildObjectKey(id)
   try {
-    const fileBuffer = await readFile(pdfPath)
-    return new NextResponse(fileBuffer, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Length': String(fileBuffer.length),
-        'Cache-Control': 'private, max-age=3600',
-      },
-    })
-  } catch {
-    return NextResponse.json({ error: 'PDF file not found', code: 'FILE_NOT_FOUND' }, { status: 404 })
+    const signedUrl = await getSignedPdfUrl(objectKey, 3600)
+    return NextResponse.redirect(signedUrl, 302)
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'PDF file not accessible', code: 'FILE_NOT_FOUND', details: String(error) },
+      { status: 404 }
+    )
   }
 }
