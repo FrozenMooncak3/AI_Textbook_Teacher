@@ -1,6 +1,7 @@
 # Journal Index
 
 ## open（需要关注）
+- [milestone:plan-ready-queued] **Session-Init Token 优化**（基础设施，**brainstorm + spec + plan 全部完成 2026-04-15**，**排队等云部署完成再启动施工**；6 决策、24 tasks、3 周路线、目标开机 token 20-30%→≤10%）→ [spec](../superpowers/specs/2026-04-15-session-init-token-optimization-design.md) + [plan](../superpowers/plans/2026-04-15-session-init-token-optimization.md) + [WIP 决策追溯](../superpowers/specs/2026-04-15-session-init-token-optimization-brainstorm-state.md)
 - [milestone:brainstorm-ready-for-spec] **云部署**（基础设施里程碑，**10 决策全拍完 2026-04-15**：Google Vision + Vercel Hobby + Cloud Run + R2 + 生产/preview/Neon branch + Cloud Run CD UI + 平台 env vars + .com/Cloudflare Registrar + Sentry/Vercel Analytics + 3 阶段拆分；下一步转正式 design spec + writing-plans 阶段 1）→ [specs/2026-04-12-cloud-deployment-brainstorm-state.md](../superpowers/specs/2026-04-12-cloud-deployment-brainstorm-state.md) + 7 份调研（[ocr](../research/2026-04-14-cloud-ocr-options.md)/[deploy](../research/2026-04-14-cloud-deployment-platform-options.md)/[python](../research/2026-04-14-cloud-python-server-options.md)/[storage](../research/2026-04-14-cloud-object-storage-options.md)/[cicd](../research/2026-04-14-cloud-cicd-options.md)/[secrets](../research/2026-04-15-cloud-secrets-options.md)/[domain](../research/2026-04-15-cloud-domain-https-options.md)）
 - [idea] 两种学习模式：课件→教学模式（只教不考），教材→完整模式（教+考+复习），解决课件 vs 教材产品难题 → [2026-04-11-two-learning-modes.md](./2026-04-11-two-learning-modes.md)
 - [idea] 用户留存与学习动机：需要核心留存机制，MVP 前确定方案 → [2026-04-10-retention-motivation.md](./2026-04-10-retention-motivation.md)

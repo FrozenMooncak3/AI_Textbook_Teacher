@@ -11,6 +11,14 @@
 
 **当前里程碑**：云部署（基础设施） — **10 个决策全部拍完**，下一步转正式 design spec + writing-plans 阶段 1
 
+**排队中（基础设施 · 等云部署完再做）**：**Session-Init Token Optimization** — brainstorm + spec + plan 全部完成，**等云部署上线后启动施工**。
+- spec: `docs/superpowers/specs/2026-04-15-session-init-token-optimization-design.md`
+- plan: `docs/superpowers/plans/2026-04-15-session-init-token-optimization.md`（24 tasks，3 周路线，全 Claude 直接执行）
+- 目标：开机 token 20-30% → ≤10%（实测目标 ~3%）；brainstorming 首轮 ≤5k token
+- 路线 D（多层 INDEX + frontmatter schema + memory-cleanup skill + obra/ECC/claude-mem 零件级借鉴）
+- CCB/MCP 永久不兼容已写入架构记录
+- **启动条件**：云部署 3 阶段（数据层 / OCR / 域名+监控+secrets）全部上线 + 验收通过 → 开新 session 直接按 plan Week 1 起跑
+
 **最新完成**：
 - **调研能力建设完成**（2026-04-15，3 commits 未 push）：新 skill `research-before-decision`（49946e9）+ brainstorming 升级 Research Trigger Check & BS-1 增量 spec（99ee882）+ CLAUDE.md 指针接入（03d206d）。解决 2026-04-14 OCR 决策捏造定价事件，关键决策前强制走 triage + S 级源 + sub-agent 并行 + 5 问硬 gate
 - 设计资产：`docs/superpowers/specs/2026-04-14-research-capability-design.md`（10 决策）+ `docs/superpowers/plans/2026-04-15-research-capability.md`（6 tasks, 全部执行完毕）

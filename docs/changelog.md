@@ -4,6 +4,21 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-15 | Session-Init Token Optimization — brainstorm + design spec 完成
+
+**目的**：session-init 开机消耗 20-30% context（继续涨会撞 compact 阈值），brainstorming Mandatory Read List 也在膨胀。同时承接 2026-04-09 parked 的"记忆清除 skill"。目标降到 ≤10%（实测目标 ~3%），但**保留**"知道每件事存在"的全局视野。
+
+核心成果：
+- **brainstorm 全程**（BS-1 增量协议）：6 决策全锁——D1 路线选型（路线 D 混合架构）/ D2 调研派发 / D3 P1-P7 外部零件采纳 + 拒绝清单 + CCB 永久规避 MCP / D4 session-init 重构（拆 3 个新 skill + `@import` + `.ccb/session-marker` compact 检测）/ D5 brainstorming 优化（删冗读 + 机制 B+C INDEX 相关性判断）/ D6 文件体系（统一 frontmatter schema + 2 新 INDEX + architecture 摘要卡 + memory-cleanup skill + INDEX 维护责任表）
+- **设计 spec**：`docs/superpowers/specs/2026-04-15-session-init-token-optimization-design.md`（8 章，含 3 周施工路线 + 回退路径 + 验证方法 + 完整 change list）
+- **WIP 决策追溯**：`docs/superpowers/specs/2026-04-15-session-init-token-optimization-brainstorm-state.md`（保留作决策日志）
+- **4 维度并行调研**（research-before-decision 🔴 重档）+ Synthesizer 综合：`docs/research/2026-04-15-claude-mem-repo-analysis.md` / `everything-claude-code-repo-analysis.md` / `obra-superpowers-repo-analysis.md` / `cc-long-project-context-mgmt.md` / `session-init-optimization-synthesis.md`；🟡 `claude-md-import-syntax.md` 验证 `@import` 机制
+- **spec review 通过**：subagent 找出 2 Important + 3 Minor，3 条 Important 全修（CLAUDE.md "Skill 使用" 段落重写 / session-init frontmatter description 更新 / Week 2 Step 1-2-5 顺序硬约束）
+
+下一步：进 writing-plans skill 出 3 周实施计划。
+
+---
+
 ## 2026-04-15 | Research Capability — 新 skill + brainstorming 升级
 
 **目的**：关键决策前不再凭训练记忆瞎说，改为显式调研流程，结果沉淀到 `docs/research/` 作为项目知识库。起因是 2026-04-14 云部署 OCR 决策时捏造了 Google Vision / Mistral OCR / Railway 定价被用户点破（"假装权威"）。
