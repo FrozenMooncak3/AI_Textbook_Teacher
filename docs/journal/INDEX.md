@@ -1,8 +1,7 @@
 # Journal Index
 
 ## open（需要关注）
-- [milestone:brainstorm-wip] **云部署**（基础设施里程碑，决策 1-10 待拍，下一步决策 1 OCR 处理方式）→ [specs/2026-04-12-cloud-deployment-brainstorm-state.md](../superpowers/specs/2026-04-12-cloud-deployment-brainstorm-state.md)
-- [milestone:brainstorm-wip] **教学系统**（决策 1-10 全部拍板 2026-04-14，design spec 已写，待 M4/M5 拆分详细 brainstorm）→ [specs/2026-04-12-teaching-system-brainstorm-state.md](../superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md)
+- [milestone:brainstorm-ready-for-spec] **云部署**（基础设施里程碑，**10 决策全拍完 2026-04-15**：Google Vision + Vercel Hobby + Cloud Run + R2 + 生产/preview/Neon branch + Cloud Run CD UI + 平台 env vars + .com/Cloudflare Registrar + Sentry/Vercel Analytics + 3 阶段拆分；下一步转正式 design spec + writing-plans 阶段 1）→ [specs/2026-04-12-cloud-deployment-brainstorm-state.md](../superpowers/specs/2026-04-12-cloud-deployment-brainstorm-state.md) + 7 份调研（[ocr](../research/2026-04-14-cloud-ocr-options.md)/[deploy](../research/2026-04-14-cloud-deployment-platform-options.md)/[python](../research/2026-04-14-cloud-python-server-options.md)/[storage](../research/2026-04-14-cloud-object-storage-options.md)/[cicd](../research/2026-04-14-cloud-cicd-options.md)/[secrets](../research/2026-04-15-cloud-secrets-options.md)/[domain](../research/2026-04-15-cloud-domain-https-options.md)）
 - [idea] 两种学习模式：课件→教学模式（只教不考），教材→完整模式（教+考+复习），解决课件 vs 教材产品难题 → [2026-04-11-two-learning-modes.md](./2026-04-11-two-learning-modes.md)
 - [idea] 用户留存与学习动机：需要核心留存机制，MVP 前确定方案 → [2026-04-10-retention-motivation.md](./2026-04-10-retention-motivation.md)
 - [decision] MVP 必做：AI 再教一遍环节（阅读→**教学**→QA），参考月饼投资项目调研 → [2026-04-10-teaching-phase.md](./2026-04-10-teaching-phase.md)
@@ -47,6 +46,7 @@
 - [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
+- [milestone:resolved] **教学系统 brainstorm**：10 决策全部拍板（2026-04-14），顶层 design spec 已生成 → [specs/2026-04-12-teaching-system-design.md](../superpowers/specs/2026-04-12-teaching-system-design.md)（WIP 历史：[specs/2026-04-12-teaching-system-brainstorm-state.md](../superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md)）。M4/M5 启动时另开详细 brainstorm
 - [skill:resolved] brainstorming skill 加入 WIP 防 compact 机制：新增 WIP State File Protocol + checklist 扩展 + session-init 检测（2026-04-14）→ [2026-04-14-brainstorming-skill-wip-mechanism.md](./2026-04-14-brainstorming-skill-wip-mechanism.md)
 - [audit:resolved] Scanned PDF 里程碑审计：architecture.md 补齐 OCR_PROVIDER 等环境变量 + 4 端点清单 + 上云约束 ⚠️（2026-04-12）→ [2026-04-12-scanned-pdf-milestone-audit.md](./2026-04-12-scanned-pdf-milestone-audit.md)
 - [audit:resolved] Page 1 Refinement 审计：shadow 违规修复（+2 tokens），architecture.md 同步（2026-04-10）→ [2026-04-10-page1-refinement-audit.md](./2026-04-10-page1-refinement-audit.md)

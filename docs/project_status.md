@@ -9,7 +9,7 @@
 
 **方向**：MVP 扩展三线推进——扫描 PDF（**已完成**）→ 教学系统 → 留存机制，串行执行
 
-**当前里程碑**：云部署（基础设施） — 决策 1-6 已拍，决策 7（Secrets 管理）待启动
+**当前里程碑**：云部署（基础设施） — **10 个决策全部拍完**，下一步转正式 design spec + writing-plans 阶段 1
 
 **最新完成**：
 - **调研能力建设完成**（2026-04-15，3 commits 未 push）：新 skill `research-before-decision`（49946e9）+ brainstorming 升级 Research Trigger Check & BS-1 增量 spec（99ee882）+ CLAUDE.md 指针接入（03d206d）。解决 2026-04-14 OCR 决策捏造定价事件，关键决策前强制走 triage + S 级源 + sub-agent 并行 + 5 问硬 gate
@@ -33,9 +33,13 @@
 - 决策 4（PDF 文件存储）已拍：**Cloudflare R2**（2026-04-14，调研 `docs/research/2026-04-14-cloud-object-storage-options.md`）— MVP $0/月 + egress 永久 0 费用 + S3 标准 API（保留模块化切换能力）
 - 决策 5（环境分离）已拍：**生产 + preview + Neon DB branch**（方案 B2）（2026-04-14）— Vercel 原生 preview + Neon 免费 10 个 branch + 官方集成自动克隆/销毁，月费 $0
 - 决策 6（CI/CD）已拍：**Cloud Run Continuous Deployment（UI 绑定 GitHub）**（2026-04-14，调研 `docs/research/2026-04-14-cloud-cicd-options.md`）— Cloud Build 120 min/天免费 + Artifact Registry 0.5 GB 免费 + 文件路径过滤 `scripts/**,Dockerfile*` 避免空跑 + 0 YAML 全 UI 配置，月费 $0
+- 决策 7（Secrets 管理）已拍：**平台 env vars（Vercel + Cloud Run 各自配）**（2026-04-15，调研 `docs/research/2026-04-15-cloud-secrets-options.md`）— Vision 凭据通过 Cloud Run SA 的 ADC 自动解决（不用 key 文件）+ DATABASE_URL 已由 Neon 集成自动管理，净剩 5 个 shared secrets 手动同步；不引入 Secret Manager/Doppler，月费 $0
+- 决策 8（域名与 HTTPS）已拍：**自购 `.com` + Cloudflare Registrar + Vercel/Cloud Run 各自自动 SSL（不开 Cloudflare 代理）**（2026-04-15，调研 `docs/research/2026-04-15-cloud-domain-https-options.md`）— `.com` at-cost $10.46/年不涨价 + 工信部 ICP 白名单唯一确认 TLD + Auth cookie Bearer token 无跨子域问题；Cloud Run 自定义域名仍 Preview（生产阶段跟进 GA）
+- 决策 9（监控与错误追踪）已拍：**Sentry（错误追踪，覆盖 Next.js + Python）+ Vercel Analytics（built-in 流量/Web Vitals）**（2026-04-15，🟡 轻量决策）— Sentry 免费层 5K errors/月 + Vercel Hobby 内置 Analytics，两者功能不重叠，月费 $0
+- 决策 10（分阶段实施）已拍：**3 阶段拆分**（① 数据层上云 R2+Vercel+Neon / ② OCR 上云 Cloud Run + CD / ③ 域名+监控+secrets 收尾），3-5 天 Codex 工作量（2026-04-15，🟡 轻量决策）— 每阶段独立可验收可上线可回退
 - 产品策略：MVP 海外优先，国内走第三方平台（摩点/开始吧+微信公众号+小红书/视频号）承接，**MVP 完成后再启动国内链路**
 - 架构预留 4 条国内版分区硬约束（DB/文件存储/OCR/前端 i18n 配置化）
-- 下一步：决策 7（Secrets 管理：平台 env vars vs 统一 secret manager）
+- **下一步**：WIP state → 正式 design spec `docs/superpowers/specs/2026-04-12-cloud-deployment-design.md` → spec review 循环 → writing-plans 写阶段 1 plan
 
 **冻结中的里程碑**：
 - **教学系统**（决策 1-10 全部拍板 2026-04-14，design spec 已写，待 M4/M5 拆分详细 brainstorm）：WIP 在 `docs/superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md`，design spec 在 `docs/superpowers/specs/2026-04-12-teaching-system-design.md`，云部署结束后启动 M4/M5
