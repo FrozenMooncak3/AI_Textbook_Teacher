@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
 import { requireUser } from '@/lib/auth'
 import { insert, query, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
+import { buildObjectKey, uploadPdf } from '@/lib/r2-client'
 import { triggerReadyModulesExtraction } from '@/lib/services/kp-extraction-service'
 import { chunkText } from '@/lib/text-chunker'
-
-const UPLOADS_DIR = join(process.cwd(), 'data', 'uploads')
 
 interface BookListRow {
   id: number
@@ -87,9 +84,8 @@ export async function POST(req: NextRequest) {
     [userId, title.trim(), '', 'processing']
   )
 
-  await mkdir(UPLOADS_DIR, { recursive: true })
-  const pdfPath = join(UPLOADS_DIR, `${bookId}.pdf`)
-  await writeFile(pdfPath, buffer)
+  const r2ObjectKey = buildObjectKey(bookId)
+  await uploadPdf(bookId, buffer)
 
   const markOcrFailure = async (details: string) => {
     try {
@@ -113,7 +109,7 @@ export async function POST(req: NextRequest) {
     const classifyRes = await fetch(`${ocrBase}/classify-pdf`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pdf_path: pdfPath, book_id: bookId }),
+      body: JSON.stringify({ pdf_path: r2ObjectKey, book_id: bookId }),
     })
     if (!classifyRes.ok) {
       await markOcrFailure(`classify-pdf HTTP ${classifyRes.status}`)
@@ -131,7 +127,7 @@ export async function POST(req: NextRequest) {
     const extractRes = await fetch(`${ocrBase}/extract-text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pdf_path: pdfPath, book_id: bookId }),
+      body: JSON.stringify({ pdf_path: r2ObjectKey, book_id: bookId }),
     })
     if (!extractRes.ok) {
       await markOcrFailure(`extract-text HTTP ${extractRes.status}`)
@@ -166,7 +162,7 @@ export async function POST(req: NextRequest) {
       void fetch(`${ocrBase}/ocr-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pdf_path: pdfPath, book_id: bookId }),
+        body: JSON.stringify({ pdf_path: r2ObjectKey, book_id: bookId }),
       })
         .then(async (response) => {
           if (response.ok) {
