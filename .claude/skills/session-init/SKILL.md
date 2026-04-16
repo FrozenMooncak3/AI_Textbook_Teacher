@@ -1,6 +1,6 @@
 ---
 name: session-init
-description: CEO 仪表盘 + session-wide 运行规则 + skill 使用手册。Session 开始和 compact 后自动调用。
+description: CEO 仪表盘 + git 状态 + INDEX 扫描。Session 首次启动时调用；compact/resume 后通过 .ccb/session-marker 跳过重读，仅刷新仪表盘。
 ---
 
 <SUBAGENT-STOP>
@@ -13,6 +13,17 @@ If you were dispatched as a subagent to execute a specific task, skip this skill
 
 ---
 
+## Step 0: Compact/Resume Detection
+
+```bash
+test -f .ccb/session-marker && echo "RESUME" || echo "FRESH"
+```
+
+- 如果输出 `RESUME`：跳过 Step 1-2 完整重读，只跑 git status + 输出"恢复"型仪表盘（一行：`📊 已从 compact/resume 恢复，最近 commit: <git log -1 --oneline>`），然后 exit。
+- 如果输出 `FRESH`：继续 Step 1。
+
+---
+
 ## Step 1: Load Context (parallel reads)
 
 Read ALL of these in parallel:
@@ -20,10 +31,10 @@ Read ALL of these in parallel:
 | Source | What to extract |
 |--------|----------------|
 | `docs/project_status.md` | Current milestone, next step, blockers |
-| `docs/decisions.md` | Closed decisions (don't re-discuss) |
-| `docs/journal/INDEX.md` | Open/in-progress items, parked ideas |
-| `docs/ccb-protocol.md` | Collaboration rules |
-| `docs/architecture.md` | System overview + interface contracts (check ⚠️ markers) |
+| `docs/journal/INDEX.md` | Open / in_progress / parked 项的 1 行摘要 + keywords |
+| `docs/research/INDEX.md` | 调研知识库索引 |
+| `docs/superpowers/INDEX.md` | Specs / plans 索引 |
+| `docs/architecture.md` `## 0. 摘要卡` | 表名 + 接口契约 + ⚠️ 约束（不读 §1-N） |
 | MEMORY.md | Already in context (auto-loaded) — note user preferences and feedback |
 
 Also run:
@@ -110,121 +121,15 @@ Check for these signals:
 
 ---
 
-## Step 4: Session-Wide 运行规则
+## Step 4: 写入 marker
 
-以下规则在 session-init 加载后全程生效，不需要用户提醒：
+```bash
+mkdir -p .ccb && touch .ccb/session-marker
+```
 
-### 规则 1: 自动派发
+后续 compact/resume 时 Step 0 检测到 marker 就跳过重读。
 
-当检测到需要给 Codex/Gemini 派任务时，自动按 structured-dispatch 模板执行：
-1. 填写完整模板
-2. 根据任务类型从 Step 6 的 Agent 参考 skill 表中选择推荐 skill
-3. 标注推荐档位（轻/标准/重，依据 ccb-protocol Section 3）
-4. 给用户看中文翻译
-5. 用户批准后发英文指令
-
-### 规则 2: 想法分流
-
-用户提出新想法时，立刻判断去向并告知用户（不问"你觉得该放哪"）：
-- **纳入具体里程碑**（M3/M5/新里程碑）— 核心流程需要的、产品不完整没它不行的
-- **停车场** — 好想法，但不是当前阶段，存着等合适的时候
-- **丢掉** — 评估后觉得不值得做，说明理由
-
-判断后一句话告知结论和理由。
-
-**停车场入库流程**（用户说"停车场"时自动执行）：
-1. **评估**：想法是否正确？当前做还是以后做？
-2. **分类**：归入以下类别之一：AI/Prompt | 功能 | 交互/UX | 基础设施 | 商业 | 工程流程
-3. **定级**：T1（当前里程碑必做）| T2（下个里程碑或独立评估）| T3（MVP 后）
-4. **写入**：创建/追加 journal 文件，更新 INDEX.md 对应分类下正确的 tier 位置
-5. **确认**：一句话告知"已停车：[分类] T[级别] — [想法名]"
-
-### 规则 3: Skill 自动触发
-
-| 触发条件 | 自动执行的 skill |
-|----------|-----------------|
-| 用户想做新功能/探索想法 | brainstorming → writing-plans |
-| 执行计划中的任务 | task-execution（统筹 dispatch + review + retry） |
-| brainstorming 或重要讨论结束 | journal |
-| 声称完成/准备 commit | verification-before-completion → claudemd-check |
-| 用户告知 agent 完成任务 | task-execution（进入 review phase） |
-| 里程碑开始 | using-git-worktrees（创建隔离分支） |
-| 里程碑结束 | milestone-audit → finishing-a-development-branch |
-| 同一问题修复失败 ≥2 次 | systematic-debugging（强制走诊断流程，禁止继续猜） |
-| 用户说"停车场" | 规则 2 停车场入库流程（分类→定级→写入→确认） |
-
-### 规则 4: Git 管理
-
-- 当前阶段直接在 master 上开发（单人 + CCB 串行派发，出问题 git revert 即可）
-- Worktree/分支隔离为**可选**，不强制。适用场景：多条开发线并行、高风险重构
-- 每次 dispatch 后 Codex/Gemini commit + push，保持 master 可回退
-
-### 规则 5: Chain Routing
-
-用户给出指令后，匹配以下 chain：
-
-**Design Chain** — 探索想法、做新功能：
-1. brainstorming → 2. writing-plans → 3. task-execution
-
-**Execution Chain** — 执行计划（dispatch 给 Codex/Gemini）：
-1. task-execution（内部管 dispatch + review + retry 全流程）→ 2. verification-before-completion → 3. claudemd-check
-
-**Closeout Chain** — 收尾：
-1. milestone-audit → 2. claudemd-check → 3. finishing-a-development-branch
-
-不匹配任何 chain 时正常处理，chain 是指引不是约束。
-
----
-
-## Step 5: Skill 使用手册
-
-### 核心流程 skill（session-init 管控）— 11 个
-
-| Skill | 职责 | 触发方式 |
-|-------|------|---------|
-| **session-init** | 开机 + CEO 仪表盘 + 运行规则 | session 开始 / compact 后自动 |
-| **claudemd-check** | 收尾合规审计（含 skill 合规） | 声称完成前自动 / `/claudemd-check` |
-| **brainstorming** | 需求讨论 → 设计 | 检测到新功能/想法时自动 / `/brainstorming` |
-| **writing-plans** | 写实施计划 | brainstorming 完成后自动 |
-| **task-execution** | 计划执行引擎（dispatch→review→retry→close 全自动） | 有计划要执行时自动 / 用户说"执行" |
-| **structured-dispatch** | 派发模板（被 task-execution 内联调用） | 由 task-execution 触发 |
-| **requesting-code-review** | 代码审查（被 task-execution 内联调用） | 由 task-execution 触发 |
-| **journal** | 记录想法/决策/待跟进 | brainstorming/重要讨论后自动 / `/journal` |
-| **verification-before-completion** | 完成前验证 | 声称完成前自动 |
-| **milestone-audit** | 里程碑收尾 architecture.md 全量验证 | 里程碑结束时自动 |
-| **finishing-a-development-branch** | 里程碑级分支收尾 | 里程碑结束时自动 |
-
-### Agent 参考 skill（structured-dispatch 推荐给 Codex/Gemini）— 7 个
-
-| Skill | 推荐场景 |
-|-------|---------|
-| **coding-standards** | 所有开发任务 |
-| **api-design** | API 端点开发 |
-| **frontend-patterns** | 前端组件开发 |
-| **test-driven-development** | 新功能 / bug 修复 |
-| **systematic-debugging** | bug 诊断 |
-| **security-review** | 认证 / 敏感数据处理 |
-| **database-migrations** | schema 变更 |
-
-### 低频工具 skill — 5 个
-
-| Skill | 用途 |
-|-------|------|
-| **receiving-code-review** | 收到外部 review 反馈时 |
-| **retrospective** | 定期回顾协作模式（`/retrospective`） |
-| **writing-skills** | 创建/编辑 skill |
-| **api-contract** | API 合约文档更新 |
-| **debug-ocr** | OCR 问题排查 |
-
-### 用户需要知道的命令（只有 3 个）
-
-| 命令 | 用途 |
-|------|------|
-| `/brainstorming` | 有新想法要讨论 |
-| `/retrospective` | 回顾协作模式 |
-| `/claudemd-check` | 手动跑合规检查 |
-
-其他 skill 全部自动触发，用户不需要手动调用。
+**手动强制重载**：用户删除 `.ccb/session-marker` 后开新 session 即重新跑完整流程。
 
 ---
 
