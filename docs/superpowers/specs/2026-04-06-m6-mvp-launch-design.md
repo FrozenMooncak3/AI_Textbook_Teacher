@@ -1,3 +1,11 @@
+---
+date: 2026-04-06
+topic: M6 MVP发布设计
+type: spec
+status: resolved
+keywords: [M6, MVP, launch, deployment, Docker]
+---
+
 # M6: MVP Launch — Design Spec
 
 ## 1. Problem Statement

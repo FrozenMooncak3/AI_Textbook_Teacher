@@ -1,3 +1,11 @@
+---
+date: 2026-03-21
+topic: 会话日志系统设计
+type: spec
+status: resolved
+keywords: [journal, logging, session, decision-tracking]
+---
+
 # 会话日志系统设计
 
 **日期**：2026-03-21

@@ -1,3 +1,11 @@
+---
+date: 2026-04-04
+topic: 统一任务执行Skill设计
+type: spec
+status: resolved
+keywords: [task-execution, dispatch, review, state-tracking, CCB]
+---
+
 # Task Execution Skill 设计
 
 > 统一执行引擎——把 dispatch、review、状态跟踪、重试决策、完成清单整合为一个 skill。

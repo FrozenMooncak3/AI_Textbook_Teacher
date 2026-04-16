@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: Codex/Gemini Skill安装
+type: plan
+status: resolved
+keywords: [codex, gemini, skill, CCB, installation]
+---
+
 # Codex/Gemini Skill 安装 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

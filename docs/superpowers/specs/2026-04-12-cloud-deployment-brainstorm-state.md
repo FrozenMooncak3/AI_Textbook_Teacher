@@ -1,3 +1,11 @@
+---
+date: 2026-04-12
+topic: 云部署Brainstorm进度追踪
+type: spec
+status: resolved
+keywords: [cloud, deployment, brainstorm, WIP, compact-defense]
+---
+
 # 云部署 Brainstorm 进行中状态（WIP）
 
 **创建日期**：2026-04-12

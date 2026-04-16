@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: 教学系统深度调研Session简报
+type: plan
+status: resolved
+keywords: [teaching-system, session-brief, research, design]
+---
+
 # Session B 任务简报：教学系统深度调研 + 设计
 
 ---

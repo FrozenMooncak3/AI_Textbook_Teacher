@@ -1,3 +1,11 @@
+---
+date: 2026-03-21
+topic: MVP重新设计AI教材精学
+type: spec
+status: resolved
+keywords: [MVP, redesign, learning-flow, product-spec]
+---
+
 # MVP 重新设计：AI 教材精学教练
 
 **日期**：2026-03-21

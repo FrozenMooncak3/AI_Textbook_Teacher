@@ -1,3 +1,11 @@
+---
+date: 2026-04-02
+topic: M4复习系统设计
+type: spec
+status: resolved
+keywords: [M4, review, spaced-repetition, scheduling, P-value]
+---
+
 # M4 复习系统设计
 
 **日期**：2026-04-02

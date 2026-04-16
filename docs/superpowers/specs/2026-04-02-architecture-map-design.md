@@ -1,3 +1,11 @@
+---
+date: 2026-04-02
+topic: 架构地图系统设计
+type: spec
+status: resolved
+keywords: [architecture, dependency-map, cross-module, verification]
+---
+
 # 设计文稿：架构地图系统
 
 > 日期：2026-04-02

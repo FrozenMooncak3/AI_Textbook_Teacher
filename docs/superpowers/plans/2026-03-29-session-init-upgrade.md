@@ -1,3 +1,11 @@
+---
+date: 2026-03-29
+topic: Session-Init升级+Skill治理
+type: plan
+status: resolved
+keywords: [session-init, CEO-dashboard, skill-governance, claudemd-check]
+---
+
 # Session-Init 升级 + Skill 治理 实施计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

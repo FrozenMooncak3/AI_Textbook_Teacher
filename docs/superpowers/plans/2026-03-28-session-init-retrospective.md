@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: Session Init+Skill链+回顾机制
+type: plan
+status: resolved
+keywords: [session-init, skill-chaining, retrospective, automation]
+---
+
 # Session Init + Skill Chaining + Retrospective Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

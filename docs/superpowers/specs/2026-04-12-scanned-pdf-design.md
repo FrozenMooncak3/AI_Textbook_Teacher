@@ -1,3 +1,11 @@
+---
+date: 2026-04-12
+topic: 扫描PDF功能升级设计
+type: spec
+status: resolved
+keywords: [scanned-PDF, OCR, classification, progressive-unlock]
+---
+
 # 扫描 PDF 功能升级设计
 
 **日期**: 2026-04-12

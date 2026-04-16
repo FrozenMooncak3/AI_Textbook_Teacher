@@ -1,3 +1,11 @@
+---
+date: 2026-04-08
+topic: Amber Companion设计令牌
+type: spec
+status: resolved
+keywords: [design-tokens, Stitch, CSS, Tailwind, Amber-Companion]
+---
+
 # Design Tokens — Amber Companion
 
 > 从 Stitch 导出的 11 个 HTML 文件中提取，全部页面交叉验证一致。

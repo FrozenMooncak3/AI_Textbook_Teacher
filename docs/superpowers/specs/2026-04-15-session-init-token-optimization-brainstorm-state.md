@@ -1,6 +1,9 @@
 ---
-name: session-init token optimization brainstorm WIP
-description: compact 防御——session-init / brainstorming token 膨胀问题的决策进度追踪
+date: 2026-04-15
+topic: Token优化Brainstorm进度追踪
+type: spec
+status: resolved
+keywords: [session-init, token-optimization, brainstorm, WIP, compact-defense]
 ---
 
 # Session-Init Token Optimization Brainstorm 进行中状态（WIP）

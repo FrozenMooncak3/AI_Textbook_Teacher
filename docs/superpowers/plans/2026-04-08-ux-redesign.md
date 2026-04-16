@@ -1,3 +1,11 @@
+---
+date: 2026-04-08
+topic: UX重设计Amber Companion
+type: plan
+status: resolved
+keywords: [UX, redesign, Amber-Companion, design-system, pages]
+---
+
 # UX 重设计 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

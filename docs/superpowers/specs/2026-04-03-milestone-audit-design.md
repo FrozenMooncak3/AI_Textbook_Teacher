@@ -1,3 +1,11 @@
+---
+date: 2026-04-03
+topic: architecture.md守护体系设计
+type: spec
+status: resolved
+keywords: [milestone-audit, architecture, verification, closed-loop]
+---
+
 # 设计文稿：architecture.md 守护体系
 
 > 日期：2026-04-03

@@ -1,3 +1,11 @@
+---
+date: 2026-04-11
+topic: MVP扩展三线时间线
+type: plan
+status: resolved
+keywords: [MVP, expansion, timeline, scanned-PDF, teaching, retention]
+---
+
 # MVP 扩展时间线
 
 **创建日期**: 2026-04-11

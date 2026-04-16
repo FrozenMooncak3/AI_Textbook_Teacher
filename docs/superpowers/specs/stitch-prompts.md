@@ -1,3 +1,11 @@
+---
+date: 2026-04-08
+topic: Stitch生成提示词集
+type: spec
+status: resolved
+keywords: [Stitch, prompts, UX-redesign, wireframe, Amber-Companion]
+---
+
 # Stitch Prompts — AI Textbook Teacher UX Redesign
 
 > 使用说明：

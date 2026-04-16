@@ -1,3 +1,11 @@
+---
+date: 2026-04-04
+topic: 统一任务执行Skill实施
+type: plan
+status: resolved
+keywords: [task-execution, dispatch, review, CCB, skill]
+---
+
 # Task Execution Skill Implementation Plan
 
 > **Execution:** Claude executes this plan inline (all files are within Claude's write boundary: `.claude/skills/**`, `docs/**`, `.gitignore`). No dispatch to Codex/Gemini needed.

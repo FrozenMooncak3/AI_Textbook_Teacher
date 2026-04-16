@@ -1,3 +1,11 @@
+---
+date: 2026-04-03
+topic: architecture.md守护体系
+type: plan
+status: resolved
+keywords: [milestone-audit, architecture, verification, skill]
+---
+
 # Architecture.md 守护体系 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

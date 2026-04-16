@@ -1,3 +1,11 @@
+---
+date: 2026-04-12
+topic: 教学系统顶层设计
+type: spec
+status: resolved
+keywords: [teaching-system, architecture, data-model, API-contract, phasing]
+---
+
 # 教学系统顶层设计
 
 **设计日期**：2026-04-12 启动，2026-04-14 拍板完成

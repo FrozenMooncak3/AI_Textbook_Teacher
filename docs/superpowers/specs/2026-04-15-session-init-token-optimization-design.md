@@ -1,6 +1,9 @@
 ---
-name: session-init token optimization design
-description: Spec skeleton — session-init / brainstorming token 膨胀问题的最终设计文档，决策锁定时增量写入
+date: 2026-04-15
+topic: Session-Init Token优化设计
+type: spec
+status: in_progress
+keywords: [session-init, token-optimization, frontmatter, index, memory-cleanup]
 ---
 
 # Session-Init Token Optimization — 设计文档

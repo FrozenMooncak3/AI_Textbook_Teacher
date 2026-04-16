@@ -1,3 +1,11 @@
+---
+date: 2026-03-22
+topic: M0错误处理与服务层基础
+type: plan
+status: resolved
+keywords: [M0, error-handling, service-layer, API, infrastructure]
+---
+
 # M0 Task 0: Structured Error Handling + Service Layer Foundation
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

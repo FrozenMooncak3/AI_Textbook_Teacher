@@ -1,3 +1,11 @@
+---
+date: 2026-04-03
+topic: M5功能补完让MVP可用
+type: plan
+status: resolved
+keywords: [M5, feature-completion, dashboard, screenshot-ask, markdown]
+---
+
 # M5 功能补完 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

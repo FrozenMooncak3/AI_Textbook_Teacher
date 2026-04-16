@@ -1,3 +1,11 @@
+---
+date: 2026-04-08
+topic: UX重设计最终Spec
+type: spec
+status: resolved
+keywords: [UX, redesign, design-spec, Stitch, Amber-Companion]
+---
+
 # UX 重设计 — 最终 Design Spec
 
 > Chain 文件：`docs/superpowers/specs/2026-04-07-ux-redesign-chain.md`

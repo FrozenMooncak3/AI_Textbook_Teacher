@@ -1,3 +1,11 @@
+---
+date: 2026-03-31
+topic: M3考官AI设计
+type: spec
+status: resolved
+keywords: [M3, examiner, test-generation, scoring, pass-fail]
+---
+
 # M3：考官 AI 设计文稿
 
 **日期**：2026-03-31

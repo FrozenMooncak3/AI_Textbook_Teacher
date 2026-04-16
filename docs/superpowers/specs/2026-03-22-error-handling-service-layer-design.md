@@ -1,3 +1,11 @@
+---
+date: 2026-03-22
+topic: 结构化错误处理+服务层设计
+type: spec
+status: resolved
+keywords: [error-handling, service-layer, API, infrastructure, M0]
+---
+
 # 基础设施改进：结构化错误处理 + 服务层分离
 
 **日期**：2026-03-22

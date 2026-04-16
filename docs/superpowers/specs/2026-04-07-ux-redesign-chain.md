@@ -1,3 +1,11 @@
+---
+date: 2026-04-07
+topic: UX重设计Brainstorm交接文档
+type: spec
+status: resolved
+keywords: [UX, brainstorm-chain, redesign, Amber-Companion]
+---
+
 # UX 重设计 — Brainstorm Chain
 
 > 这个文件是多次 brainstorm 之间的交接文档。每次 session 开始时必须读取此文件。

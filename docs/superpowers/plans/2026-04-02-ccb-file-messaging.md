@@ -1,3 +1,11 @@
+---
+date: 2026-04-02
+topic: CCB文件消息系统替代ask
+type: plan
+status: resolved
+keywords: [CCB, file-messaging, inbox, coordination]
+---
+
 # CCB 文件消息系统 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

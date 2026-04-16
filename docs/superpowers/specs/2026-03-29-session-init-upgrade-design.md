@@ -1,3 +1,11 @@
+---
+date: 2026-03-29
+topic: Session-Init升级+Skill治理设计
+type: spec
+status: resolved
+keywords: [session-init, CEO-dashboard, skill-governance, cleanup]
+---
+
 # Session-Init 升级 + Skill 治理 设计文稿
 
 > 日期：2026-03-29

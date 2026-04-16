@@ -1,3 +1,11 @@
+---
+date: 2026-04-12
+topic: 教学系统Brainstorm进度追踪
+type: spec
+status: resolved
+keywords: [teaching-system, brainstorm, WIP, compact-defense]
+---
+
 # 教学系统 Brainstorm 进行中状态（WIP）
 
 **创建日期**: 2026-04-12

@@ -1,3 +1,11 @@
+---
+date: 2026-03-29
+topic: 多模型API抽象层实施
+type: plan
+status: resolved
+keywords: [multi-model, Vercel-AI-SDK, abstraction, provider]
+---
+
 # Multi-Model API Abstraction Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

@@ -1,3 +1,11 @@
+---
+date: 2026-04-02
+topic: CCB文件消息系统设计
+type: spec
+status: resolved
+keywords: [CCB, file-messaging, inbox, coordination]
+---
+
 # CCB 文件消息系统设计
 
 > 替代 `ask` 命令，用"写文件 + 短通知"实现 Claude / Codex / Gemini 三方可靠通信。

@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: Codex/Gemini Skill安装设计
+type: spec
+status: resolved
+keywords: [codex, gemini, skill, installation, CCB]
+---
+
 # Design Spec: 给 Codex/Gemini 安装 Skill
 
 > 日期：2026-03-28

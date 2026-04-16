@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: 外部仓库调研总结
+type: spec
+status: resolved
+keywords: [research, open-source, patterns, Claude-Code]
+---
+
 # 外部仓库调研总结（2026-03-28）
 
 > 调研目的：从三个开源 Claude Code 项目中提取可用于本项目的模式和实践。

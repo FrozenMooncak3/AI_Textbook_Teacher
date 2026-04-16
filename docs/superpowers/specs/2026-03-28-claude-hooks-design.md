@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: Claude Hooks自动化设计
+type: spec
+status: resolved
+keywords: [hooks, automation, quality-check, structured-dispatch]
+---
+
 # Claude Skill Automation + Hook System Design
 
 > Second brainstorming output (2026-03-28).

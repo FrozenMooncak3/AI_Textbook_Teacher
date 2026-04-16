@@ -1,3 +1,11 @@
+---
+date: 2026-03-31
+topic: M3考官AI测试与评分系统
+type: plan
+status: resolved
+keywords: [M3, examiner, test, scoring, diagnosis]
+---
+
 # M3 Examiner AI Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

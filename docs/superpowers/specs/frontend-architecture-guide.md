@@ -1,3 +1,11 @@
+---
+date: 2026-04-09
+topic: 前端架构参考手册
+type: spec
+status: resolved
+keywords: [frontend, architecture, shadcn, design-token, component-library]
+---
+
 # Frontend Architecture Guide — AI 教材精学老师
 
 > 类型：长期参考手册（非一次性 spec）

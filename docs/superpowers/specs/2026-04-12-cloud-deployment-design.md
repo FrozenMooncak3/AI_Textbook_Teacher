@@ -1,3 +1,11 @@
+---
+date: 2026-04-12
+topic: 云部署里程碑设计
+type: spec
+status: in_progress
+keywords: [cloud, deployment, Supabase, Docker, three-phase]
+---
+
 # 云部署里程碑 · Design Spec
 
 **立项日期**：2026-04-12

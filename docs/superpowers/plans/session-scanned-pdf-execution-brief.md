@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: 扫描PDF执行Session简报
+type: plan
+status: resolved
+keywords: [scanned-PDF, execution, session-brief, dispatch]
+---
+
 # Session 任务简报：扫描 PDF 计划执行
 
 ---

@@ -1,3 +1,11 @@
+---
+date: 2026-04-12
+topic: 扫描PDF处理升级计划
+type: plan
+status: resolved
+keywords: [scanned-PDF, OCR, progressive-unlock, classification]
+---
+
 # Scanned PDF Processing Upgrade — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

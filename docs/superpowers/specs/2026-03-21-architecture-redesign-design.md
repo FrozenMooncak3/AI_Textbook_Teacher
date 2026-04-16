@@ -1,3 +1,11 @@
+---
+date: 2026-03-21
+topic: CCB+Skill体系架构重构设计
+type: spec
+status: resolved
+keywords: [CCB, skill, architecture, migration, three-tier]
+---
+
 # 架构重构设计：从多 Agent 迁移到 CCB + Skill 体系
 
 > 日期：2026-03-21

@@ -1,3 +1,11 @@
+---
+date: 2026-04-03
+topic: M5功能补完设计
+type: spec
+status: resolved
+keywords: [M5, feature-completion, dashboard, mistakes, markdown]
+---
+
 # M5 设计文稿：功能补完
 
 > 让 MVP 从"能跑"变成"能用"。修正已有功能的缺陷，补全缺失的展示页面。

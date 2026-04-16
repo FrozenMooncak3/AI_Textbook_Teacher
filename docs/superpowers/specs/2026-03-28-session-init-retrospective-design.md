@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: Session Init+Skill链+回顾设计
+type: spec
+status: resolved
+keywords: [session-init, skill-chaining, retrospective, automation]
+---
+
 # Session Init + Skill Chaining + Retrospective Design
 
 > Third brainstorming output (2026-03-28).

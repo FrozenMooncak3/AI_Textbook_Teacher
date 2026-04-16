@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: Claude Hooks自动化质检
+type: plan
+status: resolved
+keywords: [hooks, automation, quality-check, structured-dispatch]
+---
+
 # Claude Hooks + Skill Automation Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

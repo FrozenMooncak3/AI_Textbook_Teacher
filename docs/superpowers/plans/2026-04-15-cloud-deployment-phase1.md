@@ -1,3 +1,11 @@
+---
+date: 2026-04-15
+topic: 云部署阶段1数据层上云
+type: plan
+status: in_progress
+keywords: [cloud, deployment, database, Supabase, phase-1]
+---
+
 # 云部署 · 阶段 1 实施计划（数据层上云）
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

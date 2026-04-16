@@ -1,3 +1,11 @@
+---
+date: 2026-04-02
+topic: 架构地图系统实施
+type: plan
+status: resolved
+keywords: [architecture, dependency-tracking, documentation, break-points]
+---
+
 # Architecture Map Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

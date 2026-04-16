@@ -1,3 +1,11 @@
+---
+date: 2026-03-29
+topic: 多模型API抽象层设计
+type: spec
+status: resolved
+keywords: [multi-model, Vercel-AI-SDK, abstraction, provider]
+---
+
 # Multi-Model API Abstraction Layer — Design Spec
 
 > **Priority**: T0

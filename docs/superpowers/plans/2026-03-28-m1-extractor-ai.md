@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: M1知识点提取AI实施计划
+type: plan
+status: resolved
+keywords: [M1, extractor, KP-extraction, PDF, AI]
+---
+
 # M1: Extractor AI Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

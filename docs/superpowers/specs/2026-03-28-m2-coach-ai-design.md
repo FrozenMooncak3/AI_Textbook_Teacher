@@ -1,3 +1,11 @@
+---
+date: 2026-03-28
+topic: M2教练AI核心设计
+type: spec
+status: resolved
+keywords: [M2, coach, Q&A, reading-guide, study-notes]
+---
+
 # M2: 教练 AI（核心）— 设计文稿
 
 > **范围**：读前指引（异步）→ 阅读（笔记 + 截图问答）→ Q&A（4 种题型 + 即时反馈 + 预生成）→ 学习笔记生成

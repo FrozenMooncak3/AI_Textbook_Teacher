@@ -1,3 +1,11 @@
+---
+date: 2026-04-09
+topic: 组件库从Stitch提取设计
+type: spec
+status: resolved
+keywords: [component-library, Stitch, extraction, design-tokens, React]
+---
+
 # 组件库设计 Spec — 从 Stitch 提取积木块
 
 > 日期：2026-04-09
