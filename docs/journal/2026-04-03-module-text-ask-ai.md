@@ -1,3 +1,12 @@
+---
+date: 2026-04-03
+topic: 模块阅读选文字问AI交互想法
+type: journal
+status: parked
+keywords: [阅读, 选文字, 问AI, 体验增强]
+urgency: normal
+---
+
 # 模块阅读选文字问AI
 
 **类型**: idea

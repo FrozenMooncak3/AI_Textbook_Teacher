@@ -1,7 +1,9 @@
 ---
 date: 2026-03-22
-topic: M0 最终验证 + 截图问 AI 问题发现
-tags: [验证, 截图AI, UX, 语言]
+topic: M0最终验证通过及截图AI问题发现
+type: journal
+status: resolved
+keywords: [M0验证, 截图AI, UX问题, 语言检测]
 ---
 
 ## M0 验证结果

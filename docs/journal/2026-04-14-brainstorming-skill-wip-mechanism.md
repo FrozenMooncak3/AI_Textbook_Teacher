@@ -1,3 +1,11 @@
+---
+date: 2026-04-14
+topic: brainstorming skill加入WIP防compact机制
+type: journal
+status: resolved
+keywords: [brainstorming, WIP, compact防御, skill改动, 状态存档]
+---
+
 # brainstorming skill 加入 WIP 防 compact 机制
 
 **日期**：2026-04-14

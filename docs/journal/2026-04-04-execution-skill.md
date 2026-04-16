@@ -1,3 +1,11 @@
+---
+date: 2026-04-04
+topic: 任务执行Skill设计：dispatch到完成全流程
+type: journal
+status: resolved
+keywords: [task-execution, skill, dispatch, review, 自动化]
+---
+
 # 执行任务 Skill 设计
 
 **类型**: idea

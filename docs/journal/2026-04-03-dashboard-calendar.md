@@ -1,3 +1,12 @@
+---
+date: 2026-04-03
+topic: Dashboard日历视图：复习时间表展示
+type: journal
+status: parked
+keywords: [Dashboard, 日历, 复习计划, 学习时间表]
+urgency: normal
+---
+
 # Dashboard 日历视图
 
 **类型**: idea

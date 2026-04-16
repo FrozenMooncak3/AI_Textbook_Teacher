@@ -1,7 +1,9 @@
 ---
-type: decision
-status: open
 date: 2026-04-10
+topic: MVP必做：AI主动教学环节设计
+type: journal
+status: open
+keywords: [AI教学, 学习流程, 教学阶段, MVP必做]
 ---
 
 # MVP 必做：AI 再教一遍环节

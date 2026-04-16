@@ -1,3 +1,11 @@
+---
+date: 2026-04-03
+topic: M4里程碑审计：architecture.md验证
+type: journal
+status: resolved
+keywords: [M4, 里程碑审计, architecture, 复习系统, 接口契约]
+---
+
 # M4 Milestone Audit — architecture.md 验证
 
 **日期**：2026-04-03

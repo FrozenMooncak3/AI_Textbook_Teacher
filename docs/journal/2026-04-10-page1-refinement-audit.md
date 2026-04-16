@@ -1,7 +1,9 @@
 ---
-type: audit
-status: resolved
 date: 2026-04-10
+topic: Page1首页精调审计通过
+type: journal
+status: resolved
+keywords: [审计, 首页精调, CourseCard, 组件契约]
 ---
 
 # Page 1 Refinement 审计报告

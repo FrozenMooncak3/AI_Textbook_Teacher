@@ -1,7 +1,9 @@
 ---
 date: 2026-04-02
-topic: M3→M4 里程碑启动代码审计 — 首次执行
-tags: [audit, m3.5, m4, review-system]
+topic: M3到M4里程碑启动代码审计首次执行
+type: journal
+status: resolved
+keywords: [代码审计, M4, 复习系统, schema, prompt模板]
 ---
 
 ## 背景

@@ -1,3 +1,12 @@
+---
+date: 2026-04-03
+topic: 复习系统UX改进：正确答案与原文查看
+type: journal
+status: parked
+keywords: [复习UX, 正确答案, 预生成解析, QA原文]
+urgency: normal
+---
+
 # 复习系统 UX 改进想法
 
 **类型**: idea

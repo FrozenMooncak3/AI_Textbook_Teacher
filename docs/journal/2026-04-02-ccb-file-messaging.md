@@ -1,3 +1,11 @@
+---
+date: 2026-04-02
+topic: CCB文件消息系统替代ask命令
+type: journal
+status: resolved
+keywords: [CCB, 文件消息, inbox, PowerShell, wezterm]
+---
+
 # CCB 文件消息系统
 
 **类型**: infra

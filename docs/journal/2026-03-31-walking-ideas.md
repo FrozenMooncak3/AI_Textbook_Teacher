@@ -1,3 +1,12 @@
+---
+date: 2026-03-31
+topic: 散步想法：思维导图、笔记跳转等体验增强
+type: journal
+status: parked
+keywords: [思维导图, 笔记跳转, 体验增强, 散步想法]
+urgency: normal
+---
+
 # 散步想法记录
 
 **类型**: idea

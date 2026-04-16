@@ -1,3 +1,11 @@
+---
+date: 2026-03-29
+topic: Session Init自动综合报告机制
+type: journal
+status: resolved
+keywords: [session-init, 报告, parked检测, 里程碑]
+---
+
 # Session Init 全局报告 Skill/Hook
 
 **类型**: idea

@@ -1,3 +1,12 @@
+---
+date: 2026-03-31
+topic: M3 brainstorming想法：错题本与学习计划
+type: journal
+status: parked
+keywords: [错题本, 学习计划, 百词斩模式, M5]
+urgency: normal
+---
+
 # M3 Brainstorming 想法记录
 
 **类型**: idea

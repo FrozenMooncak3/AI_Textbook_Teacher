@@ -1,3 +1,11 @@
+---
+date: 2026-03-29
+topic: Wezterm报告自动提交问题及修复
+type: journal
+status: resolved
+keywords: [wezterm, send-text, no-paste, 自动提交]
+---
+
 # Wezterm 报告自动提交问题
 
 **类型**: idea

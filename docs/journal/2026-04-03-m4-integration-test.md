@@ -1,3 +1,11 @@
+---
+date: 2026-04-03
+topic: M4集成测试发现2个AI相关Bug
+type: journal
+status: resolved
+keywords: [M4, 集成测试, AI出题, 复习系统, bug]
+---
+
 # M4 集成测试 — 2 个 Bug
 
 **类型**: bug

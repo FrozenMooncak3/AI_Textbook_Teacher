@@ -1,3 +1,11 @@
+---
+date: 2026-04-07
+topic: M6里程碑审计重做：4个严重断裂
+type: journal
+status: resolved
+keywords: [M6, 审计重做, SQLite迁移遗漏, PostgreSQL, OCR]
+---
+
 # M6 Milestone Audit（重做）
 
 **类型**: audit

@@ -1,3 +1,11 @@
+---
+date: 2026-04-03
+topic: 里程碑审计Skill设计与自动化
+type: journal
+status: resolved
+keywords: [milestone-audit, skill, 接口契约, 自动化审计]
+---
+
 # Milestone Audit Skill
 
 **类型**: idea

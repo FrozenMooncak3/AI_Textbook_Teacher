@@ -1,3 +1,11 @@
+---
+date: 2026-04-07
+topic: M6用户测试：hotfix执行及问题发现
+type: journal
+status: open
+keywords: [M6, 用户测试, hotfix, OCR迁移, PostgreSQL]
+---
+
 # M6 用户测试
 
 **类型**: testing

@@ -1,3 +1,11 @@
+---
+date: 2026-04-01
+topic: CCB迁移至Claude Code Bridge v5.2.6+
+type: journal
+status: resolved
+keywords: [CCB, 迁移, wezterm, ask命令, 通信]
+---
+
 # CCB 迁移到 Claude Code Bridge v5.2.6+
 
 **类型**: infra

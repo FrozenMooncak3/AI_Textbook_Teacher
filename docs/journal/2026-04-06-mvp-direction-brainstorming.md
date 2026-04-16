@@ -1,3 +1,11 @@
+---
+date: 2026-04-06
+topic: MVP方向brainstorming：验证留学生需求
+type: journal
+status: resolved
+keywords: [MVP方向, 留学生, 需求验证, 产品定位, 推广]
+---
+
 # MVP 方向 Brainstorming
 
 **类型**: decision

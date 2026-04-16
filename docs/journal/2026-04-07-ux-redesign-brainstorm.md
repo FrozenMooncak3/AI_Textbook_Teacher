@@ -1,3 +1,11 @@
+---
+date: 2026-04-07
+topic: UX全面重设计brainstorm
+type: journal
+status: resolved
+keywords: [UX重设计, Action Hub, 书首页, 设计决策]
+---
+
 # UX 重设计 Brainstorm — 2026-04-07
 
 type: brainstorm

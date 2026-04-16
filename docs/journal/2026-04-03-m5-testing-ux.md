@@ -1,3 +1,11 @@
+---
+date: 2026-04-03
+topic: M5测试发现全局缺导航UX问题
+type: journal
+status: resolved
+keywords: [UX, 导航, M5测试, 返回键, 全局布局]
+---
+
 # M5 测试发现的 UX 问题：全局缺导航
 
 **日期**：2026-04-03

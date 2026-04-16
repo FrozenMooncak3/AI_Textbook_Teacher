@@ -1,3 +1,12 @@
+---
+date: 2026-04-04
+topic: 预生成系统：后台提前生成下一步内容
+type: journal
+status: parked
+keywords: [预生成, 零等待, 后台任务, 性能优化]
+urgency: normal
+---
+
 # 预生成系统
 
 **类型**: idea

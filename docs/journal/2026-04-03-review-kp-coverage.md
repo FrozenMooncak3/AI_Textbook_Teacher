@@ -1,3 +1,12 @@
+---
+date: 2026-04-03
+topic: 复习出题KP覆盖率改进方案
+type: journal
+status: parked
+keywords: [复习, KP覆盖率, cluster, 出题策略]
+urgency: normal
+---
+
 # 复习出题 KP 覆盖率
 
 **类型**: idea

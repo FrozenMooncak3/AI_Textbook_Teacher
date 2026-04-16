@@ -1,7 +1,9 @@
 ---
 date: 2026-03-21
-topic: MVP 重新设计 brainstorming
-tags: [产品方向, 用户定位, 架构, 学习科学]
+topic: MVP重新设计：教练定位与核心流程确定
+type: journal
+status: resolved
+keywords: [产品定位, 用户画像, MVP范围, 教练模式, 学习科学]
 ---
 
 ## 决策 + 为什么

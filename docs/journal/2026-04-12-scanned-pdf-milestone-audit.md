@@ -1,3 +1,11 @@
+---
+date: 2026-04-12
+topic: 扫描PDF里程碑审计通过
+type: journal
+status: resolved
+keywords: [扫描PDF, 里程碑审计, OCR, DB schema, API端点]
+---
+
 # Scanned PDF 里程碑审计 (2026-04-12)
 
 **类型**：audit

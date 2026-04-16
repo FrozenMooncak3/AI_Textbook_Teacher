@@ -1,7 +1,9 @@
 ---
-type: decision
-status: open
 date: 2026-04-10
+topic: MVP范围扩展：扫描PDF与多书种类
+type: journal
+status: open
+keywords: [MVP扩展, 扫描PDF, PaddleOCR, 多书种类]
 ---
 
 # MVP 范围扩展：扫描版 PDF + 多书种类

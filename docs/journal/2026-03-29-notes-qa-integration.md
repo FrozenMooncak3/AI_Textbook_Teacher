@@ -1,3 +1,12 @@
+---
+date: 2026-03-29
+topic: 笔记与QA联动：阅读笔记整合到练习
+type: journal
+status: parked
+keywords: [笔记, QA联动, 结构化笔记, 侧边栏]
+urgency: normal
+---
+
 # 笔记 + QA 联动
 
 **类型**: idea

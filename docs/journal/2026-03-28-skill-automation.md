@@ -1,7 +1,9 @@
 ---
 date: 2026-03-28
-topic: Skill 自动化三次 brainstorming — 第一次完成
-tags: [skills, codex, gemini, ccb, brainstorming]
+topic: Skill自动化brainstorming首轮完成
+type: journal
+status: resolved
+keywords: [skills, CCB, brainstorming, Codex, Gemini]
 ---
 
 ## 决策 + 为什么
