@@ -1,6 +1,9 @@
 ---
 date: 2026-04-15
 topic: everything-claude-code repo 零件级分析（session-init token 优化调研 D2）
+type: research
+status: resolved
+keywords: [everything-claude-code, skills, agents, 生态系统, 零件库]
 triage: 🔴
 template: A
 budget: 45min

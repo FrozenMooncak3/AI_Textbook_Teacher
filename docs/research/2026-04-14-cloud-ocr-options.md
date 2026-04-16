@@ -1,3 +1,11 @@
+---
+date: 2026-04-14
+topic: 云部署OCR方案选型
+type: research
+status: resolved
+keywords: [云OCR, Google Vision, Mistral, 云部署, 中英混排]
+---
+
 # 云部署 OCR 方案调研
 
 **调研日期**：2026-04-14

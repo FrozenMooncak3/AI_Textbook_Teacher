@@ -1,3 +1,11 @@
+---
+date: 2026-04-11
+topic: AI教学对话prompt编码方案
+type: research
+status: resolved
+keywords: [prompt编码, AI教学, AutoTutor, 结构化约束, 教学对话]
+---
+
 # 调研 3：AI 教学对话 prompt 编码
 
 **调研日期**: 2026-04-11

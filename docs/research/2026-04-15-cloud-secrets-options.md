@@ -1,3 +1,11 @@
+---
+date: 2026-04-15
+topic: Secrets管理方案选型
+type: research
+status: resolved
+keywords: [Secrets管理, 环境变量, Vercel, Cloud Run, 凭据轮换]
+---
+
 # 调研：Secrets 管理方案（决策 7）
 
 **调研日期**：2026-04-15

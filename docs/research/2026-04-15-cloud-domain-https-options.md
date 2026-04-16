@@ -1,6 +1,9 @@
 ---
 date: 2026-04-15
-topic: 云部署决策 8 — 域名与 HTTPS 选择
+topic: 云部署决策8 — 域名与HTTPS选择
+type: research
+status: resolved
+keywords: [域名, HTTPS, DNS, Vercel, CloudRun]
 triage: 🔴
 template: A
 budget: ~40 min（4 个 general-purpose sub-agent 并行）

@@ -1,6 +1,9 @@
 ---
 date: 2026-04-15
 topic: Claude Code CLAUDE.md @import 语法核实
+type: research
+status: resolved
+keywords: [CLAUDE.md, import语法, 文件引用, Claude Code]
 triage: 🟡
 scope: 单点事实 / 易反悔 / 只服务当前决策
 budget: 8 分钟

@@ -1,6 +1,9 @@
 ---
 date: 2026-04-15
 topic: obra/superpowers repo 分析（session-init token 优化调研 D3）
+type: research
+status: resolved
+keywords: [obra, superpowers, session-init, subagent, 上下文优化]
 triage: 🔴
 template: A
 budget: 45min

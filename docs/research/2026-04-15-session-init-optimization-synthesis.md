@@ -1,6 +1,9 @@
 ---
 date: 2026-04-15
-topic: session-init token 优化 — 4 维调研综合（Route D 零件推荐）
+topic: session-init token 优化 — 4维调研综合（Route D）
+type: research
+status: resolved
+keywords: [session-init, token优化, 按需加载, 索引, 综合调研]
 triage: 🔴
 template: synthesis
 inputs:

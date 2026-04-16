@@ -1,3 +1,11 @@
+---
+date: 2026-04-11
+topic: 竞品深度分析（NotebookLM/Khanmigo等）
+type: research
+status: resolved
+keywords: [竞品分析, NotebookLM, Khanmigo, 差异化, 市场格局]
+---
+
 # 竞品深度分析
 
 **调研日期**: 2026-04-11

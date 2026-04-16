@@ -1,3 +1,11 @@
+---
+date: 2026-04-11
+topic: PDF处理技术选型（OCR横评）
+type: research
+status: resolved
+keywords: [PDF处理, OCR, PaddleOCR, Marker, 扫描PDF]
+---
+
 # PDF 处理技术调研
 
 **调研日期**: 2026-04-11

@@ -1,3 +1,11 @@
+---
+date: 2026-04-14
+topic: PDF对象存储平台选型
+type: research
+status: resolved
+keywords: [对象存储, Cloudflare R2, S3兼容, Backblaze, PDF存储]
+---
+
 # 调研：PDF 对象存储平台（决策 4）
 
 **调研日期**：2026-04-14

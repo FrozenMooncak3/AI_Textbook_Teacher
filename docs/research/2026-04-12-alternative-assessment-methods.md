@@ -1,3 +1,11 @@
+---
+date: 2026-04-12
+topic: 替代性评估方法（超越传统QA）
+type: research
+status: resolved
+keywords: [评估方法, 深度理解, Bloom层级, 知识迁移, 元认知]
+---
+
 # 替代性评估方法：超越传统 Q&A 的深度理解验证
 
 **调研日期**: 2026-04-12

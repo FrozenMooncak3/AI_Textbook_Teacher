@@ -1,3 +1,11 @@
+---
+date: 2026-04-12
+topic: 最优学习活动序列设计
+type: research
+status: resolved
+keywords: [学习序列, 间隔学习, 交错练习, Gagne, ICAP框架]
+---
+
 # 最优学习活动序列：从首次接触到掌握
 
 **调研日期**: 2026-04-12

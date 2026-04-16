@@ -1,3 +1,11 @@
+---
+date: 2026-04-11
+topic: 通用知识类型分类方案（Bloom分类法）
+type: research
+status: resolved
+keywords: [知识分类, Bloom分类法, 事实性知识, 概念性知识, 过程性知识]
+---
+
 # 调研 1：通用知识类型分类方案
 
 **调研日期**: 2026-04-11

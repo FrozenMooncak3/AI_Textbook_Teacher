@@ -1,6 +1,9 @@
 ---
 date: 2026-04-15
-topic: Claude Code 长期项目 session 上下文管理最佳实践（session-init token 优化调研 D4）
+topic: Claude Code 长期项目上下文管理最佳实践（调研D4）
+type: research
+status: resolved
+keywords: [上下文管理, session-init, token优化, 渐进披露, 索引]
 triage: 🔴
 template: A
 budget: 40min

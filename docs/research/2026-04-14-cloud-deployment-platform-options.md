@@ -1,3 +1,11 @@
+---
+date: 2026-04-14
+topic: 云部署平台选型（Next.js主App）
+type: research
+status: resolved
+keywords: [云部署, Vercel, Next.js, Neon Postgres, 墙内访问]
+---
+
 # 云部署平台调研（Next.js 主 App）
 
 **调研日期**：2026-04-14

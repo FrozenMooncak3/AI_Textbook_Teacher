@@ -1,3 +1,11 @@
+---
+date: 2026-04-14
+topic: 轻量Python服务器云部署平台选型
+type: research
+status: resolved
+keywords: [Cloud Run, Python部署, Docker, FastAPI, 容器化]
+---
+
 # 调研：轻量 Python 服务器云部署平台（决策 3）
 
 **调研日期**：2026-04-14

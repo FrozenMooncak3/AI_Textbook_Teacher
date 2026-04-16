@@ -1,3 +1,11 @@
+---
+date: 2026-04-14
+topic: CI/CD自动化方案选型
+type: research
+status: resolved
+keywords: [CI/CD, Cloud Run, GitHub, 自动部署, Docker]
+---
+
 # 调研：CI/CD 方案（决策 6）
 
 **调研日期**：2026-04-14

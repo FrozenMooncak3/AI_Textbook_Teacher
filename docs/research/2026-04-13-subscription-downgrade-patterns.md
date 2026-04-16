@@ -1,3 +1,11 @@
+---
+date: 2026-04-13
+topic: SaaS订阅降级策略与权限管理
+type: research
+status: resolved
+keywords: [订阅降级, Entitlement, SaaS, 付费墙, schema设计]
+---
+
 # 调研：SaaS 订阅降级策略与 Entitlement Management
 
 **调研日期**: 2026-04-13

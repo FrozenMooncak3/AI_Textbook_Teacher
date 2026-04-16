@@ -1,3 +1,11 @@
+---
+date: 2026-04-11
+topic: 教学UX设计 — 怎样让学不无聊
+type: research
+status: resolved
+keywords: [教学UX, 用户留存, Duolingo, 学习动机, 对话疲劳]
+---
+
 # 调研 4：教学 UX — 怎样让学不无聊
 
 **调研日期**: 2026-04-11

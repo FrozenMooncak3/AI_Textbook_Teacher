@@ -1,3 +1,11 @@
+---
+date: 2026-04-11
+topic: 教学Spec评价与借鉴（月饼投资项目）
+type: research
+status: resolved
+keywords: [教学设计, 知识类型, 教学法, spec评价, 认知卸载]
+---
+
 # 月饼投资教学 Spec 评价
 
 **调研日期**: 2026-04-11

@@ -1,6 +1,9 @@
 ---
 date: 2026-04-15
 topic: claude-mem repo 零件级分析（session-init token 优化调研 D1）
+type: research
+status: resolved
+keywords: [claude-mem, session上下文, 向量库, SQLite, MCP]
 triage: 🔴
 template: A
 budget: 25min

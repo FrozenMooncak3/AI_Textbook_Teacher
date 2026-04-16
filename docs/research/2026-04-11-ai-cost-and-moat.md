@@ -1,3 +1,11 @@
+---
+date: 2026-04-11
+topic: AI成本趋势与护城河分析
+type: research
+status: resolved
+keywords: [AI成本, token定价, 护城河, 商业策略, 定价模型]
+---
+
 # AI 成本趋势与护城河分析
 
 **调研日期**: 2026-04-11
