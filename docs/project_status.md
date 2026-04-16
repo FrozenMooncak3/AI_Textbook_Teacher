@@ -5,11 +5,11 @@
 
 ---
 
-## 当前状态（2026-04-15）
+## 当前状态（2026-04-16）
 
 **方向**：MVP 扩展三线推进——扫描 PDF（**已完成**）→ 教学系统 → 留存机制，串行执行
 
-**当前里程碑**：云部署（基础设施） — **10 个决策全部拍完**，下一步转正式 design spec + writing-plans 阶段 1
+**当前里程碑**：云部署（基础设施） — **阶段 1 已完成上线**（Vercel + Neon + R2），阶段 2（Cloud Run OCR）+ 阶段 3（域名+监控+secrets）待启动
 
 **排队中（基础设施 · 等云部署完再做）**：**Session-Init Token Optimization** — brainstorm + spec + plan 全部完成，**等云部署上线后启动施工**。
 - spec: `docs/superpowers/specs/2026-04-15-session-init-token-optimization-design.md`
@@ -34,7 +34,10 @@
 - 两种学习模式洞察 → `docs/journal/2026-04-11-two-learning-modes.md`
 - MVP 扩展时间线 → `docs/superpowers/plans/2026-04-11-mvp-expansion-timeline.md`
 
-**下一步**：**云部署里程碑**（基础设施，新立项）— 本地测试环境痛苦，产品负责人拍板切换"独立开发者云部署模式"。brainstorm WIP 在 `docs/superpowers/specs/2026-04-12-cloud-deployment-brainstorm-state.md`。
+**云部署里程碑进度**（基础设施）：
+- **阶段 1 ✅ 完成**（2026-04-16）：R2 文件存储 + Vercel 部署 + Neon Postgres + OCR 代码层兼容。生产冒烟通过（注册/登录/上传/PDF阅读器均可用，OCR 预期不可用）。10 tasks（T1-T7+T9 Codex 执行，T8 跳过，T10 用户+Claude 协作部署）。
+- **阶段 2 ⬜ 未开始**：Cloud Run OCR + CI/CD + Google Vision
+- **阶段 3 ⬜ 未开始**：自定义域名 + 监控 + Secrets 管理
 - 决策 1（OCR 处理方式）已拍：**Google Vision**（2026-04-14，调研 `docs/research/2026-04-14-cloud-ocr-options.md`）
 - 决策 2（Next.js 部署平台）已拍：**Vercel Hobby**（2026-04-14，调研 `docs/research/2026-04-14-cloud-deployment-platform-options.md`）
 - 决策 3（轻量 Python 服务器部署平台）已拍：**Google Cloud Run**（2026-04-14，调研 `docs/research/2026-04-14-cloud-python-server-options.md`）— MVP $0/月（永久免费层够用）+ 同家调 Vision API 延迟最低 + scale-to-zero 原生
@@ -49,8 +52,20 @@
 - 架构预留 4 条国内版分区硬约束（DB/文件存储/OCR/前端 i18n 配置化）
 - **下一步**：WIP state → 正式 design spec `docs/superpowers/specs/2026-04-12-cloud-deployment-design.md` → spec review 循环 → writing-plans 写阶段 1 plan
 
-**冻结中的里程碑**：
-- **教学系统**（决策 1-10 全部拍板 2026-04-14，design spec 已写，待 M4/M5 拆分详细 brainstorm）：WIP 在 `docs/superpowers/specs/2026-04-12-teaching-system-brainstorm-state.md`，design spec 在 `docs/superpowers/specs/2026-04-12-teaching-system-design.md`，云部署结束后启动 M4/M5
+**排队中的里程碑（等云部署上线后启动 dispatch）**：
+- **M4 教学系统最小闭环**（2026-04-16 设计全完成）：
+  - **L1 引擎核心 brainstorm 完成**（2026-04-15）：决策 1/3/4/6/12 已拍，spec §2-§4 已写
+  - **L2 UI 层 brainstorm 完成**（2026-04-16）：决策 8/9/10/11 已拍，spec §5.1-§5.4 已写 + subagent review 7 项修复通过
+  - **L3 延后**：决策 2/5/7/13（session 生命周期/cost tracking/中断恢复/任务拆分），L1+L2 实施稳定后再拍
+  - **Implementation plan 完成**：L1 Task 0-11（Codex 后端）+ L2 Task 12-19（Codex 3 API + Gemini 7 前端 task）+ Task D1-D3（Claude 文档）
+  - plan: `docs/superpowers/plans/2026-04-15-m4-teaching-mode.md`
+  - spec: `docs/superpowers/specs/2026-04-15-m4-teaching-mode-design.md`
+  - WIP trail: `docs/superpowers/specs/2026-04-15-m4-teaching-mode-brainstorm-state.md`
+  - 护城河原则写入项目记忆：KP type / importance 永不暴露到 UI
+  - **启动条件**：云部署上线 + 验收通过 → 开新 session，L1 Codex dispatch + L2 Tier A Gemini 可并行
+  - 关键新组件：BookTOC（书级目录+引导态）、ObjectivesList（Phase 0 激活页）、ModeSwitchDialog（模式切换弹窗）、Modal（通用弹窗）
+
+**冻结中**：
 - **扫描 PDF 端到端人工测试**：因本地 OCR server 起不来推迟，改为云环境测试
 
 **里程碑收尾**：
@@ -81,6 +96,7 @@
 | UX Redesign | Amber Companion 设计系统全覆盖 + 页面合并 + 考试/复习重写 + 共享组件 | **已完成**（2026-04-09） |
 | Component Library | 33 组件从 Stitch 落地 + 全页面重写 + 旧组件清理 + Radix UI | **已完成**（2026-04-09） |
 | Scanned PDF | 文字+扫描混合 PDF 渐进处理 + 模块级状态 + 前端可阅读态 | **已完成**（2026-04-12） |
+| Cloud Deploy P1 | R2 文件存储 + Vercel 部署 + Neon Postgres + OCR 代码层兼容 | **已完成**（2026-04-16） |
 
 ### Scanned PDF 完成内容
 

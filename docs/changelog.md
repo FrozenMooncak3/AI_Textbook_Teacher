@@ -4,6 +4,36 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-16 | 云部署阶段 1 — 数据层上云（R2 + Vercel + Neon）
+
+**目的**：本地 Docker 开发环境痛苦（OCR 模型占 1GB+，每次重建 10 分钟），产品负责人拍板切"独立开发者云部署模式"。阶段 1 只迁数据层，OCR 留本地 Docker（阶段 2 上 Cloud Run）。
+
+核心变更（10 tasks，Codex 执行，Claude 审查）：
+- **T1**: `@aws-sdk/client-s3` + `s3-request-presigner` 依赖（b7f6d17）
+- **T2**: `src/lib/r2-client.ts` — R2 S3 helper（PUT / presigned GET / delete）+ 单元测试（54cd815）
+- **T3**: `/api/books` 上传写 R2 替代本地磁盘，对象路径 `books/{bookId}/original.pdf`（70e2d2f）
+- **T4**: `/api/books/[bookId]/pdf` → 302 redirect 到 R2 presigned URL（1h TTL）（b531d5e）
+- **T5**: Python OCR 3 端点接受 `r2_object_key`（boto3 下载到 tmpdir + finally 清理）（d89ef6e）
+- **T6**: Next.js OCR fetch 字段 `pdf_path` → `r2_object_key`（bf8f264）
+- **T7**: Dockerfile.ocr 加 boto3 + docker-compose.yml 注入 R2 env + .env.example 更新（9ac0b81）
+- **T8**: [SKIPPED] 本地端到端冒烟（无 Docker Desktop + 阶段 1 线上无 OCR 路径）
+- **T9**: `scripts/init-neon-schema.ts` one-shot schema 推 Neon（1fd9545）
+- **T10**: Vercel 部署 — Neon Integration + 9 env vars + Redeploy + 生产冒烟通过
+
+生产冒烟验收（2026-04-16）：
+- ✅ 注册/登录（新 Neon，frozenmooncak3@gmail.com）
+- ✅ 上传 1.8MB PDF → R2 bucket 有 `books/3/original.pdf`
+- ✅ PDF 阅读器 302 redirect 显示 PDF
+- ✅ OCR "Failed to fetch" = 预期行为（阶段 2 Cloud Run 部署后消失）
+- ⚠️ Vercel Hobby 4.5MB 请求体上限，大 PDF 需阶段 2 前端直传 R2 或升 Pro
+
+基础设施：
+- Vercel Hobby（frozenmooncak3's projects）+ Neon Integration（us-east-1 auto-branch）
+- Cloudflare R2 bucket `ai-textbook-pdfs`（Account ID / Access Key / Secret + S3 API）
+- 本地 Docker Compose 保持兼容（同一份 master 代码两地跑）
+
+---
+
 ## 2026-04-15 | Session-Init Token Optimization — brainstorm + design spec 完成
 
 **目的**：session-init 开机消耗 20-30% context（继续涨会撞 compact 阈值），brainstorming Mandatory Read List 也在膨胀。同时承接 2026-04-09 parked 的"记忆清除 skill"。目标降到 ≤10%（实测目标 ~3%），但**保留**"知道每件事存在"的全局视野。

@@ -295,18 +295,33 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - `initDb()` 读 `schema.sql`（CREATE TABLE IF NOT EXISTS）+ `seedTemplates()`（幂等 UPSERT）
 - 保护条件：`NEXT_RUNTIME === 'nodejs'`，避免 Edge runtime 导入 pg
 
-### 部署架构（M6 + Scanned PDF 升级 2026-04-12）
+### 部署架构（云部署阶段 1 完成 2026-04-16）
 
-- **三容器 Docker Compose**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（PaddleOCR + PyMuPDF + psycopg2 + pymupdf4llm）
-- **环境变量**：
-  - **App**：`DATABASE_URL`, `ANTHROPIC_API_KEY`, `AI_MODEL`, `OCR_SERVER_HOST`, `OCR_SERVER_PORT`
-  - **OCR**：`OCR_PROVIDER`（默认 `paddle`，可切 `google`）, `GOOGLE_CLOUD_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS`（仅 google provider 需要）, `DATABASE_URL`
-- **持久化卷**：pgdata（数据库）+ uploads（用户 PDF，app 和 ocr 共享）
-- **OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/{classify-pdf,extract-text,ocr-pdf,ocr}`，本地默认 127.0.0.1:8000
-- **副产品字段**：`books.text_pages_count` / `scanned_pages_count` 由 OCR 的 classify 阶段填入，TypeScript 代码目前未消费（云上可用于成本监控）
+**生产环境（Vercel + Neon + R2）**：
+- **前端/API**：Vercel Hobby（Next.js standalone）— 自动 CI/CD on push to master
+- **数据库**：Neon Serverless Postgres（us-east-1）— Vercel Integration 自动注入 `DATABASE_URL`，Preview 环境自动 DB branch
+- **文件存储**：Cloudflare R2 bucket `ai-textbook-pdfs` — S3 兼容 API，对象路径 `books/{bookId}/original.pdf`
+- **PDF 服务**：`/api/books/[bookId]/pdf` → 302 redirect 到 R2 presigned URL（1h TTL），绕开 Vercel 4.5MB 响应限制
+- **OCR**：阶段 1 不可用（`OCR_SERVER_HOST=127.0.0.1` 占位，阶段 2 切 Cloud Run）
 
-**⚠️ 上云部署约束**（下个里程碑「云部署」brainstorm 入口）：
-- OCR server 内存需求 ≥ 1GB（PaddleOCR 模型加载）；首次启动需下载模型，冷启动慢
-- `uploads` volume 共享依赖：若 app 与 ocr 分开部署（跨主机），PDF 文件传递方式需重设计（URL / 对象存储 / 流式上传）
-- OCR server 端点当前无认证，Docker 内网可用；暴露到公网必须加 auth 或放 VPC 内
-- `DATABASE_URL` 被 app 和 ocr 两侧都直连，Neon pooler 连接数限制要考虑
+**本地开发环境（Docker Compose，保持兼容）**：
+- **三容器**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（PaddleOCR + PyMuPDF + psycopg2 + pymupdf4llm + boto3）
+- **持久化卷**：pgdata（数据库）+ uploads（仅本地遗留，新上传走 R2）
+
+**环境变量（生产 Vercel）**：
+- **Neon 自动注入**：`DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PGHOST`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_*`
+- **手动配置**：`ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `AI_MODEL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `OCR_SERVER_HOST`, `OCR_SERVER_PORT`
+
+**环境变量（本地 Docker）**：
+- **App**：`DATABASE_URL`, `ANTHROPIC_API_KEY`, `AI_MODEL`, `OCR_SERVER_HOST`, `OCR_SERVER_PORT`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`
+- **OCR**：`OCR_PROVIDER`, `DATABASE_URL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`
+
+**OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/{classify-pdf,extract-text,ocr-pdf,ocr}`
+- PDF 端点接受双键：`r2_object_key`（优先，R2 下载到 tmpdir）/ `pdf_path`（遗留本地路径 fallback）
+- 副产品字段：`books.text_pages_count` / `scanned_pages_count` 由 classify 阶段填入
+
+**⚠️ 阶段 2 待办约束**：
+- Vercel Hobby 请求体上限 4.5MB — 大 PDF 上传需要前端直传 R2（presigned PUT）或升级 Pro
+- OCR server 内存需求 ≥ 1GB（PaddleOCR 模型加载）；Cloud Run 需配足 memory
+- OCR server 端点无认证，Cloud Run 部署需加 IAM 或 VPC connector
+- Neon pooler 连接数限制：app + OCR 双侧直连需监控
