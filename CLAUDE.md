@@ -99,10 +99,11 @@
 - 不确定时明说，不用技术自信掩盖判断模糊
 
 ## Skill 使用
-每次会话开始，调用 session-init skill。它包含 CEO 仪表盘、运行规则和完整的 skill 使用手册。
-详见 `.claude/skills/session-init/SKILL.md`。
+每次会话首次启动时调用 session-init skill（CEO 仪表盘 + git 状态 + INDEX 扫描）。运行规则通过 CLAUDE.md `@import` 自动加载（`session-rules` skill）；skill 使用手册按需加载（`skill-catalog` skill）。Compact/resume 后 session-init 通过 `.ccb/session-marker` 自动跳过，只刷新仪表盘。详见 `.claude/skills/session-init/SKILL.md`。
 
 **调研能力**：做关键决策前（3+ 选项 / 难反悔 / 跨领域 / 用户明确要求），brainstorming skill 会自动触发 `research-before-decision` skill。新 skill 硬执行 "CLAUDE.md 5 问表格"、权威加权源质量（S 级 = 满足 6 条信号中 ≥3 条）、每维度派 sub-agent 并行调研、落盘到 `docs/research/` 作为项目知识库。详见 `.claude/skills/research-before-decision/SKILL.md`。
 
 ## 已关闭的决策
 详见 `docs/decisions.md`，不重新讨论。
+
+@.claude/skills/session-rules/SKILL.md
