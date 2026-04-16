@@ -4,6 +4,32 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-17 | Session-Init Token Optimization — 全 3 周完成
+
+**目的**：session-init 开机占 context 20-30%，brainstorming 读全量 docs 浪费 token。目标：开机 ≤10%，brainstorming 首轮增量 ≤5k token。
+
+**Week 1（INDEX 基础设施）**：
+- `docs/conventions/frontmatter-schema.md` — 5 必填字段 + parked urgency（76210d8）
+- 38 journal + 29 research + 68 specs/plans 全量 frontmatter 补齐（5ecc16d, 0873796, a371ace）
+- 15 decisions + 56 journal INDEX 加 keywords（8f3d104）
+- `docs/research/INDEX.md`（31 entries, 7 clusters）+ `docs/superpowers/INDEX.md`（68 entries）（dd7869d, 0235b42）
+- `docs/architecture.md` §0 摘要卡（~1.5k tokens）（ae0cabb）
+
+**Week 2（核心重构）**：
+- 3 新 skill：session-rules（@import 始终加载）/ skill-catalog（按需）/ ccb-protocol-reference（ea9f468, 02c2c5f, 6eb6ff5）
+- session-init 瘦身 237→141 行：删 Step 4/5 + 加 marker 跳过 + 换 INDEX 读取（65b20b9）
+- CLAUDE.md @import session-rules + Skill 使用段落重写（7f79705）
+- brainstorming Mandatory Read List 换摘要卡 + INDEX keyword 匹配（e4de8ba）
+- 4 producer skill 加 INDEX 维护步骤（5acb6fd）
+- claudemd-check 加 INDEX 同步 + frontmatter 检查（6b97121）
+
+**Week 3（收尾）**：
+- memory-cleanup skill（archive-not-delete, y/n gating）（55ed20a）
+- INDEX 100% 覆盖验证通过（0 MISSING）
+- 待用户实测：新 session /context token 占比
+
+---
+
 ## 2026-04-16 | 云部署阶段 1 — 数据层上云（R2 + Vercel + Neon）
 
 **目的**：本地 Docker 开发环境痛苦（OCR 模型占 1GB+，每次重建 10 分钟），产品负责人拍板切"独立开发者云部署模式"。阶段 1 只迁数据层，OCR 留本地 Docker（阶段 2 上 Cloud Run）。

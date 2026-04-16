@@ -61,6 +61,8 @@
 - [infra:resolved] task-execution skill 已实现——统一执行引擎（dispatch→review→retry→close 全自动），替代手动串联 dispatch/review chain（2026-04-04）`[task-execution, skill, dispatch-engine, CCB-automation]` → [2026-04-04-execution-skill.md](./2026-04-04-execution-skill.md)
 - [audit] M5.5 milestone-audit 通过：App Shell + ProcessingPoller + 错误边界全量验证，architecture.md 与代码一致（2026-04-04）`[M5.5, milestone-audit, AppShell, ProcessingPoller]` → [2026-04-04-m5.5-milestone-audit.md](./2026-04-04-m5.5-milestone-audit.md)
 - [audit] M5 milestone-audit 通过：architecture.md 与代码一致，3 条新契约已文档化，⚠️ test/submit error_type 未变（2026-04-03）`[M5, milestone-audit, architecture.md, API-contracts]` → [2026-04-03-m5-milestone-audit.md](./2026-04-03-m5-milestone-audit.md)
+- [testing:resolved] M5 测试发现全局缺导航 UX 问题（2026-04-03）`[UX, 导航, M5测试, 返回键, 全局布局]` → [2026-04-03-m5-testing-ux.md](./2026-04-03-m5-testing-ux.md)
+- [brainstorm:resolved] UX 全面重设计 brainstorm（2026-04-07）`[UX重设计, Action Hub, 书首页, 设计决策]` → [2026-04-07-ux-redesign-brainstorm.md](./2026-04-07-ux-redesign-brainstorm.md)
 - [M5完成] 评分后显示正确答案：T4/T7 实现（review/respond + test/submit 返回 correct_answer/explanation，前端展示）（2026-04-03）`[M5, correct-answer, review-respond, test-submit]`
 - [M5完成] 错题本功能：T5/T8 实现（书级 mistakes API + 多维筛选前端页面）（2026-04-03）`[M5, mistakes-book, filtering, API]`
 - [M5完成] 测试 Dashboard：T5/T8 实现（dashboard API + 四宫格仪表盘页面）（2026-04-03）`[M5, test-dashboard, dashboard-API, four-panel]`

@@ -5,19 +5,20 @@
 
 ---
 
-## 当前状态（2026-04-16）
+## 当前状态（2026-04-17）
 
 **方向**：MVP 扩展三线推进——扫描 PDF（**已完成**）→ 教学系统 → 留存机制，串行执行
 
 **当前里程碑**：云部署（基础设施） — **阶段 1 已完成上线**（Vercel + Neon + R2），阶段 2（Cloud Run OCR）+ 阶段 3（域名+监控+secrets）待启动
 
-**排队中（基础设施 · 等云部署完再做）**：**Session-Init Token Optimization** — brainstorm + spec + plan 全部完成，**等云部署上线后启动施工**。
-- spec: `docs/superpowers/specs/2026-04-15-session-init-token-optimization-design.md`
-- plan: `docs/superpowers/plans/2026-04-15-session-init-token-optimization.md`（24 tasks，3 周路线，全 Claude 直接执行）
-- 目标：开机 token 20-30% → ≤10%（实测目标 ~3%）；brainstorming 首轮 ≤5k token
-- 路线 D（多层 INDEX + frontmatter schema + memory-cleanup skill + obra/ECC/claude-mem 零件级借鉴）
-- CCB/MCP 永久不兼容已写入架构记录
-- **启动条件**：云部署 3 阶段（数据层 / OCR / 域名+监控+secrets）全部上线 + 验收通过 → 开新 session 直接按 plan Week 1 起跑
+**已完成（基础设施）**：**Session-Init Token Optimization** — Week 1-3 全部完成（2026-04-17）
+- 3 个新 skill 创建（session-rules / skill-catalog / ccb-protocol-reference）+ memory-cleanup skill
+- session-init 从 237 行瘦身到 141 行（-40%），Step 4/5 外迁 + marker 跳过机制
+- CLAUDE.md @import session-rules，运行规则始终加载
+- 3 个 INDEX 文件（journal/research/superpowers）全量覆盖 + frontmatter schema 标准化
+- architecture.md §0 摘要卡，brainstorming 默认只读摘要卡
+- 6 个 skill 更新（brainstorming/research/writing-plans/journal/claudemd-check/task-execution）
+- 待用户验证：新 session /context token 实测（目标 ≤10%）
 
 **最新完成**：
 - **调研能力建设完成**（2026-04-15，3 commits 未 push）：新 skill `research-before-decision`（49946e9）+ brainstorming 升级 Research Trigger Check & BS-1 增量 spec（99ee882）+ CLAUDE.md 指针接入（03d206d）。解决 2026-04-14 OCR 决策捏造定价事件，关键决策前强制走 triage + S 级源 + sub-agent 并行 + 5 问硬 gate

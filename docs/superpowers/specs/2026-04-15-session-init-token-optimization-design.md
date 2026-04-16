@@ -2,7 +2,7 @@
 date: 2026-04-15
 topic: Session-Init Token优化设计
 type: spec
-status: in_progress
+status: resolved
 keywords: [session-init, token-optimization, frontmatter, index, memory-cleanup]
 ---
 

@@ -5,11 +5,11 @@
 ## Specs
 
 ### 进行中（in_progress）
-- [2026-04-15] Session-Init Token优化设计 `[session-init, token-optimization, frontmatter, index, memory-cleanup]` → [spec](specs/2026-04-15-session-init-token-optimization-design.md)
 - [2026-04-15] M4教学模式最小闭环设计 `[M4, teaching-mode, teacher-AI, transcript, prompt]` → [spec](specs/2026-04-15-m4-teaching-mode-design.md)
 - [2026-04-12] 云部署里程碑设计 `[cloud, deployment, Supabase, Docker, three-phase]` → [spec](specs/2026-04-12-cloud-deployment-design.md)
 
 ### 已完成（resolved）
+- [2026-04-15] Session-Init Token优化设计 `[session-init, token-optimization, frontmatter, index, memory-cleanup]` → [spec](specs/2026-04-15-session-init-token-optimization-design.md)
 - [2026-04-15] M4教学模式Brainstorm进度追踪 `[M4, teaching-mode, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-15-m4-teaching-mode-brainstorm-state.md)
 - [2026-04-15] Token优化Brainstorm进度追踪 `[session-init, token-optimization, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-15-session-init-token-optimization-brainstorm-state.md)
 - [2026-04-14] 调研能力Skill设计 `[research, skill, authority-weighting, brainstorming, sub-agent]` → [spec](specs/2026-04-14-research-capability-design.md)
@@ -49,11 +49,11 @@
 ## Plans
 
 ### 进行中（in_progress）
-- [2026-04-15] Session-Init Token Optimization 实施计划 `[session-init, token, index, frontmatter, memory-cleanup]` → [plan](plans/2026-04-15-session-init-token-optimization.md)
 - [2026-04-15] M4教学模式最小闭环 `[M4, teaching-mode, teacher-AI, prompt, transcript]` → [plan](plans/2026-04-15-m4-teaching-mode.md)
 - [2026-04-15] 云部署阶段1数据层上云 `[cloud, deployment, database, Supabase, phase-1]` → [plan](plans/2026-04-15-cloud-deployment-phase1.md)
 
 ### 已完成（resolved）
+- [2026-04-15] Session-Init Token Optimization 实施计划 `[session-init, token, index, frontmatter, memory-cleanup]` → [plan](plans/2026-04-15-session-init-token-optimization.md)
 - [2026-04-15] 调研能力Skill构建 `[research, skill, authority-weighting, brainstorming]` → [plan](plans/2026-04-15-research-capability.md)
 - [2026-04-12] 扫描PDF处理升级计划 `[scanned-PDF, OCR, progressive-unlock, classification]` → [plan](plans/2026-04-12-scanned-pdf-plan.md)
 - [2026-04-11] MVP扩展三线时间线 `[MVP, expansion, timeline, scanned-PDF, teaching, retention]` → [plan](plans/2026-04-11-mvp-expansion-timeline.md)

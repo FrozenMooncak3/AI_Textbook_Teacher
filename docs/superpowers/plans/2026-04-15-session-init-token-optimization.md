@@ -2,7 +2,7 @@
 date: 2026-04-15
 topic: Session-Init Token Optimization 实施计划
 type: plan
-status: in_progress
+status: resolved
 keywords: [session-init, token, index, frontmatter, memory-cleanup]
 ---
 
