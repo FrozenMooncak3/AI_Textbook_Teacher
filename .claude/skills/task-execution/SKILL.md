@@ -232,6 +232,7 @@ Only upgrade, never downgrade. Update ledger `review_level` if upgraded.
    - Requirements: acceptance criteria from dispatch
    - Git range: base..head commits
    - Instruction: classify issues as Blocking / Advisory / Informational
+   - **语言要求（硬约束）**：subagent prompt 最后一段必须显式要求"用中文书写所有 finding 描述和 summary"，只保留以下英文：severity 分类名（Blocking / Advisory / Informational）、verdict 枚举（PASS / RETRY / ESCALATE）、文件路径、命令、SDK / API 名称、错误原文
 
 2. **Claude quality pass.** Read the diff yourself. Check:
    - Does implementation match the design intent (not just the letter of the spec)?
@@ -277,22 +278,22 @@ Output this block to the user verbatim (fill in the bracketed parts):
 
 ```
 ═══ T[N] Review ═══
-Level: [Full / Spot Check / Auto-Pass]  (upgraded from [X])   ← only if upgraded
-Diff: [N files, +X -Y]
-Files: [comma-separated file list]
+级别：[Full / Spot Check / Auto-Pass]  （从 [X] 升级）   ← only if upgraded
+变更：[N 文件, +X -Y]
+文件：[逗号分隔文件列表]
 
-Subagent [full review only]:
-  • [finding 1 — classified]
-  • [finding 2 — classified]
-  • [if nothing: "clean — all N criteria ✅"]
+Subagent（仅 Full）：
+  • [finding 1 — 已分类]
+  • [finding 2 — 已分类]
+  • [如无问题：「干净 — N/N 条验收标准 ✅」]
 
-Claude quality pass:
-  • [finding 1 — classified]
-  • [if agreeing with subagent: "同意 subagent,无新增发现"]
-  • [if downgrading any subagent finding: "降级 X: 理由..."]
+Claude 质量复核：
+  • [finding 1 — 已分类]
+  • [如同意 subagent：「同意 subagent，无新增发现」]
+  • [如降级 subagent 任一 finding：「降级 X：理由……」]
 
-Blocking: [N] | Advisory: [N] | Informational: [N]
-裁决: PASS / RETRY (attempt X/3) / ESCALATE
+Blocking：[N] | Advisory：[N] | Informational：[N]
+裁决：PASS / RETRY（第 X/3 次）/ ESCALATE
 ════════════════════
 ```
 
@@ -301,6 +302,7 @@ Blocking: [N] | Advisory: [N] | Informational: [N]
 2. If you downgrade a subagent finding, explicitly log the reason (prevents silent quality erosion)
 3. Write the full summary (subagent + Claude findings + verdict) into ledger `review_summary` field (see schema). This is how session recovery / future audits see what happened.
 4. If `review_level` was upgraded in Step 3.1, note it on the `Level:` line
+5. **语言要求（硬约束）**：所有 finding / notes / verdict 说明一律用中文；模板标签、`subagent_findings` / `claude_findings` / `notes` 字段内容全中文。仅以下可保留英文：severity 分类名（Blocking / Advisory / Informational）、verdict 枚举（pass / retry / escalate）、文件路径、命令、SDK / API 名称、错误原文、commit hash。违反此条 = skill 违规。
 
 Also write the same summary content into the ledger entry (see updated schema below).
 
@@ -445,19 +447,21 @@ Populated in Step 3.4 when a review completes. Null until then. Schema:
 ```json
 "review_summary": {
   "level_used": "full",
-  "diff_stat": "3 files, +529 -0",
+  "diff_stat": "3 文件, +529 -0",
   "subagent_findings": [
-    "Advisory: ... — [reasoning]",
-    "Informational: ..."
+    "Advisory: 某某函数命名不一致 — [理由]",
+    "Informational: ……"
   ],
   "claude_findings": [
-    "No new blocking. Agree with subagent.",
-    "Downgraded subagent's 'X' from Blocking to Advisory because [reason]"
+    "同意 subagent,无新增 Blocking",
+    "降级 subagent 'X' 从 Blocking 到 Advisory,理由 [解释]"
   ],
   "verdict": "pass",
-  "notes": "Free-form short note, e.g., 'Retry #1 — fixed cluster dedup'"
+  "notes": "简短自由文本,例如「Retry #1 — 修掉 cluster dedup」"
 }
 ```
+
+**字段语言约束**：`subagent_findings` / `claude_findings` / `notes` 一律中文；`level_used` / `verdict` 用英文枚举（full / spot_check / auto_pass / pass / retry / escalate）；`diff_stat` 可中英混写（数字 + 单位）。
 
 On retry, overwrite the previous review_summary (old one becomes the retry's reason, captured in `notes`).
 
