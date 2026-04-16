@@ -1,0 +1,83 @@
+# Superpowers Index
+
+> 所有 specs / plans 的全局索引。brainstorming / writing-plans skill 落盘时自动更新。
+
+## Specs
+
+### 进行中（in_progress）
+- [2026-04-15] Session-Init Token优化设计 `[session-init, token-optimization, frontmatter, index, memory-cleanup]` → [spec](specs/2026-04-15-session-init-token-optimization-design.md)
+- [2026-04-15] M4教学模式最小闭环设计 `[M4, teaching-mode, teacher-AI, transcript, prompt]` → [spec](specs/2026-04-15-m4-teaching-mode-design.md)
+- [2026-04-12] 云部署里程碑设计 `[cloud, deployment, Supabase, Docker, three-phase]` → [spec](specs/2026-04-12-cloud-deployment-design.md)
+
+### 已完成（resolved）
+- [2026-04-15] M4教学模式Brainstorm进度追踪 `[M4, teaching-mode, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-15-m4-teaching-mode-brainstorm-state.md)
+- [2026-04-15] Token优化Brainstorm进度追踪 `[session-init, token-optimization, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-15-session-init-token-optimization-brainstorm-state.md)
+- [2026-04-14] 调研能力Skill设计 `[research, skill, authority-weighting, brainstorming, sub-agent]` → [spec](specs/2026-04-14-research-capability-design.md)
+- [2026-04-14] 调研能力Brainstorm进度追踪 `[research, brainstorm, WIP, authority-weighting, compact-defense]` → [spec](specs/2026-04-14-research-capability-brainstorm-state.md)
+- [2026-04-12] 扫描PDF功能升级设计 `[scanned-PDF, OCR, classification, progressive-unlock]` → [spec](specs/2026-04-12-scanned-pdf-design.md)
+- [2026-04-12] 教学系统顶层设计 `[teaching-system, architecture, data-model, API-contract, phasing]` → [spec](specs/2026-04-12-teaching-system-design.md)
+- [2026-04-12] 教学系统Brainstorm进度追踪 `[teaching-system, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-12-teaching-system-brainstorm-state.md)
+- [2026-04-12] 云部署Brainstorm进度追踪 `[cloud, deployment, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-12-cloud-deployment-brainstorm-state.md)
+- [2026-04-09] 组件库从Stitch提取设计 `[component-library, Stitch, extraction, design-tokens, React]` → [spec](specs/2026-04-09-component-library-design.md)
+- [2026-04-09] 前端架构参考手册 `[frontend, architecture, shadcn, design-token, component-library]` → [spec](specs/frontend-architecture-guide.md)
+- [2026-04-08] UX重设计最终Spec `[UX, redesign, design-spec, Stitch, Amber-Companion]` → [spec](specs/2026-04-08-ux-redesign-spec.md)
+- [2026-04-08] Amber Companion设计令牌 `[design-tokens, Stitch, CSS, Tailwind, Amber-Companion]` → [spec](specs/design-tokens.md)
+- [2026-04-08] Stitch生成提示词集 `[Stitch, prompts, UX-redesign, wireframe, Amber-Companion]` → [spec](specs/stitch-prompts.md)
+- [2026-04-07] UX重设计Brainstorm交接文档 `[UX, brainstorm-chain, redesign, Amber-Companion]` → [spec](specs/2026-04-07-ux-redesign-chain.md)
+- [2026-04-06] M6 MVP发布设计 `[M6, MVP, launch, deployment, Docker]` → [spec](specs/2026-04-06-m6-mvp-launch-design.md)
+- [2026-04-04] M5.5稳定化与App Shell设计 `[M5.5, stabilization, navigation, loading-state, app-shell]` → [spec](specs/2026-04-04-m5.5-stabilization-design.md)
+- [2026-04-04] 统一任务执行Skill设计 `[task-execution, dispatch, review, state-tracking, CCB]` → [spec](specs/2026-04-04-task-execution-design.md)
+- [2026-04-03] M5功能补完设计 `[M5, feature-completion, dashboard, mistakes, markdown]` → [spec](specs/2026-04-03-m5-feature-completion-design.md)
+- [2026-04-03] architecture.md守护体系设计 `[milestone-audit, architecture, verification, closed-loop]` → [spec](specs/2026-04-03-milestone-audit-design.md)
+- [2026-04-02] 架构地图系统设计 `[architecture, dependency-map, cross-module, verification]` → [spec](specs/2026-04-02-architecture-map-design.md)
+- [2026-04-02] CCB文件消息系统设计 `[CCB, file-messaging, inbox, coordination]` → [spec](specs/2026-04-02-ccb-file-messaging-design.md)
+- [2026-04-02] M3.5里程碑衔接修复设计 `[M3.5, bridge, interface-gap, M3-M4, data-fix]` → [spec](specs/2026-04-02-m3.5-bridge-fixes-design.md)
+- [2026-04-02] M4复习系统设计 `[M4, review, spaced-repetition, scheduling, P-value]` → [spec](specs/2026-04-02-m4-review-system-design.md)
+- [2026-03-31] M3考官AI设计 `[M3, examiner, test-generation, scoring, pass-fail]` → [spec](specs/2026-03-31-m3-examiner-ai-design.md)
+- [2026-03-29] 多模型API抽象层设计 `[multi-model, Vercel-AI-SDK, abstraction, provider]` → [spec](specs/2026-03-29-multi-model-abstraction-design.md)
+- [2026-03-29] Session-Init升级+Skill治理设计 `[session-init, CEO-dashboard, skill-governance, cleanup]` → [spec](specs/2026-03-29-session-init-upgrade-design.md)
+- [2026-03-28] M2教练AI核心设计 `[M2, coach, Q&A, reading-guide, study-notes]` → [spec](specs/2026-03-28-m2-coach-ai-design.md)
+- [2026-03-28] Claude Hooks自动化设计 `[hooks, automation, quality-check, structured-dispatch]` → [spec](specs/2026-03-28-claude-hooks-design.md)
+- [2026-03-28] Codex/Gemini Skill安装设计 `[codex, gemini, skill, installation, CCB]` → [spec](specs/2026-03-28-codex-gemini-skills-design.md)
+- [2026-03-28] 外部仓库调研总结 `[research, open-source, patterns, Claude-Code]` → [spec](specs/2026-03-28-repo-research-findings.md)
+- [2026-03-28] Session Init+Skill链+回顾设计 `[session-init, skill-chaining, retrospective, automation]` → [spec](specs/2026-03-28-session-init-retrospective-design.md)
+- [2026-03-22] 结构化错误处理+服务层设计 `[error-handling, service-layer, API, infrastructure, M0]` → [spec](specs/2026-03-22-error-handling-service-layer-design.md)
+- [2026-03-21] CCB+Skill体系架构重构设计 `[CCB, skill, architecture, migration, three-tier]` → [spec](specs/2026-03-21-architecture-redesign-design.md)
+- [2026-03-21] 会话日志系统设计 `[journal, logging, session, decision-tracking]` → [spec](specs/2026-03-21-journal-system-design.md)
+- [2026-03-21] MVP重新设计AI教材精学 `[MVP, redesign, learning-flow, product-spec]` → [spec](specs/2026-03-21-mvp-redesign-design.md)
+
+## Plans
+
+### 进行中（in_progress）
+- [2026-04-15] Session-Init Token Optimization 实施计划 `[session-init, token, index, frontmatter, memory-cleanup]` → [plan](plans/2026-04-15-session-init-token-optimization.md)
+- [2026-04-15] M4教学模式最小闭环 `[M4, teaching-mode, teacher-AI, prompt, transcript]` → [plan](plans/2026-04-15-m4-teaching-mode.md)
+- [2026-04-15] 云部署阶段1数据层上云 `[cloud, deployment, database, Supabase, phase-1]` → [plan](plans/2026-04-15-cloud-deployment-phase1.md)
+
+### 已完成（resolved）
+- [2026-04-15] 调研能力Skill构建 `[research, skill, authority-weighting, brainstorming]` → [plan](plans/2026-04-15-research-capability.md)
+- [2026-04-12] 扫描PDF处理升级计划 `[scanned-PDF, OCR, progressive-unlock, classification]` → [plan](plans/2026-04-12-scanned-pdf-plan.md)
+- [2026-04-11] MVP扩展三线时间线 `[MVP, expansion, timeline, scanned-PDF, teaching, retention]` → [plan](plans/2026-04-11-mvp-expansion-timeline.md)
+- [2026-04-09] 组件库从Stitch提取实施 `[component-library, Stitch, React, CSS, extraction]` → [plan](plans/2026-04-09-component-library.md)
+- [2026-04-08] UX重设计Amber Companion `[UX, redesign, Amber-Companion, design-system, pages]` → [plan](plans/2026-04-08-ux-redesign.md)
+- [2026-04-06] M6 MVP发布部署计划 `[M6, MVP, launch, deployment, Docker]` → [plan](plans/2026-04-06-m6-mvp-launch-plan.md)
+- [2026-04-04] M5.5稳定化与App Shell `[M5.5, stabilization, app-shell, navigation, loading-state]` → [plan](plans/2026-04-04-m5.5-stabilization.md)
+- [2026-04-04] 统一任务执行Skill实施 `[task-execution, dispatch, review, CCB, skill]` → [plan](plans/2026-04-04-task-execution-plan.md)
+- [2026-04-03] M5功能补完让MVP可用 `[M5, feature-completion, dashboard, screenshot-ask, markdown]` → [plan](plans/2026-04-03-m5-feature-completion.md)
+- [2026-04-03] architecture.md守护体系 `[milestone-audit, architecture, verification, skill]` → [plan](plans/2026-04-03-milestone-audit-plan.md)
+- [2026-04-02] M4复习系统实施计划 `[M4, review, spaced-repetition, P-value, scheduling]` → [plan](plans/2026-04-02-m4-review-system.md)
+- [2026-04-02] 架构地图系统实施 `[architecture, dependency-tracking, documentation, break-points]` → [plan](plans/2026-04-02-architecture-map.md)
+- [2026-04-02] CCB文件消息系统替代ask `[CCB, file-messaging, inbox, coordination]` → [plan](plans/2026-04-02-ccb-file-messaging.md)
+- [2026-04-02] M3.5里程碑衔接修复 `[M3.5, bridge, interface-gap, M3-M4]` → [plan](plans/2026-04-02-m3.5-bridge-fixes.md)
+- [2026-03-31] M3考官AI测试与评分系统 `[M3, examiner, test, scoring, diagnosis]` → [plan](plans/2026-03-31-m3-examiner-ai.md)
+- [2026-03-29] 多模型API抽象层实施 `[multi-model, Vercel-AI-SDK, abstraction, provider]` → [plan](plans/2026-03-29-multi-model-abstraction.md)
+- [2026-03-29] Session-Init升级+Skill治理 `[session-init, CEO-dashboard, skill-governance, claudemd-check]` → [plan](plans/2026-03-29-session-init-upgrade.md)
+- [2026-03-28] M2教练AI核心学习循环 `[M2, coach, Q&A, reading, study-notes]` → [plan](plans/2026-03-28-m2-coach-ai.md)
+- [2026-03-28] M1知识点提取AI实施计划 `[M1, extractor, KP-extraction, PDF, AI]` → [plan](plans/2026-03-28-m1-extractor-ai.md)
+- [2026-03-28] Claude Hooks自动化质检 `[hooks, automation, quality-check, structured-dispatch]` → [plan](plans/2026-03-28-claude-hooks-automation.md)
+- [2026-03-28] Codex/Gemini Skill安装 `[codex, gemini, skill, CCB, installation]` → [plan](plans/2026-03-28-codex-gemini-skills.md)
+- [2026-03-28] Session Init+Skill链+回顾机制 `[session-init, skill-chaining, retrospective, automation]` → [plan](plans/2026-03-28-session-init-retrospective.md)
+- [2026-03-28] 教学系统深度调研Session简报 `[teaching-system, session-brief, research, design]` → [plan](plans/session-b-teaching-system-brief.md)
+- [2026-03-28] 扫描PDF执行Session简报 `[scanned-PDF, execution, session-brief, dispatch]` → [plan](plans/session-scanned-pdf-execution-brief.md)
+- [2026-03-22] M0错误处理与服务层基础 `[M0, error-handling, service-layer, API, infrastructure]` → [plan](plans/2026-03-22-m0-task0-error-handling-service-layer.md)
+- [2026-03-21] CCB+Skill体系架构重构 `[CCB, skill, architecture, migration, CLAUDE.md]` → [plan](plans/2026-03-21-architecture-redesign.md)
+- [2026-03-21] M0地基改造实施计划 `[M0, schema, migration, foundation, OCR]` → [plan](plans/2026-03-21-m0-foundation.md)
