@@ -45,7 +45,42 @@ description: CLAUDE.md 合规自检。自动触发：每次声称任务完成、
     如果本次会话涉及里程碑收尾，检查 `docs/journal/` 中是否有对应的 `m<N>-milestone-audit.md` 审计记录。没有则报 ✗ 并要求先执行 milestone-audit skill。
 
 11. **检查：Skill 合规**
-    读 session-init 的运行规则（Step 4），回顾本次 session 实际发生的事件，逐条检查是否遵守。只审计实际发生的事，未发生的跳过。检查依据是 session-init 的运行规则，不硬编码——规则变了，审计自动跟着变。
+    读 session-rules skill（通过 CLAUDE.md @import 始终加载），回顾本次 session 实际发生的事件，逐条检查是否遵守。只审计实际发生的事，未发生的跳过。检查依据是 session-rules 的运行规则，不硬编码——规则变了，审计自动跟着变。
+
+12. **检查：INDEX 同步**
+    扫描以下目录，每个目录里的文件必须在对应 INDEX 中有一行：
+
+    | 目录 | INDEX |
+    |------|-------|
+    | `docs/journal/*.md`（除 INDEX.md） | `docs/journal/INDEX.md` |
+    | `docs/research/*.md`（除 INDEX.md / README.md） | `docs/research/INDEX.md` |
+    | `docs/superpowers/specs/*.md` | `docs/superpowers/INDEX.md` |
+    | `docs/superpowers/plans/*.md` | `docs/superpowers/INDEX.md` |
+
+    ```bash
+    # journal
+    for f in docs/journal/*.md; do
+      bn=$(basename "$f" .md)
+      [ "$bn" = "INDEX" ] && continue
+      grep -q "$bn" docs/journal/INDEX.md || echo "MISSING in journal INDEX: $bn"
+    done
+    # research
+    for f in docs/research/*.md; do
+      bn=$(basename "$f" .md)
+      [ "$bn" = "INDEX" -o "$bn" = "README" ] && continue
+      grep -q "$bn" docs/research/INDEX.md || echo "MISSING in research INDEX: $bn"
+    done
+    # superpowers
+    for f in docs/superpowers/specs/*.md docs/superpowers/plans/*.md; do
+      bn=$(basename "$f" .md)
+      grep -q "$bn" docs/superpowers/INDEX.md || echo "MISSING in superpowers INDEX: $bn"
+    done
+    ```
+
+    任一项报 MISSING → 检查失败，补 INDEX 后重跑。
+
+13. **检查：Frontmatter schema**
+    扫描 `docs/journal/*.md`、`docs/research/*.md`、`docs/superpowers/specs/*.md`、`docs/superpowers/plans/*.md` 中**本次新增或修改的文件**，检查是否含 `keywords:` 字段。缺失 → 报错并要求补齐。
 
 ## 输出格式
 
@@ -66,6 +101,8 @@ CLAUDE.md 自检完成
   - brainstorming 后记录：已写 journal / 未 brainstorm，跳过
   - 完成前验证：已执行 / 本次未声称完成，跳过
   - Git 隔离：在隔离分支上 / 无进行中里程碑，跳过
+✓/✗ INDEX 同步：全部在索引中 / MISSING N 条
+✓/✗ Frontmatter：新文件含 keywords / 缺 N 个
 
 结果：全部通过 / N 项需修复
 ```
