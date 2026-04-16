@@ -5,6 +5,52 @@
 
 ---
 
+## 0. 摘要卡
+
+> brainstorming skill 默认只读这一章；详细内容按需查后续章节。
+
+### 页面结构
+`/` 首页 Dashboard | `/upload` 上传 | `/books/[bookId]` Action Hub + `/reader` + `/mistakes`
+`/modules/[moduleId]` 学习 + `/qa` + `/test` + `/review?scheduleId=X` + `/notes` + `/mistakes`
+Auth: `/login` `/register`（邀请码）| App Shell: 3 级 error.tsx + AppSidebar + LoadingState
+
+### DB 表（24 张）
+| 分类 | 表 |
+|------|----|
+| 认证 | users, invite_codes, sessions |
+| 用户 | books, modules, conversations, messages, highlights, reading_notes, module_notes |
+| 学习 | knowledge_points, clusters, qa_questions, qa_responses |
+| 测试 | test_papers, test_questions, test_responses, mistakes |
+| 复习 | review_schedule, review_records, review_questions, review_responses |
+| 系统 | prompt_templates, logs |
+
+### 核心 API
+- `POST /api/books` — PDF 上传 → R2 存储 → OCR classify → extract-text → 建模块 → KP 提取
+- `GET /api/books/[id]/module-status` — 模块级三元组状态（text/ocr/kp）
+- `POST /api/books/[id]/extract` — 手动触发 KP 提取（全书或 ?moduleId=N）
+- `GET /api/books/[id]/pdf` — 302 redirect 到 R2 presigned URL（1h TTL）
+- `POST /api/modules/[id]/generate-questions` — 教练出 QA 题
+- `POST /api/modules/[id]/test/generate` — 考官出测试题
+- `POST /api/review/[scheduleId]/generate` — 复习官出复习题
+- `GET /api/review/due` — 待复习列表
+
+### AI 角色（5 个）
+extractor（KP 提取 + 模块地图）| coach（指引 + QA + 反馈 + 笔记）| examiner（测试 + 评分 + 诊断）| reviewer（复习 + P 值）| assistant（截图问 AI）
+
+### 部署
+生产：Vercel Hobby + Neon Postgres(us-east-1) + Cloudflare R2 | OCR 阶段 2 待迁 Cloud Run
+本地：Docker Compose 三容器（app + db + ocr）
+
+### ⚠️ 核心约束
+- Vercel Hobby 请求体 4.5MB 上限 — 大 PDF 需前端直传 R2 或升级 Pro
+- OCR server 内存 ≥ 1GB（PaddleOCR）；Cloud Run 需配足
+- OCR 端点无认证 — Cloud Run 部署需 IAM/VPC
+- 大 PDF 分块阈值 35K 字符（20 行 overlap）
+- P 值方向：低=好（1=已掌握，4=最弱）
+- 学习流：unstarted → reading → qa → notes_generated → testing → completed
+
+---
+
 ## 系统总图
 
 ### 页面
