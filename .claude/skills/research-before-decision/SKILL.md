@@ -83,6 +83,7 @@ CLAUDE.md 标注"难以反悔"的决策**默认走 🔴**，不得降级。
 5. **确认源质量档位**：默认 §Source Quality Standard 的 S 级优先、允许降级显式标级
 6. **执行调研**：**每维度派一个 general-purpose sub-agent 并行跑**（见下方 Sub-Agent Dispatch），主 Claude 只做聚合。🟡 不进这一步
 7. **产出文件**：`docs/research/YYYY-MM-DD-<topic-slug>.md`（slug 小写英文连字符、ASCII-only），结构见 §Output File Format
+7.1. **更新 INDEX**：更新 `docs/research/INDEX.md`，按主题分组追加一行：`- [YYYY-MM-DD] <topic> \`[kw1, kw2]\` <triage 图标> → [link](<filename>)`
 8. **调研收尾自检**：S/A/B 源分布统计 + URL 逐个验证可打开 + 幻觉自查声明
 9. **5 问硬 gate 自检**：必须产出完整 5 问表格（模板 A）或完整 5 段（模板 B），缺任一条 = skill 违规，仅允许显式 `N/A: <原因>`。未通过返回步骤 6/7 补齐，不得进入步骤 10
 10. **返回调用方**

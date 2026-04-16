@@ -218,6 +218,7 @@ Append a mandatory closing section: S/A/B source counts, URL openability (✅/�
   2. **Also** append the locked decision's engineering content to the matching spec section (new rule)
   3. WIP carries rationale + rejected alternatives + decision trail; spec carries engineering deliverables. **Dual-write, not either/or.**
 - **7c · Final completeness check** — at end of step 8, before dispatching spec-document-reviewer: re-read the spec end to end, confirm every WIP decision has a spec section, zero `待定` markers remain, all cross-section refs resolve.
+- **7d · INDEX update** — 更新 `docs/superpowers/INDEX.md` Specs 段，追加新 spec 一行（in_progress 段下，含 keywords）。
 
 Step 9 (spec review loop) and everything after are unchanged.
 

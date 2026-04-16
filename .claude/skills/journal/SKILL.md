@@ -31,8 +31,11 @@ description: |
 ```markdown
 ---
 date: YYYY-MM-DD
-topic: 对话主题简述
-tags: [标签1, 标签2]
+topic: 对话主题简述（≤30 字中文）
+type: journal
+status: open | in_progress | parked | resolved
+keywords: [关键词1, 关键词2, 关键词3]
+urgency: normal | infra-affecting | trigger-date:YYYY-MM-DD  # 仅 parked 状态
 ---
 
 ## 决策 + 为什么
