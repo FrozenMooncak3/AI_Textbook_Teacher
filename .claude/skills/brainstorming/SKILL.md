@@ -40,19 +40,30 @@ You MUST create a task for each of these items and complete them in order:
 
 For milestone-level brainstorming, "explore project context" means reading these specific files:
 
-| File | Why |
-|------|-----|
-| `docs/architecture.md` | System state — pages, APIs, DB tables, AI roles, interface contracts, ⚠️ markers |
-| `docs/project_status.md` | Current progress, completed milestones, next step |
-| `docs/journal/INDEX.md` | Parked ideas that might be relevant to this milestone |
-| Previous milestone's spec (if any) | Prior design decisions |
-| Related source code | architecture.md tells you which files matter — read them to confirm contracts are still accurate |
-
-The first 4 are always read. The 5th is targeted based on architecture.md interface contracts.
+| File | Why | 备注 |
+|------|-----|------|
+| `docs/architecture.md` `## 0. 摘要卡` | 表名 + 接口契约 + ⚠️ 约束 | 全文按需 grep / 读相关章节 |
+| `docs/project_status.md` | Current progress, milestones, next step | session-init 已加载时可跳过 |
+| `docs/journal/INDEX.md` | Parked ideas + keywords | session-init 已加载时可跳过 |
+| `docs/superpowers/INDEX.md` | Specs / plans 索引 | 通过 keywords 匹配展开相关文件 |
+| `docs/research/INDEX.md` | 调研知识库索引 | 通过 keywords 匹配展开相关文件 |
+| Previous milestone's spec (if any) | Prior design decisions | 通过 INDEX keywords 匹配，不默认读全文 |
+| Related source code | 按摘要卡接口契约按需读 | 同上 |
 
 <HARD-GATE>
 For milestone-level work: if architecture.md and code are inconsistent, fix architecture.md FIRST before proceeding with design. Do not design on top of stale assumptions.
 </HARD-GATE>
+
+## INDEX 相关性判断（机制 B+C 轻量版）
+
+**核心风险**：INDEX 判断失误 = 信息真的丢了。
+
+**机制**：
+- **日常（机制 B）**：所有 INDEX 强制 `keywords` 字段（3-5 个）。Claude 用当前 brainstorm 主题关键词与每条对比：
+  - 高分（2+ 词撞）→ 自动展开（读全文）
+  - 中分（1 词撞）→ 展开 + 告知用户："已展开 [文件名]，因为 keyword [X] 撞了"
+- **保护（机制 C 轻量版）**：brainstorming 开场必须列出已展开的 INDEX 条目清单
+- **用户强制**：用户说 "去读 X" → 强制展开
 
 ## WIP State File Protocol
 
