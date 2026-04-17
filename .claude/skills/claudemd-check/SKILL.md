@@ -82,6 +82,26 @@ description: CLAUDE.md 合规自检。自动触发：每次声称任务完成、
 13. **检查：Frontmatter schema**
     扫描 `docs/journal/*.md`、`docs/research/*.md`、`docs/superpowers/specs/*.md`、`docs/superpowers/plans/*.md` 中**本次新增或修改的文件**，检查是否含 `keywords:` 字段。缺失 → 报错并要求补齐。
 
+14. **检查：MCP 占用**
+    项目主工作区默认应 0 MCP 占用（参考 `docs/mcp-routing.md`）。扫描：
+
+    ```bash
+    # 项目级
+    test -f .mcp.json && echo "PROJECT-MCP: $(cat .mcp.json | grep -oP '"[a-z_-]+": \{' | head -5)"
+    # 用户级 mcpServers
+    node -e "const c=JSON.parse(require('fs').readFileSync(process.env.USERPROFILE+'/.claude.json','utf8')); const k=Object.keys(c.mcpServers||{}); if(k.length)console.log('USER-MCP: '+k.join(','))"
+    # Claude.ai connectors 开关
+    node -e "const c=JSON.parse(require('fs').readFileSync(process.env.USERPROFILE+'/.claude.json','utf8')); if(c.cachedGrowthBookFeatures?.tengu_claudeai_mcp_connectors===true)console.log('CONNECTORS: on (Gmail/Calendar/Drive ~1.8k)')"
+    ```
+
+    如任一输出非空，向用户确认：
+    ```
+    检测到 MCP 占用：[列出来源与名字]
+    用完了吗？y = 我帮你清理 / n = 保留
+    ```
+    用户回 y → 按来源分别清理：项目级 `.mcp.json` 直接 `rm`；用户级 `mcpServers` 改为 `{}`；connectors 开关改为 `false`。清理前先 `cp ~/.claude.json ~/.claude.json.bak-$(date +%Y%m%d-%H%M%S)` 备份。
+    用户回 n → 跳过，不报错。
+
 ## 输出格式
 
 ```
@@ -103,6 +123,7 @@ CLAUDE.md 自检完成
   - Git 隔离：在隔离分支上 / 无进行中里程碑，跳过
 ✓/✗ INDEX 同步：全部在索引中 / MISSING N 条
 ✓/✗ Frontmatter：新文件含 keywords / 缺 N 个
+✓/⚠ MCP 占用：主项目 0 MCP / 检测到 [来源]（已询问用户）
 
 结果：全部通过 / N 项需修复
 ```

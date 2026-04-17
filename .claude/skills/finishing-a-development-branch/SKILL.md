@@ -161,14 +161,36 @@ rm -f .ccb/inbox/claude/*.md .ccb/inbox/codex/*.md .ccb/inbox/gemini/*.md
 
 This resets message sequence numbers to `001` for the next milestone.
 
+### Step 7: MCP 占用检查（主项目常驻 0 MCP）
+
+参考 `docs/mcp-routing.md`——主项目应无常驻 MCP。里程碑收尾是清理临时 MCP 残留的自然时机。
+
+```bash
+# 项目级
+test -f .mcp.json && echo "PROJECT-MCP: 发现 .mcp.json"
+# 用户级 mcpServers
+node -e "const c=JSON.parse(require('fs').readFileSync(process.env.USERPROFILE+'/.claude.json','utf8')); const k=Object.keys(c.mcpServers||{}); if(k.length)console.log('USER-MCP: '+k.join(','))"
+# Claude.ai connectors 开关
+node -e "const c=JSON.parse(require('fs').readFileSync(process.env.USERPROFILE+'/.claude.json','utf8')); if(c.cachedGrowthBookFeatures?.tengu_claudeai_mcp_connectors===true)console.log('CONNECTORS: on')"
+```
+
+任一输出非空 → 向用户确认：
+```
+里程碑收尾检测到 MCP 占用：[来源 + 名字]
+这次里程碑用完了吗？y = 清理 / n = 保留到下个里程碑
+```
+
+用户 y → 先 `cp ~/.claude.json ~/.claude.json.bak-$(date +%Y%m%d-%H%M%S)` 备份，再清理（项目级 `rm .mcp.json`；用户级 `mcpServers: {}`；connectors `false`）。
+用户 n → 跳过。
+
 ## Quick Reference
 
-| Option | Merge | Push | Keep Worktree | Cleanup Branch | Cleanup CCB Inbox |
-|--------|-------|------|---------------|----------------|-------------------|
-| 1. Merge locally | ✓ | - | - | ✓ | ✓ |
-| 2. Create PR | - | ✓ | ✓ | - | ✓ |
-| 3. Keep as-is | - | - | ✓ | - | ✓ |
-| 4. Discard | - | - | - | ✓ (force) | ✓ |
+| Option | Merge | Push | Keep Worktree | Cleanup Branch | Cleanup CCB Inbox | MCP 检查 |
+|--------|-------|------|---------------|----------------|-------------------|---------|
+| 1. Merge locally | ✓ | - | - | ✓ | ✓ | ✓ |
+| 2. Create PR | - | ✓ | ✓ | - | ✓ | ✓ |
+| 3. Keep as-is | - | - | ✓ | - | ✓ | ✓ |
+| 4. Discard | - | - | - | ✓ (force) | ✓ | ✓ |
 
 ## Common Mistakes
 
