@@ -1,7 +1,6 @@
 # Journal Index
 
 ## open（需要关注）
-- [milestone:in_progress] **Session-Init Token 优化**：Week 1-3 完成，软优化 A-D 执行中 `[session-init, token-optimization, M-next]` → [spec](../superpowers/specs/2026-04-15-session-init-token-optimization-design.md) · [plan](../superpowers/plans/2026-04-15-session-init-token-optimization.md)
 - [milestone:phase-1-done] **云部署**：阶段 1 已上线（R2+Vercel+Neon），阶段 2（Cloud Run OCR）/阶段 3（域名+监控+secrets）未启动。10 决策详情见 project_status.md；调研见 research/INDEX.md 云部署节 `[cloud-deployment, Vercel, Cloud-Run, R2]` → [spec](../superpowers/specs/2026-04-12-cloud-deployment-design.md)
 - [idea] 两种学习模式：课件→教学模式（只教不考），教材→完整模式（教+考+复习），解决课件 vs 教材产品难题 `[learning-modes, teaching, courseware, product-design]` → [2026-04-11-two-learning-modes.md](./2026-04-11-two-learning-modes.md)
 - [idea] 用户留存与学习动机：需要核心留存机制，MVP 前确定方案 `[retention, motivation, MVP, user-engagement]` → [2026-04-10-retention-motivation.md](./2026-04-10-retention-motivation.md)
@@ -43,6 +42,7 @@
 
 > 只保留里程碑级 resolved（milestone / audit / brainstorm-chain）。其他归档在 [INDEX-resolved.md](./INDEX-resolved.md)。
 
+- [milestone:resolved] **Session-Init F.3 重设计**：SessionStart hook 注入 + PreCompact block + SKILL 瘦身，Skills 15k→2.5k，非 MCP 29.3k（2026-04-18，commit cd8c3fe）`[session-init, token-optimization, hook-injection]` → [bloat-diagnosis](./2026-04-18-session-init-bloat-diagnosis.md) · [spec](../superpowers/specs/2026-04-18-session-init-F2-redesign.md)
 - [milestone:resolved] **教学系统 brainstorm**：10 决策全部拍板（2026-04-14），顶层 design spec 已生成 `[teaching-system, brainstorm, design-spec, M4, M5]` → [spec](../superpowers/specs/2026-04-12-teaching-system-design.md)
 - [audit:resolved] Scanned PDF 里程碑审计：architecture.md 补齐 OCR_PROVIDER + 4 端点清单 + 上云约束 ⚠️（2026-04-12）`[scanned-PDF, milestone-audit, OCR]` → [2026-04-12-scanned-pdf-milestone-audit.md](./2026-04-12-scanned-pdf-milestone-audit.md)
 - [audit:resolved] Page 1 Refinement 审计：shadow 违规修复 + architecture.md 同步（2026-04-10）`[page1-refinement, audit, shadow-tokens]` → [2026-04-10-page1-refinement-audit.md](./2026-04-10-page1-refinement-audit.md)

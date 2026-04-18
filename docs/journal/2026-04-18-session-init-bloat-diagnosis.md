@@ -2,7 +2,7 @@
 date: 2026-04-18
 topic: Session-Init Token 膨胀诊断（优化后不降反增）
 type: diagnosis
-status: open
+status: resolved
 keywords: [session-init, token-optimization, context-bloat, skill-anti-pattern, MCP, skills-list, @import, INDEX]
 ---
 
@@ -275,6 +275,34 @@ session-init 的存在价值：
 
 ---
 
+## 10. F.3 落地实测（2026-04-18 晚）
+
+F.3 方案（SessionStart hook 注入 project_status.md + PreCompact block + SKILL 瘦身 + parking 清理）已 commit `cd8c3fe`。当晚开新 session 实测：
+
+**/context 拆解（fresh session 跑完 session-init 后）**
+```
+Context Usage: 41.8k / 200k tokens (21%)
+- System prompt: 8.8k (4.4%)   ← 含 project_status.md 注入 ~3.3k
+- System tools: 11.4k (5.7%)
+- Memory files: 6.6k (3.3%)
+- Skills: 2.5k (1.2%)           ★ 从约 15k 降到 2.5k
+- Messages: 13k (6.5%)          ← 对话 + 仪表盘输出
+```
+
+**对照 §2.2 优化后 baseline（32% / 非 MCP 65k / Skills 15k+）**：
+- 总占用：32% → 21%，**-11%**
+- Skills：15k+ → 2.5k，**-12.5k**（session-init 只剩 41 tokens 元数据）
+- 非 MCP 骨架（System + Tools + Memory + Skills）：~35k → 29.3k，**-5.7k**
+
+**PreCompact block 实测**：用户手动 /compact → CLI 返回 `Compaction blocked by PreCompact hook: ... PreCompact checkpoint: ...`。Claude 扫本 session 新内容 Edit project_status.md，用户再 /compact 通过。`.ccb/precompact-saved-<session_id>` flag 幂等验证生效。
+
+**SessionStart hook 注入验证**：新 session 首轮仪表盘直接引用"云部署阶段 1 ✅"/"F.3 commit cd8c3fe"/"11 条 parked"——这些全来自 hook 注入的 project_status.md，Claude 未调用 Read。
+
+**F.3 状态**：T0-T10 全部完成，本 journal status 改为 resolved。两条新经验已写入 memory（small-bash-direct-write / precompact-handshake）。
+
+---
+
 ## 变更记录
 
 - 2026-04-18：创建（本 session 诊断产出）
+- 2026-04-18 晚：F.3 落地 + 实测数据补入 §10，status → resolved

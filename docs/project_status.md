@@ -19,13 +19,13 @@
 - 启动条件：云部署上线 + 验收通过 → 开新 session dispatch
 - L1 引擎 Codex + L2 Tier A Gemini 可并行
 
-**下一步**：云部署阶段 2 plan 编写，或 F.3 session-init 重设计实施（当前 session 在做）
+**下一步**：云部署阶段 2 plan review → dispatch（plan 草稿已落盘 `plans/2026-04-18-cloud-deployment-phase2.md`）
 
 ---
 
 ## 2. 最近关键决策
 
-- 2026-04-18 session-init F.3 重设计：SessionStart hook 注入 project_status + PreCompact block 强制刷新 + SKILL 瘦身 → [spec](superpowers/specs/2026-04-18-session-init-F2-redesign.md) · [plan](superpowers/plans/2026-04-18-session-init-F3-redesign.md)
+- 2026-04-18 session-init F.3 落地（commit cd8c3fe）：SessionStart hook 注入 project_status + PreCompact block 强制刷新 + SKILL 瘦身（127→60 行）+ parked 分流 14→11。实测 Skills 从 ~15k 降到 2.5k，新 session 非 MCP 29.3k / 21% → [spec](superpowers/specs/2026-04-18-session-init-F2-redesign.md) · [plan](superpowers/plans/2026-04-18-session-init-F3-redesign.md)
 - 2026-04-15 调研能力建设：research-before-decision skill + brainstorming Research Trigger Check，解决 OCR 决策捏造定价事件 → [spec](superpowers/specs/2026-04-14-research-capability-design.md)
 - 2026-04-14~15 云部署 10 决策拍板：Vision OCR / Vercel Hobby / Cloud Run / R2 / Neon branch preview / CD UI / 平台 env vars / .com + Cloudflare Registrar / Sentry + Vercel Analytics / 3 阶段拆分 → [spec](superpowers/specs/2026-04-12-cloud-deployment-design.md)
 - 2026-04-14 教学系统 10 决策全部拍板 → [spec](superpowers/specs/2026-04-15-m4-teaching-mode-design.md)
