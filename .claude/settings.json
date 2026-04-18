@@ -49,6 +49,25 @@
           {
             "type": "command",
             "command": "bash scripts/hooks/pre-compact-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash scripts/hooks/pre-compact-save.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'rm -f .ccb/session-marker .ccb/precompact-saved-*'"
+          },
+          {
+            "type": "command",
+            "command": "bash scripts/hooks/session-start-inject.sh"
           }
         ]
       }

@@ -76,6 +76,7 @@
 - 禁止未经确认就修改产品不变量
 - 禁止在未更新 `docs/project_status.md`、`docs/changelog.md` 和 `docs/architecture.md` 的情况下声称任务完成
 - 禁止在里程碑收尾时跳过 milestone-audit（architecture.md 全量验证）
+- 禁止 `docs/project_status.md` 鲜度失守——里程碑切换 / 关键决策 / architecture 变动 / 新 spec 产生 / 阻塞变化时必须同步更新（该文件由 SessionStart hook 注入到每个 session，失守即误导后续所有决策）
 
 ## 与项目负责人的沟通协议
 
@@ -99,7 +100,7 @@
 - 不确定时明说，不用技术自信掩盖判断模糊
 
 ## Skill 使用
-每次会话首次启动时调用 session-init skill（CEO 仪表盘 + git 状态 + INDEX 扫描）。运行规则通过 CLAUDE.md `@import` 自动加载（`session-rules` skill）；skill 使用手册按需加载（`skill-catalog` skill）。Compact/resume 后 session-init 通过 `.ccb/session-marker` 自动跳过，只刷新仪表盘。详见 `.claude/skills/session-init/SKILL.md`。
+每次会话首次启动时调用 session-init skill（CEO 仪表盘 + git 状态 + 停车场扫描）。`docs/project_status.md` 由 SessionStart hook 自动注入 system prompt，skill 不重读该文件。运行规则通过 CLAUDE.md `@import` 自动加载（`session-rules` skill）；skill 使用手册按需加载（`skill-catalog` skill）。Compact/resume 后 session-init 通过 `.ccb/session-marker` 自动跳过，只刷新仪表盘。PreCompact hook 在 compact 前强制拦一次，要求先更新 `project_status.md` 再放行（每 session 一次，幂等）。详见 `.claude/skills/session-init/SKILL.md`。
 
 **调研能力**：做关键决策前（3+ 选项 / 难反悔 / 跨领域 / 用户明确要求），brainstorming skill 会自动触发 `research-before-decision` skill。新 skill 硬执行 "CLAUDE.md 5 问表格"、权威加权源质量（S 级 = 满足 6 条信号中 ≥3 条）、每维度派 sub-agent 并行调研、落盘到 `docs/research/` 作为项目知识库。详见 `.claude/skills/research-before-decision/SKILL.md`。
 

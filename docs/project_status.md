@@ -1,121 +1,67 @@
-# 项目状态（Project Status）
+# 项目状态
 
-> 每次新 session 的第一个文件。保持"此刻的真实状态"。
-> 每完成任何一个操作，必须更新这个文件。
-
----
-
-## 当前状态（2026-04-17）
-
-**方向**：MVP 扩展三线推进——扫描 PDF（**已完成**）→ 教学系统 → 留存机制，串行执行
-
-**当前里程碑**：云部署（基础设施） — **阶段 1 已完成上线**（Vercel + Neon + R2），阶段 2（Cloud Run OCR）+ 阶段 3（域名+监控+secrets）待启动
-
-**已完成（基础设施）**：**Session-Init Token Optimization** — Week 1-3 全部完成（2026-04-17）
-- 3 个新 skill 创建（session-rules / skill-catalog / ccb-protocol-reference）+ memory-cleanup skill
-- session-init 从 237 行瘦身到 141 行（-40%），Step 4/5 外迁 + marker 跳过机制
-- CLAUDE.md @import session-rules，运行规则始终加载
-- 3 个 INDEX 文件（journal/research/superpowers）全量覆盖 + frontmatter schema 标准化
-- architecture.md §0 摘要卡，brainstorming 默认只读摘要卡
-- 6 个 skill 更新（brainstorming/research/writing-plans/journal/claudemd-check/task-execution）
-- 待用户验证：新 session /context token 实测（目标 ≤10%）
-
-**最新完成**：
-- **调研能力建设完成**（2026-04-15，3 commits 未 push）：新 skill `research-before-decision`（49946e9）+ brainstorming 升级 Research Trigger Check & BS-1 增量 spec（99ee882）+ CLAUDE.md 指针接入（03d206d）。解决 2026-04-14 OCR 决策捏造定价事件，关键决策前强制走 triage + S 级源 + sub-agent 并行 + 5 问硬 gate
-- 设计资产：`docs/superpowers/specs/2026-04-14-research-capability-design.md`（10 决策）+ `docs/superpowers/plans/2026-04-15-research-capability.md`（6 tasks, 全部执行完毕）
-
-**历史最近完成**：
-- **扫描 PDF 9 tasks 全部完成**：T1-T7（Codex 后端）+ T8（Gemini 前端，1 次 retry 修 `any`/`console.error` 红线）+ T9（Claude 文档验证）
-- 实际效果：文字页立即解锁阅读，扫描页后台 OCR 不阻塞；模块级独立状态追踪（text/ocr/kp），一就绪就可用
-- 新 API：`GET /api/books/[bookId]/module-status` + `POST /api/books/[bookId]/extract?moduleId=N`
-- 新 UI：StatusBadge 6 状态（加了 processing/readable）+ ProcessingPoller 模块级渲染 + ActionHub 按三元组 badge/可点击性
-- 扫描 PDF 设计 spec + 实施计划（含 2 轮 review）存档于 `docs/superpowers/specs/` 和 `docs/superpowers/plans/`
-- PDF 处理技术调研 → `docs/research/2026-04-11-pdf-processing-research.md`
-- MVP 扩展首轮调研完成（竞品/学习科学/AI成本/护城河/用户定位）→ `docs/research/`
-- 两种学习模式洞察 → `docs/journal/2026-04-11-two-learning-modes.md`
-- MVP 扩展时间线 → `docs/superpowers/plans/2026-04-11-mvp-expansion-timeline.md`
-
-**云部署里程碑进度**（基础设施）：
-- **阶段 1 ✅ 完成**（2026-04-16）：R2 文件存储 + Vercel 部署 + Neon Postgres + OCR 代码层兼容。生产冒烟通过（注册/登录/上传/PDF阅读器均可用，OCR 预期不可用）。10 tasks（T1-T7+T9 Codex 执行，T8 跳过，T10 用户+Claude 协作部署）。
-- **阶段 2 ⬜ 未开始**：Cloud Run OCR + CI/CD + Google Vision
-- **阶段 3 ⬜ 未开始**：自定义域名 + 监控 + Secrets 管理
-- 决策 1（OCR 处理方式）已拍：**Google Vision**（2026-04-14，调研 `docs/research/2026-04-14-cloud-ocr-options.md`）
-- 决策 2（Next.js 部署平台）已拍：**Vercel Hobby**（2026-04-14，调研 `docs/research/2026-04-14-cloud-deployment-platform-options.md`）
-- 决策 3（轻量 Python 服务器部署平台）已拍：**Google Cloud Run**（2026-04-14，调研 `docs/research/2026-04-14-cloud-python-server-options.md`）— MVP $0/月（永久免费层够用）+ 同家调 Vision API 延迟最低 + scale-to-zero 原生
-- 决策 4（PDF 文件存储）已拍：**Cloudflare R2**（2026-04-14，调研 `docs/research/2026-04-14-cloud-object-storage-options.md`）— MVP $0/月 + egress 永久 0 费用 + S3 标准 API（保留模块化切换能力）
-- 决策 5（环境分离）已拍：**生产 + preview + Neon DB branch**（方案 B2）（2026-04-14）— Vercel 原生 preview + Neon 免费 10 个 branch + 官方集成自动克隆/销毁，月费 $0
-- 决策 6（CI/CD）已拍：**Cloud Run Continuous Deployment（UI 绑定 GitHub）**（2026-04-14，调研 `docs/research/2026-04-14-cloud-cicd-options.md`）— Cloud Build 120 min/天免费 + Artifact Registry 0.5 GB 免费 + 文件路径过滤 `scripts/**,Dockerfile*` 避免空跑 + 0 YAML 全 UI 配置，月费 $0
-- 决策 7（Secrets 管理）已拍：**平台 env vars（Vercel + Cloud Run 各自配）**（2026-04-15，调研 `docs/research/2026-04-15-cloud-secrets-options.md`）— Vision 凭据通过 Cloud Run SA 的 ADC 自动解决（不用 key 文件）+ DATABASE_URL 已由 Neon 集成自动管理，净剩 5 个 shared secrets 手动同步；不引入 Secret Manager/Doppler，月费 $0
-- 决策 8（域名与 HTTPS）已拍：**自购 `.com` + Cloudflare Registrar + Vercel/Cloud Run 各自自动 SSL（不开 Cloudflare 代理）**（2026-04-15，调研 `docs/research/2026-04-15-cloud-domain-https-options.md`）— `.com` at-cost $10.46/年不涨价 + 工信部 ICP 白名单唯一确认 TLD + Auth cookie Bearer token 无跨子域问题；Cloud Run 自定义域名仍 Preview（生产阶段跟进 GA）
-- 决策 9（监控与错误追踪）已拍：**Sentry（错误追踪，覆盖 Next.js + Python）+ Vercel Analytics（built-in 流量/Web Vitals）**（2026-04-15，🟡 轻量决策）— Sentry 免费层 5K errors/月 + Vercel Hobby 内置 Analytics，两者功能不重叠，月费 $0
-- 决策 10（分阶段实施）已拍：**3 阶段拆分**（① 数据层上云 R2+Vercel+Neon / ② OCR 上云 Cloud Run + CD / ③ 域名+监控+secrets 收尾），3-5 天 Codex 工作量（2026-04-15，🟡 轻量决策）— 每阶段独立可验收可上线可回退
-- 产品策略：MVP 海外优先，国内走第三方平台（摩点/开始吧+微信公众号+小红书/视频号）承接，**MVP 完成后再启动国内链路**
-- 架构预留 4 条国内版分区硬约束（DB/文件存储/OCR/前端 i18n 配置化）
-- **下一步**：WIP state → 正式 design spec `docs/superpowers/specs/2026-04-12-cloud-deployment-design.md` → spec review 循环 → writing-plans 写阶段 1 plan
-
-**排队中的里程碑（等云部署上线后启动 dispatch）**：
-- **M4 教学系统最小闭环**（2026-04-16 设计全完成）：
-  - **L1 引擎核心 brainstorm 完成**（2026-04-15）：决策 1/3/4/6/12 已拍，spec §2-§4 已写
-  - **L2 UI 层 brainstorm 完成**（2026-04-16）：决策 8/9/10/11 已拍，spec §5.1-§5.4 已写 + subagent review 7 项修复通过
-  - **L3 延后**：决策 2/5/7/13（session 生命周期/cost tracking/中断恢复/任务拆分），L1+L2 实施稳定后再拍
-  - **Implementation plan 完成**：L1 Task 0-11（Codex 后端）+ L2 Task 12-19（Codex 3 API + Gemini 7 前端 task）+ Task D1-D3（Claude 文档）
-  - plan: `docs/superpowers/plans/2026-04-15-m4-teaching-mode.md`
-  - spec: `docs/superpowers/specs/2026-04-15-m4-teaching-mode-design.md`
-  - WIP trail: `docs/superpowers/specs/2026-04-15-m4-teaching-mode-brainstorm-state.md`
-  - 护城河原则写入项目记忆：KP type / importance 永不暴露到 UI
-  - **启动条件**：云部署上线 + 验收通过 → 开新 session，L1 Codex dispatch + L2 Tier A Gemini 可并行
-  - 关键新组件：BookTOC（书级目录+引导态）、ObjectivesList（Phase 0 激活页）、ModeSwitchDialog（模式切换弹窗）、Modal（通用弹窗）
-
-**冻结中**：
-- **扫描 PDF 端到端人工测试**：因本地 OCR server 起不来推迟，改为云环境测试
-
-**里程碑收尾**：
-- ✅ milestone-audit 已完成（2026-04-12，架构 ⚠️ 4 条新增约束已写入 architecture.md）
-- ⏳ claudemd-check 待跑
-
-**Advisory 累计**：11 条（T6: 3 + T7: 3 + T8: 5），其中 2 条已在清理任务修复（40f895b + 277738d），剩余 9 条经人工评估为 by-design，不单独追修。
-
-**架构**：CCB 多模型协作（Claude PM + Codex 后端 + Gemini 前端），Superpowers + Skill 体系，Hook 自动化守卫
+> 当前项目状态的权威快照。SessionStart hook 自动注入。
+> 里程碑切换 / 关键决策 / architecture 变动 / 新 spec 产生 / 阻塞变化时必须同步更新。
 
 ---
 
-## 里程碑总览
+## 1. 当前里程碑
 
-> 里程碑定义以设计 spec（Section 6）为准。
+**方向**：MVP 扩展三线——扫描 PDF（✅）→ 教学系统（M4，待启动）→ 留存机制，串行执行
 
-| 里程碑 | 内容 | 状态 |
-|--------|------|------|
-| M0 | 地基重建：19 张表 + prompt 模板系统 + bug 修复 | **已完成**（2026-03-22） |
-| M1 | 提取器 AI：上传 PDF → 三阶段 KP 提取 → KP 表和模块地图写入 DB → 模块地图页面 | **已完成**（2026-03-28） |
-| M2 | 教练 AI（核心）：读前指引 → 阅读（笔记+截图问答）→ Q&A（4 种题型+即时反馈+预生成）→ 学习笔记生成 | **已完成**（2026-03-29） |
-| M3 | 考官 AI：测试出题 → 盲测 → 评分 → 80% 过关 → 错题诊断 | **已完成**（2026-04-01） |
-| M3.5 | 里程碑衔接修复：测试→复习调度触发 + schema 清理 + reviewer prompt 重写 | **已完成**（2026-04-02） |
-| M4 | 复习系统：复习调度（3/7/15/30/60 天）→ 聚类出题 → P 值更新 → 前端复习会话 | **已完成**（2026-04-02） |
-| M5 | 功能补完：截图问 AI 两步流程 + AIResponse Markdown 渲染 + 正确答案展示 + 仪表盘 + 错题诊断 | **已完成**（2026-04-03） |
-| M5.5 | 稳固 & App Shell：侧栏导航 + 白屏修复 + OCR 自动触发 + 进度显示 + LoadingState | **已完成**（2026-04-04） |
-| M6 | MVP Launch：PostgreSQL 迁移 + 用户账号 + 大 PDF 分块 + PDF 阅读器 + 部署上线 | **已完成**（2026-04-06） |
-| UX Redesign | Amber Companion 设计系统全覆盖 + 页面合并 + 考试/复习重写 + 共享组件 | **已完成**（2026-04-09） |
-| Component Library | 33 组件从 Stitch 落地 + 全页面重写 + 旧组件清理 + Radix UI | **已完成**（2026-04-09） |
-| Scanned PDF | 文字+扫描混合 PDF 渐进处理 + 模块级状态 + 前端可阅读态 | **已完成**（2026-04-12） |
-| Cloud Deploy P1 | R2 文件存储 + Vercel 部署 + Neon Postgres + OCR 代码层兼容 | **已完成**（2026-04-16） |
+**进行中**：云部署
+- 阶段 1 ✅ 完成（2026-04-16）：R2 + Vercel + Neon + OCR 代码层兼容，生产冒烟通过
+- 阶段 2 ⬜ 未开始：Cloud Run OCR + CI/CD + Google Vision
+- 阶段 3 ⬜ 未开始：自定义域名 + 监控 + Secrets 管理
 
-### 完成任务详情
-近期里程碑完整任务表见 `docs/milestones/`：
-- `scanned-pdf-complete.md`（2026-04-12，9 tasks）
-- `m6-complete.md`（2026-04-06，11 tasks）
-- `m5-complete.md`（2026-04-03，9 tasks）
+**排队中**：M4 教学系统最小闭环
+- 设计全完成（spec + plan 就绪）
+- 启动条件：云部署上线 + 验收通过 → 开新 session dispatch
+- L1 引擎 Codex + L2 Tier A Gemini 可并行
 
-### 依赖关系
-
-```
-M0 → M1 → M2 → M3 → M4 → M5
-              ↑
-       独立问答通道（已有，持续可用）
-```
+**下一步**：云部署阶段 2 plan 编写，或 F.3 session-init 重设计实施（当前 session 在做）
 
 ---
 
-## 相关文档
+## 2. 最近关键决策
 
-- **核心架构**（AI 角色 / 表结构 / 接口契约 / 约束）：`docs/architecture.md` §0 摘要卡
-- **历史时间线**（Phase 0 → 当前）：`docs/milestones/historical-log.md`
+- 2026-04-18 session-init F.3 重设计：SessionStart hook 注入 project_status + PreCompact block 强制刷新 + SKILL 瘦身 → [spec](superpowers/specs/2026-04-18-session-init-F2-redesign.md) · [plan](superpowers/plans/2026-04-18-session-init-F3-redesign.md)
+- 2026-04-15 调研能力建设：research-before-decision skill + brainstorming Research Trigger Check，解决 OCR 决策捏造定价事件 → [spec](superpowers/specs/2026-04-14-research-capability-design.md)
+- 2026-04-14~15 云部署 10 决策拍板：Vision OCR / Vercel Hobby / Cloud Run / R2 / Neon branch preview / CD UI / 平台 env vars / .com + Cloudflare Registrar / Sentry + Vercel Analytics / 3 阶段拆分 → [spec](superpowers/specs/2026-04-12-cloud-deployment-design.md)
+- 2026-04-14 教学系统 10 决策全部拍板 → [spec](superpowers/specs/2026-04-15-m4-teaching-mode-design.md)
+- 2026-04-12 扫描 PDF 里程碑完成，9 tasks 闭环，architecture.md 补 OCR_PROVIDER 等 4 条约束
+- 2026-04-09 Component Library 完成：33 组件 + 全页面重写
+
+完整决策历史见 `docs/decisions.md`（早期）和各 spec 文件（2026-04 之后）。
+
+---
+
+## 3. 文件地图（Navigation）
+
+**代码结构**：`docs/architecture.md §0 摘要卡`（只读摘要卡，不读 §1-N）
+
+**当前 WIP / 排队中里程碑**：
+- 云部署：`docs/superpowers/specs/2026-04-12-cloud-deployment-design.md`
+- M4 教学系统：`docs/superpowers/specs/2026-04-15-m4-teaching-mode-design.md` + `plans/2026-04-15-m4-teaching-mode.md`
+- Session-Init F.3（当前 session）：`docs/superpowers/specs/2026-04-18-session-init-F2-redesign.md` + `plans/2026-04-18-session-init-F3-redesign.md`
+
+**历史里程碑完整任务表**：`docs/milestones/`
+
+**想法 / 停车场**：`docs/journal/INDEX.md`（11 条 parked，分类 T1/T2/T3）· 归档见 `INDEX-resolved.md`
+
+**调研知识库**：`docs/research/INDEX.md`（云部署 / PDF 处理 / 学习科学 / 竞品 / 护城河）
+
+**Specs 索引**：`docs/superpowers/INDEX.md`
+
+**CCB 协议**：`docs/ccb-protocol.md`（派发 / 语言 / Review 规范）
+
+**已关闭决策**：`docs/decisions.md`（早期产品决策，不重新讨论）
+
+---
+
+## 4. 未决问题
+
+- **扫描 PDF 端到端人工测试**：本地 OCR server 起不来，改为云环境测试（阶段 2 上线后跑）
+- **Advisory 累计**：11 条中剩 9 条经人工评估为 by-design，不单独追修
+- **M3 阶段 3 收尾**：域名、监控、Secrets 三件事打包（低优先，阶段 2 稳定后再做）
+

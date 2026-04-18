@@ -8,6 +8,7 @@
 - [decision] MVP 必做：AI 再教一遍环节（阅读→**教学**→QA），参考月饼投资项目调研 `[teaching-phase, AI-teaching, MVP, learning-flow]` → [2026-04-10-teaching-phase.md](./2026-04-10-teaching-phase.md)
 - [decision] MVP 范围扩展：扫描版 PDF（主功能）+ 多书种类（至少教案课件型）必须上线前具备 `[MVP-scope, scanned-PDF, OCR, book-types]` → [2026-04-10-mvp-scope-expansion.md](./2026-04-10-mvp-scope-expansion.md)
 - [testing] M6 用户测试：多个问题待收集（Date.slice 已修复，其他问题待 brainstorm）`[M6, user-testing, bug-triage, Date.slice]` → [2026-04-07-m6-user-testing.md](./2026-04-07-m6-user-testing.md)
+- [idea:m5-intake] QA/复习时旁边可看原文（M5 启动时拉入 scope）`[QA, review, side-by-side, PDF-viewer, M5]` → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
 - [bug] M5.5 验收：test_ch1_2 显示 PDF 处理失败 + 读财报模块地图白屏 `[M5.5, PDF-processing, white-screen, user-testing]` → [2026-04-04-m5.5-user-testing.md](./2026-04-04-m5.5-user-testing.md)
 
 ## in_progress（解决中）
@@ -26,7 +27,6 @@
 - **T3** 渐进 Hint 系统（浅提示→跳原文→解析，subscription 分级）`[hint-system, subscription, progressive-help, UX]` → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
 
 ### 交互 / UX
-- **T1** QA/复习时旁边可以看原文 `[QA, review, side-by-side, PDF-viewer]` → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
 - **T2** 模块阅读选文字问AI（选中文字→提问→AI回答，复用screenshot-ask第二步）`[text-selection, AI-QA, module-reading, interactive]` → [2026-04-03-module-text-ask-ai.md](./2026-04-03-module-text-ask-ai.md)
 - **T2** 笔记跳转原文 `[notes, source-linking, navigation]` → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - **T2** 右键选中多功能：做笔记、高亮等 `[context-menu, highlight, notes, text-selection]` → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
@@ -38,13 +38,6 @@
 
 ### 商业
 - **T2** Subscription 分级（hint access levels 等付费功能区分）`[subscription, paywall, monetization, hint-access]` → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
-
-### 工程流程
-- **T2** 记忆清除 skill——将已关闭的记忆文件合并压缩为摘要文档，减少每次 session 读文件的 token 消耗 `[memory-management, token-optimization, skill, session-init]` → 用户提出 2026-04-09
-- **T2** 深度调研派发 agent skill——来源分级+质量标准+格式模板产品化 `[research-skill, agent-dispatch, source-grading, CCB]` → [2026-04-12-research-dispatch-skill.md](./2026-04-12-research-dispatch-skill.md)
-
-### 已决策归档
-- [decision] 第三次 brainstorming 砍掉的项 H6/H8/H12/H13 `[brainstorming, scope-cut, skill-automation, archive]` → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 
 ## resolved（已解决）
 

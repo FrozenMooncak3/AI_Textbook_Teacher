@@ -15,6 +15,9 @@
 - [testing:resolved] M5 测试发现全局缺导航 UX 问题（2026-04-03）`[UX, 导航, M5测试, 返回键, 全局布局]` → [2026-04-03-m5-testing-ux.md](./2026-04-03-m5-testing-ux.md)
 
 ## Skill / 工具链
+- [skill:resolved] memory-cleanup skill 已实现——归档而非删除的 y/n gating 流程（2026-04-17，commit 55ed20a）`[memory-management, token-optimization, skill]`
+- [skill:resolved] research-before-decision skill 已实现——权威加权源质量 + 并行派发（2026-04-12）`[research-skill, agent-dispatch, source-grading, CCB]` → [2026-04-12-research-dispatch-skill.md](./2026-04-12-research-dispatch-skill.md)
+- [decision:resolved] 第三次 brainstorming 砍掉 H6/H8/H12/H13（归档）`[brainstorming, scope-cut, skill-automation, archive]` → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)
 - [skill:resolved] brainstorming skill 加入 WIP 防 compact 机制：WIP State File Protocol + checklist + session-init 检测（2026-04-14）`[brainstorming-skill, WIP-protocol, compact-protection, session-init]` → [2026-04-14-brainstorming-skill-wip-mechanism.md](./2026-04-14-brainstorming-skill-wip-mechanism.md)
 - [infra:resolved] task-execution skill 已实现——统一执行引擎（dispatch→review→retry→close 全自动）（2026-04-04）`[task-execution, skill, dispatch-engine, CCB-automation]` → [2026-04-04-execution-skill.md](./2026-04-04-execution-skill.md)
 - [infra:resolved] milestone-audit skill 已实现——architecture.md 守护体系（两道关卡闭环）（2026-04-03）`[milestone-audit, skill, architecture-guard, two-gate]` → [2026-04-03-milestone-audit-skill.md](./2026-04-03-milestone-audit-skill.md)
