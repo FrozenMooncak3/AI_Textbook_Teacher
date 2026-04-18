@@ -99,49 +99,11 @@
 | Scanned PDF | 文字+扫描混合 PDF 渐进处理 + 模块级状态 + 前端可阅读态 | **已完成**（2026-04-12） |
 | Cloud Deploy P1 | R2 文件存储 + Vercel 部署 + Neon Postgres + OCR 代码层兼容 | **已完成**（2026-04-16） |
 
-### Scanned PDF 完成内容
-
-| 任务 | 描述 | 执行者 | 状态 |
-|------|------|--------|------|
-| T1 | DB Schema + Docker Foundation | Codex | ✅ |
-| T2 | OCR Server — /classify-pdf | Codex | ✅ |
-| T3 | OCR Server — /extract-text (pymupdf4llm) | Codex | ✅ |
-| T4 | OCR Server — 仅扫描页 OCR + Provider 抽象 | Codex | ✅ |
-| T5 | text-chunker 页范围追踪 | Codex | ✅ |
-| T6 | kp-extraction 按模块重写 | Codex | ✅ |
-| T7 | API 路由（upload + extract + module-status） | Codex | ✅ |
-| T8 | 前端模块级处理 UI | Gemini | ✅ (1 retry: any/console 红线) |
-| T9 | 集成验证 + 文档 | Claude | ✅ |
-
-### M6 完成内容
-
-| 任务 | 描述 | 执行者 | 状态 |
-|------|------|--------|------|
-| T1 | PostgreSQL Foundation (db.ts + schema) | Codex | ✅ |
-| T2 | Convert lib/ files to async | Codex | ✅ |
-| T3 | Convert API routes (books+conversations+logs) | Codex | ✅ |
-| T4 | Convert API routes (modules+review+qa) | Codex | ✅ |
-| T5 | Auth system backend | Codex | ✅ |
-| T6 | Auth frontend + server page conversion | Gemini | ✅ |
-| T7 | Large PDF chunking | Codex | ✅ (1 retry) |
-| T8 | PDF reader replacement (react-pdf-viewer) | Gemini | ✅ |
-| T9 | Bug fixes (auth guards + security) | Codex | ✅ |
-| T10 | Deployment (Docker + compose) | Codex | ✅ |
-| T11 | Smoke test + docs update | Claude | ✅ |
-
-### M5 完成内容
-
-| 任务 | 描述 | 状态 |
-|------|------|------|
-| T1 | Schema migration: mistakes 表 + screenshot_qa 模板修复 | ✅ |
-| T2 | AIResponse 组件 + react-markdown 依赖 | ✅ |
-| T3 | 截图问 AI API 拆分（screenshot-ocr + screenshot-ask 重写） | ✅ |
-| T4 | 正确答案/解析：review/respond + test/submit 返回值增强 | ✅ |
-| T5 | Dashboard + Mistakes 后端 API | ✅ |
-| T6 | AiChatDialog 前端两步流程 | ✅ |
-| T7 | ReviewSession/TestSession 正确答案展示 + AIResponse 迁移 | ✅ |
-| T8 | Dashboard + Mistakes 前端页面 | ✅ |
-| T9 | AIResponse 全站 rollout | ✅ |
+### 完成任务详情
+近期里程碑完整任务表见 `docs/milestones/`：
+- `scanned-pdf-complete.md`（2026-04-12，9 tasks）
+- `m6-complete.md`（2026-04-06，11 tasks）
+- `m5-complete.md`（2026-04-03，9 tasks）
 
 ### 依赖关系
 
@@ -153,40 +115,7 @@ M0 → M1 → M2 → M3 → M4 → M5
 
 ---
 
-## 核心架构变化（相比旧 Phase 1/2）
+## 相关文档
 
-- **5 个 AI 角色**：提取器 / 教练 / 考官 / 复习官 / 助手，各有独立 prompt 模板
-- **KP 成为一级实体**：知识点有独立表，驱动所有学习活动
-- **即时反馈**：Q&A 每题答完立即反馈（不再是全部答完后批量）
-- **P-value 复习权重**：动态权重系统控制复习题量
-- **数据库从 12 张表扩展到 24 张表**（M6: +users, invite_codes, sessions），PostgreSQL 部署
-
----
-
-## 已有资产（Phase 1 + Phase 2 遗留，M0 后部分复用）
-
-- Phase 1 完整学习流程可运行（上传 → 模块 → Q&A → 测试 → 错题）
-- Phase 2 PDF 阅读器 + 截图问 AI 后端已完成
-- PaddleOCR 常驻 HTTP 服务（`scripts/ocr_server.py`）
-- Vercel AI SDK 多模型客户端（`src/lib/ai.ts`，支持 Anthropic/Google/OpenAI 兼容 provider）
-
----
-
-## 历史记录
-
-| 日期 | 里程碑 |
-|------|--------|
-| 2026-03-14 | Phase 0 完成，文档体系建立 |
-| 2026-03-15 | Phase 1 完成，完整学习流程可运行 |
-| 2026-03-17 | 引入多 Agent 架构 |
-| 2026-03-18 | Phase 2 启动，后端 M1-M5 全部完成 |
-| 2026-03-21 | 架构迁移到 CCB + Skill 体系 |
-| 2026-03-21 | MVP 重新设计，目标用户定位中国留学生 |
-| 2026-03-21 | 旧文件清理，文档体系精简 |
-| 2026-03-22 | M0 Task 0-5 完成（schema 重写 + prompt 模板 + bug 修复） |
-| 2026-03-22 | **M0 完成**：最终验证通过（8/8 checks） |
-| 2026-03-28 | **Hook 自动化完成**：4 个 hook + structured-dispatch skill + claudemd-check 更新 |
-| 2026-03-28 | **第三次 brainstorming 实施完成**：session-init skill + retrospective skill + 6 skill chain 声明 + CLAUDE.md/using-superpowers 更新 |
-| 2026-03-29 | **M2 完成**：教练 AI 全部代码 + review 修复完成，6 项 fix 已 push |
-| 2026-03-29 | **多模型抽象层完成**：Vercel AI SDK 集成，12 个调用点迁移，`AI_MODEL` 环境变量切换 |
-| 2026-03-29 | **Session-Init 升级 + Skill 治理**：CEO 仪表盘、skill 合规审计、skill 合并/清理（26→22） |
+- **核心架构**（AI 角色 / 表结构 / 接口契约 / 约束）：`docs/architecture.md` §0 摘要卡
+- **历史时间线**（Phase 0 → 当前）：`docs/milestones/historical-log.md`

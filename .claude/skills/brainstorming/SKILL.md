@@ -62,6 +62,7 @@ For milestone-level work: if architecture.md and code are inconsistent, fix arch
 - **日常（机制 B）**：所有 INDEX 强制 `keywords` 字段（3-5 个）。Claude 用当前 brainstorm 主题关键词与每条对比：
   - 高分（2+ 词撞）→ 自动展开（读全文）
   - 中分（1 词撞）→ 展开 + 告知用户："已展开 [文件名]，因为 keyword [X] 撞了"
+- **二轮扫描**：如果 journal 主 `INDEX.md` 零命中但主题涉及旧 skill/bug/infra/idea（例如 CCB、wezterm、旧 skill 改造），同时扫 `docs/journal/INDEX-resolved.md`（归档），命中规则同上。只在零命中时触发，不每次双扫。
 - **保护（机制 C 轻量版）**：brainstorming 开场必须列出已展开的 INDEX 条目清单
 - **用户强制**：用户说 "去读 X" → 强制展开
 
