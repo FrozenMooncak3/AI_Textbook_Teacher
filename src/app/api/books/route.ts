@@ -101,14 +101,16 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const ocrHost = process.env.OCR_SERVER_HOST || '127.0.0.1'
-  const ocrPort = process.env.OCR_SERVER_PORT || '8000'
-  const ocrBase = `http://${ocrHost}:${ocrPort}`
+  const ocrBase = process.env.OCR_SERVER_URL || 'http://127.0.0.1:8000'
+  const ocrToken = process.env.OCR_SERVER_TOKEN || ''
 
   try {
     const classifyRes = await fetch(`${ocrBase}/classify-pdf`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${ocrToken}`,
+      },
       body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId }),
     })
     if (!classifyRes.ok) {
@@ -117,27 +119,43 @@ export async function POST(req: NextRequest) {
     }
 
     const classifyJson = (await classifyRes.json()) as {
+      pages: { page: number; type: string }[]
       text_count: number
       scanned_count: number
       mixed_count: number
+      total_pages: number
     }
-    const { text_count, scanned_count, mixed_count } = classifyJson
+    const { pages, text_count, scanned_count, mixed_count } = classifyJson
     const nonTextPages = scanned_count + mixed_count
+
+    await run(
+      `UPDATE books
+         SET page_classifications = $1,
+             text_pages_count = $2,
+             scanned_pages_count = $3
+       WHERE id = $4`,
+      [JSON.stringify(pages), text_count, scanned_count + mixed_count, bookId]
+    )
 
     const extractRes = await fetch(`${ocrBase}/extract-text`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${ocrToken}`,
+      },
+      body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId, classifications: pages }),
     })
     if (!extractRes.ok) {
       await markOcrFailure(`extract-text HTTP ${extractRes.status}`)
       return NextResponse.json({ bookId, processing: true }, { status: 201 })
     }
 
-    const extractJson = (await extractRes.json()) as { text: string }
+    const extractJson = (await extractRes.json()) as { text: string; page_count: number }
     const rawText = extractJson.text ?? ''
 
     if (rawText) {
+      await run('UPDATE books SET raw_text = $1 WHERE id = $2', [rawText, bookId])
+
       const chunks = chunkText(rawText)
       for (let index = 0; index < chunks.length; index += 1) {
         const chunk = chunks[index]
@@ -161,8 +179,11 @@ export async function POST(req: NextRequest) {
     if (nonTextPages > 0) {
       void fetch(`${ocrBase}/ocr-pdf`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${ocrToken}`,
+        },
+        body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId, classifications: pages }),
       })
         .then(async (response) => {
           if (response.ok) {
