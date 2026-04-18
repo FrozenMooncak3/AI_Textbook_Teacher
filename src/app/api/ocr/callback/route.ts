@@ -68,6 +68,26 @@ async function handlePageResult(event: PageResultEvent): Promise<void> {
 
 async function handleModuleComplete(event: ModuleCompleteEvent): Promise<void> {
   const nextStatus = event.status === 'success' ? 'done' : 'error'
+
+  if (event.module_id === 0) {
+    await run(
+      "UPDATE modules SET ocr_status = $1 WHERE book_id = $2 AND ocr_status = 'processing'",
+      [nextStatus, event.book_id]
+    )
+    await run(
+      `UPDATE books SET parse_status = $1 WHERE id = $2`,
+      [event.status === 'success' ? 'done' : 'error', event.book_id]
+    )
+    if (event.status === 'error') {
+      await logAction(
+        'ocr_callback_book_error',
+        `bookId=${event.book_id}, error=${(event.error ?? '').slice(0, 500)}`,
+        'error'
+      )
+    }
+    return
+  }
+
   await run('UPDATE modules SET ocr_status = $1 WHERE id = $2', [nextStatus, event.module_id])
 
   const pendingModules = await query<{ count: string }>(
