@@ -24,6 +24,22 @@ try:
 except ImportError:
     HAS_PYMUPDF4LLM = False
 
+OCR_SERVER_TOKEN = os.environ.get("OCR_SERVER_TOKEN", "")
+
+
+def _require_bearer() -> tuple[Any, int] | None:
+    """Return (response, status) if Bearer token invalid, else None."""
+    if not OCR_SERVER_TOKEN:
+        return jsonify({"error": "OCR_SERVER_TOKEN not configured"}), 500
+    header = request.headers.get("Authorization", "")
+    if not header.startswith("Bearer "):
+        return jsonify({"error": "missing Bearer token"}), 401
+    received = header[len("Bearer ") :].strip()
+    if received != OCR_SERVER_TOKEN:
+        return jsonify({"error": "invalid token"}), 401
+    return None
+
+
 OCR_PROVIDER = os.environ.get("OCR_PROVIDER", "paddle")
 
 print("Loading PaddleOCR model...", flush=True)
@@ -180,29 +196,21 @@ def paddle_ocr(page_image: Image.Image) -> str:
 
 
 def google_ocr(page_image: Image.Image) -> str:
-    """Google Document AI OCR stub with Paddle fallback."""
-    try:
-        from google.cloud import documentai_v1 as documentai
+    """OCR a page image via Google Cloud Vision API (document_text_detection)."""
+    from google.cloud import vision
 
-        project_id = os.environ.get("GOOGLE_CLOUD_PROJECT_ID")
-        processor_id = os.environ.get("GOOGLE_DOCUMENT_AI_PROCESSOR_ID", "")
-        location = os.environ.get("GOOGLE_DOCUMENT_AI_LOCATION", "us")
+    client = vision.ImageAnnotatorClient()
 
-        client = documentai.DocumentProcessorServiceClient()
-        name = client.processor_path(project_id, location, processor_id)
+    buffer = io.BytesIO()
+    page_image.save(buffer, format="PNG")
+    image = vision.Image(content=buffer.getvalue())
 
-        image_buffer = io.BytesIO()
-        page_image.save(image_buffer, format="PNG")
-        raw_document = documentai.RawDocument(
-            content=image_buffer.getvalue(),
-            mime_type="image/png",
-        )
-        request_payload = documentai.ProcessRequest(name=name, raw_document=raw_document)
-        result = client.process_document(request_payload)
-        return result.document.text
-    except Exception as error:
-        print(f"Google OCR failed: {error}, falling back to PaddleOCR", flush=True)
-        return paddle_ocr(page_image)
+    response = client.document_text_detection(image=image)
+    if response.error.message:
+        raise RuntimeError(f"Google Vision error: {response.error.message}")
+
+    full = response.full_text_annotation
+    return full.text.strip() if full and full.text else ""
 
 
 def extract_page_text(page: fitz.Page) -> str:
@@ -427,6 +435,10 @@ def health() -> tuple[Any, int] | Any:
 
 @app.post("/ocr")
 def ocr_image_route() -> tuple[Any, int] | Any:
+    auth_error = _require_bearer()
+    if auth_error:
+        return auth_error
+
     try:
         body = request.get_json(silent=True) or {}
         image_path = str(body.get("image_path", "")).strip()
@@ -446,6 +458,10 @@ def ocr_image_route() -> tuple[Any, int] | Any:
 
 @app.post("/classify-pdf")
 def classify_pdf_route() -> tuple[Any, int] | Any:
+    auth_error = _require_bearer()
+    if auth_error:
+        return auth_error
+
     body = request.get_json(silent=True) or {}
     r2_key = str(body.get("r2_object_key", "")).strip()
     legacy_path = str(body.get("pdf_path", "")).strip()
@@ -515,6 +531,10 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
 
 @app.post("/extract-text")
 def extract_text_route() -> tuple[Any, int] | Any:
+    auth_error = _require_bearer()
+    if auth_error:
+        return auth_error
+
     body = request.get_json(silent=True) or {}
     r2_key = str(body.get("r2_object_key", "")).strip()
     legacy_path = str(body.get("pdf_path", "")).strip()
@@ -586,6 +606,10 @@ def extract_text_route() -> tuple[Any, int] | Any:
 
 @app.post("/ocr-pdf")
 def ocr_pdf_route() -> tuple[Any, int] | Any:
+    auth_error = _require_bearer()
+    if auth_error:
+        return auth_error
+
     body = request.get_json(silent=True) or {}
     r2_key = str(body.get("r2_object_key", "")).strip()
     legacy_path = str(body.get("pdf_path", "")).strip()
