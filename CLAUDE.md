@@ -6,17 +6,15 @@
 目标不是帮用户省时间，而是帮用户真正学扎实。
 
 ## 每次会话开始时
-调用 session-init skill（通过 Skill 工具）。它会自动完成：
-- 读取项目状态、决策日志、会话日志、CCB 协议
-- 检查 git 状态和未完成工作
-- 向用户汇报当前位置和建议下一步
-- 注入 skill chain 路由
+`docs/project_status.md` 由 SessionStart hook 自动注入 system prompt（F.3，2026-04-18）。`session-rules` skill 通过本文件 `@import` 自动加载运行规则。然后调用 session-init skill（通过 Skill 工具）：
+- 跑 git status + log，扫 journal INDEX parked 段
+- 输出 CEO 仪表盘 + 下一步建议
+- 不重读 project_status.md（hook 已注入）
+- 不主动读 `decisions.md` / `ccb-protocol.md`（前者是已关闭归档，不重讨；后者抽成 `ccb-protocol-reference` skill 按需加载）
 
-如果 session-init 不可用（如 skill 文件缺失），手动读取以下文件作为 fallback：
-1. `docs/project_status.md` — 当前状态与下一步
-2. `docs/decisions.md` — 已关闭的决策（不重新讨论）
-3. `docs/journal/INDEX.md` — 会话日志索引
-4. `docs/ccb-protocol.md` — CCB 多模型协作操作规范
+PreCompact hook 每 session 首次 /compact 强制拦一次，要求先更新 project_status.md 再放行。
+
+如果 session-init skill 不可用（skill 文件缺失），fallback：手动读 `docs/project_status.md` + `docs/journal/INDEX.md`。
 
 ## 想法与日志处理
 当用户在开发过程中提出新想法或重要 insight 时：
@@ -42,8 +40,9 @@
 5. **Q&A 是一次一题 + 即时反馈**：显示一题 → 用户作答 → 立即显示评分和解析 → 点"下一题"继续
 
 ## 部署
-- **Docker Compose**：`docker-compose up --build` 启动三容器（app + db + ocr）
-- **环境变量**：DATABASE_URL, ANTHROPIC_API_KEY, AI_MODEL, OCR_SERVER_HOST, OCR_SERVER_PORT
+- **生产**（阶段 1 ✅ 上线）：Vercel（Next.js）+ Neon Postgres + Cloudflare R2（PDF 存储）+ OCR 容器（阶段 2 迁 Cloud Run）
+- **本地开发**：Docker Compose（app + db + ocr 三容器）
+- **环境变量**：`DATABASE_URL` / `ANTHROPIC_API_KEY` / `AI_MODEL` / `OCR_SERVER_URL` / `OCR_SERVER_TOKEN` / `NEXT_CALLBACK_URL` / `SENTRY_DSN` / R2 四件套（`R2_*`）
 - **Next.js standalone**：`output: 'standalone'`，生产镜像不含 node_modules
 
 ## 技术红线
@@ -67,6 +66,7 @@
 ## 协调文件
 - `docs/superpowers/plans/` — 里程碑实现计划
 - `docs/superpowers/specs/` — 设计文稿
+- `docs/research/` — 关键决策前的调研报告（research-before-decision skill 产出）
 - `docs/changelog.md` — 变更日志
 - `docs/journal/` — 会话日志（想法、决策推理、待跟进）
 
