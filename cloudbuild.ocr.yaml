@@ -1,0 +1,9 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'Dockerfile.ocr', '-t', 'us-central1-docker.pkg.dev/awesome-nucleus-403711/ai-textbook-teacher/ai-textbook-ocr:first', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/awesome-nucleus-403711/ai-textbook-teacher/ai-textbook-ocr:first']
+images:
+  - 'us-central1-docker.pkg.dev/awesome-nucleus-403711/ai-textbook-teacher/ai-textbook-ocr:first'
+options:
+  logging: CLOUD_LOGGING_ONLY
