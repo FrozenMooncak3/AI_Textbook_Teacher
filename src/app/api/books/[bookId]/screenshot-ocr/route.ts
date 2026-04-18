@@ -1,8 +1,4 @@
 import { requireBookOwner } from '@/lib/auth'
-import { randomUUID } from 'crypto'
-import { unlink, writeFile } from 'fs/promises'
-import { tmpdir } from 'os'
-import { join } from 'path'
 import { queryOne } from '@/lib/db'
 import { UserError, SystemError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
@@ -52,16 +48,13 @@ export const POST = handleRoute(async (req, context) => {
 
   const { imageBase64 } = parseBody(await req.json())
   const normalizedBase64 = normalizeBase64Image(imageBase64)
-  const tempImagePath = join(tmpdir(), `screenshot_ocr_${randomUUID()}.png`)
+  const imageBuffer = Buffer.from(normalizedBase64, 'base64')
 
   let ocrResult
   try {
-    await writeFile(tempImagePath, Buffer.from(normalizedBase64, 'base64'))
-    ocrResult = await ocrImage(tempImagePath)
+    ocrResult = await ocrImage(imageBuffer)
   } catch (error) {
     throw new SystemError('Failed to process screenshot OCR request', error)
-  } finally {
-    await unlink(tempImagePath).catch(() => {})
   }
 
   await logAction(
