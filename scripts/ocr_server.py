@@ -441,17 +441,28 @@ def ocr_image_route() -> tuple[Any, int] | Any:
 
     try:
         body = request.get_json(silent=True) or {}
-        image_path = str(body.get("image_path", "")).strip()
+        image_b64 = str(body.get("image_base64", "")).strip()
 
-        if not image_path:
-            return jsonify({"error": "missing image_path"}), 400
+        if not image_b64:
+            return jsonify({"error": "missing image_base64"}), 400
 
-        image = preprocess_image(image_path)
-        with ocr_lock:
-            result = ocr_engine.ocr(np.array(image), cls=True)
+        import base64
 
-        lines, confidence = extract_lines(result)
-        return jsonify({"text": "\n".join(lines), "confidence": confidence})
+        if "," in image_b64 and image_b64.startswith("data:"):
+            image_b64 = image_b64.split(",", 1)[1]
+
+        image_bytes = base64.b64decode(image_b64)
+        image = Image.open(io.BytesIO(image_bytes))
+        image = ImageOps.exif_transpose(image).convert("L")
+        image = ImageOps.autocontrast(image)
+        width, height = image.size
+        if max(width, height) < 1600:
+            image = image.resize((width * 2, height * 2), Image.Resampling.LANCZOS)
+        image = image.convert("RGB")
+
+        text = ocr_page_image(image)
+        confidence = 1.0 if text.strip() else 0.0
+        return jsonify({"text": text, "confidence": confidence})
     except Exception as error:
         return jsonify({"error": str(error)}), 500
 
@@ -492,6 +503,7 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
     pages: list[dict[str, Any]] = []
     text_count = 0
     scanned_count = 0
+    mixed_count = 0
 
     try:
         doc = fitz.open(pdf_path)
@@ -502,8 +514,10 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
 
             if page_type == "text":
                 text_count += 1
-            else:
+            elif page_type == "scanned":
                 scanned_count += 1
+            else:
+                mixed_count += 1
     finally:
         if doc is not None:
             doc.close()
@@ -525,6 +539,8 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
             "pages": pages,
             "text_count": text_count,
             "scanned_count": scanned_count,
+            "mixed_count": mixed_count,
+            "total_pages": len(pages),
         }
     )
 
