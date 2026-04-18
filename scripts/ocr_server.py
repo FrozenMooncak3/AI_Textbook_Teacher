@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HTTP wrapper around PaddleOCR for screenshot recognition and PDF OCR."""
+"""HTTP wrapper around Google Vision OCR for screenshot recognition and PDF OCR."""
 
 import io
 import os
@@ -9,12 +9,10 @@ from typing import Any
 
 import boto3
 import fitz
-import numpy as np
 import requests
 from botocore.client import Config
 from flask import Flask, jsonify, request
 from PIL import Image, ImageOps
-from paddleocr import PaddleOCR
 
 try:
     import pymupdf4llm
@@ -40,12 +38,7 @@ def _require_bearer() -> tuple[Any, int] | None:
     return None
 
 
-OCR_PROVIDER = os.environ.get("OCR_PROVIDER", "paddle")
-
-print("Loading PaddleOCR model...", flush=True)
-ocr_engine = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=False, show_log=False)
-ocr_lock = threading.Lock()
-print("PaddleOCR model loaded", flush=True)
+OCR_PROVIDER = os.environ.get("OCR_PROVIDER", "google")
 
 app = Flask(__name__)
 
@@ -117,37 +110,6 @@ def _cleanup_if_temp(path: str, downloaded: bool) -> None:
             pass
 
 
-def extract_lines(result: object) -> tuple[list[str], float]:
-    if not isinstance(result, list) or not result or not isinstance(result[0], list):
-        return [], 0.0
-
-    lines: list[str] = []
-    confidences: list[float] = []
-
-    for item in result[0]:
-        if not isinstance(item, list) or len(item) < 2:
-            continue
-
-        recognition = item[1]
-        if not isinstance(recognition, (tuple, list)) or len(recognition) < 2:
-            continue
-
-        text = str(recognition[0]).strip()
-        try:
-            confidence = float(recognition[1])
-        except (TypeError, ValueError):
-            confidence = 0.0
-
-        if not text or confidence < 0.35:
-            continue
-
-        lines.append(text)
-        confidences.append(confidence)
-
-    average_confidence = sum(confidences) / len(confidences) if confidences else 0.0
-    return lines, average_confidence
-
-
 def render_pdf_page(page: fitz.Page) -> Image.Image:
     matrix = fitz.Matrix(1.5, 1.5)
     pix = page.get_pixmap(matrix=matrix)
@@ -155,20 +117,10 @@ def render_pdf_page(page: fitz.Page) -> Image.Image:
 
 
 def ocr_page_image(page_image: Image.Image) -> str:
-    """Route OCR to the configured provider."""
-    if OCR_PROVIDER == "google":
-        return google_ocr(page_image)
-
-    return paddle_ocr(page_image)
-
-
-def paddle_ocr(page_image: Image.Image) -> str:
-    """Run OCR with PaddleOCR."""
-    with ocr_lock:
-        result = ocr_engine.ocr(np.array(page_image), cls=True)
-
-    lines, _ = extract_lines(result)
-    return "\n".join(lines).strip()
+    """OCR a page image via the configured provider (only google supported post-P2)."""
+    if OCR_PROVIDER != "google":
+        raise RuntimeError(f"Unsupported OCR_PROVIDER={OCR_PROVIDER} (only 'google' is supported)")
+    return google_ocr(page_image)
 
 
 def google_ocr(page_image: Image.Image) -> str:
@@ -222,7 +174,6 @@ def process_pdf_ocr(
     pdf_path: str,
     book_id: int,
     classifications: list[dict[str, Any]] | None,
-    downloaded: bool = False,
 ) -> None:
     """Background worker: OCR scanned/mixed pages and POST callbacks."""
     try:
@@ -292,7 +243,7 @@ def process_pdf_ocr(
             }
         )
     finally:
-        _cleanup_if_temp(pdf_path, downloaded)
+        _cleanup_if_temp(pdf_path, True)
 
 
 @app.get("/health")
@@ -348,11 +299,10 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
 
     body = request.get_json(silent=True) or {}
     r2_key = str(body.get("r2_object_key", "")).strip()
-    legacy_path = str(body.get("pdf_path", "")).strip()
     raw_book_id = body.get("book_id")
 
-    if not r2_key and not legacy_path:
-        return jsonify({"error": "missing r2_object_key (or legacy pdf_path)"}), 400
+    if not r2_key:
+        return jsonify({"error": "missing r2_object_key"}), 400
 
     if raw_book_id is None:
         return jsonify({"error": "missing book_id"}), 400
@@ -362,9 +312,8 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
     except (TypeError, ValueError):
         return jsonify({"error": "invalid book_id"}), 400
 
-    downloaded = bool(r2_key)
     try:
-        pdf_path = _download_pdf_from_r2(r2_key) if r2_key else legacy_path
+        pdf_path = _download_pdf_from_r2(r2_key)
     except Exception as error:
         return jsonify({"error": f"R2 download failed: {error}"}), 500
 
@@ -390,7 +339,7 @@ def classify_pdf_route() -> tuple[Any, int] | Any:
     finally:
         if doc is not None:
             doc.close()
-        _cleanup_if_temp(pdf_path, downloaded)
+        _cleanup_if_temp(pdf_path, True)
 
     return jsonify(
         {
@@ -411,12 +360,11 @@ def extract_text_route() -> tuple[Any, int] | Any:
 
     body = request.get_json(silent=True) or {}
     r2_key = str(body.get("r2_object_key", "")).strip()
-    legacy_path = str(body.get("pdf_path", "")).strip()
     raw_book_id = body.get("book_id")
     classifications_raw = body.get("classifications")
 
-    if not r2_key and not legacy_path:
-        return jsonify({"error": "missing r2_object_key (or legacy pdf_path)"}), 400
+    if not r2_key:
+        return jsonify({"error": "missing r2_object_key"}), 400
 
     if raw_book_id is None:
         return jsonify({"error": "missing book_id"}), 400
@@ -432,9 +380,8 @@ def extract_text_route() -> tuple[Any, int] | Any:
     if not classifications:
         return jsonify({"error": "Run /classify-pdf first"}), 400
 
-    downloaded = bool(r2_key)
     try:
-        pdf_path = _download_pdf_from_r2(r2_key) if r2_key else legacy_path
+        pdf_path = _download_pdf_from_r2(r2_key)
     except Exception as error:
         return jsonify({"error": f"R2 download failed: {error}"}), 500
 
@@ -462,7 +409,7 @@ def extract_text_route() -> tuple[Any, int] | Any:
     finally:
         if doc is not None:
             doc.close()
-        _cleanup_if_temp(pdf_path, downloaded)
+        _cleanup_if_temp(pdf_path, True)
 
     full_text = "\n".join(full_text_parts)
 
@@ -477,12 +424,11 @@ def ocr_pdf_route() -> tuple[Any, int] | Any:
 
     body = request.get_json(silent=True) or {}
     r2_key = str(body.get("r2_object_key", "")).strip()
-    legacy_path = str(body.get("pdf_path", "")).strip()
     raw_book_id = body.get("book_id")
     classifications_raw = body.get("classifications")
 
-    if not r2_key and not legacy_path:
-        return jsonify({"error": "missing r2_object_key (or legacy pdf_path)"}), 400
+    if not r2_key:
+        return jsonify({"error": "missing r2_object_key"}), 400
 
     if raw_book_id is None:
         return jsonify({"error": "missing book_id"}), 400
@@ -496,9 +442,8 @@ def ocr_pdf_route() -> tuple[Any, int] | Any:
     if isinstance(classifications_raw, list):
         classifications = classifications_raw
 
-    downloaded = bool(r2_key)
     try:
-        pdf_path = _download_pdf_from_r2(r2_key) if r2_key else legacy_path
+        pdf_path = _download_pdf_from_r2(r2_key)
     except Exception as error:
         return jsonify({"error": f"R2 download failed: {error}"}), 500
 
@@ -507,7 +452,7 @@ def ocr_pdf_route() -> tuple[Any, int] | Any:
 
     worker = threading.Thread(
         target=process_pdf_ocr,
-        args=(pdf_path, book_id, classifications, downloaded),
+        args=(pdf_path, book_id, classifications),
         daemon=True,
     )
     worker.start()
