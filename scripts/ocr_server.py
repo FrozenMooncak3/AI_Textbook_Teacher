@@ -10,6 +10,7 @@ from typing import Any
 import boto3
 import fitz
 import requests
+import sentry_sdk
 from botocore.client import Config
 from flask import Flask, jsonify, request
 from PIL import Image, ImageOps
@@ -23,6 +24,7 @@ except ImportError:
 
 OCR_SERVER_TOKEN = os.environ.get("OCR_SERVER_TOKEN", "")
 NEXT_CALLBACK_URL = os.environ.get("NEXT_CALLBACK_URL", "")
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
 
 
 def _require_bearer() -> tuple[Any, int] | None:
@@ -37,6 +39,16 @@ def _require_bearer() -> tuple[Any, int] | None:
         return jsonify({"error": "invalid token"}), 401
     return None
 
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=0.1,
+        environment=os.environ.get("SENTRY_ENVIRONMENT", "production"),
+    )
+    print(f"[sentry] initialized (env={os.environ.get('SENTRY_ENVIRONMENT', 'production')})", flush=True)
+else:
+    print("[sentry] SENTRY_DSN not configured; skipping init", flush=True)
 
 OCR_PROVIDER = os.environ.get("OCR_PROVIDER", "google")
 
