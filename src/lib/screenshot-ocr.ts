@@ -1,8 +1,4 @@
-import http from 'http'
 import { logAction } from './log'
-
-const OCR_SERVER_HOST = process.env.OCR_SERVER_HOST || '127.0.0.1'
-const OCR_SERVER_PORT = Number(process.env.OCR_SERVER_PORT) || 8000
 
 interface OcrResponseBody {
   text?: string
@@ -21,71 +17,46 @@ export function normalizeBase64Image(image: string): string {
 
 export function isUsefulOcrText(text: string, confidence: number): boolean {
   const normalized = text.trim()
-  if (!normalized || normalized.includes('�')) {
+  if (!normalized || normalized.includes('\uFFFD')) {
     return false
   }
 
   return confidence >= 0.5 || normalized.length >= 24
 }
 
-export async function ocrImage(imagePath: string): Promise<OcrResult> {
+export async function ocrImage(imageBuffer: Buffer): Promise<OcrResult> {
+  const ocrBase = process.env.OCR_SERVER_URL || 'http://127.0.0.1:8000'
+  const ocrToken = process.env.OCR_SERVER_TOKEN || ''
+
+  const base64 = imageBuffer.toString('base64')
+
   try {
-    return await new Promise<OcrResult>((resolve, reject) => {
-      const postData = JSON.stringify({ image_path: imagePath })
-      const req = http.request(
-        {
-          hostname: OCR_SERVER_HOST,
-          port: OCR_SERVER_PORT,
-          path: '/ocr',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(postData),
-          },
-          timeout: 60_000,
-        },
-        (res) => {
-          let data = ''
-
-          res.on('data', (chunk: Buffer) => {
-            data += chunk.toString()
-          })
-
-          res.on('end', () => {
-            try {
-              const json = JSON.parse(data) as OcrResponseBody
-              if (res.statusCode !== 200 || json.error) {
-                logAction(
-                  'screenshot_ocr_failed',
-                  `${imagePath}: ${json.error ?? `HTTP ${res.statusCode}`}`,
-                  'error'
-                )
-                resolve({ text: '', confidence: 0 })
-                return
-              }
-
-              resolve({
-                text: json.text ?? '',
-                confidence: typeof json.confidence === 'number' ? json.confidence : 0,
-              })
-            } catch {
-              logAction('screenshot_ocr_failed', `${imagePath}: invalid OCR response`, 'error')
-              resolve({ text: '', confidence: 0 })
-            }
-          })
-        }
-      )
-
-      req.on('error', (error) => reject(error))
-      req.on('timeout', () => {
-        req.destroy()
-        reject(new Error('OCR request timed out'))
-      })
-      req.write(postData)
-      req.end()
+    const response = await fetch(`${ocrBase}/ocr`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${ocrToken}`,
+      },
+      body: JSON.stringify({ image_base64: base64 }),
+      signal: AbortSignal.timeout(60_000),
     })
+
+    const json = (await response.json()) as OcrResponseBody
+    if (!response.ok || json.error) {
+      await logAction(
+        'screenshot_ocr_failed',
+        `HTTP ${response.status}: ${json.error ?? 'unknown'}`,
+        'error'
+      )
+      return { text: '', confidence: 0 }
+    }
+
+    return {
+      text: json.text ?? '',
+      confidence: typeof json.confidence === 'number' ? json.confidence : 0,
+    }
   } catch (error) {
-    logAction('screenshot_ocr_failed', `${imagePath}: ${String(error)}`, 'error')
+    await logAction('screenshot_ocr_failed', String(error), 'error')
     return { text: '', confidence: 0 }
   }
 }
