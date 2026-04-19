@@ -78,6 +78,12 @@ PreCompact hook 每 session 首次 /compact 强制拦一次，要求先更新 pr
 - 禁止在里程碑收尾时跳过 milestone-audit（architecture.md 全量验证）
 - 禁止 `docs/project_status.md` 鲜度失守——里程碑切换 / 关键决策 / architecture 变动 / 新 spec 产生 / 阻塞变化时必须同步更新（该文件由 SessionStart hook 注入到每个 session，失守即误导后续所有决策）
 
+## memory audit 契约（2026-04-19，spec §2.4 M6）
+
+- 所有对 `C:\Users\Administrator\.claude\projects\D------Users-Sean-ai-textbook-teacher\memory\**` 的增/改/删**必须**在 `docs/memory-audit-log.md` 追加一行 `YYYY-MM-DD HH:MM | op:<add|edit|delete> | file:<name>.md | reason:<短描述>`
+- memory 路径在用户主目录跨 repo，无法 git 托管；降级方案是在项目内维护 append-only 审计日志
+- retrospective 2.0 会对比 `git log` memory 目录改动次数 vs 审计日志行数差，发现漏记
+
 ## 与项目负责人的沟通协议
 
 > 项目负责人不具备技术背景，以高管视角参与决策。
