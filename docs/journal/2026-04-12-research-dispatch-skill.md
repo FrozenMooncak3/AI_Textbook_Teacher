@@ -2,7 +2,7 @@
 date: 2026-04-12
 topic: 深度调研派发Agent Skill设计
 type: journal
-status: parked
+status: resolved
 keywords: [调研, agent, 可信来源, 质量保证, skill]
 urgency: normal
 ---

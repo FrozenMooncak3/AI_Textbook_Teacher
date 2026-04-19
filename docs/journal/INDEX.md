@@ -2,10 +2,6 @@
 
 ## open（需要关注）
 - [milestone:phase-2-done] **云部署**：阶段 1+2 已上线（R2+Vercel+Neon+Cloud Run Vision OCR），E2E smoke 通过（2026-04-19），阶段 3（域名+监控+secrets）未启动 `[cloud-deployment, Vercel, Cloud-Run, R2, Phase2-done]` → [spec](../superpowers/specs/2026-04-12-cloud-deployment-design.md) · [audit](./2026-04-19-cloud-deployment-phase2-audit.md)
-- [idea] 两种学习模式：课件→教学模式（只教不考），教材→完整模式（教+考+复习），解决课件 vs 教材产品难题 `[learning-modes, teaching, courseware, product-design]` → [2026-04-11-two-learning-modes.md](./2026-04-11-two-learning-modes.md)
-- [idea] 用户留存与学习动机：需要核心留存机制，MVP 前确定方案 `[retention, motivation, MVP, user-engagement]` → [2026-04-10-retention-motivation.md](./2026-04-10-retention-motivation.md)
-- [decision] MVP 必做：AI 再教一遍环节（阅读→**教学**→QA），参考月饼投资项目调研 `[teaching-phase, AI-teaching, MVP, learning-flow]` → [2026-04-10-teaching-phase.md](./2026-04-10-teaching-phase.md)
-- [decision] MVP 范围扩展：扫描版 PDF（主功能）+ 多书种类（至少教案课件型）必须上线前具备 `[MVP-scope, scanned-PDF, OCR, book-types]` → [2026-04-10-mvp-scope-expansion.md](./2026-04-10-mvp-scope-expansion.md)
 - [testing] M6 用户测试：多个问题待收集（Date.slice 已修复，其他问题待 brainstorm）`[M6, user-testing, bug-triage, Date.slice]` → [2026-04-07-m6-user-testing.md](./2026-04-07-m6-user-testing.md)
 - [idea:m5-intake] QA/复习时旁边可看原文（M5 启动时拉入 scope）`[QA, review, side-by-side, PDF-viewer, M5]` → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
 - [bug] M5.5 验收：test_ch1_2 显示 PDF 处理失败 + 读财报模块地图白屏 `[M5.5, PDF-processing, white-screen, user-testing]` → [2026-04-04-m5.5-user-testing.md](./2026-04-04-m5.5-user-testing.md)
@@ -20,6 +16,8 @@
 - **T2** 复习出题 KP 覆盖率——cluster 内 KP 轮换或改为 KP 粒度出题 `[review, KP-coverage, prompt, question-generation]` → [2026-04-03-review-kp-coverage.md](./2026-04-03-review-kp-coverage.md)
 
 ### 功能
+- **T2** 🎯 用户留存与学习动机——MVP 前需确定核心留存机制（streak / 复习提醒 / 成就等）`[retention, motivation, MVP, user-engagement]` → [2026-04-10-retention-motivation.md](./2026-04-10-retention-motivation.md)
+- **T2** MVP 范围扩展：多书种类支持（至少教案课件型）——与教学模式 spec 呼应 `[MVP-scope, book-types, courseware]` → [2026-04-10-mvp-scope-expansion.md](./2026-04-10-mvp-scope-expansion.md)
 - **T2** Dashboard 日历视图——学习/复习时间表 `[dashboard, calendar, study-schedule, UX]` → [2026-04-03-dashboard-calendar.md](./2026-04-03-dashboard-calendar.md)
 - **T2** 笔记+QA 联动：阅读写笔记 → AI 结构化 → QA 侧边栏弹要点 `[notes, QA-integration, AI-structuring, sidebar]` → [2026-03-29-notes-qa-integration.md](./2026-03-29-notes-qa-integration.md)
 - **T3** OCR 后生成思维导图 `[OCR, mind-map, visualization]` → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
@@ -43,6 +41,9 @@
 
 > 只保留里程碑级 resolved（milestone / audit / brainstorm-chain）。其他归档在 [INDEX-resolved.md](./INDEX-resolved.md)。
 
+- [milestone:resolved] **元系统进化 10 机制**：T1 8 条低成本 hook/counter + T2 Retrospective 2.0（skill audit / 挖矿 / m6 交叉检查）+ M10 review 硬 check（2026-04-19）`[meta-evolution, retrospective, skill-audit, hooks]` → [research](../research/2026-04-19-system-evolution-survey.md) · [spec](../superpowers/specs/2026-04-18-system-evolution-research-design.md)
+- [decision:resolved] 两种学习模式（教学模式 / 完整模式）— 被 M4 教学系统 spec 吸收（2026-04-11）`[learning-modes, teaching, M4]` → [2026-04-11-two-learning-modes.md](./2026-04-11-two-learning-modes.md)
+- [decision:resolved] AI 教学环节纳入 MVP — 已由 M4 教学系统 spec + plan 完整设计（2026-04-10）`[AI-teaching, MVP, M4]` → [2026-04-10-teaching-phase.md](./2026-04-10-teaching-phase.md)
 - [milestone:resolved] **Session-Init F.3 重设计**：SessionStart hook 注入 + PreCompact block + SKILL 瘦身，Skills 15k→2.5k，非 MCP 29.3k（2026-04-18，commit cd8c3fe）`[session-init, token-optimization, hook-injection]` → [bloat-diagnosis](./2026-04-18-session-init-bloat-diagnosis.md) · [spec](../superpowers/specs/2026-04-18-session-init-F2-redesign.md)
 - [milestone:resolved] **教学系统 brainstorm**：10 决策全部拍板（2026-04-14），顶层 design spec 已生成 `[teaching-system, brainstorm, design-spec, M4, M5]` → [spec](../superpowers/specs/2026-04-12-teaching-system-design.md)
 - [audit:resolved] Scanned PDF 里程碑审计：architecture.md 补齐 OCR_PROVIDER + 4 端点清单 + 上云约束 ⚠️（2026-04-12）`[scanned-PDF, milestone-audit, OCR]` → [2026-04-12-scanned-pdf-milestone-audit.md](./2026-04-12-scanned-pdf-milestone-audit.md)

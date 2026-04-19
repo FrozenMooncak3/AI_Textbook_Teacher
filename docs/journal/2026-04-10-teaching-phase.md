@@ -2,7 +2,7 @@
 date: 2026-04-10
 topic: MVP必做：AI主动教学环节设计
 type: journal
-status: open
+status: resolved
 keywords: [AI教学, 学习流程, 教学阶段, MVP必做]
 ---
 

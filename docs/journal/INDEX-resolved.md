@@ -15,6 +15,7 @@
 - [testing:resolved] M5 测试发现全局缺导航 UX 问题（2026-04-03）`[UX, 导航, M5测试, 返回键, 全局布局]` → [2026-04-03-m5-testing-ux.md](./2026-04-03-m5-testing-ux.md)
 
 ## Skill / 工具链
+- [retrospective:resolved] Retrospective 2.0 首轮清理（2026-04-19）：删 3 僵尸 skill（executing-plans / api-contract(claude 端) / frontend-design）+ 降级 2 文档 skill（skill-catalog / ccb-protocol-reference → docs/）+ 4 Agent skill 描述标注 + 1 stale memory 删除 + 6 条 journal 归档 `[retrospective, skill-cleanup, anti-pattern]`
 - [skill:resolved] memory-cleanup skill 已实现——归档而非删除的 y/n gating 流程（2026-04-17，commit 55ed20a）`[memory-management, token-optimization, skill]`
 - [skill:resolved] research-before-decision skill 已实现——权威加权源质量 + 并行派发（2026-04-12）`[research-skill, agent-dispatch, source-grading, CCB]` → [2026-04-12-research-dispatch-skill.md](./2026-04-12-research-dispatch-skill.md)
 - [decision:resolved] 第三次 brainstorming 砍掉 H6/H8/H12/H13（归档）`[brainstorming, scope-cut, skill-automation, archive]` → [2026-03-28-skill-automation.md](./2026-03-28-skill-automation.md)

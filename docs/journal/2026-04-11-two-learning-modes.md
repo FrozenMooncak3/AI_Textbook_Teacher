@@ -2,7 +2,7 @@
 date: 2026-04-11
 topic: 两种学习模式：教学模式与完整模式
 type: journal
-status: open
+status: resolved
 keywords: [教学模式, 完整模式, 付费分层, 课件, 教材]
 ---
 

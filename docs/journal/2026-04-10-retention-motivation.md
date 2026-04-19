@@ -2,7 +2,7 @@
 date: 2026-04-10
 topic: 用户留存与学习动机机制探索
 type: journal
-status: open
+status: parked
 keywords: [用户留存, 学习动机, 进度可视化, 复习提醒]
 ---
 
