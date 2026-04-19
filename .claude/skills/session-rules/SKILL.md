@@ -43,8 +43,11 @@ description: Session-wide 运行规则（自动派发 / 想法分流 / skill 自
 | 用户告知 agent 完成任务 | task-execution（进入 review phase） |
 | 里程碑开始 | using-git-worktrees（创建隔离分支） |
 | 里程碑结束 | milestone-audit → finishing-a-development-branch |
-| 同一问题修复失败 ≥2 次 | systematic-debugging（强制走诊断流程，禁止继续猜） |
+| 同一问题修复失败 ≥2 次 | systematic-debugging（**绝对必须**走诊断流程，禁止继续猜） |
 | 用户说"停车场" | 规则 2 停车场入库流程（分类→定级→写入→确认） |
+
+**规则 3 量化升级**（2026-04-19，spec `2026-04-19-system-evolution-design` §2.1.2-2.1.3）：
+同一问题计数由 `.ccb/counters/user-corrections-<session_id>.count` 硬计数（UserPromptSubmit hook 自动维护）。计数 ≥2 时 hook 已 inject `additionalContext` 提示，Claude **必须响应**不得忽略；≥3 时必须 `/clear` 或明确重启诊断流程。即使当前尝试看起来"只差一点"，1% 可能需要根因诊断 = 100% 必须走诊断流程。
 
 ## 规则 4: Git 管理
 
