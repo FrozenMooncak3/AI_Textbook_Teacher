@@ -12,3 +12,4 @@
 ## 2026-04-19
 
 2026-04-19 16:45 | op:init | file:- | reason:M6 memory audit log 初始化（spec 2026-04-19-system-evolution-design §2.4）
+2026-04-19 18:20 | op:delete | file:project_system-evolution-research-wip.md | reason:Retrospective 2.0 stale memory cleanup（10 机制已全量落地，research WIP 指针过时）
