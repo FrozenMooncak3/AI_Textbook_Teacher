@@ -1926,3 +1926,9 @@ Files: `src/lib/schema.sql`, `src/lib/services/kp-extraction-types.ts`, `src/lib
 ## 2026-04-19 | M4 Task 2: add zod runtime dependency
 Completed: Added `zod` as a runtime dependency for upcoming `generateObject({ schema: ZodSchema })` validation work, verified direct runtime parsing with `require('zod')`, and confirmed `ai` + `zod` compile together in a temporary TS smoke script without triggering any model call.
 Files: `package.json`, `package-lock.json`
+
+---
+
+## 2026-04-19 | M4 Task 3: add teaching schema foundations
+Completed: Added `pgcrypto`, appended `prompt_templates.model`, added `books.learning_mode` and `books.preferred_learning_mode` with idempotent named checks, created `teaching_sessions` and `user_subscriptions`, backfilled subscriptions, and added a regression script covering all eight Task 3 schema invariants. Also normalized the schema-init script connection string to silence the `sslmode=require` warning during the required double-run verification.
+Files: `src/lib/schema.sql`, `scripts/init-neon-schema.ts`, `scripts/test-m4-task3-schema.ts`

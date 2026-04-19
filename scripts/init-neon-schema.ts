@@ -2,6 +2,16 @@
 import { readFile } from 'fs/promises'
 import { Pool } from 'pg'
 
+function normalizeDatabaseUrl(connectionString: string): string {
+  const normalizedUrl = new URL(connectionString)
+
+  if (normalizedUrl.searchParams.get('sslmode') === 'require') {
+    normalizedUrl.searchParams.set('sslmode', 'verify-full')
+  }
+
+  return normalizedUrl.toString()
+}
+
 async function main() {
   const databaseUrl = process.env.DATABASE_URL
   if (!databaseUrl) {
@@ -10,7 +20,7 @@ async function main() {
   }
   const schemaPath = new URL('../src/lib/schema.sql', import.meta.url)
   const schema = await readFile(schemaPath, 'utf8')
-  const pool = new Pool({ connectionString: databaseUrl })
+  const pool = new Pool({ connectionString: normalizeDatabaseUrl(databaseUrl) })
   try {
     await pool.query(schema)
     console.log('schema applied successfully')

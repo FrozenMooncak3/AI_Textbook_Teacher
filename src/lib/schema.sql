@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
@@ -21,6 +23,34 @@ CREATE TABLE IF NOT EXISTS books (
   scanned_pages_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE books ADD COLUMN IF NOT EXISTS learning_mode TEXT NOT NULL DEFAULT 'full';
+ALTER TABLE books ADD COLUMN IF NOT EXISTS preferred_learning_mode TEXT;
+
+DO $$
+DECLARE
+  con_name TEXT;
+BEGIN
+  FOR con_name IN
+    SELECT c.conname
+    FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(c.conkey)
+    WHERE t.relname = 'books'
+      AND n.nspname = 'public'
+      AND c.contype = 'c'
+      AND a.attname IN ('learning_mode', 'preferred_learning_mode')
+  LOOP
+    EXECUTE format('ALTER TABLE books DROP CONSTRAINT %I', con_name);
+  END LOOP;
+END $$;
+
+ALTER TABLE books ADD CONSTRAINT books_learning_mode_check
+  CHECK (learning_mode IN ('teaching', 'full'));
+
+ALTER TABLE books ADD CONSTRAINT books_preferred_learning_mode_check
+  CHECK (preferred_learning_mode IN ('teaching', 'full') OR preferred_learning_mode IS NULL);
 
 CREATE TABLE IF NOT EXISTS modules (
   id SERIAL PRIMARY KEY,
@@ -272,6 +302,8 @@ CREATE TABLE IF NOT EXISTS prompt_templates (
   UNIQUE(role, stage, version)
 );
 
+ALTER TABLE prompt_templates ADD COLUMN IF NOT EXISTS model TEXT NULL;
+
 CREATE TABLE IF NOT EXISTS invite_codes (
   code TEXT PRIMARY KEY,
   created_by INTEGER REFERENCES users(id),
@@ -297,3 +329,38 @@ ALTER TABLE books ADD COLUMN IF NOT EXISTS scanned_pages_count INTEGER DEFAULT 0
 ALTER TABLE modules ADD COLUMN IF NOT EXISTS text_status TEXT DEFAULT 'ready';
 ALTER TABLE modules ADD COLUMN IF NOT EXISTS ocr_status TEXT DEFAULT 'done';
 ALTER TABLE modules ADD COLUMN IF NOT EXISTS kp_extraction_status TEXT DEFAULT 'completed';
+
+CREATE TABLE IF NOT EXISTS teaching_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  module_id INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+  cluster_id INTEGER REFERENCES clusters(id) ON DELETE SET NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  transcript JSONB NOT NULL DEFAULT '{"version":1,"state":{"depth":"full","currentKpId":null,"coveredKpIds":[],"strugglingStreak":0,"startedAt":null,"lastActiveAt":null,"tokensInTotal":0,"tokensOutTotal":0},"messages":[]}'::jsonb,
+  depth TEXT NOT NULL DEFAULT 'full' CHECK (depth IN ('light', 'full')),
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_teaching_sessions_module ON teaching_sessions(module_id);
+CREATE INDEX IF NOT EXISTS idx_teaching_sessions_user ON teaching_sessions(user_id);
+
+CREATE TABLE IF NOT EXISTS user_subscriptions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  tier TEXT NOT NULL DEFAULT 'premium' CHECK (tier IN ('free', 'premium')),
+  effective_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user ON user_subscriptions(user_id);
+
+INSERT INTO user_subscriptions (user_id, tier, effective_at)
+SELECT u.id, 'premium', NOW()
+FROM users u
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM user_subscriptions s
+  WHERE s.user_id = u.id
+);
