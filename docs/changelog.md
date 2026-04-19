@@ -4,6 +4,52 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-19 | 云部署 Phase 2 — OCR 迁 Cloud Run 完整上线
+
+**目的**：把 OCR 服务从"本地/VPS 上的 Docker 容器 + PaddleOCR + 直连 DB"迁到 Cloud Run 上的 Google Vision 异步回调架构。Cloud Run 自动扩缩 + Vision OCR 质量高 + 后端无状态 + 鉴权走 IAM + token 双层。
+
+**Spec / Plan**：`docs/superpowers/specs/2026-04-12-cloud-deployment-design.md` §4.2 · `docs/superpowers/plans/2026-04-18-cloud-deployment-phase2.md`
+
+**Python (scripts/ocr_server.py)**：
+- 鉴权：所有业务端点（`/ocr` `/classify-pdf` `/extract-text` `/ocr-pdf`）加 `_require_bearer()` 校验 `OCR_SERVER_TOKEN`；`/health` 放行给 Cloud Run probe（T3）
+- OCR 引擎：Paddle → Google Vision，`google_ocr()` 用 `vision.ImageAnnotatorClient().document_text_detection`；删 PaddleOCR / numpy / preprocess_image / extract_lines（T3/T6）
+- 删 DB 写入能力：psycopg2 + 4 个 DB 写函数（`update_ocr_progress` / `set_parse_status` / `write_ocr_result` / `replace_page_placeholder`）全部拆除（T5）
+- 回调：新增 `_post_callback()` 把 progress/page_result/module_complete 事件 POST 到 `NEXT_CALLBACK_URL`，不再直连 DB（T5）
+- `/classify-pdf` 新增 `mixed_count` + `total_pages` 响应字段；`/ocr` 接受 `image_base64`（之前走临时文件）；`/extract-text` 接受 body `classifications`（之前 SELECT DB）（T4/T5）
+- Sentry：可选 DSN，无 DSN 时 print 不崩（T7）
+
+**Next.js (src/)**：
+- 新增 `src/app/api/ocr/callback/route.ts`：3 事件类型（progress / page_result / module_complete）+ `requireBearer(OCR_SERVER_TOKEN)` + 迁移过来的 4 个 DB 写操作（T2）
+- `src/app/api/books/route.ts`：env 从 HOST/PORT 迁到 `OCR_SERVER_URL`，3 处 Bearer token 添加，`/extract-text` 和 `/ocr-pdf` body 带 classifications（T8）
+- `src/lib/screenshot-ocr.ts`：Buffer/base64 传 `image_base64`，删 Node http + HOST/PORT 常量（T9）
+- `src/app/api/screenshot-ocr/route.ts`：删临时文件路径，直接传 Buffer（T10）
+- `src/middleware.ts`：精确豁免 `/api/ocr/callback` 路径，允许 server-to-server 回调走路由自己的 Bearer 鉴权（T15 hotfix，commit 6d918d0）
+- `src/app/globals.css`：Tailwind v4 + Turbopack auto-source 在 Vercel 构建扫到 `.claude/` 下的非 Unicode 代码点崩溃，改 `@import "tailwindcss" source(none)` + 显式 `@source "../**/*.{js,ts,jsx,tsx,mdx}"`（T15 hotfix，commit 96c9eb1）
+
+**基础设施**：
+- Dockerfile.ocr：删 paddleocr/psycopg2，加 google-cloud-vision/sentry-sdk/requests（T1）
+- docker-compose.yml + .env.example：app 段 HOST/PORT → OCR_SERVER_URL + TOKEN + SENTRY_DSN；ocr 段删 DATABASE_URL，默认 OCR_PROVIDER=google（T11）
+- GCP：SA `ocr-cloudrun-sa@awesome-nucleus-403711` + `serviceUsageConsumer` + `artifactregistry.reader`；Artifact Registry repo `ai-textbook-teacher` (us-central1)（T12）
+- Cloud Run 服务：`ai-textbook-ocr` @ us-central1，IAM-only，URL `https://ai-textbook-ocr-408273773864.us-central1.run.app`（T13）
+- Cloud Build GitHub trigger：`includedFiles = scripts/**, Dockerfile.ocr, requirements.txt`，push master 自动重建（T14）
+- Cloudflare R2 CORS：bucket `ai-textbook-pdfs` 加 CORS 规则允许 Vercel 域名 + localhost（T15 发现）
+- Google Cloud Vision API：在项目 `awesome-nucleus-403711` 启用（T15 发现）
+
+**E2E smoke test（T15）**：
+- Book 5（1 页扫描 PDF）：上传 → classify → `/ocr-pdf` 202 → Vision OCR → callback → `parse_status=done, ocr_current_page=1/1, raw_text 156 字符`
+- 链路完整打通；OCR 结果准确
+
+**已归停车场（T2 基础设施独立评估）**：
+- Vercel 4.5MB 函数 body 上限阻塞 >4.5MB 扫描 PDF 上传，修复思路 presigned URL 直传 R2（`docs/journal/2026-04-19-pdf-upload-size-limit.md`）
+
+**涉及文件**：
+- 代码：`src/middleware.ts` · `src/app/globals.css` · `src/app/api/ocr/callback/route.ts` · `src/app/api/books/route.ts` · `src/app/api/screenshot-ocr/route.ts` · `src/lib/screenshot-ocr.ts` · `scripts/ocr_server.py` · `Dockerfile.ocr` · `docker-compose.yml` · `.env.example` · `scripts/test-ocr-callback-middleware.mjs`
+- 文档：`docs/superpowers/specs/2026-04-12-cloud-deployment-design.md` · `docs/superpowers/plans/2026-04-18-cloud-deployment-phase2.md` · `docs/journal/2026-04-19-pdf-upload-size-limit.md`
+
+**Commits**：`04f5107` `f47e68f` `cb0fcb3` `019c9b9` `74e856d` `6127996` `34d6e5b` `99080ca` `3264cb8` `fa5b7e9` `bd1cf5e` `96c9eb1` `6d918d0`
+
+---
+
 ## 2026-04-19 | 元系统进化 T1+T2 — 10 机制全量落地
 
 **目的**：Survey 发现当前 AI 协作体系在事件捕获（24 hook 只用 2）、工作流终止（review/retry 太主观）、自我诊断（完全空白）三维度有结构性短板。落地 10 个低成本机制补齐，每机制独立 commit + kill switch 可秒级回滚。

@@ -29,6 +29,7 @@ Auth: `/login` `/register`（邀请码）| App Shell: 3 级 error.tsx + AppSideb
 - `GET /api/books/[id]/module-status` — 模块级三元组状态（text/ocr/kp）
 - `POST /api/books/[id]/extract` — 手动触发 KP 提取（全书或 ?moduleId=N）
 - `GET /api/books/[id]/pdf` — 302 redirect 到 R2 presigned URL（1h TTL）
+- `POST /api/ocr/callback` — Cloud Run OCR 回调端点（Bearer `OCR_SERVER_TOKEN`，middleware 豁免 session 鉴权）；3 事件类型 progress / page_result / module_complete
 - `POST /api/modules/[id]/generate-questions` — 教练出 QA 题
 - `POST /api/modules/[id]/test/generate` — 考官出测试题
 - `POST /api/review/[scheduleId]/generate` — 复习官出复习题
@@ -38,13 +39,13 @@ Auth: `/login` `/register`（邀请码）| App Shell: 3 级 error.tsx + AppSideb
 extractor（KP 提取 + 模块地图）| coach（指引 + QA + 反馈 + 笔记）| examiner（测试 + 评分 + 诊断）| reviewer（复习 + P 值）| assistant（截图问 AI）
 
 ### 部署
-生产：Vercel Hobby + Neon Postgres(us-east-1) + Cloudflare R2 | OCR 阶段 2 待迁 Cloud Run
-本地：Docker Compose 三容器（app + db + ocr）
+生产：Vercel Hobby + Neon Postgres(us-east-1) + Cloudflare R2 + Cloud Run OCR (us-central1, Google Vision, IAM-only)
+本地：Docker Compose 三容器（app + db + ocr；ocr 走 Google Vision 需挂 GCP SA key）
 
 ### ⚠️ 核心约束
-- Vercel Hobby 请求体 4.5MB 上限 — 大 PDF 需前端直传 R2 或升级 Pro
-- OCR server 内存 ≥ 1GB（PaddleOCR）；Cloud Run 需配足
-- OCR 端点无认证 — Cloud Run 部署需 IAM/VPC
+- 🚨 Vercel Hobby 请求体 4.5MB 上限阻塞 >4.5MB PDF 上传 — 修复已归停车场 T2（presigned URL 直传 R2）
+- OCR 鉴权双层：Vercel → Cloud Run 用 `X-App-Token` + Google ID token（`OCR_REQUIRE_IAM_AUTH=true`）；Cloud Run → Vercel callback 用 `Authorization: Bearer OCR_SERVER_TOKEN`
+- Cloud Run OCR 不连 DB，只调 Vision API + 回调 Vercel；DB 写操作全部在 Next.js `/api/ocr/callback` 里
 - 大 PDF 分块阈值 35K 字符（20 行 overlap）
 - P 值方向：低=好（1=已掌握，4=最弱）
 - 学习流：unstarted → reading → qa → notes_generated → testing → completed
@@ -286,20 +287,28 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - pdfjs-dist@3.11.174 Worker（CDN）
 - ScreenshotOverlay + AiChatDialog 保持不变
 
-### PDF OCR 管道（Scanned PDF 升级 2026-04-12）
+### PDF OCR 管道（Scanned PDF 2026-04-12 + Cloud Run 异步回调 2026-04-19）
 
-**4 步上传流程**（替代原单步 `/ocr-pdf`）：
-1. **classify**：`POST /classify-pdf { pdf_path, book_id }` → 逐页分类（text/scanned/mixed），写入 `books.page_classifications`
-2. **extract-text**：`POST /extract-text { pdf_path, book_id }` → 基于 pymupdf4llm 提取所有 text/mixed 页的 Markdown 文本，scanned 页用 `[OCR_PENDING]` 占位，页间用 `--- PAGE N ---` 标记分隔，写入 `books.raw_text`
-3. **建模块**：`books/route.ts` 对 rawText 调用 `chunkText()` → 每个 chunk 带 `pageStart/pageEnd` → 插入 modules 表（`text_status='ready'`, `ocr_status=nonTextPages>0?'pending':'skipped'`, `kp_extraction_status='pending'`）
-4. **fire-and-forget OCR**：只对非纯文字 PDF 调用 `/ocr-pdf`，后台处理 scanned/mixed 页；同时调用 `triggerReadyModulesExtraction(bookId)` 并行触发已就绪模块的 KP 提取
+**4 步上传流程**：
+1. **classify**：`POST /classify-pdf { r2_object_key, book_id }` → 逐页分类（text/scanned/mixed），响应 `{ pages, text_count, scanned_count, mixed_count, total_pages }`，Next.js 写入 `books.page_classifications` + `text_pages_count` + `scanned_pages_count`（scanned + mixed）
+2. **extract-text**：`POST /extract-text { r2_object_key, book_id, classifications }` → pymupdf4llm 提取 text/mixed 页 Markdown，scanned 页 `[OCR_PENDING]` 占位，`--- PAGE N ---` 分隔；Next.js 把 raw_text 写回 `books.raw_text`
+3. **建模块**：`books/route.ts` 对 rawText 调用 `chunkText()` → 每 chunk 带 `pageStart/pageEnd` → 插入 modules 表（`text_status='ready'`, `ocr_status=nonTextPages>0?'pending':'skipped'`, `kp_extraction_status='pending'`）
+4. **async OCR**：只对非纯文字 PDF 调用 `/ocr-pdf { r2_object_key, book_id, classifications }`，Cloud Run 立即返回 202 `{status:'accepted'}`，后台 Vision OCR + 三事件回调；同时 Next.js 并行 `triggerReadyModulesExtraction(bookId)` 触发已就绪模块 KP
 
-**OCR 服务端点**（scripts/ocr_server.py）：
-- `/classify-pdf` — 页面分类
-- `/extract-text` — pymupdf4llm 提取 Markdown
-- `/ocr-pdf` — 只处理 scanned/mixed 页（提取后替换 `[OCR_PENDING]` 占位）
-- `/ocr` — 单图 OCR（截图问 AI 使用）
-- **Provider 抽象**：PaddleOCR 为默认 provider，接口可换
+**OCR 服务端点**（scripts/ocr_server.py，Cloud Run 部署）：
+- `/classify-pdf` — 页面分类（`_require_bearer`）
+- `/extract-text` — pymupdf4llm 提取 Markdown（`_require_bearer`，body 必带 classifications 列表替代 DB 查询）
+- `/ocr-pdf` — 异步 Google Vision OCR（`_require_bearer`，Threading + 三事件回调到 `NEXT_CALLBACK_URL`）
+- `/ocr` — 单图 OCR（`_require_bearer`，入参 `{ image_base64 }` — 截图问 AI 使用）
+- `/health` — 未鉴权（Cloud Run probe 保留）
+- **Provider**：`OCR_PROVIDER=google`（默认且唯一，PaddleOCR/numpy/preprocess 管道已移除）
+
+**Cloud Run → Vercel 回调契约**（`/api/ocr/callback`，Bearer `OCR_SERVER_TOKEN`）：
+- `progress`：`{ event:'progress', book_id, module_id?, pages_done, pages_total }` → `UPDATE books SET ocr_current_page, ocr_total_pages, parse_status='processing'`
+- `page_result`：`{ event:'page_result', book_id, module_id, page_number, text }` → 在 `books.raw_text` 中字符串 replace `[OCR_PENDING]` 占位
+- `module_complete`：`{ event:'module_complete', book_id, module_id, status, error? }` → `module_id=0` 时批量把 `ocr_status='processing'` 模块翻成 done/error 并设 `books.parse_status`；`module_id>0` 时更新单模块，若该书所有模块都 done/skipped 自动 `parse_status='done'`
+
+**middleware 豁免**：`src/middleware.ts` 精确匹配 `pathname === '/api/ocr/callback'` 跳过 session cookie 鉴权，让路由自己的 Bearer 鉴权接管（原 prefix `/api/auth/` 不覆盖 OCR 回调导致 smoke test 阻塞，已修 commit 6d918d0）
 
 **进度更新**：`books.ocr_current_page`/`ocr_total_pages` 书级；模块级 text_status/ocr_status/kp_extraction_status 独立追踪
 
@@ -341,33 +350,40 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - `initDb()` 读 `schema.sql`（CREATE TABLE IF NOT EXISTS）+ `seedTemplates()`（幂等 UPSERT）
 - 保护条件：`NEXT_RUNTIME === 'nodejs'`，避免 Edge runtime 导入 pg
 
-### 部署架构（云部署阶段 1 完成 2026-04-16）
+### 部署架构（云部署阶段 1 完成 2026-04-16，阶段 2 完成 2026-04-19）
 
-**生产环境（Vercel + Neon + R2）**：
+**生产环境（Vercel + Neon + R2 + Cloud Run）**：
 - **前端/API**：Vercel Hobby（Next.js standalone）— 自动 CI/CD on push to master
 - **数据库**：Neon Serverless Postgres（us-east-1）— Vercel Integration 自动注入 `DATABASE_URL`，Preview 环境自动 DB branch
-- **文件存储**：Cloudflare R2 bucket `ai-textbook-pdfs` — S3 兼容 API，对象路径 `books/{bookId}/original.pdf`
+- **文件存储**：Cloudflare R2 bucket `ai-textbook-pdfs` — S3 兼容 API，对象路径 `books/{bookId}/original.pdf`，CORS 允许 Vercel 域名 + localhost
 - **PDF 服务**：`/api/books/[bookId]/pdf` → 302 redirect 到 R2 presigned URL（1h TTL），绕开 Vercel 4.5MB 响应限制
-- **OCR**：阶段 1 不可用（`OCR_SERVER_HOST=127.0.0.1` 占位，阶段 2 切 Cloud Run）
+- **OCR**：Cloud Run 服务 `ai-textbook-ocr` @ us-central1，URL `https://ai-textbook-ocr-408273773864.us-central1.run.app`，IAM-only（禁止未鉴权调用），Google Vision API 调用，Cloud Build GitHub trigger `includedFiles=scripts/**,Dockerfile.ocr,requirements.txt` 自动 CD
+- **Sentry**：OCR 服务可选 DSN（`SENTRY_DSN` 未设时 print 不崩），环境标签 `SENTRY_ENVIRONMENT`
 
-**本地开发环境（Docker Compose，保持兼容）**：
-- **三容器**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（PaddleOCR + PyMuPDF + psycopg2 + pymupdf4llm + boto3）
+**本地开发环境（Docker Compose）**：
+- **三容器**：app（Next.js standalone）+ db（PostgreSQL 16）+ ocr（Google Vision + PyMuPDF + pymupdf4llm + boto3 + requests + sentry-sdk）
+- **OCR 本地运行需挂 GCP SA key**（volume mount `/app/gcp-sa-key.json` + `GOOGLE_APPLICATION_CREDENTIALS`），或以 `OCR_REQUIRE_IAM_AUTH=false` 跳过 IAM
 - **持久化卷**：pgdata（数据库）+ uploads（仅本地遗留，新上传走 R2）
 
 **环境变量（生产 Vercel）**：
 - **Neon 自动注入**：`DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PGHOST`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_*`
-- **手动配置**：`ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `AI_MODEL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `OCR_SERVER_HOST`, `OCR_SERVER_PORT`
+- **手动配置**：`ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `AI_MODEL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `OCR_SERVER_URL`, `OCR_SERVER_TOKEN`, `GCP_SA_KEY_JSON`, `OCR_REQUIRE_IAM_AUTH=true`, `NEXT_CALLBACK_URL`
+
+**环境变量（Cloud Run OCR 服务）**：
+- `OCR_PROVIDER=google`, `OCR_SERVER_TOKEN`, `NEXT_CALLBACK_URL`, `SENTRY_DSN`（可选）, `SENTRY_ENVIRONMENT`, `R2_*`, `GOOGLE_APPLICATION_CREDENTIALS`（由 SA 绑定自动注入）
 
 **环境变量（本地 Docker）**：
-- **App**：`DATABASE_URL`, `ANTHROPIC_API_KEY`, `AI_MODEL`, `OCR_SERVER_HOST`, `OCR_SERVER_PORT`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`
-- **OCR**：`OCR_PROVIDER`, `DATABASE_URL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`
+- **App**：`DATABASE_URL`, `ANTHROPIC_API_KEY`, `AI_MODEL`, `OCR_SERVER_URL=http://ocr:8000`, `OCR_SERVER_TOKEN`, `OCR_REQUIRE_IAM_AUTH=false`, `NEXT_CALLBACK_URL=http://app:3000/api/ocr/callback`, `R2_*`
+- **OCR**：`OCR_PROVIDER=google`, `OCR_SERVER_TOKEN`, `NEXT_CALLBACK_URL=http://app:3000/api/ocr/callback`, `R2_*`, `GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-sa-key.json`
 
-**OCR 通信**：app → `http://${OCR_SERVER_HOST}:${OCR_SERVER_PORT}/{classify-pdf,extract-text,ocr-pdf,ocr}`
-- PDF 端点接受双键：`r2_object_key`（优先，R2 下载到 tmpdir）/ `pdf_path`（遗留本地路径 fallback）
-- 副产品字段：`books.text_pages_count` / `scanned_pages_count` 由 classify 阶段填入
+**OCR 通信（鉴权双层）**：
+- **Vercel → Cloud Run**：`src/lib/ocr-auth.ts` `buildOcrHeaders()` 生成两个头 — `X-App-Token: $OCR_SERVER_TOKEN`（应用层）+ `Authorization: Bearer <Google ID token>`（IAM，仅 `OCR_REQUIRE_IAM_AUTH=true` 时生成；通过 `google-auth-library` 用 `GCP_SA_KEY_JSON` 服务账号铸造）
+- **Cloud Run → Vercel**：`_post_callback()` 发 `Authorization: Bearer $OCR_SERVER_TOKEN`（Vercel 端无 IAM，middleware 豁免 `/api/ocr/callback` 后由路由 `requireBearer` 校验）
+- **入参**：PDF 端点只接受 `r2_object_key`（legacy `pdf_path` 已拆除），`/ocr` 接受 `image_base64`
+- **副产品字段**：`books.text_pages_count` / `scanned_pages_count` 由 classify 阶段填入
 
-**⚠️ 阶段 2 待办约束**：
-- Vercel Hobby 请求体上限 4.5MB — 大 PDF 上传需要前端直传 R2（presigned PUT）或升级 Pro
-- OCR server 内存需求 ≥ 1GB（PaddleOCR 模型加载）；Cloud Run 需配足 memory
-- OCR server 端点无认证，Cloud Run 部署需加 IAM 或 VPC connector
-- Neon pooler 连接数限制：app + OCR 双侧直连需监控
+**⚠️ 阶段 3 待办**：
+- 自定义域名（Cloudflare Registrar + Vercel CNAME）
+- 监控全量接入（Sentry Next.js 前端 + Vercel Analytics 仪表盘）
+- Secrets 管理（当前 `GCP_SA_KEY_JSON` 明文存 Vercel env，应迁 Secret Manager 或 Vercel Encrypted Env 升级）
+- 🚨 PDF 上传 presigned URL 直传 R2（绕过 Vercel 4.5MB body 上限，阻塞 >4.5MB 扫描 PDF，已归停车场 T2 基础设施）

@@ -65,5 +65,20 @@ next-env.d.ts
 !.ccb/inbox/*/
 !.ccb/inbox/*/.gitkeep
 
+# CCB ad-hoc smoke/debug scripts (contain hardcoded local paths)
+.ccb/*.mjs
+.ccb/*.sh
+.ccb/*.json
+.ccb/counters/
+.ccb/history/
+.ccb/precompact-saved-*
+
+# Claude Code scheduled tasks runtime lock
+.claude/scheduled_tasks.lock
+
+# Superpowers runtime artifacts
+.superpowers/
+.claude/skills/**/scripts/.superpowers/
+
 # MCP config (contains API keys)
 .mcp.json

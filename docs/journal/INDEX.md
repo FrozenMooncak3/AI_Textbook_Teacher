@@ -1,7 +1,7 @@
 # Journal Index
 
 ## open（需要关注）
-- [milestone:phase-1-done] **云部署**：阶段 1 已上线（R2+Vercel+Neon），阶段 2（Cloud Run OCR）/阶段 3（域名+监控+secrets）未启动。10 决策详情见 project_status.md；调研见 research/INDEX.md 云部署节 `[cloud-deployment, Vercel, Cloud-Run, R2]` → [spec](../superpowers/specs/2026-04-12-cloud-deployment-design.md)
+- [milestone:phase-2-done] **云部署**：阶段 1+2 已上线（R2+Vercel+Neon+Cloud Run Vision OCR），E2E smoke 通过（2026-04-19），阶段 3（域名+监控+secrets）未启动 `[cloud-deployment, Vercel, Cloud-Run, R2, Phase2-done]` → [spec](../superpowers/specs/2026-04-12-cloud-deployment-design.md) · [audit](./2026-04-19-cloud-deployment-phase2-audit.md)
 - [idea] 两种学习模式：课件→教学模式（只教不考），教材→完整模式（教+考+复习），解决课件 vs 教材产品难题 `[learning-modes, teaching, courseware, product-design]` → [2026-04-11-two-learning-modes.md](./2026-04-11-two-learning-modes.md)
 - [idea] 用户留存与学习动机：需要核心留存机制，MVP 前确定方案 `[retention, motivation, MVP, user-engagement]` → [2026-04-10-retention-motivation.md](./2026-04-10-retention-motivation.md)
 - [decision] MVP 必做：AI 再教一遍环节（阅读→**教学**→QA），参考月饼投资项目调研 `[teaching-phase, AI-teaching, MVP, learning-flow]` → [2026-04-10-teaching-phase.md](./2026-04-10-teaching-phase.md)
@@ -32,6 +32,7 @@
 - **T2** 学习计划定制（百词斩模式）：AI 预估时长+用户自定节奏 `[study-plan, pacing, AI-estimation, personalization]` → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
 
 ### 基础设施
+- **T2** 🚨 PDF 上传 presigned URL 直传 R2——当前 Vercel 4.5MB 函数上限，>4.5MB 扫描 PDF 全部传不上来 `[PDF-upload, presigned-URL, R2, Vercel-function-limit]` → [2026-04-19-pdf-upload-size-limit.md](./2026-04-19-pdf-upload-size-limit.md)
 - **T2** 预生成系统——后台预生成下一步内容，消灭等待 `[pregeneration, background-tasks, latency, infrastructure]` → [2026-04-04-pregeneration-system.md](./2026-04-04-pregeneration-system.md)
 - **T3** 语言模式系统——自动切换 prompt 语言，多国语言版本 `[i18n, prompt-language, localization]` → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
 
