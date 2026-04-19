@@ -29,6 +29,15 @@
             "command": "bash scripts/hooks/post-edit-check.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/hooks/post-tool-failure-capture.sh"
+          }
+        ]
       }
     ],
     "Stop": [

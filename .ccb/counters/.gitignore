@@ -1,0 +1,5 @@
+# counters state files 不进 repo
+*.count
+*.log
+# 保留目录和本文件本身
+!.gitignore
