@@ -4,6 +4,7 @@ interface TemplateSeed {
   role: string
   stage: string
   template_text: string
+  model?: string | null
 }
 
 const SEED_TEMPLATES: TemplateSeed[] = [
@@ -456,12 +457,14 @@ if (preReadingGuideTemplate) {
 }
 
 const INSERT_TEMPLATE_SQL =
-  'INSERT INTO prompt_templates (role, stage, version, template_text, is_active) VALUES ($1, $2, 1, $3, 1)'
+  'INSERT INTO prompt_templates (role, stage, version, template_text, is_active, model) VALUES ($1, $2, 1, $3, 1, $4)'
 
 const UPSERT_TEMPLATE_SQL = `
-  INSERT INTO prompt_templates (role, stage, version, template_text, is_active)
-  VALUES ($1, $2, 1, $3, 1)
-  ON CONFLICT(role, stage, version) DO UPDATE SET template_text = excluded.template_text
+  INSERT INTO prompt_templates (role, stage, version, template_text, is_active, model)
+  VALUES ($1, $2, 1, $3, 1, $4)
+  ON CONFLICT(role, stage, version) DO UPDATE
+  SET template_text = excluded.template_text,
+      model = excluded.model
 `
 
 async function seedRoleTemplates(role: string): Promise<void> {
@@ -470,7 +473,12 @@ async function seedRoleTemplates(role: string): Promise<void> {
       continue
     }
 
-    await run(UPSERT_TEMPLATE_SQL, [template.role, template.stage, template.template_text])
+    await run(UPSERT_TEMPLATE_SQL, [
+      template.role,
+      template.stage,
+      template.template_text,
+      template.model ?? null,
+    ])
   }
 }
 
@@ -481,7 +489,12 @@ export async function seedTemplates(): Promise<void> {
 
   if (!existing || existing.count === 0) {
     for (const template of SEED_TEMPLATES) {
-      await run(INSERT_TEMPLATE_SQL, [template.role, template.stage, template.template_text])
+      await run(INSERT_TEMPLATE_SQL, [
+        template.role,
+        template.stage,
+        template.template_text,
+        template.model ?? null,
+      ])
     }
 
     return

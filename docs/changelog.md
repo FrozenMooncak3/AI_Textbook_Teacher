@@ -1932,3 +1932,9 @@ Files: `package.json`, `package-lock.json`
 ## 2026-04-19 | M4 Task 3: add teaching schema foundations
 Completed: Added `pgcrypto`, appended `prompt_templates.model`, added `books.learning_mode` and `books.preferred_learning_mode` with idempotent named checks, created `teaching_sessions` and `user_subscriptions`, backfilled subscriptions, and added a regression script covering all eight Task 3 schema invariants. Also normalized the schema-init script connection string to silence the `sslmode=require` warning during the required double-run verification.
 Files: `src/lib/schema.sql`, `scripts/init-neon-schema.ts`, `scripts/test-m4-task3-schema.ts`
+
+---
+
+## 2026-04-19 | M4 Task 7: thread prompt template model through backend seeds
+Completed: Extended prompt template typing and `upsertTemplate()` to persist the optional `model` column on both update and insert paths. Updated template seeding SQL to write `model` on insert and upsert while leaving the current extractor/coach/examiner/reviewer/assistant seed records at the default `NULL` model value.
+Files: `src/lib/prompt-templates.ts`, `src/lib/seed-templates.ts`

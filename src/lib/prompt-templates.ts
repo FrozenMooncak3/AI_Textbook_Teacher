@@ -7,6 +7,7 @@ interface PromptTemplate {
   version: number
   template_text: string
   is_active: number
+  model: string | null
 }
 
 /**
@@ -54,7 +55,8 @@ export async function getPrompt(
 export async function upsertTemplate(
   role: string,
   stage: string,
-  templateText: string
+  templateText: string,
+  model?: string | null
 ): Promise<void> {
   const existing = await queryOne<{ id: number }>(
     'SELECT id FROM prompt_templates WHERE role = $1 AND stage = $2 AND is_active = 1',
@@ -62,15 +64,16 @@ export async function upsertTemplate(
   )
 
   if (existing) {
-    await run('UPDATE prompt_templates SET template_text = $1 WHERE id = $2', [
+    await run('UPDATE prompt_templates SET template_text = $1, model = $2 WHERE id = $3', [
       templateText,
+      model ?? null,
       existing.id,
     ])
     return
   }
 
   await run(
-    'INSERT INTO prompt_templates (role, stage, version, template_text, is_active) VALUES ($1, $2, 1, $3, 1)',
-    [role, stage, templateText]
+    'INSERT INTO prompt_templates (role, stage, version, template_text, is_active, model) VALUES ($1, $2, 1, $3, 1, $4)',
+    [role, stage, templateText, model ?? null]
   )
 }
