@@ -104,6 +104,9 @@ PreCompact hook 每 session 首次 /compact 强制拦一次，要求先更新 pr
 
 **调研能力**：做关键决策前（3+ 选项 / 难反悔 / 跨领域 / 用户明确要求），brainstorming skill 会自动触发 `research-before-decision` skill。新 skill 硬执行 "CLAUDE.md 5 问表格"、权威加权源质量（S 级 = 满足 6 条信号中 ≥3 条）、每维度派 sub-agent 并行调研、落盘到 `docs/research/` 作为项目知识库。详见 `.claude/skills/research-before-decision/SKILL.md`。
 
+**1% 强触发语契约**（2026-04-19，spec `2026-04-19-system-evolution-design` M1）：
+所有 `session-rules` Chain Routing 条件触发的 skill——brainstorming / verification-before-completion / claudemd-check / systematic-debugging / research-before-decision——**即使只有 1% 可能需要调用，也必须走对应 skill 的触发流程**。违规属于优先级高于"保持简洁"的硬错误。1% 可能 = 100% 必须走流程，不得以"这次简单，跳过也行"为由绕过。
+
 ## 已关闭的决策
 详见 `docs/decisions.md`，不重新讨论。
 
