@@ -143,7 +143,7 @@ This is non-negotiable.
 ## Chain Position
 
 This skill is **step 2** of the **Execution Chain**:
-1. executing-plans
+1. task-execution
 2. **verification-before-completion** ← you are here
 3. claudemd-check
 

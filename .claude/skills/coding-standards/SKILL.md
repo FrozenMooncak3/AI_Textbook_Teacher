@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-description: Universal coding standards, best practices, and patterns for TypeScript, JavaScript, React, and Node.js development.
+description: Universal coding standards, best practices, and patterns for TypeScript, JavaScript, React, and Node.js development. 推荐给 Codex/Gemini 使用，Claude 自己不启动。
 origin: ECC
 ---
 

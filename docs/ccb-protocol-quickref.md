@@ -1,11 +1,7 @@
----
-name: ccb-protocol-reference
-description: CCB 派发协议精华（角色分工 / 派发模板 / 档位判断 / 3-step 协议 / 通信基础设施）。被 structured-dispatch 链式调用，提供 dispatch 时所需的精确格式。
----
-
 # CCB Protocol Quick Reference
 
-> 完整版见 `docs/ccb-protocol.md`。本 skill 只含 dispatch 时高频查的部分。
+> 完整版见 `docs/ccb-protocol.md`。本文件是 dispatch 时高频查的精华版。
+> 原为 `.claude/skills/ccb-protocol-reference/SKILL.md`，2026-04-19 Retrospective 2.0 降级为 docs（踩 2026-04-18 bloat §5 "文档 skill 化"陷阱）。
 
 ## 角色分工
 
@@ -92,3 +88,4 @@ After completing this task:
 - 查进度只通过 git/文件
 - Review 必须**真正读文件内容**，不能只跑验证命令
 - Gemini doc 防护：dispatch 必须说 "edit only relevant section"
+- **Fresh session per task**（M14）：每次新任务前向对应 pane 发 `/clear` 或 `/new`，retry 除外

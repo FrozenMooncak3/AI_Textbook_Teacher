@@ -221,6 +221,6 @@ sources: { S: N, A: N, B: N }
 
 ## Chain Position
 
-被动触发：本 skill 只由其他 skill（主要是 `brainstorming`，也可以是 `executing-plans` 等）在判定为 🔴 档时显式调用。**自己不主动启动**。
+被动触发：本 skill 只由其他 skill（主要是 `brainstorming`，也可以是 `task-execution` 等）在判定为 🔴 档时显式调用。**自己不主动启动**。
 
 返回调用方后由调用方继续后续流程。

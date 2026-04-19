@@ -1,6 +1,6 @@
 ---
 name: frontend-patterns
-description: Frontend development patterns for React, Next.js, state management, performance optimization, and UI best practices.
+description: Frontend development patterns for React, Next.js, state management, performance optimization, and UI best practices. 推荐给 Gemini 使用，Claude 自己不启动。
 origin: ECC
 ---
 

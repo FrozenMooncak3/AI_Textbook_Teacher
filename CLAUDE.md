@@ -10,7 +10,7 @@
 - 跑 git status + log，扫 journal INDEX parked 段
 - 输出 CEO 仪表盘 + 下一步建议
 - 不重读 project_status.md（hook 已注入）
-- 不主动读 `decisions.md` / `ccb-protocol.md`（前者是已关闭归档，不重讨；后者抽成 `ccb-protocol-reference` skill 按需加载）
+- 不主动读 `decisions.md` / `ccb-protocol.md`（前者是已关闭归档，不重讨；后者精华摘录见 `docs/ccb-protocol-quickref.md`，dispatch 时需要查则 Read）
 
 PreCompact hook 每 session 首次 /compact 强制拦一次，要求先更新 project_status.md 再放行。
 
@@ -107,7 +107,7 @@ PreCompact hook 每 session 首次 /compact 强制拦一次，要求先更新 pr
 - 不确定时明说，不用技术自信掩盖判断模糊
 
 ## Skill 使用
-每次会话首次启动时调用 session-init skill（CEO 仪表盘 + git 状态 + 停车场扫描）。`docs/project_status.md` 由 SessionStart hook 自动注入 system prompt，skill 不重读该文件。运行规则通过 CLAUDE.md `@import` 自动加载（`session-rules` skill）；skill 使用手册按需加载（`skill-catalog` skill）。Compact/resume 后 session-init 通过 `.ccb/session-marker` 自动跳过，只刷新仪表盘。PreCompact hook 在 compact 前强制拦一次，要求先更新 `project_status.md` 再放行（每 session 一次，幂等）。详见 `.claude/skills/session-init/SKILL.md`。
+每次会话首次启动时调用 session-init skill（CEO 仪表盘 + git 状态 + 停车场扫描）。`docs/project_status.md` 由 SessionStart hook 自动注入 system prompt，skill 不重读该文件。运行规则通过 CLAUDE.md `@import` 自动加载（`session-rules` skill）；skill 使用手册见 `docs/skill-catalog.md`（按需 Read，非 skill）。Compact/resume 后 session-init 通过 `.ccb/session-marker` 自动跳过，只刷新仪表盘。PreCompact hook 在 compact 前强制拦一次，要求先更新 `project_status.md` 再放行（每 session 一次，幂等）。详见 `.claude/skills/session-init/SKILL.md`。
 
 **调研能力**：做关键决策前（3+ 选项 / 难反悔 / 跨领域 / 用户明确要求），brainstorming skill 会自动触发 `research-before-decision` skill。新 skill 硬执行 "CLAUDE.md 5 问表格"、权威加权源质量（S 级 = 满足 6 条信号中 ≥3 条）、每维度派 sub-agent 并行调研、落盘到 `docs/research/` 作为项目知识库。详见 `.claude/skills/research-before-decision/SKILL.md`。
 
