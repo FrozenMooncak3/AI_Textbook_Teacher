@@ -79,11 +79,11 @@ Extract knowledge points (KPs) from the block below.
 - Ask: would this still be valid if applied to a different company or scenario?
 
 ### 3. KP types
-- position
-- calculation
-- c1_judgment
-- c2_evaluation
-- definition
+- factual（事实性）
+- conceptual（概念性）
+- procedural（程序性）
+- analytical（分析性）
+- evaluative（评价性）
 
 ### 4. detailed_content
 - Must be self-contained.
@@ -112,7 +112,7 @@ Return strict JSON only, with no extra text:
       "kp_code": "section-01",
       "section_name": "section name",
       "description": "one-sentence description",
-      "type": "position|calculation|c1_judgment|c2_evaluation|definition",
+      "type": "factual|conceptual|procedural|analytical|evaluative",
       "importance": 1,
       "detailed_content": "complete evidence-based content with escaped quotes like \"fixed asset\"",
       "cross_block_risk": false,
@@ -184,7 +184,7 @@ Return strict JSON only, with no extra text:
       "cluster_name": "鑱氱被鍚?",
       "section_name": "鎵€灞炲皬鑺?",
       "description": "涓€鍙ヨ瘽鎻忚堪",
-      "type": "position|calculation|c1_judgment|c2_evaluation|definition",
+      "type": "factual|conceptual|procedural|analytical|evaluative",
       "importance": 1,
       "detailed_content": "瀹屾暣鑷冻鍐呭",
       "ocr_quality": "good|uncertain|damaged"

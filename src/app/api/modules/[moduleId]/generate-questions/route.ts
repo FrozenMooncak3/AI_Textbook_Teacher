@@ -153,11 +153,11 @@ export const POST = handleRoute(async (_req, context) => {
   }
 
   const qaRules = `
-- Question types: worked_example (for calculation KPs), scaffolded_mc, short_answer, comparison
-- For calculation KPs: generate 3 questions in sequence: worked example -> progressive -> independent (Sweller method)
+- Question types: worked_example (for procedural KPs), scaffolded_mc, short_answer, comparison
+- For procedural KPs: generate 3 questions in sequence: worked example -> progressive -> independent (Sweller method)
 - For other KP types: 1-2 questions per KP, mix of types
 - scaffolded_mc questions MUST include a "scaffolding" field with a hint
-- Total questions roughly 1-2 per KP (calculation KPs may have 3)
+- Total questions roughly 1-2 per KP (procedural KPs may have 3)
 - Output language should match the KP content language
 - Do NOT include review questions from other modules
 `.trim()

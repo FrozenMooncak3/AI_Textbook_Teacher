@@ -22,7 +22,12 @@ export interface Stage0Result {
   modules: ModuleGroup[]
 }
 
-export type KPType = 'position' | 'calculation' | 'c1_judgment' | 'c2_evaluation' | 'definition'
+export type KPType =
+  | 'factual'
+  | 'conceptual'
+  | 'procedural'
+  | 'analytical'
+  | 'evaluative'
 export type OCRQuality = 'good' | 'uncertain' | 'damaged'
 
 export interface RawKP {

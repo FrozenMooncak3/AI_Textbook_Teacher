@@ -56,13 +56,37 @@ CREATE TABLE IF NOT EXISTS knowledge_points (
   kp_code TEXT NOT NULL,
   section_name TEXT NOT NULL,
   description TEXT NOT NULL,
-  type TEXT NOT NULL CHECK(type IN ('position','calculation','c1_judgment','c2_evaluation','definition')),
+  type TEXT NOT NULL,
   importance INTEGER NOT NULL DEFAULT 2,
   detailed_content TEXT NOT NULL,
   cluster_id INTEGER REFERENCES clusters(id),
   ocr_quality TEXT NOT NULL DEFAULT 'good',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+DO $$
+DECLARE
+  con_name TEXT;
+BEGIN
+  FOR con_name IN
+    SELECT c.conname
+    FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(c.conkey)
+    WHERE t.relname = 'knowledge_points'
+      AND n.nspname = 'public'
+      AND c.contype = 'c'
+      AND a.attname = 'type'
+  LOOP
+    EXECUTE format('ALTER TABLE knowledge_points DROP CONSTRAINT %I', con_name);
+  END LOOP;
+END $$;
+
+ALTER TABLE knowledge_points ADD CONSTRAINT knowledge_points_type_check
+  CHECK (type IN ('factual', 'conceptual', 'procedural', 'analytical', 'evaluative'));
+
+ALTER TABLE knowledge_points ADD COLUMN IF NOT EXISTS source_anchor JSONB;
 
 CREATE TABLE IF NOT EXISTS conversations (
   id SERIAL PRIMARY KEY,

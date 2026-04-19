@@ -1914,3 +1914,9 @@ Files: `src/lib/services/kp-extraction-service.ts`, `src/app/api/books/route.ts`
 ## 2026-04-19 | Cloud Deployment T15: allow OCR callback through middleware
 Completed: Exempted the exact `/api/ocr/callback` path from session-cookie middleware so Cloud Run callback events can reach the route-level Bearer auth. Added a regression script that proves the exact callback path is public while nearby OCR API paths remain protected.
 Files: `src/middleware.ts`, `scripts/test-ocr-callback-middleware.mjs`
+
+---
+
+## 2026-04-19 | M4 Task 1: migrate KP type enum and add source anchor
+Completed: Replaced the `knowledge_points.type` inline CHECK with an idempotent PostgreSQL migration block that dynamically drops old type constraints, adds the new 5-value `knowledge_points_type_check`, and adds nullable `source_anchor JSONB`. Updated backend KP type definitions and extractor/Q&A prompt text to use the new factual/conceptual/procedural/analytical/evaluative taxonomy, refreshed extractor templates in Neon `m4-dev`, and added a regression script covering the new enum, `source_anchor`, and template cleanup.
+Files: `src/lib/schema.sql`, `src/lib/services/kp-extraction-types.ts`, `src/lib/seed-templates.ts`, `src/app/api/modules/[moduleId]/generate-questions/route.ts`, `scripts/test-m4-task1-kp-migration.ts`
