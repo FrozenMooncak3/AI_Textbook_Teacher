@@ -73,6 +73,31 @@ What Claude will do after this task is done (review, next task, etc.).
 - Do NOT dispatch while the agent is actively working on another task.
 - If the task involves modifying docs/ files (changelog.md, project_status.md, etc.), include explicit instruction: **"Edit only the relevant section. Do NOT rewrite the entire file."** Gemini has a pattern of overwriting entire files when it struggles with partial edits.
 
+## ⚠️ Fresh Session per Task（2026-04-19 起，M14）
+
+**每次新任务派发必须使用 fresh session（新开 Codex/Gemini 实例，不续接旧 context）**。
+
+派发前先在对应 pane 发送 `/new` 或 `/clear` 命令清空 context，然后发送 "Read .ccb/inbox/..." 指令。若当前实例尚有未结任务（retry / review），不算新任务，可续接。
+
+**理由**：
+- obra "fresh subagent per task" 范式（survey §D Finding 1.4）—— context 污染是多步任务失败的根源
+- Cognition "context 污染影响 review 判断"（survey §D Finding 3.3）
+- Anthropic Skills 2.0 evals 显示 5/6 模型在长 session 里 skill 漂移（survey §D Finding 2.2）
+
+**例外**：
+- 同一任务的 retry（非新任务）允许续接同 session，保留上下文让 agent 更快定位问题
+- 但 M11 3 次 retry cap 触发后必须换 fresh session 并走 systematic-debugging
+
+**操作**（Send Procedure 之前）：
+```bash
+# 派新任务前先清 pane（二选一）
+echo "/new" | wezterm cli send-text --pane-id <target_pane> --no-paste
+# 或
+echo "/clear" | wezterm cli send-text --pane-id <target_pane> --no-paste
+printf '\r' | wezterm cli send-text --pane-id <target_pane> --no-paste
+# 等 2 秒让 session 重置，再发 dispatch 通知
+```
+
 ---
 
 ## Send Procedure

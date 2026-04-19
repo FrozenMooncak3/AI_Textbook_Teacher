@@ -82,6 +82,14 @@ rm -f .ccb/inbox/claude/*.md .ccb/inbox/codex/*.md .ccb/inbox/gemini/*.md
 - 要查进度只通过 `git diff` / `git log` / 读文件，不碰他们的 session
 - 等用户主动告知完成后再介入 review
 
+### Fresh Session per Task 约定（2026-04-19 起，M14）
+
+**每次新任务派发必须打开新 Codex / Gemini session**（发 `/new` 或 `/clear` 清空 context 后再发 dispatch 通知）。**Retry 允许续接**同 session 保留调试上下文，但 M11 触发的 3 次 retry cap 后必须换 fresh session 并走 `systematic-debugging`。
+
+来源：spec `2026-04-19-system-evolution-design` §2.3.5（M14，结合 obra fresh subagent + Cognition context pollution + Anthropic Skills 2.0 evals 三路证据）。
+
+**操作细节**：见 `.claude/skills/structured-dispatch/SKILL.md` "Fresh Session per Task" 段。
+
 ## 3. 模型调度规则
 
 根据任务复杂度分 3 档，Claude 派发指令时必须标注推荐档位 `[轻/标准/重]`，由用户切换模型：
