@@ -258,6 +258,34 @@ Run build verification: `npm run build` (or equivalent).
 - Build passes → auto-approve, skip human review
 - Build fails → escalate to Spot Check
 
+### Step 3.2.5: Review 终止硬 check（系统进化机制 M10）
+
+Review phase 在声明 `passed` / `verdict: pass` 前**必须**运行下列 `required_pass` 列表并全部返回 exit 0。目的：避免 review 基于 Claude 主观判断就 "pass"，survey §D Finding 3.1 显示 LLM 自评 ECE 77%（Expected Calibration Error）。
+
+```yaml
+review_termination_criteria:
+  required_pass:
+    - command: "npm run build"
+      expect_exit: 0
+    - command: "npm test"
+      expect_exit: 0
+    - command: "npm run lint"
+      expect_exit: 0
+  optional_signals:
+    - "manual_visual_check"
+    - "smoke_test_passed"
+```
+
+**硬规则**：
+- Claude 必须实际调用这些命令并报告 exit code（不得"估计应该过了"）
+- 任一 `required_pass` 未达 → review **不能声明 passed**，必须回到 Phase 4 Path B（Recycle）或 Path C（Escalate）
+- Claude 主观判断是**补充信号**（指出 build 过但逻辑错），不能**替代**硬 check
+- 命令失败时：把 stderr 最后 500 字符写入 ledger `review_summary.notes`，便于下轮 debug
+
+**例外处理**：任务纯文档改动（无构建 / 测试影响）时，reviewer 必须在 Review 开始时**明文声明**"本任务无构建/测试硬 check，仅走人工 review"——例外必须可见且记录到 `review_summary.notes`，不得静默跳过。
+
+**触发条件**：`review_level` 为 `Full` 或 `Spot Check` 时必走。`Auto-Pass` 已包含 `npm run build` 硬 check，本段不重复。
+
 ### Step 3.3: Classify Findings
 
 For each finding, assign one severity:
