@@ -4,6 +4,34 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-19 | 元系统进化 T1+T2 — 10 机制全量落地
+
+**目的**：Survey 发现当前 AI 协作体系在事件捕获（24 hook 只用 2）、工作流终止（review/retry 太主观）、自我诊断（完全空白）三维度有结构性短板。落地 10 个低成本机制补齐，每机制独立 commit + kill switch 可秒级回滚。
+
+**Spec / Plan**：`docs/superpowers/specs/2026-04-19-system-evolution-design.md` · `docs/superpowers/plans/2026-04-19-system-evolution.md` · `docs/research/2026-04-19-system-evolution-survey.md`
+
+**T1 — 8 低成本机制**：
+- **M1** 1% 强触发语（CLAUDE.md §Skill 使用 + session-rules 规则 3）：即使 1% 可能需要也必须走 skill 流程（3227a3d）
+- **M2** PostToolUse Bash 失败捕获 hook：`scripts/hooks/post-tool-failure-capture.sh` + `.ccb/counters/tool-failures.log` + whitelist（codex/gemini/npm/git/node/bash/docker）升 journal（c423c63）
+- **M3/M4** UserPromptSubmit 纠错词计数 hook：`scripts/hooks/user-correction-counter.sh`，窄关键词（不对/重来/错了/重新/不行/搞错/弄错 + wrong/redo/no that's/stop），2 次 ⚠️ 3 次 🛑 inject additionalContext（7eb1313）
+- **M5** fallback_for_toolsets frontmatter：debug-ocr / database-migrations / using-git-worktrees / research-before-decision 4 个 skill 加字段 + session-rules 规则 6（36b5303）
+- **M6** memory audit log：`docs/memory-audit-log.md` append-only + CLAUDE.md 契约段 + retrospective 2.0 交叉检查（0684391）
+- **M11** task-execution max retries=3 硬 cap：`.ccb/counters/task-retries-<uuid>.count` 持久化（跨 session 存活），避免 $47k 无限循环案例（ed50bbf）
+- **M14** Fresh Session per Task：structured-dispatch + ccb-protocol §2 加约定，每次新任务 `/new` 或 `/clear` 清 pane，retry 允许续接（d783baf）
+- **Kill switch 文档化**：CLAUDE.md 技术红线加 `AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用 + session-init Step 2 扫 `.ccb/counters/` 命中 ≥3 显眼警告（96b25fd）
+
+**T2 — 2 高杠杆机制**：
+- **Retrospective 2.0**：合并 M7/M9/M15 为单 skill 升级（避免 skill 膨胀）：段 d skill-audit（独立 sub-agent 避自评 ECE 77% 陷阱，3 阶段数据演进 纯静态→加 counter→加 PreToolUse Task hook）+ 段 e 挖矿（扫 journal ≥3 次重复 pattern 提议新 skill，仅提议不自动生成）+ 自动触发提示（里程碑收尾 / 30 commits 阈值，零运行时 hook）（cfe8456）
+- **M10** Review 终止硬 check：task-execution Phase 3 Step 3.2.5，声明 verdict: pass 前必须 `npm run build` / `npm test` / `npm run lint` 全过 exit 0，主观判断作补充信号不能替代硬 check；纯文档任务必须明文声明例外（024de5e）
+
+**核心变更文件**：
+- 新增：`scripts/hooks/post-tool-failure-capture.sh` · `scripts/hooks/user-correction-counter.sh` · `docs/memory-audit-log.md` · `.ccb/counters/.gitignore`
+- 修改：`CLAUDE.md` · `.claude/settings.json` · `.claude/skills/{session-rules,session-init,task-execution,structured-dispatch,retrospective,debug-ocr,database-migrations,using-git-worktrees,research-before-decision}/SKILL.md` · `docs/ccb-protocol.md`
+
+**回滚策略**：10 独立 commit → `git revert <hash>` 分钟级恢复。总开关：`export AI_SYSTEM_EVOLUTION_DISABLE=1` 秒级禁用 hook。
+
+---
+
 ## 2026-04-17 | Session-Init Token Optimization — 全 3 周完成
 
 **目的**：session-init 开机占 context 20-30%，brainstorming 读全量 docs 浪费 token。目标：开机 ≤10%，brainstorming 首轮增量 ≤5k token。

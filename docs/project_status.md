@@ -21,11 +21,15 @@
 
 **下一步**：云部署阶段 2 plan review → dispatch（plan 草稿已落盘 `plans/2026-04-18-cloud-deployment-phase2.md`）
 
+**平行 · 元系统进化**：✅ 完成（2026-04-19 本 session 端到端落地）。Survey → Spec → Plan → 10 commits（c423c63 / 7eb1313 / 3227a3d / 36b5303 / 0684391 / ed50bbf / d783baf / 96b25fd / cfe8456 / 024de5e），T1 8 低成本 + T2 Retrospective 2.0 + M10 review 外化全部上线。Kill switch：`AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用所有 hook 机制。Spec: `superpowers/specs/2026-04-19-system-evolution-design.md`；Plan: `superpowers/plans/2026-04-19-system-evolution.md`。
+
 ---
 
 ## 2. 最近关键决策
 
-- 2026-04-18 session-init F.3 落地（commit cd8c3fe）：SessionStart hook 注入 project_status + PreCompact block 强制刷新 + SKILL 瘦身（127→60 行）+ parked 分流 14→11。实测 Skills 从 ~15k 降到 2.5k，新 session 非 MCP 29.3k / 21% → [spec](superpowers/specs/2026-04-18-session-init-F2-redesign.md) · [plan](superpowers/plans/2026-04-18-session-init-F3-redesign.md)
+- 2026-04-19 元系统进化 10 机制全量落地（本 session 端到端）：10 commits 独立提交，每机制分钟级 git revert 回滚 + `AI_SYSTEM_EVOLUTION_DISABLE=1` 一键总开关。落地清单：M1 1% 强触发语（CLAUDE.md）· M2 PostToolUse Bash 失败捕获 hook（.ccb/counters/tool-failures.log + whitelist 升 journal）· M3/M4 UserPromptSubmit 纠错词计数 hook（≥2 ⚠️ / ≥3 🛑 inject）· M5 fallback_for_toolsets frontmatter（4 skill + session-rules 规则 6）· M6 memory audit log（docs/memory-audit-log.md append-only + CLAUDE.md 契约）· M11 task-execution 硬 cap 3 + 持久化 counter · M14 fresh session per task（structured-dispatch + ccb-protocol）· kill switch 文档化 + session-init 扫计数器 · Retrospective 2.0（段 d skill-audit M9 + 段 e 挖矿 M15 + 自动触发提示）· M10 review 终止硬 check（build/test/lint 硬过 exit 0）。→ [spec](superpowers/specs/2026-04-19-system-evolution-design.md) · [plan](superpowers/plans/2026-04-19-system-evolution.md)
+- 2026-04-19 元系统进化调研完成：5 sub-agent 并行扫 8 源（Anthropic / Letta / hermes / obra / OpenHands / Aider / Cognition / Cline-Continue），42 个 S 级源，三重 gate 通过。survey 结论：A 记忆方向对、B 技能方向对、C 事件捕获最大红利（24 hook 只用 2）、D 工作流 review/retry 终止太主观、E 自我诊断完全空白 → [survey](research/2026-04-19-system-evolution-survey.md) · [handoff](superpowers/specs/2026-04-19-system-evolution-design-handoff.md)
+- 2026-04-18 session-init F.3 盖棺（commits cd8c3fe + f54e7b2 + fe950e4）：SessionStart hook 注入 project_status + PreCompact block 强制刷新 + SKILL 瘦身（127→60 行）+ parked 分流 14→11 + CLAUDE.md session-start 流程 / 部署现状 / research 协调文件三处同步。实测 Skills 从 ~15k 降到 2.5k，非 MCP 29.3k / 21%，PreCompact block 验证通过。Retrospective 补 2 条 memory（small-bash-direct-write / precompact-handshake）→ [spec](superpowers/specs/2026-04-18-session-init-F2-redesign.md) · [bloat-diagnosis](journal/2026-04-18-session-init-bloat-diagnosis.md) · [plan](superpowers/plans/2026-04-18-session-init-F3-redesign.md)
 - 2026-04-15 调研能力建设：research-before-decision skill + brainstorming Research Trigger Check，解决 OCR 决策捏造定价事件 → [spec](superpowers/specs/2026-04-14-research-capability-design.md)
 - 2026-04-14~15 云部署 10 决策拍板：Vision OCR / Vercel Hobby / Cloud Run / R2 / Neon branch preview / CD UI / 平台 env vars / .com + Cloudflare Registrar / Sentry + Vercel Analytics / 3 阶段拆分 → [spec](superpowers/specs/2026-04-12-cloud-deployment-design.md)
 - 2026-04-14 教学系统 10 决策全部拍板 → [spec](superpowers/specs/2026-04-15-m4-teaching-mode-design.md)

@@ -9,6 +9,13 @@
 - [2026-04-12] 云部署里程碑设计 `[cloud, deployment, Supabase, Docker, three-phase]` → [spec](specs/2026-04-12-cloud-deployment-design.md)
 
 ### 已完成（resolved）
+- [2026-04-19] 系统进化机制设计 `[system-evolution, design, T1, T2, hooks, skills, 10-mechanisms, implemented]` → [spec](specs/2026-04-19-system-evolution-design.md)
+- [2026-04-19] 系统进化机制设计Brainstorm进度追踪 `[system-evolution, design, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-19-system-evolution-design-brainstorm-state.md)
+- [2026-04-19] 系统进化系统设计Handoff `[system-evolution, brainstorm-handoff, 方案A, 冷启动指令]` → [spec](specs/2026-04-19-system-evolution-design-handoff.md)
+- [2026-04-18] 系统进化机制调研设计 `[agent-system, evolution, memory, skills, event-capture, workflow, self-diagnosis, research-design]` → [spec](specs/2026-04-18-system-evolution-research-design.md)
+- [2026-04-18] 系统进化机制调研Brainstorm进度追踪 `[agent-system, evolution, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-18-system-evolution-research-brainstorm-state.md)
+
+### 已完成（resolved）
 - [2026-04-15] Session-Init Token优化设计 `[session-init, token-optimization, frontmatter, index, memory-cleanup]` → [spec](specs/2026-04-15-session-init-token-optimization-design.md)
 - [2026-04-15] M4教学模式Brainstorm进度追踪 `[M4, teaching-mode, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-15-m4-teaching-mode-brainstorm-state.md)
 - [2026-04-15] Token优化Brainstorm进度追踪 `[session-init, token-optimization, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-15-session-init-token-optimization-brainstorm-state.md)
@@ -49,10 +56,12 @@
 ## Plans
 
 ### 进行中（in_progress）
+- [2026-04-18] 云部署阶段2 Cloud Run OCR `[cloud, deployment, Cloud-Run, Google-Vision, callback, phase-2]` → [plan](plans/2026-04-18-cloud-deployment-phase2.md)
 - [2026-04-15] M4教学模式最小闭环 `[M4, teaching-mode, teacher-AI, prompt, transcript]` → [plan](plans/2026-04-15-m4-teaching-mode.md)
 - [2026-04-15] 云部署阶段1数据层上云 `[cloud, deployment, database, Supabase, phase-1]` → [plan](plans/2026-04-15-cloud-deployment-phase1.md)
 
 ### 已完成（resolved）
+- [2026-04-19] 系统进化 10 机制实施 `[system-evolution, hooks, skills, T1-T2, retrospective-2.0, review-externalization, implemented]` → [plan](plans/2026-04-19-system-evolution.md)
 - [2026-04-15] Session-Init Token Optimization 实施计划 `[session-init, token, index, frontmatter, memory-cleanup]` → [plan](plans/2026-04-15-session-init-token-optimization.md)
 - [2026-04-15] 调研能力Skill构建 `[research, skill, authority-weighting, brainstorming]` → [plan](plans/2026-04-15-research-capability.md)
 - [2026-04-12] 扫描PDF处理升级计划 `[scanned-PDF, OCR, progressive-unlock, classification]` → [plan](plans/2026-04-12-scanned-pdf-plan.md)
