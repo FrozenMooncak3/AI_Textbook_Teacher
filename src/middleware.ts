@@ -6,7 +6,8 @@ const publicPaths = ['/login', '/register']
 function isPublicPath(pathname: string): boolean {
   return (
     publicPaths.includes(pathname) ||
-    pathname.startsWith('/api/auth/')
+    pathname.startsWith('/api/auth/') ||
+    pathname === '/api/ocr/callback'
   )
 }
 

@@ -1862,3 +1862,9 @@ Files: `src/lib/services/kp-extraction-service.ts`, `scripts/test-scanned-pdf-ta
 ## 2026-04-12 | Scanned PDF T7: 4-step upload flow and module-level extraction APIs
 Completed: Rewired `POST /api/books` for PDFs to run classify, extract-text, module creation, background OCR, and background module extraction orchestration. Added `syncBookKpStatus`, `getModuleText`, and `triggerReadyModulesExtraction` to keep book-level KP state aligned with per-module extraction. Replaced `POST /api/books/[bookId]/extract` with module-aware fire-and-forget behavior and added `GET /api/books/[bookId]/module-status` for OCR/KP progress polling. Updated the API contract and added regression coverage for the new service helpers and route shapes.
 Files: `src/lib/services/kp-extraction-service.ts`, `src/app/api/books/route.ts`, `src/app/api/books/[bookId]/extract/route.ts`, `src/app/api/books/[bookId]/module-status/route.ts`, `.agents/API_CONTRACT.md`, `scripts/test-scanned-pdf-task6.mjs`, `scripts/test-scanned-pdf-task7.mjs`
+
+---
+
+## 2026-04-19 | Cloud Deployment T15: allow OCR callback through middleware
+Completed: Exempted the exact `/api/ocr/callback` path from session-cookie middleware so Cloud Run callback events can reach the route-level Bearer auth. Added a regression script that proves the exact callback path is public while nearby OCR API paths remain protected.
+Files: `src/middleware.ts`, `scripts/test-ocr-callback-middleware.mjs`
