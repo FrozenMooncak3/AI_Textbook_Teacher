@@ -49,6 +49,7 @@ PreCompact hook 每 session 首次 /compact 强制拦一次，要求先更新 pr
 - 不写 TypeScript `any`，不绕过类型系统
 - 不在客户端代码中暴露 `ANTHROPIC_API_KEY`，API 调用只在服务端
 - 不在生产代码中留 `console.log`
+- **系统进化 hook 总开关**：若 `scripts/hooks/` 下带 `AI_SYSTEM_EVOLUTION_DISABLE` 检查的 hook（如 `post-tool-failure-capture.sh` / `user-correction-counter.sh`）出现异常（误报 / 失败阻塞），设置环境变量 `AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用所有新机制。Windows 当前 shell：`export AI_SYSTEM_EVOLUTION_DISABLE=1`；永久：写入 `~/.bashrc` 或项目 `.env`。恢复：`unset AI_SYSTEM_EVOLUTION_DISABLE` 或 `=0`。
 
 ## CCB 角色分工
 | 角色 | 身份 | 指令文件 | 文件边界 |

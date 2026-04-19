@@ -85,6 +85,10 @@ fallback_for_toolsets:
 
 ---
 
+> 新 hook 机制总开关见 CLAUDE.md "技术红线" 段 kill switch 条款（`AI_SYSTEM_EVOLUTION_DISABLE=1`）。覆盖所有 `scripts/hooks/*` 带检查的脚本；单 hook 失败时优先考虑关掉再修，而不是让 hook 阻塞工作流。
+
+---
+
 ## 行为契约
 
 - **主动执行**运行规则，不等用户提醒

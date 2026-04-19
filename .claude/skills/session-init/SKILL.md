@@ -31,6 +31,10 @@ test -f .ccb/session-marker && echo "RESUME" || echo "FRESH"
 - `ls .ccb/inbox/claude/ 2>/dev/null`（未读消息）
 - `ls .codex-report.md .gemini-report.md 2>/dev/null`（fallback 报告）
 - `ls docs/superpowers/specs/*-brainstorm-state.md 2>/dev/null`（WIP brainstorm，若存在先读）
+- `ls .ccb/counters/ 2>/dev/null`（系统进化机制状态文件 M2/M3/M11）：
+  - `tool-failures.log` 存在且近 24h 有新条目 → 仪表盘加 `⚠️ Bash 失败事件: N 条（scripts/hooks/post-tool-failure-capture 捕获）`
+  - `user-corrections-*.count` 任一值 ≥3 → 仪表盘加 `🛑 用户 3 次纠错未处理（建议 /clear 或走 systematic-debugging）`
+  - `task-retries-*.count` 任一值 ≥3 → 仪表盘加 `🛑 任务 retry cap 命中（M11）`
 
 ---
 
