@@ -2,6 +2,9 @@
 name: database-migrations
 description: Database migration best practices for schema changes, data migrations, rollbacks, and zero-downtime deployments across PostgreSQL, MySQL, and common ORMs (Prisma, Drizzle, Django, TypeORM, golang-migrate).
 origin: ECC
+fallback_for_toolsets:
+  - preferred: ["Bash"]
+    fallback: "If Bash is unavailable (e.g., local shell restricted), write SQL changes to docs/migration-<date>.sql and dispatch to Codex with AGENTS.md boundary."
 ---
 
 # Database Migration Patterns

@@ -1,6 +1,9 @@
 ---
 name: research-before-decision
 description: "You MUST use this before recommending any 🔴 tier decision (3+ options / hard to reverse / cross-domain expert knowledge / referenced by multiple downstream decisions / user explicitly requests). Executes multi-dimensional research with authority-weighted source quality grading, dispatches one sub-agent per dimension, produces a durable knowledge-base file at docs/research/YYYY-MM-DD-<topic>.md, and enforces the CLAUDE.md 5-question hard gate before returning."
+fallback_for_toolsets:
+  - preferred: ["Agent", "WebSearch", "WebFetch"]
+    fallback: "If Agent sub-agent dispatch is unavailable, fall back to serial WebSearch + WebFetch from the main loop (slower, less parallelism, but functional). If WebSearch/WebFetch also unavailable, halt research and report to user — do not fabricate findings from training memory."
 ---
 
 # Research Before Decision

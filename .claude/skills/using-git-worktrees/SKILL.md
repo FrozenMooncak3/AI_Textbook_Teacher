@@ -1,6 +1,9 @@
 ---
 name: using-git-worktrees
 description: Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates isolated git worktrees with smart directory selection and safety verification
+fallback_for_toolsets:
+  - preferred: ["Bash"]
+    fallback: "If Bash is unavailable, skip worktree creation and work directly on master — document the isolation risk in the plan header and reduce blast radius by committing early and often."
 ---
 
 # Using Git Worktrees

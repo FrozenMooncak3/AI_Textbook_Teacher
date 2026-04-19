@@ -2,6 +2,9 @@
 description: 排查 PaddleOCR / 截图 OCR / ocr_server.py 相关问题
 globs: scripts/ocr_*.py, src/app/api/**/screenshot*
 alwaysApply: false
+fallback_for_toolsets:
+  - preferred: ["Bash"]
+    fallback: "If Bash is unavailable, use Read to tail last 100 lines of OCR logs; if OCR container not running locally, dispatch to Codex for remote check."
 ---
 
 # Debug OCR

@@ -70,6 +70,19 @@ description: Session-wide 运行规则（自动派发 / 想法分流 / skill 自
 
 不匹配任何 chain 时正常处理，chain 是指引不是约束。
 
+## 规则 6: Fallback for Toolsets
+
+加载任何 skill 时，若 SKILL.md frontmatter 含 `fallback_for_toolsets` 字段且当前 session 中 `preferred` 列表任一工具不可用 → 必须优先读并执行 `fallback` 文本，禁止因单个工具缺失直接放弃 skill。
+
+字段格式：
+```yaml
+fallback_for_toolsets:
+  - preferred: ["Bash"]
+    fallback: "If Bash is unavailable, ..."
+```
+
+来源：spec `2026-04-19-system-evolution-design` §2.1.4（M5，借鉴 Hermes skill runtime fallback 模式）。
+
 ---
 
 ## 行为契约
