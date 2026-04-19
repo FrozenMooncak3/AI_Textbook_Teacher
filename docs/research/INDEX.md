@@ -45,6 +45,7 @@
 - [2026-04-15] Claude Code 长期项目上下文管理最佳实践 `[上下文管理, session-init, token优化, 渐进披露, 索引]` 🔴 → [link](2026-04-15-cc-long-project-context-mgmt.md)
 - [2026-04-15] session-init token 优化综合（Route D） `[session-init, token优化, 按需加载, 索引, 综合调研]` 🔴 → [link](2026-04-15-session-init-optimization-synthesis.md)
 - [2026-04-15] Claude Code CLAUDE.md @import 语法核实 `[CLAUDE.md, import语法, 文件引用, Claude Code]` 🟡 → [link](2026-04-15-claude-md-import-syntax.md)
+- [2026-04-19] 系统进化机制调研（5维SOTA横扫） `[agent系统, 元系统进化, 记忆, 技能演化, 事件捕获, 工作流, 自我诊断, Letta, hermes, Superpowers]` 🔴 → [link](2026-04-19-system-evolution-survey.md)
 
 ## 教师模型选型
 
