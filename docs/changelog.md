@@ -1920,3 +1920,9 @@ Files: `src/middleware.ts`, `scripts/test-ocr-callback-middleware.mjs`
 ## 2026-04-19 | M4 Task 1: migrate KP type enum and add source anchor
 Completed: Replaced the `knowledge_points.type` inline CHECK with an idempotent PostgreSQL migration block that dynamically drops old type constraints, adds the new 5-value `knowledge_points_type_check`, and adds nullable `source_anchor JSONB`. Updated backend KP type definitions and extractor/Q&A prompt text to use the new factual/conceptual/procedural/analytical/evaluative taxonomy, refreshed extractor templates in Neon `m4-dev`, and added a regression script covering the new enum, `source_anchor`, and template cleanup.
 Files: `src/lib/schema.sql`, `src/lib/services/kp-extraction-types.ts`, `src/lib/seed-templates.ts`, `src/app/api/modules/[moduleId]/generate-questions/route.ts`, `scripts/test-m4-task1-kp-migration.ts`
+
+---
+
+## 2026-04-19 | M4 Task 2: add zod runtime dependency
+Completed: Added `zod` as a runtime dependency for upcoming `generateObject({ schema: ZodSchema })` validation work, verified direct runtime parsing with `require('zod')`, and confirmed `ai` + `zod` compile together in a temporary TS smoke script without triggering any model call.
+Files: `package.json`, `package-lock.json`
