@@ -4,6 +4,7 @@ import { insert, query, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
+import { buildOcrHeaders } from '@/lib/ocr-auth'
 import { buildObjectKey, uploadPdf } from '@/lib/r2-client'
 import { triggerReadyModulesExtraction } from '@/lib/services/kp-extraction-service'
 import { chunkText } from '@/lib/text-chunker'
@@ -102,15 +103,12 @@ export async function POST(req: NextRequest) {
   }
 
   const ocrBase = process.env.OCR_SERVER_URL || 'http://127.0.0.1:8000'
-  const ocrToken = process.env.OCR_SERVER_TOKEN || ''
 
   try {
-    const classifyRes = await fetch(`${ocrBase}/classify-pdf`, {
+    const classifyUrl = `${ocrBase}/classify-pdf`
+    const classifyRes = await fetch(classifyUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${ocrToken}`,
-      },
+      headers: await buildOcrHeaders(classifyUrl),
       body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId }),
     })
     if (!classifyRes.ok) {
@@ -137,12 +135,10 @@ export async function POST(req: NextRequest) {
       [JSON.stringify(pages), text_count, scanned_count + mixed_count, bookId]
     )
 
-    const extractRes = await fetch(`${ocrBase}/extract-text`, {
+    const extractUrl = `${ocrBase}/extract-text`
+    const extractRes = await fetch(extractUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${ocrToken}`,
-      },
+      headers: await buildOcrHeaders(extractUrl),
       body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId, classifications: pages }),
     })
     if (!extractRes.ok) {
@@ -177,12 +173,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (nonTextPages > 0) {
-      void fetch(`${ocrBase}/ocr-pdf`, {
+      const ocrPdfUrl = `${ocrBase}/ocr-pdf`
+      const ocrPdfHeaders = await buildOcrHeaders(ocrPdfUrl)
+      void fetch(ocrPdfUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${ocrToken}`,
-        },
+        headers: ocrPdfHeaders,
         body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId, classifications: pages }),
       })
         .then(async (response) => {

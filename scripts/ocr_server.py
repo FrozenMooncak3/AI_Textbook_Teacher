@@ -28,13 +28,12 @@ SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
 
 
 def _require_bearer() -> tuple[Any, int] | None:
-    """Return (response, status) if Bearer token invalid, else None."""
+    """Return (response, status) if app token invalid, else None."""
     if not OCR_SERVER_TOKEN:
         return jsonify({"error": "OCR_SERVER_TOKEN not configured"}), 500
-    header = request.headers.get("Authorization", "")
-    if not header.startswith("Bearer "):
-        return jsonify({"error": "missing Bearer token"}), 401
-    received = header[len("Bearer ") :].strip()
+    received = request.headers.get("X-App-Token", "").strip()
+    if not received:
+        return jsonify({"error": "missing X-App-Token"}), 401
     if received != OCR_SERVER_TOKEN:
         return jsonify({"error": "invalid token"}), 401
     return None

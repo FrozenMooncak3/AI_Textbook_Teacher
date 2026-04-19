@@ -1,3 +1,4 @@
+import { buildOcrHeaders } from './ocr-auth'
 import { logAction } from './log'
 
 interface OcrResponseBody {
@@ -26,17 +27,14 @@ export function isUsefulOcrText(text: string, confidence: number): boolean {
 
 export async function ocrImage(imageBuffer: Buffer): Promise<OcrResult> {
   const ocrBase = process.env.OCR_SERVER_URL || 'http://127.0.0.1:8000'
-  const ocrToken = process.env.OCR_SERVER_TOKEN || ''
-
   const base64 = imageBuffer.toString('base64')
 
   try {
-    const response = await fetch(`${ocrBase}/ocr`, {
+    const targetUrl = `${ocrBase}/ocr`
+    const headers = await buildOcrHeaders(targetUrl)
+    const response = await fetch(targetUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${ocrToken}`,
-      },
+      headers,
       body: JSON.stringify({ image_base64: base64 }),
       signal: AbortSignal.timeout(60_000),
     })
