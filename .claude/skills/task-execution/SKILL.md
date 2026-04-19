@@ -340,9 +340,10 @@ Step 3.4 already output the review summary with `裁决: PASS`. Don't repeat a "
 3. **If `infra_error`** → fix the infrastructure issue (e.g., re-encode dispatch), re-dispatch with corrected content. Do NOT increment retry_count. State stays `dispatched`. Back to Phase 2.
 
 4. **If `implementation_error`:**
-   - Check retry_count. If >= 2 → update state → `escalated`, go to Path C
+   - Check retry_count. If >= 3 → update state → `escalated`, go to Path C
    - Otherwise:
      - Increment `retry_count` (BEFORE dispatching fix)
+     - **Mirror to persistent counter**（M11 硬 cap）：`.ccb/counters/task-retries-${task_uuid}.count` 同步写入当前 retry_count。若文件不存在则用任务 id（T[N]_<timestamp>）作为 uuid。在 Phase 1 Step 1.5 dispatch 时若 `task_uuid` 不存在则生成：`task_uuid="T${N}-$(date +%s)"`，记入 ledger
      - Write fix dispatch listing specific Blocking issues:
        ```
        ## Fix Required (Attempt [retry_count+1] of 3)
@@ -382,6 +383,36 @@ Wait for user decision. Execute accordingly:
 - Option 2: change assignee in ledger, update state → `ready`, retry_count = 0
 - Option 3: user defines sub-tasks, add to ledger, current task → `skipped`
 - Option 4: update state → `skipped`
+
+---
+
+## Retry 硬 cap（系统进化机制 M11）
+
+**目的**：避免 $47k 无限循环案例（survey §D Finding 1.3：LangChain "infinite CodeAct loop" on ambiguous task）。
+
+**双层计数**：
+1. **Ledger 内 `retry_count`**：会话内可见、用于 Step 3.4 review summary 显示（如 "Retry #2 of 3"）
+2. **持久化 counter** `.ccb/counters/task-retries-${task_uuid}.count`：跨 session 存活；即使 session /compact 或 crash 重启，counter 不丢
+
+**流程**（Phase 4 Path B Step 4 触发，这里是整体规约）：
+
+1. Dispatch 前（Phase 1 Step 1.5）：生成并记录 `task_uuid = "T${N}-$(date +%s)"` 到 ledger
+2. 每次 retry 前读 `.ccb/counters/task-retries-${task_uuid}.count`（不存在则 0）
+3. COUNT+1 写回文件 + ledger `retry_count`
+4. **if COUNT >= 3**：surface to user
+   ```
+   🛑 Retry cap hit (3/3) for task ${task_uuid}.
+   Manual diagnosis required. 对应 dispatch: <dispatch_file>。
+   禁止继续 retry，必须走 systematic-debugging 或放弃任务（skipped）。
+   ```
+   → 走 Path C（escalated）
+5. COUNT < 3 → 允许 retry，回到 Phase 2
+
+**生命周期**：任务完成（done）/ 跳过（skipped）/ 升级（escalated 并由用户走 systematic-debugging）后，counter 文件保留 24h 供 retrospective 2.0 挖矿，超过由 `memory-cleanup` skill 清理。
+
+**硬规则**：
+- 不接受"只差一点再试一次"说辞——survey $47k 案例明确警告
+- Kill switch：`AI_SYSTEM_EVOLUTION_DISABLE=1` 不影响本机制（cap 是 dispatch 层硬约束，不走 hook）
 
 ---
 
@@ -486,7 +517,7 @@ ready → dispatched → in_review → done
                          │
                   ┌──────┴──────┐
             impl_error      spec_mismatch
-            & retry < 2    or retry >= 2
+            & retry < 3    or retry >= 3
                   │              │
             retry++          ESCALATED
             re-dispatch          │
@@ -510,11 +541,13 @@ rename/format/text only?      → Auto-Pass
 ### Circuit Breaker
 
 ```
-implementation_error + retry < 2   → Recycle (retry++)
-implementation_error + retry >= 2  → Escalate
+implementation_error + retry < 3   → Recycle (retry++)
+implementation_error + retry >= 3  → Escalate (M11 hard cap)
 spec_mismatch                      → Escalate immediately
 infra_error                        → Fix infra, no retry count
 ```
+
+Persistent counter: `.ccb/counters/task-retries-${task_uuid}.count` mirrors ledger retry_count, survives session crash/compact.
 
 ### Quality Gate
 
@@ -543,7 +576,7 @@ Autonomous 不能松的:
   Full Review 必须跑 subagent
   Review summary 必须输出 (Step 3.4)
   Blocking 依然 recycle,不能私自 downgrade
-  Spec mismatch / retry >= 2 依然 escalate 找用户
+  Spec mismatch / retry >= 3 依然 escalate 找用户（M11）
 ```
 
 ---
