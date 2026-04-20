@@ -4,6 +4,46 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-20 | M4 Teaching Mode — 前端 T13-T16（Modal + BookTOC + ObjectivesList + Book 页改造）
+
+**目的**：M4 Teaching Mode 前端第一阶段——通用组件（Modal）+ 书籍级导航（BookTOC 基础态/引导态）+ 学习目标列表（ObjectivesList）+ /books/[bookId] 页面改造（模式切换 Dialog + BookTOC 引导态 + 推荐模块提示）。为 T17-T19 激活页/教学页/完成页提供组件底座。
+
+**Spec / Plan**：`docs/superpowers/specs/2026-04-15-m4-teaching-mode-spec.md` · `docs/superpowers/plans/2026-04-15-m4-teaching-mode.md` Task 13-16
+
+**新增组件**：
+- `src/components/ui/Modal.tsx`（T13，81 行）：通用 Modal 容器。`createPortal(document.body)` + ESC/backdrop/X 关闭 + body.overflow 锁滚 + a11y（`aria-modal` + `aria-labelledby` + `role=dialog` + focus 管理）+ 自动清理（useEffect cleanup）
+- `src/components/BookTOC/index.tsx` + `BookTOCItem.tsx`（T14，162 + 91 行）：书籍内模块目录。两态设计：基础态（list + collapse）和引导态（`guideMode=true` 时激活：`ring-4 ring-amber-400 shadow-2xl` 高亮 `<aside>`；非 unstarted 模块 `isBlocked=true` 变灰禁点；推荐模块显示「继续」CTA pulse 动画）。受控接口：`{ modules, collapsed, onToggleCollapse, guideMode, recommendedModuleId, onModuleClick }`
+- `src/components/ObjectivesList.tsx`（T15，37 行）：有序学习目标列表。圆形徽章（1/2/3...）+ 标题 + summary；受控 `items: { id, title, summary }[]`——**不接受 `kp.type` / `kp.importance`**（护城河）
+- `src/components/ModeSwitch/ModeSwitchDialog.tsx`（T16，120 行）：模式切换 Dialog。对比表（currentMode vs targetMode）+ AI 推荐标记（`book-meta-analyzer` 结果）+ 调用 `POST /api/books/[id]/switch-mode`
+
+**页面改造（T16）**：
+- `src/app/books/[bookId]/page.tsx`（+14 -2）：Book interface 加 `learning_mode`，并发查询 kpCount（`SELECT COUNT(kp.id)::int FROM knowledge_points kp JOIN modules m ON m.id = kp.module_id WHERE m.book_id = $1`），传 `learningMode` + `bookMeta={{ kpCount }}` 到 ActionHub
+- `src/app/books/[bookId]/ActionHub.tsx`（+366 -137 rewrite + 1 行 retry fix）：
+  - 4 新状态：`dialogOpen` / `guideMode` / `currentMode` / `tocCollapsed`
+  - `findRecommendedUnstartedModuleId` 工具函数：按 orderIndex 返回首个 unstarted 模块
+  - `handleModuleClick`：guideMode 下拦截点击 → 调 `reset-and-start` 激活 → 否则走默认跳转
+  - Layout：`<div className="... flex">` 外层 + `<AppSidebar fixed>` + `<main className="flex-1 ml-72">` + BookTOC aside + HeroCard + 模块 grid
+  - Ctrl+B 快捷键 toggle TOC 折叠
+  - ModeSwitchDialog 挂载点（onClose loading 锁 / onSwitchComplete → setGuideMode + refresh）
+
+**Review / Retry**：
+- T13 Modal：spot check PASS（Gemini 加 changelog 违规→Claude self-remediate 于 8958ab1）
+- T14 BookTOC：Full review Retry ×1（isBlocked 逻辑反、ring 位置错、Badge 被条件隐藏→Gemini 修；changelog 违规 2 次→Claude self-remediate 于 27d72df + 229397a）
+- T15 ObjectivesList：spot check 一次 PASS（0 Advisory）
+- T16 Book 页：Full review Retry ×1（`<main className="flex-1 p-10">` 缺 `ml-72`，AppSidebar `fixed w-72 z-40` 遮挡主内容 248-288px→Gemini 修于 2d6cd9b；side-effects Claude remediate 于 3c7e288）
+
+**关键教训**：
+- Gemini 对"严禁修改 docs"的明文硬约束在 T13/T14 共 3 次违规无效——本里程碑起改用 **self-remediate 模式**：发现 docs 违规后 Claude 直接 Edit + commit 修复，不再 retry 教 Gemini（retry 只处理代码 Blocking）
+- `flex-1` 不避让 `fixed` 兄弟元素——CSS 布局知识点，subagent Full Review 独立 catch 这个视觉 bug（Claude 初扫漏了），证明 subagent 价值
+- `.ccb/session-marker` + `.ccb/counters/` 加入 `.gitignore`——runtime state 根治污染，不再依靠 dispatch 告知
+
+**涉及文件**：
+- 代码：`src/components/ui/Modal.tsx` · `src/components/BookTOC/index.tsx` · `src/components/BookTOC/BookTOCItem.tsx` · `src/components/ObjectivesList.tsx` · `src/components/ModeSwitch/ModeSwitchDialog.tsx` · `src/app/books/[bookId]/page.tsx` · `src/app/books/[bookId]/ActionHub.tsx`
+- 配置：`.gitignore`（runtime files）
+- 审计：`docs/memory-audit-log.md`（memory 修改溯源）
+
+**Commits**：`a3143da` `8958ab1`（T13）· `20d822b` `27d72df` `989d40c` `229397a`（T14）· `459a9fc`（T15）· `d9abbb5` `3c7e288` `2d6cd9b`（T16）
+
 ## 2026-04-19 | 云部署 Phase 2 — OCR 迁 Cloud Run 完整上线
 
 **目的**：把 OCR 服务从"本地/VPS 上的 Docker 容器 + PaddleOCR + 直连 DB"迁到 Cloud Run 上的 Google Vision 异步回调架构。Cloud Run 自动扩缩 + Vision OCR 质量高 + 后端无状态 + 鉴权走 IAM + token 双层。
