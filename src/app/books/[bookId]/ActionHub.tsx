@@ -189,7 +189,7 @@ export default function ActionHub({
         bookTitle={book.title}
       />
 
-      <main className="flex-1 p-10 relative min-h-screen overflow-hidden">
+      <main className="flex-1 ml-72 p-10 relative min-h-screen overflow-hidden">
         <DecorativeBlur position="top-right" />
         <DecorativeBlur position="bottom-left" color="secondary" />
 
