@@ -1944,3 +1944,9 @@ Files: `src/lib/prompt-templates.ts`, `src/lib/seed-templates.ts`
 ## 2026-04-20 | M4 Task 8: add teacher prompt assembly module
 Completed: Added `src/lib/teacher-prompts.ts` with the shared Layer 1 teaching rules, the `TranscriptOutputSchema` Zod runtime validator with the `ready_to_advance`/`kpTakeaway` refine contract, the KP-type-to-stage mapping, and the runtime teacher message builder capped to the latest 10 transcript messages. Also exposed `registry` from `src/lib/ai.ts` for the upcoming teaching messages route.
 Files: `src/lib/teacher-prompts.ts`, `src/lib/ai.ts`
+
+---
+
+## 2026-04-20 | M4 Task 9: seed 5 teacher prompt templates
+Completed: Added 5 `role='teacher'` prompt template seeds for factual, conceptual, procedural, analytical, and evaluative KP teaching paths. Each template keeps `model: null`, includes the runtime placeholders for `{kp_content}`, `{cluster_kps}`, and `{struggling_streak}`, and is now seeded through the `seedTemplates()` role chain.
+Files: `src/lib/seed-templates.ts`
