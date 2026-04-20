@@ -69,3 +69,5 @@ export const timeout = 300_000
 export function getModel() {
   return registry.languageModel(AI_MODEL_ID)
 }
+
+export { registry }

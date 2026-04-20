@@ -1938,3 +1938,9 @@ Files: `src/lib/schema.sql`, `scripts/init-neon-schema.ts`, `scripts/test-m4-tas
 ## 2026-04-19 | M4 Task 7: thread prompt template model through backend seeds
 Completed: Extended prompt template typing and `upsertTemplate()` to persist the optional `model` column on both update and insert paths. Updated template seeding SQL to write `model` on insert and upsert while leaving the current extractor/coach/examiner/reviewer/assistant seed records at the default `NULL` model value.
 Files: `src/lib/prompt-templates.ts`, `src/lib/seed-templates.ts`
+
+---
+
+## 2026-04-20 | M4 Task 8: add teacher prompt assembly module
+Completed: Added `src/lib/teacher-prompts.ts` with the shared Layer 1 teaching rules, the `TranscriptOutputSchema` Zod runtime validator with the `ready_to_advance`/`kpTakeaway` refine contract, the KP-type-to-stage mapping, and the runtime teacher message builder capped to the latest 10 transcript messages. Also exposed `registry` from `src/lib/ai.ts` for the upcoming teaching messages route.
+Files: `src/lib/teacher-prompts.ts`, `src/lib/ai.ts`
