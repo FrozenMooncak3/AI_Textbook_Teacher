@@ -236,7 +236,7 @@ CREATE TABLE teaching_sessions (
   module_id INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
   cluster_id INTEGER REFERENCES clusters(id) ON DELETE SET NULL,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  transcript JSONB NOT NULL DEFAULT '[]'::jsonb,  -- 完整对话记录
+  transcript JSONB NOT NULL DEFAULT '{"version":1,"state":{"depth":"full","currentKpId":null,"coveredKpIds":[],"strugglingStreak":0,"startedAt":null,"lastActiveAt":null,"tokensInTotal":0,"tokensOutTotal":0},"messages":[]}'::jsonb,  -- TranscriptV1 信封（M4 落地：版本 + 状态机字段 + messages 数组）
   depth TEXT NOT NULL DEFAULT 'full' CHECK (depth IN ('light', 'full')),  -- 3 步 vs 5 步
   started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   completed_at TIMESTAMPTZ,
@@ -288,6 +288,8 @@ WHERE id NOT IN (SELECT user_id FROM user_subscriptions);
 - `role='teacher'`, `stage='teach_evaluative'`
 
 内容参考 `docs/research/2026-04-11-ai-prompt-encoding.md` §128-134 的 5 种教学法人格 + §168-198 的认知卸载防护硬规则。
+
+**新增字段 `model TEXT NULL`**（M4 落地）：允许每条模板覆盖默认模型（如 teacher 用 `anthropic:claude-sonnet-4-6`、cheap 工具用 `openai:gpt-5-mini`）。`NULL` → 回退 `AI_MODEL` 环境变量。Seed 时写入。
 
 ---
 
@@ -615,12 +617,15 @@ CLAUDE.md 现有 5 条产品不变量**不改不加**：
 - Migration SQL 文件（§4 全部 ALTER + user_subscriptions backfill）
 
 **修改文件**（预计）：
-- `src/lib/schema.sql`（新表 teaching_sessions / user_subscriptions 声明，用于新库初始化；已有库走 migration）
-- `src/lib/seed-templates.ts`（extractor prompt type 值域更新 + 5 条 teacher 模板新增）
+- `src/lib/schema.sql`（新表 teaching_sessions / user_subscriptions 声明，用于新库初始化；已有库走 migration；M4 实装：transcript DEFAULT 使用 TranscriptV1 信封；prompt_templates 加 `model TEXT NULL` 列）
+- `src/lib/seed-templates.ts`（extractor prompt type 值域更新 + 5 条 teacher 模板新增；M4 实装：teacher 模板写 `model='anthropic:claude-sonnet-4-6'`）
+- `src/lib/prompt-templates.ts`（M4 新增字段 model 读写；`getPromptTemplate()` 返回 model）
+- `src/lib/ai.ts`（M4 实装：export `resolveModel(template)` + provider registry，消费 template.model 或回退 env `AI_MODEL`）
 - `src/lib/services/kp-extraction-types.ts`（KPType 替换为新 5 类）
 - `src/lib/services/kp-extraction-service.ts`（写库语句加 source_anchor）
 - `src/lib/services/book-service.ts`（learning_mode / preferred_learning_mode 读写）
 - `src/app/api/auth/register/route.ts`（注册时插 user_subscriptions 默认 premium 行）
+- `package.json`（M4 新增 zod 依赖，用于 TranscriptOutputSchema 严格解析）
 - **消费 `learning_status` 的 21 个文件（grep 确认清单）**：
   - API：`src/app/api/modules/route.ts`, `src/app/api/modules/[moduleId]/{status,generate-notes,generate-questions,evaluate,questions}/route.ts`, `src/app/api/modules/[moduleId]/test/{route.ts,generate/route.ts,submit/route.ts}`, `src/app/api/books/[bookId]/{dashboard,module-map/route.ts,module-map/confirm/route.ts}/route.ts`
   - UI：`src/app/page.tsx`, `src/app/books/[bookId]/{ActionHub.tsx,ModuleMap.tsx}`, `src/app/books/[bookId]/modules/[moduleId]/{page.tsx,ModuleLearning.tsx,NotesDisplay.tsx,qa/page.tsx,test/page.tsx,test/TestSession.tsx}`
