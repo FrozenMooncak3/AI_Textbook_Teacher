@@ -53,6 +53,8 @@ next-env.d.ts
 
 # CCB runtime session files
 .ccb/.*-session
+.ccb/session-marker
+.ccb/counters/
 
 # CCB task ledger (runtime state, not committed)
 .ccb/task-ledger.json
