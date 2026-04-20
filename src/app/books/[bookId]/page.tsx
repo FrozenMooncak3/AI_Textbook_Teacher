@@ -10,6 +10,7 @@ interface Book {
   title: string
   created_at: string
   parse_status: string
+  learning_mode: 'teaching' | 'full'
 }
 
 export default async function BookPage({ params }: { params: Promise<{ bookId: string }> }) {
@@ -22,11 +23,20 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
   const { bookId } = await params
 
   const book = await queryOne<Book>(
-    'SELECT id, title, created_at, parse_status FROM books WHERE id = $1 AND user_id = $2',
+    'SELECT id, title, created_at, parse_status, learning_mode FROM books WHERE id = $1 AND user_id = $2',
     [Number(bookId), user.id]
   )
 
   if (!book) notFound()
+
+  // Fetch kpCount for ModeSwitchDialog
+  const kpCountRow = await queryOne<{ count: number }>(
+    `SELECT COUNT(kp.id)::int AS count
+       FROM knowledge_points kp
+       JOIN modules m ON m.id = kp.module_id
+      WHERE m.book_id = $1`,
+    [Number(bookId)]
+  )
 
   return (
     <main className="min-h-full bg-surface-container-low">      
@@ -50,6 +60,8 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
         <ActionHub 
           bookId={book.id} 
           userName={user.display_name || user.email} 
+          learningMode={book.learning_mode}
+          bookMeta={{ kpCount: kpCountRow?.count ?? 0 }}
         />
       )}
     </main>

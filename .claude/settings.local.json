@@ -31,7 +31,12 @@
       "Bash(curl -s http://localhost:3000 -o /dev/null -w \"%{http_code}\")",
       "Bash(curl -s http://localhost:3000 -o /dev/null -w \"HTTP %{http_code}\")",
       "Bash(node -e \":*)",
-      "Bash(node --env-file=.env.local -e \":*)"
+      "Bash(node --env-file=.env.local -e \":*)",
+      "Bash(mkdir -p \"d:/已恢复/Users/Sean/ai-textbook-teacher/.claude/skills/session-rules\")",
+      "Bash(mkdir -p \"d:/已恢复/Users/Sean/ai-textbook-teacher/.claude/skills/skill-catalog\")",
+      "Bash(mkdir -p \"d:/已恢复/Users/Sean/ai-textbook-teacher/.claude/skills/ccb-protocol-reference\")",
+      "Bash(cp .mcp.json \"D:/workspaces/stitch/.mcp.json\")",
+      "Read(//d/workspaces/stitch/**)"
     ]
   }
 }
