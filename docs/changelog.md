@@ -1962,3 +1962,25 @@ Files: `src/app/api/teaching-sessions/route.ts`, `src/app/api/teaching-sessions/
 ## 2026-04-20 | M4 Task 12: add L2 backend endpoints and recommendation rules
 Completed: Expanded `modules.learning_status` transitions for the teaching flow, added six L2 backend endpoints for module detail, cluster lookup, switch-mode, reset-and-start, and start-qa, and added `book-meta-analyzer.getRecommendation()` for the teaching/full recommendation rule set. Also added a 7-check smoke script covering the six API paths plus the recommendation logic and verified the new module-detail endpoints do not expose `kp.type`, `kp.detailed_content`, or `kp.ocr_quality`.
 Files: `src/app/api/modules/[moduleId]/status/route.ts`, `src/app/api/modules/[moduleId]/route.ts`, `src/app/api/modules/[moduleId]/clusters/route.ts`, `src/app/api/modules/[moduleId]/start-qa/route.ts`, `src/app/api/books/[bookId]/switch-mode/route.ts`, `src/app/api/books/[bookId]/modules/[moduleId]/reset-and-start/route.ts`, `src/lib/book-meta-analyzer.ts`, `scripts/test-m4-task12-l2-apis.ts`
+
+---
+
+## 2026-04-20 | M4 Task 13: Generic Modal Component (Amber Companion)
+
+**完成内容**: 为项目组件库新增了通用的 Modal 弹窗组件，供后续 ModeSwitchDialog 及其他弹窗场景使用。
+- **src/components/ui/Modal.tsx**: 
+  - 使用 createPortal 渲染至 document.body，确保层级正确。
+  - 完整实现了 ESC 键关闭（带 document 级监听和 cleanup）及点击背景（backdrop）关闭逻辑。
+  - 自动管理 document.body.style.overflow = 'hidden' 以锁定背景滚动。
+  - 支持 aria-modal='true', aria-labelledby='modal-title', role='dialog' 等无障碍属性。
+  - 自动聚焦于 Modal 面板（panelRef.current?.focus()），支持焦点捕获基础。
+- **视觉风格**: 严格遵循 Amber Companion 规范（bg-surface-container-lowest, border-amber-200, rounded-xl, bg-black/40, backdrop-blur-sm）。
+- **验证**: 
+  - 通过 npx tsc --noEmit 类型检查。
+  - 通过 npm run build 构建测试。
+  - 已经在 ActionHub.tsx 中手动注入测试代码并验证通过（ESC 关闭、点击背景关闭、标题/内容展示均正常），验证后已恢复测试代码。
+
+**修改文件**: 
+- 新增: src/components/ui/Modal.tsx
+- 修改: docs/changelog.md
+
