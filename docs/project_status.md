@@ -7,21 +7,17 @@
 
 ## 1. 当前里程碑
 
-**方向**：MVP 扩展三线——扫描 PDF（✅）→ 教学系统（M4，待启动）→ 留存机制，串行执行
+**方向**：MVP 扩展三线——扫描 PDF（✅）→ 教学系统（M4 ✅）→ 留存机制，串行执行
 
-**进行中**：无（云部署 Phase 2 本 session 刚收尾）
+**进行中**：无（M4 教学系统本 session 收尾）
 
-**已完成**：云部署
-- 阶段 1 ✅ 完成（2026-04-16）：R2 + Vercel + Neon + OCR 代码层兼容，生产冒烟通过
-- 阶段 2 ✅ 完成（2026-04-19 本 session）：Cloud Run OCR + Google Vision + IAM + token 双层鉴权 + Callback 架构，E2E smoke test book 5（1 页扫描）完整通过（parse_status=done, raw_text 156 字符）
-- 阶段 3 ⬜ 未开始：自定义域名 + 监控 + Secrets 管理
+**已完成**：
+- **云部署**（阶段 1 ✅ 2026-04-16；阶段 2 ✅ 2026-04-19；阶段 3 ⬜ 未开始：域名 + 监控 + Secrets）
+- **M4 教学系统** ✅ 完成（2026-04-20 本 session 收尾）：19 tasks 全 PASS。L1 引擎：KP 类型迁移 + zod + schema（teaching_sessions + user_subscriptions + prompt_templates.model）+ retry/teaching-types/entitlement/teacher-model + teacher-prompts（Zod refine）+ seed 5 teacher 模板 + teaching-sessions API（create + messages retry + 409 struggling）+ L2 Tier A 6 后端端点（switch-mode / reset-and-start / clusters / module / start-qa / status 扩展）+ book-meta-analyzer。L2 Tier B 前端：Modal + BookTOC（基础 + 引导态）+ ObjectivesList + ModeSwitchDialog + /books 页改造 + /activate 激活页 + /teach 教学对话页（retry ×1）+ /teaching-complete 完成中页。Moat 硬约束：4 字段全 grep 0 hits。技术债登记：start-qa API stale redirectUrl（前端已 workaround）。→ [spec](superpowers/specs/2026-04-15-m4-teaching-mode-design.md) · [plan](superpowers/plans/2026-04-15-m4-teaching-mode.md)
 
-**排队中**：M4 教学系统最小闭环
-- 设计全完成（spec + plan 就绪）
-- 启动条件已满足：云部署 Phase 2 上线 + smoke 通过 → 可开新 session dispatch
-- L1 引擎 Codex + L2 Tier A Gemini 可并行
+**排队中**：M5 留存机制（未启动 — 待决策）
 
-**下一步**：用户决定方向——(A) 启动 M4 教学系统 · (B) 继续云部署阶段 3（域名 + 监控）· (C) 处理停车场 T2 🚨 PDF 上传 4.5MB 限制
+**下一步**：用户决定方向——(A) 启动 M5 留存机制（brainstorm + spec） · (B) M4 milestone-audit 全量架构验证 · (C) 继续云部署阶段 3（域名 + 监控） · (D) 处理停车场 T2 🚨 PDF 上传 4.5MB 限制 · (E) 修 start-qa redirectUrl tech debt（小修）
 
 **平行 · 元系统进化**：✅ 完成（2026-04-19 本 session 端到端落地）。Survey → Spec → Plan → 10 commits（c423c63 / 7eb1313 / 3227a3d / 36b5303 / 0684391 / ed50bbf / d783baf / 96b25fd / cfe8456 / 024de5e），T1 8 低成本 + T2 Retrospective 2.0 + M10 review 外化全部上线。Kill switch：`AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用所有 hook 机制。Spec: `superpowers/specs/2026-04-19-system-evolution-design.md`；Plan: `superpowers/plans/2026-04-19-system-evolution.md`。
 
@@ -29,7 +25,8 @@
 
 ## 2. 最近关键决策
 
-- 2026-04-19 云部署 Phase 2 完整上线（本 session 收尾）：15 tasks 全 PASS（T1-T11 Codex 代码 + T12-T15 产品负责人 + Claude console）。核心迁移：scripts/ocr_server.py Paddle→Google Vision + 删 DB 能力 + 回调架构；Next.js 新增 /api/ocr/callback 路由 + env 迁 HOST/PORT→URL+Bearer；Cloud Run + Cloud Build CD + Artifact Registry 全链路就绪。E2E smoke 发现 4 个 hotfix：Tailwind Turbopack auto-source 崩溃（96c9eb1）· R2 CORS 缺失（用户控制台应用）· middleware 拦截 callback 401（6d918d0）· Vision API 未启用（用户控制台）。归停车场：Vercel 4.5MB body 限制 → T2 基础设施独立评估。→ [spec §4.2](superpowers/specs/2026-04-12-cloud-deployment-design.md) · [plan](superpowers/plans/2026-04-18-cloud-deployment-phase2.md)
+- 2026-04-20 M4 教学系统完整上线（本 session 收尾）：19 tasks 全 PASS。后端（L1 T1-T11）Codex：KP 枚举 / zod / schema / retry / 类型 / entitlement / prompt-templates model / teacher Zod / seed / teaching-sessions API；（L2 T12）6 backend endpoints + book-meta-analyzer。前端（L2 T13-T19）Gemini：4 组件（Modal + BookTOC + ObjectivesList + ModeSwitchDialog）+ /books 页改造 + /activate + /teach（retry ×1 用 skeleton-driven 派发）+ /teaching-complete。Review 硬规则：每 dispatch post-completion grep 校验 4 moat 字段 0 hits + Step 3.2.5 tsc/build exit 0 强制 gate。关键事件：Gemini 对"严禁修改 docs"硬约束 3 次违规 → self-remediate 模式（Claude 直接 Edit 不再 retry 教 Gemini）；T18 30% 完成度 retry ×1 验证 skeleton-driven dispatch（附完整代码骨架）有效；技术债：start-qa API stale `redirectUrl` 前端 workaround，后续 hotfix。→ [spec](superpowers/specs/2026-04-15-m4-teaching-mode-design.md) · [plan](superpowers/plans/2026-04-15-m4-teaching-mode.md)
+- 2026-04-19 云部署 Phase 2 完整上线：15 tasks 全 PASS（T1-T11 Codex 代码 + T12-T15 产品负责人 + Claude console）。核心迁移：scripts/ocr_server.py Paddle→Google Vision + 删 DB 能力 + 回调架构；Next.js 新增 /api/ocr/callback 路由 + env 迁 HOST/PORT→URL+Bearer；Cloud Run + Cloud Build CD + Artifact Registry 全链路就绪。E2E smoke 发现 4 个 hotfix：Tailwind Turbopack auto-source 崩溃（96c9eb1）· R2 CORS 缺失（用户控制台应用）· middleware 拦截 callback 401（6d918d0）· Vision API 未启用（用户控制台）。归停车场：Vercel 4.5MB body 限制 → T2 基础设施独立评估。→ [spec §4.2](superpowers/specs/2026-04-12-cloud-deployment-design.md) · [plan](superpowers/plans/2026-04-18-cloud-deployment-phase2.md)
 - 2026-04-19 元系统进化 10 机制全量落地（本 session 端到端）：10 commits 独立提交，每机制分钟级 git revert 回滚 + `AI_SYSTEM_EVOLUTION_DISABLE=1` 一键总开关。落地清单：M1 1% 强触发语（CLAUDE.md）· M2 PostToolUse Bash 失败捕获 hook（.ccb/counters/tool-failures.log + whitelist 升 journal）· M3/M4 UserPromptSubmit 纠错词计数 hook（≥2 ⚠️ / ≥3 🛑 inject）· M5 fallback_for_toolsets frontmatter（4 skill + session-rules 规则 6）· M6 memory audit log（docs/memory-audit-log.md append-only + CLAUDE.md 契约）· M11 task-execution 硬 cap 3 + 持久化 counter · M14 fresh session per task（structured-dispatch + ccb-protocol）· kill switch 文档化 + session-init 扫计数器 · Retrospective 2.0（段 d skill-audit M9 + 段 e 挖矿 M15 + 自动触发提示）· M10 review 终止硬 check（build/test/lint 硬过 exit 0）。→ [spec](superpowers/specs/2026-04-19-system-evolution-design.md) · [plan](superpowers/plans/2026-04-19-system-evolution.md)
 - 2026-04-19 元系统进化调研完成：5 sub-agent 并行扫 8 源（Anthropic / Letta / hermes / obra / OpenHands / Aider / Cognition / Cline-Continue），42 个 S 级源，三重 gate 通过。survey 结论：A 记忆方向对、B 技能方向对、C 事件捕获最大红利（24 hook 只用 2）、D 工作流 review/retry 终止太主观、E 自我诊断完全空白 → [survey](research/2026-04-19-system-evolution-survey.md) · [handoff](superpowers/specs/2026-04-19-system-evolution-design-handoff.md)
 - 2026-04-18 session-init F.3 盖棺（commits cd8c3fe + f54e7b2 + fe950e4）：SessionStart hook 注入 project_status + PreCompact block 强制刷新 + SKILL 瘦身（127→60 行）+ parked 分流 14→11 + CLAUDE.md session-start 流程 / 部署现状 / research 协调文件三处同步。实测 Skills 从 ~15k 降到 2.5k，非 MCP 29.3k / 21%，PreCompact block 验证通过。Retrospective 补 2 条 memory（small-bash-direct-write / precompact-handshake）→ [spec](superpowers/specs/2026-04-18-session-init-F2-redesign.md) · [bloat-diagnosis](journal/2026-04-18-session-init-bloat-diagnosis.md) · [plan](superpowers/plans/2026-04-18-session-init-F3-redesign.md)

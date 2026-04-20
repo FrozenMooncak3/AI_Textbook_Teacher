@@ -4,6 +4,52 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-20 | M4 Teaching Mode — 里程碑收尾（前端 T17-T19 + 文档同步）
+
+**目的**：M4 Teaching Mode 最后三个前端任务（Phase 0 激活页 / 教学对话页 / 教学完成中页）上线 + architecture.md 全量同步。Teaching 模式端到端可跑通：/activate → /teach（5 阶段 teacher AI + 409 struggling 冻结）→ /teaching-complete → /qa。
+
+**Spec / Plan**：`docs/superpowers/specs/2026-04-15-m4-teaching-mode-design.md` · `docs/superpowers/plans/2026-04-15-m4-teaching-mode.md` Task 17-19
+
+**新增页面**：
+- `src/app/modules/[moduleId]/activate/page.tsx` + `ActivateClient.tsx`（T17）：Phase 0 激活页。Server Component 查模块 + clusters + KPs（SELECT 只 `id, section_name, cluster_id`，moat 合规） → Client ObjectivesList 展示目标 → AmberButton "开始教学" CTA → `POST /api/teaching-sessions` → `router.push /modules/[id]/teach`。`learning_status !== 'taught'` guard（非首次进入直跳 QA）
+- `src/app/modules/[moduleId]/teach/page.tsx` + `TeachClient.tsx`（T18，retry ×1）：5 阶段教学对话。Server Component JOIN books 校验所有权 + 传 learningStatus → Client 12 state（含 strugglingFrozen / completing / initializing）+ useEffect 双 fire 防护（hasInitialized useRef + cancelled 标志）+ handleSend 分支 409 STRUGGLING_FROZEN / 429 / 503 retryable / 500 fatal + cluster 推进时重建 teaching_session + 全部 cluster 完成 → `PATCH status=taught` → `router.push /teaching-complete`
+- `src/app/modules/[moduleId]/teaching-complete/page.tsx` + `TeachingCompleteClient.tsx`（T19）：教学完成中页。Server Component JOIN books + `learning_status !== 'taught'` guard + KPs SELECT 只 `id, section_name` → Client 3 ContentCard（🎉 庆祝 + KP 回顾 + 过渡文案）+ AmberButton "进入 Q&A 阶段" CTA → `POST /api/modules/[id]/start-qa` → **忽略 API response.redirectUrl（stale tech debt）** → `router.push /books/${bookId}/modules/${moduleId}/qa`
+
+**Review / Retry**：
+- T17 ActivateClient：spot check PASS（0 Advisory）
+- T18 TeachClient：Full review Retry ×1（初版 30% 完成度，init 逻辑错、cluster 推进缺失、状态机不完整；retry 1 重写后 PASS，5 Advisory 全为轻度）— 此任务验证 **skeleton-driven dispatch** 模式：retry 派发时附完整代码骨架大幅降低 Gemini 解析偏差
+- T19 TeachingCompleteClient：Full review 一次 PASS（0 Blocking, 2 subagent Advisory 均降级为 Informational — KPRow 确实在用 / 表情符号是骨架意图）
+
+**M4 整体关键事件**：
+- **Moat 硬约束**：4 字段（`kp.type` / `kp.importance` / `kp.detailed_content` / `kp.ocr_quality`）在所有新增页面 grep 0 hits。每次 dispatch 包含 post-completion grep 校验脚本
+- **Skeleton-driven dispatch**：T18 retry + T19 首次均附完整代码骨架（60-100 行 page + 100-400 行 Client），显著降低 Gemini 结构性错误。后续里程碑沿用此模式处理复杂前端任务
+- **技术债登记**：`POST /api/modules/[id]/start-qa` 返回 stale `redirectUrl: /modules/${id}/qa`（该路由不存在），前端强制忽略、用 canonical `/books/${bookId}/modules/${moduleId}/qa`。M5 开始或独立 hotfix 修
+
+**架构同步**（本次 M4 closeout 补齐）：
+- `docs/architecture.md`：AI 角色 5→6（+teacher）、DB 表 24→26（+teaching_sessions +user_subscriptions）、学习状态流 6→8 值（+taught +qa_in_progress）、新增"教学系统（M4）"接口契约章节（TranscriptV1 信封 + Zod + retryWithBackoff + tier→model 映射 + struggling 冻结 + API 契约）、组件库追加 Modal + BookTOC + ObjectivesList + ModeSwitchDialog、prompt 模板段追加 teacher×5 + `model` 字段说明
+- `docs/superpowers/specs/2026-04-12-teaching-system-design.md`：parent spec 补齐 transcript DEFAULT 用 TranscriptV1 信封 + §4.6 追加 `prompt_templates.model` 列说明 + 附录 B 修改文件列表补齐 5 个 M4 文件
+
+**涉及文件**：
+- 代码：`src/app/modules/[moduleId]/activate/{page.tsx,ActivateClient.tsx}` · `src/app/modules/[moduleId]/teach/{page.tsx,TeachClient.tsx}` · `src/app/modules/[moduleId]/teaching-complete/{page.tsx,TeachingCompleteClient.tsx}`
+- 文档：`docs/architecture.md` · `docs/superpowers/specs/2026-04-12-teaching-system-design.md` · `docs/project_status.md`
+
+**Commits**：`594a6ef`（T17）· `66f7b14` `18b22bb`（T18）· `a35d529`（T19）
+
+---
+
+## 2026-04-20 | M4 Teaching Mode — 后端基础设施（T4 / T5 / T6，补录）
+
+**目的**：M4 后端三大工具库（retry 策略 / 类型契约 / 付费墙适配）上线。T4-T6 是 T10（teaching-sessions API）的前置依赖，之前未独立登录 changelog，本次 closeout 补录以保留溯源链。
+
+**新增模块**：
+- `src/lib/retry.ts`（T4，commit `1ca31ec`）：指数退避（base 500ms，mult 2，max 4 次，jitter ±20%）+ `classifyError()` 分类 retryable（429 / 503 / ETIMEDOUT / ECONNRESET / SSE 断流） vs fatal
+- `src/lib/teaching-types.ts`（T5，commit `72b5477`）：TranscriptV1 信封 + TranscriptState + TranscriptMessage 联合类型（user / assistant / system variants）
+- `src/lib/entitlement.ts` + `src/lib/teacher-model.ts`（T6，commit `0f94501`）：`getUserTier(userId)` 读 user_subscriptions 返回 'free' | 'premium'；`canUseTeaching(tier)` 目前全 true（MVP 预埋）；`getTeacherModel(tier, template)` 逐级回退 template.model → tier 映射 → `AI_MODEL` env
+
+**Commits**：`1ca31ec`（T4）· `72b5477`（T5）· `0f94501`（T6）
+
+---
+
 ## 2026-04-20 | M4 Teaching Mode — 前端 T13-T16（Modal + BookTOC + ObjectivesList + Book 页改造）
 
 **目的**：M4 Teaching Mode 前端第一阶段——通用组件（Modal）+ 书籍级导航（BookTOC 基础态/引导态）+ 学习目标列表（ObjectivesList）+ /books/[bookId] 页面改造（模式切换 Dialog + BookTOC 引导态 + 推荐模块提示）。为 T17-T19 激活页/教学页/完成页提供组件底座。
