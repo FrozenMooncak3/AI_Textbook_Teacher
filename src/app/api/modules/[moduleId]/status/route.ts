@@ -3,10 +3,21 @@ import { requireModuleOwner } from '@/lib/auth'
 import { queryOne, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 
-const VALID_STATUSES = ['unstarted', 'reading', 'qa', 'notes_generated', 'testing', 'completed']
+const VALID_STATUSES = [
+  'unstarted',
+  'reading',
+  'taught',
+  'qa_in_progress',
+  'qa',
+  'notes_generated',
+  'testing',
+  'completed',
+]
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  unstarted: ['reading'],
+  unstarted: ['reading', 'taught'],
   reading: ['qa'],
+  taught: ['qa_in_progress'],
+  qa_in_progress: ['qa', 'notes_generated'],
   qa: ['notes_generated'],
   notes_generated: ['testing', 'completed'],
   testing: ['completed'],
