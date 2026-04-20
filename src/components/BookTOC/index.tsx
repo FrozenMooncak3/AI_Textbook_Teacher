@@ -88,7 +88,10 @@ export default function BookTOC({
   return (
     <aside 
       data-slot="book-toc"
-      className="w-64 bg-white border-r border-amber-100 h-full flex flex-col transition-all"
+      className={cn(
+        "w-64 bg-white border-r border-amber-100 h-full flex flex-col transition-all",
+        guideMode && "ring-4 ring-amber-400 shadow-2xl"
+      )}
     >
       {/* Header */}
       <div className="px-6 py-4 flex items-center justify-between border-b border-amber-50">
@@ -130,7 +133,7 @@ export default function BookTOC({
                   index={i + 1}
                   guideMode={guideMode}
                   isRecommended={m.id === recommendedModuleId}
-                  isBlocked={guideMode && m.learningStatus === 'unstarted' && m.id !== recommendedModuleId}
+                  isBlocked={guideMode && m.learningStatus !== 'unstarted'}
                   onClick={() => onModuleClick?.(m.id)}
                 />
               ))}
@@ -150,7 +153,7 @@ export default function BookTOC({
                 index={i + 1}
                 guideMode={guideMode}
                 isRecommended={m.id === recommendedModuleId}
-                isBlocked={guideMode && m.learningStatus === 'unstarted' && m.id !== recommendedModuleId}
+                isBlocked={guideMode && m.learningStatus !== 'unstarted'}
                 onClick={() => onModuleClick?.(m.id)}
               />
             ))}

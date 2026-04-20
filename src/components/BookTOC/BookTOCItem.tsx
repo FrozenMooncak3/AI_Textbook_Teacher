@@ -81,11 +81,9 @@ export default function BookTOCItem({
       )}
 
       {/* Badge */}
-      {!guideMode && (
-        <Badge variant={badgeVariant} className="shrink-0 px-2 py-0.5 text-[10px]">
-          {badgeLabel}
-        </Badge>
-      )}
+      <Badge variant={badgeVariant} className="shrink-0 px-2 py-0.5 text-[10px]">
+        {badgeLabel}
+      </Badge>
     </div>
   )
 }
