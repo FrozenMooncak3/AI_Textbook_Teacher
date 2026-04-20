@@ -1950,3 +1950,9 @@ Files: `src/lib/teacher-prompts.ts`, `src/lib/ai.ts`
 ## 2026-04-20 | M4 Task 9: seed 5 teacher prompt templates
 Completed: Added 5 `role='teacher'` prompt template seeds for factual, conceptual, procedural, analytical, and evaluative KP teaching paths. Each template keeps `model: null`, includes the runtime placeholders for `{kp_content}`, `{cluster_kps}`, and `{struggling_streak}`, and is now seeded through the `seedTemplates()` role chain.
 Files: `src/lib/seed-templates.ts`
+
+---
+
+## 2026-04-20 | M4 Task 10: add teaching session create + messages APIs
+Completed: Added `POST /api/teaching-sessions` to create authenticated teaching sessions with entitlement checks, transcript initialization, and automatic `currentKpId` selection from the cluster. Added `POST /api/teaching-sessions/[sessionId]/messages` to validate ownership, assemble teacher prompts, retry `generateObject()` with `TranscriptOutputSchema`, persist transcript error state on model failure, and merge successful teaching responses back into the transcript. Also added an end-to-end smoke script for the create/message flow and tightened teacher model typing so provider IDs compile cleanly with `registry.languageModel()`.
+Files: `src/app/api/teaching-sessions/route.ts`, `src/app/api/teaching-sessions/[sessionId]/messages/route.ts`, `scripts/test-m4-task10-messages-api.ts`, `src/lib/teacher-model.ts`
