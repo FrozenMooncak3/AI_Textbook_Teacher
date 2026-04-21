@@ -2066,3 +2066,9 @@ Files: `src/app/api/uploads/presign/route.ts`, `src/app/api/uploads/presign/rout
 ## 2026-04-21 | M4.5 Task 4: add confirm endpoint and background upload flow
 Completed: Extracted the PDF classify/extract/OCR launch chain into `runClassifyAndExtract()` for background reuse, including raw text persistence, module creation, OCR failure handling, and KP extraction kickoff. Added `POST /api/books/confirm` to verify the uploaded R2 object via HEAD, atomically flip `upload_status` to `confirmed`, handle idempotent retry cases, and fire the background processing chain without blocking the client. Added regression tests for both the upload flow and the confirm route using local hook-resolved test stubs.
 Files: `src/lib/upload-flow.ts`, `src/lib/upload-flow.test.ts`, `src/app/api/books/confirm/route.ts`, `src/app/api/books/confirm/route.test.ts`, `src/lib/test-stubs/**`
+
+---
+
+## 2026-04-21 | M4.5 Task 5: remove PDF branch from POST /api/books
+Completed: Removed the legacy PDF upload branch from `POST /api/books` so large PDF uploads can no longer hit the old server-side body path. The TXT branch and GET handler remain unchanged. PDF uploads now return `400` with `code: 'USE_PRESIGN_ENDPOINT'` and a log entry directing callers to the new presign flow. Added route-level regression tests covering the unchanged TXT success path and the new PDF rejection behavior.
+Files: `src/app/api/books/route.ts`, `src/app/api/books/route.test.ts`, `src/lib/test-stubs/books-route/**`

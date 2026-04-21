@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser } from '@/lib/auth'
-import { insert, query, run } from '@/lib/db'
+import { insert, query } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
-import { buildOcrHeaders } from '@/lib/ocr-auth'
-import { buildObjectKey, uploadPdf } from '@/lib/r2-client'
-import { triggerReadyModulesExtraction } from '@/lib/services/kp-extraction-service'
-import { chunkText } from '@/lib/text-chunker'
 
 interface BookListRow {
   id: number
@@ -80,136 +76,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ bookId }, { status: 201 })
   }
 
-  const bookId = await insert(
-    'INSERT INTO books (user_id, title, raw_text, parse_status) VALUES ($1, $2, $3, $4)',
-    [userId, title.trim(), '', 'processing']
-  )
-
-  const r2ObjectKey = buildObjectKey(bookId)
-  await uploadPdf(bookId, buffer)
-
-  const markOcrFailure = async (details: string) => {
-    try {
-      await run("UPDATE books SET parse_status = 'error' WHERE id = $1", [bookId])
-    } catch {
-      // Ignore update failures while surfacing OCR failures.
-    }
-
-    try {
-      await logAction('book_ocr_failed', `bookId=${bookId}, ${details}`, 'error')
-    } catch {
-      // Ignore logging failures in background OCR paths.
-    }
+  if (ext === 'pdf') {
+    await logAction('book_upload_pdf_via_old_endpoint', `user=${userId}`, 'error')
+    return NextResponse.json(
+      {
+        error: 'PDF uploads must use /api/uploads/presign',
+        code: 'USE_PRESIGN_ENDPOINT',
+      },
+      { status: 400 }
+    )
   }
 
-  const ocrBase = process.env.OCR_SERVER_URL || 'http://127.0.0.1:8000'
-
-  try {
-    const classifyUrl = `${ocrBase}/classify-pdf`
-    const classifyRes = await fetch(classifyUrl, {
-      method: 'POST',
-      headers: await buildOcrHeaders(classifyUrl),
-      body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId }),
-    })
-    if (!classifyRes.ok) {
-      await markOcrFailure(`classify-pdf HTTP ${classifyRes.status}`)
-      return NextResponse.json({ bookId, processing: true }, { status: 201 })
-    }
-
-    const classifyJson = (await classifyRes.json()) as {
-      pages: { page: number; type: string }[]
-      text_count: number
-      scanned_count: number
-      mixed_count: number
-      total_pages: number
-    }
-    const { pages, text_count, scanned_count, mixed_count } = classifyJson
-    const nonTextPages = scanned_count + mixed_count
-
-    await run(
-      `UPDATE books
-         SET page_classifications = $1,
-             text_pages_count = $2,
-             scanned_pages_count = $3
-       WHERE id = $4`,
-      [JSON.stringify(pages), text_count, scanned_count + mixed_count, bookId]
-    )
-
-    const extractUrl = `${ocrBase}/extract-text`
-    const extractRes = await fetch(extractUrl, {
-      method: 'POST',
-      headers: await buildOcrHeaders(extractUrl),
-      body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId, classifications: pages }),
-    })
-    if (!extractRes.ok) {
-      await markOcrFailure(`extract-text HTTP ${extractRes.status}`)
-      return NextResponse.json({ bookId, processing: true }, { status: 201 })
-    }
-
-    const extractJson = (await extractRes.json()) as { text: string; page_count: number }
-    const rawText = extractJson.text ?? ''
-
-    if (rawText) {
-      await run('UPDATE books SET raw_text = $1 WHERE id = $2', [rawText, bookId])
-
-      const chunks = chunkText(rawText)
-      for (let index = 0; index < chunks.length; index += 1) {
-        const chunk = chunks[index]
-        await insert(
-          `INSERT INTO modules (book_id, title, order_index, page_start, page_end, text_status, ocr_status, kp_extraction_status)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [
-            bookId,
-            chunk.title,
-            index,
-            chunk.pageStart,
-            chunk.pageEnd,
-            'ready',
-            nonTextPages > 0 ? 'pending' : 'skipped',
-            'pending',
-          ]
-        )
-      }
-    }
-
-    if (nonTextPages > 0) {
-      const ocrPdfUrl = `${ocrBase}/ocr-pdf`
-      const ocrPdfHeaders = await buildOcrHeaders(ocrPdfUrl)
-      void fetch(ocrPdfUrl, {
-        method: 'POST',
-        headers: ocrPdfHeaders,
-        body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId, classifications: pages }),
-      })
-        .then(async (response) => {
-          if (response.ok) {
-            return
-          }
-
-          const responseText = await response.text().catch(() => '')
-          const failureDetails = responseText.trim()
-            ? `ocr-pdf HTTP ${response.status}: ${responseText.trim().slice(0, 500)}`
-            : `ocr-pdf HTTP ${response.status}`
-
-          await markOcrFailure(failureDetails)
-        })
-        .catch(async (error) => {
-          await markOcrFailure(`ocr-pdf call failed: ${String(error)}`)
-        })
-    } else {
-      await run("UPDATE books SET parse_status = 'done' WHERE id = $1", [bookId])
-    }
-
-    void triggerReadyModulesExtraction(bookId).catch(async (error) => {
-      await logAction('triggerReadyModulesExtraction error', `bookId=${bookId}: ${String(error)}`, 'error')
-    })
-
-    await logAction(
-      'book_upload_classified',
-      `bookId=${bookId}, text=${text_count}, scanned=${scanned_count}, mixed=${mixed_count}`
-    )
-    return NextResponse.json({ bookId, processing: true }, { status: 201 })
-  } catch (error) {
-    await markOcrFailure(`upload flow error: ${String(error)}`)
-    return NextResponse.json({ bookId, processing: true }, { status: 201 })
-  }
+  return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 })
 }
