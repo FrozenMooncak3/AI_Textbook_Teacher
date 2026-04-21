@@ -26,10 +26,6 @@ interface BookStatus {
   firstModuleReady: boolean
 }
 
-interface BookMeta {
-  title: string
-}
-
 function getStatusText(s: BookStatus | null): string {
   if (!s) return '正在初始化...'
   if (s.uploadStatus === 'pending') return '等待上传确认...'
@@ -47,7 +43,6 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
   const bookIdNum = Number(bookId)
   const router = useRouter()
 
-  const [bookMeta, setBookMeta] = useState<BookMeta | null>(null)
   const [status, setStatus] = useState<BookStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [userName, setUserName] = useState('加载中...')
@@ -64,16 +59,6 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
       })
       .catch(() => {})
   }, [])
-
-  // Fetch book title once
-  useEffect(() => {
-    fetch(`/api/books/${bookIdNum}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.data?.title) setBookMeta({ title: d.data.title })
-      })
-      .catch(() => {})
-  }, [bookIdNum])
 
   // Polling logic
   useEffect(() => {
@@ -134,7 +119,7 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
         <div className="max-w-2xl w-full relative z-10 space-y-8">
           <header className="text-center space-y-2">
             <h1 className="text-3xl font-black text-on-surface font-headline tracking-tight">
-              {bookMeta?.title ?? '正在加载图书...'}
+              正在为您准备图书...
             </h1>
             <p className="text-on-surface-variant font-medium">
               正在为您准备专属 AI 学习助手
@@ -229,6 +214,6 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
   )
 }
 
-function cn(...inputs: any[]) {
+function cn(...inputs: Array<string | false | null | undefined>): string {
   return inputs.filter(Boolean).join(' ')
 }
