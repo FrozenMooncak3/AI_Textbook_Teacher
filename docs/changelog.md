@@ -2054,3 +2054,9 @@ Files: `src/app/api/modules/[moduleId]/status/route.ts`, `src/app/api/modules/[m
 ## 2026-04-21 | M4.5 Task 2: add R2 presigned PUT URL helper
 Completed: Added `buildPresignedPutUrl(bookId, expirySeconds = 900)` to reuse `buildObjectKey()` and sign browser PUT uploads against R2 with explicit `ContentType: 'application/pdf'`. Added a regression test covering the returned object key, signed URL shape, and default `X-Amz-Expires=900` TTL using the repo's `tsx` Node test runner.
 Files: `src/lib/r2-client.ts`, `src/lib/r2-client.test.ts`
+
+---
+
+## 2026-04-21 | M4.5 Task 3: add upload presign endpoint
+Completed: Added `POST /api/uploads/presign` with session auth via `requireUser()`, Zod validation for `filename`/`size`/`contentType`, insertion of a pending `books` row with `file_size`, and R2 PUT presign issuance via `buildPresignedPutUrl()`. Added a route-level regression test covering unauthenticated 401, 50MB validation failure, and the successful response shape plus insert/log/signing behavior.
+Files: `src/app/api/uploads/presign/route.ts`, `src/app/api/uploads/presign/route.test.ts`
