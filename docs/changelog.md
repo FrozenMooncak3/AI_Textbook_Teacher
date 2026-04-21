@@ -2060,3 +2060,9 @@ Files: `src/lib/r2-client.ts`, `src/lib/r2-client.test.ts`
 ## 2026-04-21 | M4.5 Task 3: add upload presign endpoint
 Completed: Added `POST /api/uploads/presign` with session auth via `requireUser()`, Zod validation for `filename`/`size`/`contentType`, insertion of a pending `books` row with `file_size`, and R2 PUT presign issuance via `buildPresignedPutUrl()`. Added a route-level regression test covering unauthenticated 401, 50MB validation failure, and the successful response shape plus insert/log/signing behavior.
 Files: `src/app/api/uploads/presign/route.ts`, `src/app/api/uploads/presign/route.test.ts`
+
+---
+
+## 2026-04-21 | M4.5 Task 4: add confirm endpoint and background upload flow
+Completed: Extracted the PDF classify/extract/OCR launch chain into `runClassifyAndExtract()` for background reuse, including raw text persistence, module creation, OCR failure handling, and KP extraction kickoff. Added `POST /api/books/confirm` to verify the uploaded R2 object via HEAD, atomically flip `upload_status` to `confirmed`, handle idempotent retry cases, and fire the background processing chain without blocking the client. Added regression tests for both the upload flow and the confirm route using local hook-resolved test stubs.
+Files: `src/lib/upload-flow.ts`, `src/lib/upload-flow.test.ts`, `src/app/api/books/confirm/route.ts`, `src/app/api/books/confirm/route.test.ts`, `src/lib/test-stubs/**`
