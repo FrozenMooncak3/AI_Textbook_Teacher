@@ -64,3 +64,28 @@ test('getSignedPdfUrl returns an https URL containing X-Amz-Signature', async ()
     restore()
   }
 })
+
+test('buildPresignedPutUrl returns URL and object key for valid bookId', async () => {
+  const { mod, restore } = await loadR2ClientWithEnv({
+    R2_ACCOUNT_ID: 'test-account',
+    R2_ACCESS_KEY_ID: 'test-key',
+    R2_SECRET_ACCESS_KEY: 'test-secret',
+    R2_BUCKET: 'test-bucket',
+  })
+
+  try {
+    const { uploadUrl, objectKey } = await (mod as {
+      buildPresignedPutUrl: (
+        id: number,
+        expirySeconds?: number
+      ) => Promise<{ uploadUrl: string; objectKey: string }>
+    }).buildPresignedPutUrl(42)
+
+    assert.equal(objectKey, 'books/42/original.pdf')
+    assert.match(uploadUrl, /^https?:\/\/.*\.r2\.cloudflarestorage\.com/)
+    assert.match(uploadUrl, /X-Amz-Signature=/)
+    assert.match(uploadUrl, /X-Amz-Expires=900/)
+  } finally {
+    restore()
+  }
+})

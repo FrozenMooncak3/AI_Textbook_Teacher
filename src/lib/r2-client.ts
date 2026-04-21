@@ -69,6 +69,26 @@ export async function getSignedPdfUrl(objectKey: string, expirySeconds = 3600): 
   )
 }
 
+export async function buildPresignedPutUrl(
+  bookId: number,
+  expirySeconds: number = 900
+): Promise<{ uploadUrl: string; objectKey: string }> {
+  const { bucket } = readConfig()
+  const objectKey = buildObjectKey(bookId)
+
+  const uploadUrl = await getSignedUrl(
+    getR2Client(),
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: objectKey,
+      ContentType: 'application/pdf',
+    }),
+    { expiresIn: expirySeconds }
+  )
+
+  return { uploadUrl, objectKey }
+}
+
 export async function deletePdf(objectKey: string): Promise<void> {
   const { bucket } = readConfig()
 

@@ -2048,3 +2048,9 @@ Files: `src/app/api/teaching-sessions/route.ts`, `src/app/api/teaching-sessions/
 ## 2026-04-20 | M4 Task 12: add L2 backend endpoints and recommendation rules
 Completed: Expanded `modules.learning_status` transitions for the teaching flow, added six L2 backend endpoints for module detail, cluster lookup, switch-mode, reset-and-start, and start-qa, and added `book-meta-analyzer.getRecommendation()` for the teaching/full recommendation rule set. Also added a 7-check smoke script covering the six API paths plus the recommendation logic and verified the new module-detail endpoints do not expose `kp.type`, `kp.detailed_content`, or `kp.ocr_quality`.
 Files: `src/app/api/modules/[moduleId]/status/route.ts`, `src/app/api/modules/[moduleId]/route.ts`, `src/app/api/modules/[moduleId]/clusters/route.ts`, `src/app/api/modules/[moduleId]/start-qa/route.ts`, `src/app/api/books/[bookId]/switch-mode/route.ts`, `src/app/api/books/[bookId]/modules/[moduleId]/reset-and-start/route.ts`, `src/lib/book-meta-analyzer.ts`, `scripts/test-m4-task12-l2-apis.ts`
+
+---
+
+## 2026-04-21 | M4.5 Task 2: add R2 presigned PUT URL helper
+Completed: Added `buildPresignedPutUrl(bookId, expirySeconds = 900)` to reuse `buildObjectKey()` and sign browser PUT uploads against R2 with explicit `ContentType: 'application/pdf'`. Added a regression test covering the returned object key, signed URL shape, and default `X-Amz-Expires=900` TTL using the repo's `tsx` Node test runner.
+Files: `src/lib/r2-client.ts`, `src/lib/r2-client.test.ts`
