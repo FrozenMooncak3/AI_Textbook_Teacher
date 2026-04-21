@@ -9,7 +9,12 @@
 
 **方向**：MVP 扩展三线——扫描 PDF（✅）→ 教学系统（M4 ✅）→ 留存机制，串行执行
 
-**进行中**：无（M4 教学系统本 session 收尾）
+**进行中**：M4.5 PDF 上传重构 + 准备页 UX
+- 代码 ✅ T1-T8 全部 PASS（2026-04-21 autonomous 完成）：T1 schema 列 `aafc735` · T2 `buildPresignedPutUrl` `49619d0` · T3 presign 端点 `81dc1cb` · T4 confirm + upload-flow `11899ec` · T5 删 POST /api/books PDF 分支 `5db90e6` · T6 status 14 字段 `30cd9eb` · T7 upload 6 态状态机 `8e497a8` · T8 /preparing 页 `4ed397d` + retry 1 `8c96c72`（Gemini 越界建 /api/books/[id]/route.ts + `any` 违规两条 Blocking → Claude 指导修回）
+- ⬜ T9（用户）：Cloudflare Dashboard 贴 R2 CORS 策略（参考 `.ccb/r2-cors-policy.json` — bucket-scoped key 无 PutBucketCors 权限，autonomous 尝试失败已上报）+ Vercel Dashboard 确认 Fluid Compute 开启
+- ⬜ T10（用户）：14.2MB 369 页中文扫描 PDF 生产端到端压测
+- ✅ T11（Claude）：docs 同步（本次 session 执行，架构 / 状态 / changelog / INDEX / journal）
+→ [spec](superpowers/specs/2026-04-21-pdf-upload-refactor-design.md) · [plan](superpowers/plans/2026-04-21-m4.5-pdf-upload-refactor.md) · [WIP](superpowers/specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md) · [research](research/2026-04-20-pdf-upload-speed-options.md)
 
 **已完成**：
 - **云部署**（阶段 1 ✅ 2026-04-16；阶段 2 ✅ 2026-04-19；阶段 3 ⬜ 未开始：域名 + 监控 + Secrets）
@@ -17,7 +22,7 @@
 
 **排队中**：M5 留存机制（未启动 — 待决策）
 
-**下一步**：用户决定方向——(A) 启动 M5 留存机制（brainstorm + spec） · (B) M4 milestone-audit 全量架构验证 · (C) 继续云部署阶段 3（域名 + 监控） · (D) 处理停车场 T2 🚨 PDF 上传 4.5MB 限制 · (E) 修 start-qa redirectUrl tech debt（小修）
+**下一步**：用户执行 T9（R2 CORS + Vercel Fluid Compute toggle）→ T10（14.2MB 真书压测）→ milestone-audit 收 M4.5
 
 **平行 · 元系统进化**：✅ 完成（2026-04-19 本 session 端到端落地）。Survey → Spec → Plan → 10 commits（c423c63 / 7eb1313 / 3227a3d / 36b5303 / 0684391 / ed50bbf / d783baf / 96b25fd / cfe8456 / 024de5e），T1 8 低成本 + T2 Retrospective 2.0 + M10 review 外化全部上线。Kill switch：`AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用所有 hook 机制。Spec: `superpowers/specs/2026-04-19-system-evolution-design.md`；Plan: `superpowers/plans/2026-04-19-system-evolution.md`。
 
@@ -25,6 +30,8 @@
 
 ## 2. 最近关键决策
 
+- 2026-04-21 M4.5 代码落地（autonomous，本 session 执行）：T1-T8 8 commit 全 PASS。后端（Codex T1-T6）：books schema upload_status+file_size / `buildPresignedPutUrl` / `POST /api/uploads/presign` / `POST /api/books/confirm` + `upload-flow.ts` fire-and-forget / 删 `POST /api/books` 的 PDF 分支 / `GET /api/books/[id]/status` 扩 14 字段。前端（Gemini T7-T8）：`/upload` 6 态状态机 + XHR 进度 + PDF/TXT 分支 + 50MB client 校验 · `/books/[id]/preparing` 2s polling + firstModuleReady CTA。T8 Gemini 一次越界建 `/api/books/[id]/route.ts` + `any[]` 两违规，retry 1 修回；其余任务零 Blocking。R2 CORS 程序化写入失败（bucket-scoped key 无 PutBucketCors 权限）→ T9 surfaced 给用户 Dashboard 手动配。Kill switch 与 moat grep 校验保持生效。→ [plan](superpowers/plans/2026-04-21-m4.5-pdf-upload-refactor.md) · [spec](superpowers/specs/2026-04-21-pdf-upload-refactor-design.md)
+- 2026-04-21 M4.5 PDF 上传重构 brainstorm 完成：解停车场 T2 🚨 4.5MB 上限。8 决策全拍板——(1) Presigned URL 直传 R2 + (2) books 加 upload_status/file_size 2 列 + (3) /confirm fire-and-forget 启动 classify + (4) upload 页 XHR onprogress 6 态状态机 + (5) /preparing 页 2s polling + 第一模块就绪解锁按钮 + (6) R2 CORS 用户手动配 + (7) 7 类错误中文文案 + Sentry + (8) 14.2MB 真书端到端压测。调研 `2026-04-20-pdf-upload-speed-options.md` 29S+11A+2B 源。拒绝替代：不换 OCR / 不拆函数 / 不升 Pro / 不走 SSE。Round-2 subagent review 捉出 3 Critical + 4 Important 修完：file_path 列未用 → 改走 buildObjectKey 约定 / objectKey 格式统一 / 过滤仅列表端点 / confirm 幂等区分成功失败态 / kp_extraction_status 枚举修正 / confirm 改 fire-and-forget 避 UI 等 300s / status route 已存在标"调整"保旧字段。→ [spec](superpowers/specs/2026-04-21-pdf-upload-refactor-design.md) · [WIP](superpowers/specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md)
 - 2026-04-20 M4 教学系统完整上线（本 session 收尾）：19 tasks 全 PASS。后端（L1 T1-T11）Codex：KP 枚举 / zod / schema / retry / 类型 / entitlement / prompt-templates model / teacher Zod / seed / teaching-sessions API；（L2 T12）6 backend endpoints + book-meta-analyzer。前端（L2 T13-T19）Gemini：4 组件（Modal + BookTOC + ObjectivesList + ModeSwitchDialog）+ /books 页改造 + /activate + /teach（retry ×1 用 skeleton-driven 派发）+ /teaching-complete。Review 硬规则：每 dispatch post-completion grep 校验 4 moat 字段 0 hits + Step 3.2.5 tsc/build exit 0 强制 gate。关键事件：Gemini 对"严禁修改 docs"硬约束 3 次违规 → self-remediate 模式（Claude 直接 Edit 不再 retry 教 Gemini）；T18 30% 完成度 retry ×1 验证 skeleton-driven dispatch（附完整代码骨架）有效；技术债：start-qa API stale `redirectUrl` 前端 workaround，后续 hotfix。→ [spec](superpowers/specs/2026-04-15-m4-teaching-mode-design.md) · [plan](superpowers/plans/2026-04-15-m4-teaching-mode.md)
 - 2026-04-19 云部署 Phase 2 完整上线：15 tasks 全 PASS（T1-T11 Codex 代码 + T12-T15 产品负责人 + Claude console）。核心迁移：scripts/ocr_server.py Paddle→Google Vision + 删 DB 能力 + 回调架构；Next.js 新增 /api/ocr/callback 路由 + env 迁 HOST/PORT→URL+Bearer；Cloud Run + Cloud Build CD + Artifact Registry 全链路就绪。E2E smoke 发现 4 个 hotfix：Tailwind Turbopack auto-source 崩溃（96c9eb1）· R2 CORS 缺失（用户控制台应用）· middleware 拦截 callback 401（6d918d0）· Vision API 未启用（用户控制台）。归停车场：Vercel 4.5MB body 限制 → T2 基础设施独立评估。→ [spec §4.2](superpowers/specs/2026-04-12-cloud-deployment-design.md) · [plan](superpowers/plans/2026-04-18-cloud-deployment-phase2.md)
 - 2026-04-19 元系统进化 10 机制全量落地（本 session 端到端）：10 commits 独立提交，每机制分钟级 git revert 回滚 + `AI_SYSTEM_EVOLUTION_DISABLE=1` 一键总开关。落地清单：M1 1% 强触发语（CLAUDE.md）· M2 PostToolUse Bash 失败捕获 hook（.ccb/counters/tool-failures.log + whitelist 升 journal）· M3/M4 UserPromptSubmit 纠错词计数 hook（≥2 ⚠️ / ≥3 🛑 inject）· M5 fallback_for_toolsets frontmatter（4 skill + session-rules 规则 6）· M6 memory audit log（docs/memory-audit-log.md append-only + CLAUDE.md 契约）· M11 task-execution 硬 cap 3 + 持久化 counter · M14 fresh session per task（structured-dispatch + ccb-protocol）· kill switch 文档化 + session-init 扫计数器 · Retrospective 2.0（段 d skill-audit M9 + 段 e 挖矿 M15 + 自动触发提示）· M10 review 终止硬 check（build/test/lint 硬过 exit 0）。→ [spec](superpowers/specs/2026-04-19-system-evolution-design.md) · [plan](superpowers/plans/2026-04-19-system-evolution.md)
@@ -45,9 +52,9 @@
 **代码结构**：`docs/architecture.md §0 摘要卡`（只读摘要卡，不读 §1-N）
 
 **当前 WIP / 排队中里程碑**：
+- **M4.5 PDF 上传重构**（进行中）：`docs/superpowers/specs/2026-04-21-pdf-upload-refactor-design.md` + [WIP](superpowers/specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md) · plan 待 writing-plans 生成
 - 云部署：`docs/superpowers/specs/2026-04-12-cloud-deployment-design.md`
 - M4 教学系统：`docs/superpowers/specs/2026-04-15-m4-teaching-mode-design.md` + `plans/2026-04-15-m4-teaching-mode.md`
-- Session-Init F.3（当前 session）：`docs/superpowers/specs/2026-04-18-session-init-F2-redesign.md` + `plans/2026-04-18-session-init-F3-redesign.md`
 
 **历史里程碑完整任务表**：`docs/milestones/`
 
@@ -68,5 +75,6 @@
 - **扫描 PDF 端到端人工测试 ✅**：book 5 smoke 通过（2026-04-19）——完整链路 Vercel → R2 → Cloud Run Vision → callback → parse_status=done
 - **Advisory 累计**：Phase 2 新增 6 条（T2:2 / T3:2 / T5:1 / T8:1），累积里程碑 milestone-audit 时批量评估
 - **Phase 3 阶段收尾**：域名、监控、Secrets 三件事打包（低优先，Phase 2 稳定后再做）
-- **停车场 🚨 T2**：Vercel 4.5MB body 限制阻塞 >4.5MB PDF 上传（`journal/2026-04-19-pdf-upload-size-limit.md`），修复思路 presigned URL 直传 R2
+- **停车场 🚨 T2**：Vercel 4.5MB body 限制（`journal/2026-04-19-pdf-upload-size-limit.md`）→ **M4.5 T1-T8 代码已上线**（commits `aafc735 … 8c96c72`），T9/T10 用户手动后 milestone-audit + INDEX 下架该 pointer
+- **停车场 🚨 T1**（工程流程）：里程碑开发必须先切隔离分支（`journal/2026-04-21-dev-branch-isolation.md`）— M4.5 session 闪退暴露 master=prod 的半成品直达生产风险，M5 开始前必须决策是否升级规则 4 为"里程碑级强制 worktree"
 

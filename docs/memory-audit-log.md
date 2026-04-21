@@ -17,3 +17,10 @@
 ## 2026-04-20
 
 2026-04-20 11:45 | op:edit | file:feedback_guard-gemini-doc-overwrites.md | reason:M4 T13+T14 Gemini 连 3 次违反 docs/changelog 硬约束（T13 garble / T14 原 commit / T14 retry），固化 self-remediate 不重试的处理 pattern
+2026-04-20 14:20 | op:delete | file:project_local-testing-state.md | reason:10 天前 ephemeral WIP 快照（Page 1 refinement），10 天来云部署 Phase 1+2 / Component Library / Scanned PDF / M4 全部完成，内容完全失效且误导（session-init 和 brainstorming 两次把"本地测试"当默认选项）。违反 memory "不存 ephemeral task details" 规则。同步删 MEMORY.md 索引条目。
+
+## 2026-04-21
+
+2026-04-21 | op:add | file:project_m4-5-brainstorm-wip.md | reason:M4.5 brainstorm 开启，按 brainstorming skill WIP Protocol 要求添加 compact 防御 pointer（指向 docs/superpowers/specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md），brainstorm 完成后删除
+2026-04-21 | op:add | file:feedback_ux-user-signal.md | reason:用户复盘指出 Opus 4.6 多次否决其进度条请求（"你终于肯弄进度条了"），固化"用户 UX 反馈 = 产品信号，默认实现"规则，禁止再用 MVP minimum 回绝 UX 诉求
+2026-04-21 | op:edit | file:feedback_ux-user-signal.md | reason:用户补充"不用全信我，我就随便说说"——修正过于绝对的"100% 必须实现"表述，改成"认真评估 + 拿证据辩论"，避免矫枉过正变 yes-man

@@ -35,6 +35,7 @@
 ## PDF / OCR 处理
 
 - [2026-04-11] PDF处理技术选型（OCR横评） `[PDF处理, OCR, PaddleOCR, Marker, 扫描PDF]` → [link](2026-04-11-pdf-processing-research.md)
+- [2026-04-20] M4.5 PDF 上传第一步 UX/速度优化（4 维度 sub-agent）`[PDF上传, Vercel-Fluid-Compute, 4.5MB-body-limit, presigned-URL, R2直传, Gemini-2.5-Pro, Mistral-OCR-3, 骨架屏, Harrison-CHI-2010, Hobby-TOS-商业]` 🔴 → [link](2026-04-20-pdf-upload-speed-options.md)
 
 ## 工程 / 工具
 

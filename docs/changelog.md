@@ -4,6 +4,41 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-21 | M4.5 PDF 上传重构 — T1-T8 代码落地（autonomous 执行）
+
+**目的**：解 Vercel Hobby 4.5MB 请求体上限阻塞 14.2MB 扫描 PDF 上传的核心卡点。流程重构：client XHR 直传 R2 + fire-and-forget 处理 + `/preparing` 过渡页轮询 + 首模块就绪解锁阅读。
+
+**Spec / Plan**：`docs/superpowers/specs/2026-04-21-pdf-upload-refactor-design.md` · `docs/superpowers/plans/2026-04-21-m4.5-pdf-upload-refactor.md` Task 1-8
+
+**后端（Codex T1-T6）**：
+- **T1** `aafc735`：`src/lib/schema.sql` 追加 `upload_status TEXT DEFAULT 'confirmed' CHECK(...)` + `file_size BIGINT DEFAULT 0`，老行 `DO $$ ... EXCEPTION ... END $$` 幂等回填
+- **T2** `49619d0`：`src/lib/r2.ts` 新增 `buildPresignedPutUrl(params)` — 复用 `readConfig` + `getR2Client` + `buildObjectKey`，返回 `{ uploadUrl, objectKey }`；单测 `src/lib/r2.buildPresignedPutUrl.test.ts` 4 断言 PASS（objectKey 契约 / endpoint / X-Amz-Signature / 900s 过期）
+- **T3** `81dc1cb`：`src/app/api/uploads/presign/route.ts` — `requireUser` + contentType 白名单 `application/pdf` + 50MB size cap + 调 buildPresignedPutUrl，出 `{ uploadUrl, objectKey }`
+- **T4** `11899ec`：`src/app/api/books/confirm/route.ts` + `src/lib/upload-flow.ts` — HeadObject 校验 R2 存在 + size 匹配 → INSERT books (upload_status='uploaded', file_size, ...) → 200 返 bookId → 异步 `void processBook(bookId).catch(logError)`（classify + extract-text + 建模块 + 非纯文字页触发 /ocr-pdf 回调 + `triggerReadyModulesExtraction`）。409 `ALREADY_CONFIRMED` / 409 `PROCESSING_FAILED` / 400 `HEAD_FAILED` 三种已知错误态
+- **T5** `5db90e6`：`src/app/api/books/route.ts` 删除 PDF 分支 — 保留 TXT 上传（body 小无 4.5MB 问题），PDF 全部走 presign+confirm
+- **T6** `30cd9eb`：`src/app/api/books/[bookId]/status/route.ts` 扩展为 14 字段响应 — `{ bookId, uploadStatus, parseStatus, kpExtractionStatus, progressPct, currentStage, modules[], firstModuleReady, totalPages, pagesDone, classifyCounts, errorCode?, lastError? }`
+
+**前端（Gemini T7-T8，各 1 次 retry）**：
+- **T7** `8e497a8`：`src/app/upload/page.tsx` 重写为 6 态状态机 `{ kind: 'idle'|'signing'|'uploading'|'confirming'|'redirecting'|'error' }` — PDF 分支走 presign → XHR PUT (`upload.onprogress` 0-100%) → confirm → `router.push /preparing`；TXT 分支保留走 POST /api/books → `/reader`。`error` 态附 `retryTo: 'idle'|'books'`，409 PROCESSING_FAILED 跳 /books 让用户重传，其他错误当场重试。50MB client 校验 + Content-Type 提示
+- **T8** `4ed397d`（retry 1 `8c96c72`）：`src/app/books/[bookId]/preparing/{page.tsx,loading.tsx}` 2s setInterval 轮询 status + pollRef cleanup + 进度条 0→5→10-40→40-95→100 映射 + modules[] 渲染 + firstModuleReady 解锁"开始阅读"CTA → `router.replace('/books/{id}/reader')`；404 + parseStatus='failed' + kpExtractionStatus='failed' 错误态。**Retry 原因**：Gemini 一轮出两条 Blocking — (a) 越界建 `src/app/api/books/[bookId]/route.ts` 违反 dispatch Must-NOT + 文件边界（Codex 专属 `src/app/api/**`）；(b) `function cn(...inputs: any[])` 违反 CLAUDE.md 技术红线。Retry dispatch 042 明文指令删文件 + 去 bookMeta state + 硬编码 `<h1>` + 改 `cn` 类型；retry 1 PASS
+
+**关键事件**：
+- **Autonomous 全自动模式**：用户一句"全部 auto"授权，Claude 全程 dispatch + review + retry + docs 不再逐任务问准许。task-execution skill Step 3.2.5 硬 check 保留（build/lint/test exit 0）
+- **Moat 硬约束延续**：M4.5 新端点 `/api/uploads/presign` / `/api/books/confirm` / `/api/books/[id]/status` 响应白名单剔除 4 字段（kp.type/importance/detailed_content/ocr_quality），grep 0 hits
+- **Fire-and-forget 模式**：`POST /api/books/confirm` 不等 classify 完成就返回，用户立即看到 /preparing 页轮询进度，Vercel Fluid Compute 保证后台 200s+ 异步任务不被杀
+- **R2 CORS 程序化失败**：尝试用 R2 bucket-scoped access key 跑 `PutBucketCors` 被 `Access Denied` 拒，原因是该 key 无 bucket-level config 权限。decidedly surface 给用户 T9：Cloudflare Dashboard 手动贴 `.ccb/r2-cors-policy.json`
+
+**涉及文件**：
+- 后端：`src/lib/schema.sql` · `src/lib/r2.ts`（+buildPresignedPutUrl）· `src/lib/r2.buildPresignedPutUrl.test.ts` · `src/lib/upload-flow.ts`（新文件 fire-and-forget 调度）· `src/app/api/uploads/presign/route.ts`（新）· `src/app/api/books/confirm/route.ts`（新）· `src/app/api/books/route.ts`（删 PDF 分支）· `src/app/api/books/[bookId]/status/route.ts`（14 字段）
+- 前端：`src/app/upload/page.tsx`（6 态状态机）· `src/app/books/[bookId]/preparing/{page.tsx,loading.tsx}`（新）
+- 配置：`.ccb/r2-cors-policy.json`（参考值，用户手动贴 Dashboard）
+
+**Commits**：`aafc735`（T1）· `49619d0`（T2）· `81dc1cb`（T3）· `11899ec`（T4）· `5db90e6`（T5）· `30cd9eb`（T6）· `8e497a8`（T7）· `4ed397d` + `8c96c72`（T8+retry 1）
+
+**剩余**：T9（用户 Dashboard）+ T10（14.2MB 真书压测）+ milestone-audit 收 M4.5
+
+---
+
 ## 2026-04-20 | M4 Teaching Mode — 里程碑收尾（前端 T17-T19 + 文档同步）
 
 **目的**：M4 Teaching Mode 最后三个前端任务（Phase 0 激活页 / 教学对话页 / 教学完成中页）上线 + architecture.md 全量同步。Teaching 模式端到端可跑通：/activate → /teach（5 阶段 teacher AI + 409 struggling 冻结）→ /teaching-complete → /qa。

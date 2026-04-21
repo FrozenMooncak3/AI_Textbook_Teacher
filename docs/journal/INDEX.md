@@ -30,12 +30,16 @@
 - **T2** 学习计划定制（百词斩模式）：AI 预估时长+用户自定节奏 `[study-plan, pacing, AI-estimation, personalization]` → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
 
 ### 基础设施
-- **T2** 🚨 PDF 上传 presigned URL 直传 R2——当前 Vercel 4.5MB 函数上限，>4.5MB 扫描 PDF 全部传不上来 `[PDF-upload, presigned-URL, R2, Vercel-function-limit]` → [2026-04-19-pdf-upload-size-limit.md](./2026-04-19-pdf-upload-size-limit.md)
+- **T2** 🚨 PDF 上传 presigned URL 直传 R2——M4.5 T1-T8 代码 ✅ 上线（2026-04-21，commits `aafc735…8c96c72`），T9 R2 CORS + Vercel Fluid 需用户 Dashboard 手动配，T10 14.2MB 真书压测待用户执行；milestone-audit 收尾后下架该条 `[PDF-upload, presigned-URL, R2, Vercel-function-limit]` → [2026-04-19-pdf-upload-size-limit.md](./2026-04-19-pdf-upload-size-limit.md)
 - **T2** 预生成系统——后台预生成下一步内容，消灭等待 `[pregeneration, background-tasks, latency, infrastructure]` → [2026-04-04-pregeneration-system.md](./2026-04-04-pregeneration-system.md)
 - **T3** 语言模式系统——自动切换 prompt 语言，多国语言版本 `[i18n, prompt-language, localization]` → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
 
 ### 商业
 - **T2** Subscription 分级（hint access levels 等付费功能区分）`[subscription, paywall, monetization, hint-access]` → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
+
+### 工程流程
+- **T1** 🚨 里程碑开发必须先切隔离分支/版本——M4.5 session 闪退暴露 master=prod 半成品直达生产（T7 已上线但 T8 未建→生产 404），M5 开始前必须决策规则 4 升级为"里程碑级强制 worktree" `[dev-branch, worktree, milestone-isolation, master-prod-risk]` → [2026-04-21-dev-branch-isolation.md](./2026-04-21-dev-branch-isolation.md)
+- **T2** Agent 违规事件追溯系统——T8 Gemini 一轮 3 类硬约束违规（file boundary / any / AC 文案自创），现有追溯只到 session-local ledger + 模式级 memory，缺跨 session 可查事件日志。推荐 `.ccb/agent-violations.log` + 扩展 feedback memory 组合，M4.5 闭环后或下次 retrospective 再评估 `[agent-reliability, observability, violation-tracking, retrospective]` → [2026-04-21-agent-violation-tracking.md](./2026-04-21-agent-violation-tracking.md)
 
 ## resolved（已解决）
 

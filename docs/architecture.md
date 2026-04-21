@@ -10,7 +10,7 @@
 > brainstorming skill 默认只读这一章；详细内容按需查后续章节。
 
 ### 页面结构
-`/` 首页 Dashboard | `/upload` 上传 | `/books/[bookId]` Action Hub + `/reader` + `/mistakes`
+`/` 首页 Dashboard | `/upload` 上传 | `/books/[bookId]` Action Hub + `/reader` + `/preparing`（M4.5） + `/mistakes`
 `/modules/[moduleId]` 学习 + `/activate` + `/teach` + `/teaching-complete` + `/qa` + `/test` + `/review?scheduleId=X` + `/notes` + `/mistakes`
 Auth: `/login` `/register`（邀请码）| App Shell: 3 级 error.tsx + AppSidebar + LoadingState
 
@@ -26,7 +26,10 @@ Auth: `/login` `/register`（邀请码）| App Shell: 3 级 error.tsx + AppSideb
 | 系统 | prompt_templates, logs |
 
 ### 核心 API
-- `POST /api/books` — PDF 上传 → R2 存储 → OCR classify → extract-text → 建模块 → KP 提取
+- `POST /api/books` — TXT 上传 + 建书（M4.5 起 PDF 走 presign+confirm 分支，不再经此端点）
+- `POST /api/uploads/presign` — 签发 R2 PUT presigned URL（M4.5，15min TTL，contentType 白名单 application/pdf，objectKey 格式 `books/{userId}/{uuid}.pdf`）
+- `POST /api/books/confirm` — 客户端上传完成后确认入库（M4.5，HeadObject 校验 → INSERT books（upload_status='uploaded', file_size） → fire-and-forget classify + extract-text + 建模块 + KP 触发 → 200 立返 bookId）
+- `GET /api/books/[id]/status` — 准备页轮询端点（M4.5 扩展 14 字段：bookId / uploadStatus / parseStatus / kpExtractionStatus / progressPct / currentStage / modules[] / firstModuleReady / totalPages / pagesDone / classifyCounts / errorCode / lastError）
 - `GET /api/books/[id]/module-status` — 模块级三元组状态（text/ocr/kp）
 - `POST /api/books/[id]/extract` — 手动触发 KP 提取（全书或 ?moduleId=N）
 - `POST /api/books/[id]/switch-mode` — 书级 teaching/full 模式切换（M4）
@@ -51,7 +54,7 @@ extractor（KP 提取 + 模块地图）| **teacher（5 阶段 Q&A 教学：factu
 本地：Docker Compose 三容器（app + db + ocr；ocr 走 Google Vision 需挂 GCP SA key）
 
 ### ⚠️ 核心约束
-- 🚨 Vercel Hobby 请求体 4.5MB 上限阻塞 >4.5MB PDF 上传 — 修复已归停车场 T2（presigned URL 直传 R2）
+- ✅ Vercel Hobby 4.5MB 请求体上限（M4.5 已绕过：PDF 走 presigned URL 直传 R2 + `/api/books/confirm` fire-and-forget）；TXT 仍经 `POST /api/books`
 - OCR 鉴权双层：Vercel → Cloud Run 用 `X-App-Token` + Google ID token（`OCR_REQUIRE_IAM_AUTH=true`）；Cloud Run → Vercel callback 用 `Authorization: Bearer OCR_SERVER_TOKEN`
 - Cloud Run OCR 不连 DB，只调 Vision API + 回调 Vercel；DB 写操作全部在 Next.js `/api/ocr/callback` 里
 - 大 PDF 分块阈值 35K 字符（20 行 overlap）
@@ -68,10 +71,11 @@ extractor（KP 提取 + 模块地图）| **teacher（5 阶段 Q&A 教学：factu
 
 ```
 / (首页 Multi-Column Dashboard：AppSidebar + 固定顶栏(搜索+头像) + 双栏(CourseCard 网格+本周概览 / ReviewButton+统计+最近动态 timeline) + FAB)
-├── /upload (上传 PDF：AppSidebar + ContentCard 拖拽区 + AmberButton)
+├── /upload (上传 PDF/TXT：AppSidebar + ContentCard 拖拽区 + AmberButton；M4.5 6 态状态机 idle/signing/uploading/confirming/redirecting/error，PDF 走 presign+XHR+confirm，TXT 仍走 POST /api/books)
 ├── /logs (系统日志)
 └── /books/[bookId]
     ├── / (Action Hub：AppSidebar + HeroCard + ContentCard 模块列表 + StatusBadge + ProgressBar)
+    ├── /preparing (M4.5 准备页：confirm 后过渡页，2s 轮询 status API，首模块 kpStatus='completed' 解锁"开始阅读"CTA → /reader；parseStatus='failed' 或 kpExtractionStatus='failed' 显示错误态)
     ├── /reader (PDF 阅读器 + 截图问 AI：OCR→提问→回答两步流程)
     ├── /module-map → 重定向到 /books/[bookId]（已废弃）
     ├── /dashboard → 重定向到 /books/[bookId]（已废弃）
@@ -111,9 +115,11 @@ Design System（Amber Companion）:
 
 ```
 auth/               — register, login, logout, me
-books/              — list/create
-books/[bookId]/     — extract(+?moduleId=N), module-status, status, pdf, module-map(+confirm/regenerate), screenshot-ocr, screenshot-ask, notes, highlights, toc, dashboard, mistakes,
+books/              — list/create（M4.5 仅 TXT）
+books/confirm       — POST（M4.5）presign 直传完成后入库 + fire-and-forget classify
+books/[bookId]/     — extract(+?moduleId=N), module-status, status（M4.5 扩展 14 字段）, pdf, module-map(+confirm/regenerate), screenshot-ocr, screenshot-ask, notes, highlights, toc, dashboard, mistakes,
                       switch-mode（M4），modules/[moduleId]/reset-and-start（M4）
+uploads/presign     — POST（M4.5）签发 R2 PUT presigned URL（15min TTL，objectKey=books/{userId}/{uuid}.pdf）
 modules/            — list
 modules/[moduleId]/ — status（M4 扩展 8 状态），guide, generate-questions, qa-feedback, questions, reading-notes,
                       generate-notes, evaluate, test/generate, test/submit, test/, mistakes,
@@ -363,6 +369,48 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - **LoadingState**：共享加载组件（Amber 风格），stage 模式 + progress 模式
 - **Design System**：Amber Companion — Tailwind v4 @theme inline tokens + 10 shadow tokens + cn() 工具函数
 
+### PDF 上传重构（M4.5 · 2026-04-21）
+
+**目的**：解 Vercel Hobby 4.5MB 请求体上限阻塞 14.2MB 扫描 PDF 的问题。
+
+**6 步流程**（PDF 分支）：
+1. 用户选 PDF → `/upload` 页面 client 校验 ≤50MB
+2. `POST /api/uploads/presign { fileName, contentType: 'application/pdf', fileSize }` → 返回 `{ uploadUrl, objectKey }`（15min TTL，objectKey 格式 `books/{userId}/{uuid}.pdf`，由 `buildObjectKey()` 生成）
+3. 前端 XHR `PUT uploadUrl`（带 `Content-Type: application/pdf`）+ `upload.onprogress` 驱动真实进度条 0-100%
+4. `POST /api/books/confirm { objectKey, fileName, fileSize }` → `HeadObject` 校验 R2 文件存在 + `Content-Length` 匹配 → `INSERT books (user_id, title, file_path=objectKey, upload_status='uploaded', file_size, parse_status='pending', ...)` → 200 返回 `{ bookId }` 后**异步**（`void processBook(bookId).catch(logError)`）触发 classify + extract-text + 建模块 + 并行 `triggerReadyModulesExtraction` + 非纯文字页走 `/ocr-pdf` 异步回调
+5. Upload 页收到 bookId → `router.push('/books/{bookId}/preparing')`
+6. Preparing 页 2s 轮询 `GET /api/books/{id}/status` → 首模块 `kpStatus='completed'` 且 `parseStatus='done' OR 'processing'` → 解锁"开始阅读"按钮 → `router.replace('/books/{id}/reader')`；`parseStatus='failed'` 或 `kpExtractionStatus='failed'` → 错误态
+
+**books schema 扩展**（M4.5，commit `aafc735`）：
+- `upload_status TEXT DEFAULT 'confirmed' CHECK(upload_status IN ('uploading','uploaded','confirmed','failed'))` — 老行通过 `DO $$ ... EXCEPTION ... END $$` 守卫回填 `'confirmed'`
+- `file_size BIGINT DEFAULT 0` — 入库时写 client 上报 size，HeadObject 校验一致
+
+**API 契约**：
+- `POST /api/uploads/presign`：入 `{ fileName: string, contentType: 'application/pdf', fileSize: number }` → 出 `{ uploadUrl: string, objectKey: string }`；contentType 白名单（仅 application/pdf），大小上限 50MB；鉴权 requireUser；objectKey 约定由服务端生成，客户端不得自定义
+- `POST /api/books/confirm`：入 `{ objectKey, fileName, fileSize }` → 出 200 `{ bookId }` / 409 `{ error: 'ALREADY_CONFIRMED', bookId }`（file_path 已存在 books 记录 → 幂等）/ 409 `{ error: 'PROCESSING_FAILED', bookId }`（已有记录但 parse_status='error'，前端跳 `/books` 让用户重传）/ 400 `{ error: 'HEAD_FAILED' }`（HeadObject 404 或 size 不匹配）。成功响应不等 classify 完成（fire-and-forget）
+- `GET /api/books/[id]/status` 扩展 14 字段：`{ bookId, uploadStatus, parseStatus, kpExtractionStatus, progressPct (0-100), currentStage ('uploading'|'classifying'|'extracting'|'building_modules'|'extracting_kps'|'ready'|'failed'), modules: [{ id, title, orderIndex, textStatus, ocrStatus, kpStatus, pageStart, pageEnd }], firstModuleReady: boolean, totalPages, pagesDone, classifyCounts: {text, scanned, mixed}, errorCode?, lastError? }`；老 status 端点的 polling 调用方行为兼容
+
+**Fire-and-forget 调度**（`src/lib/upload-flow.ts`）：
+- `processBook(bookId)` 顺序：classify → extract-text → build modules → async ocr-pdf（非纯文字） + parallel `triggerReadyModulesExtraction`
+- 所有阶段异常走 `logError()` 写 logs 表，不抛 throw 到 confirm 端点；用户在 /preparing 页通过轮询 status API 看到失败态
+
+**前端上传状态机**（`src/app/upload/page.tsx`，T7）：
+- 6 态判别联合：`{ kind: 'idle' | 'signing' | 'uploading', percent: number | 'confirming' | 'redirecting' | 'error' }`
+- `error` 态附 `{ message, retryTo: 'idle' | 'books' }`：409 PROCESSING_FAILED → `retryTo: 'books'`（用户跳 `/books` 重传），其他错误 → `retryTo: 'idle'`（当场重试）
+- XHR `upload.onprogress` 实际字节进度（fetch 无此能力）
+- TXT 分支保留：直接 `POST /api/books`（body ≪ 4.5MB）→ `router.push /reader`
+
+**前端准备页**（`src/app/books/[bookId]/preparing/page.tsx`，T8 + retry 1）：
+- 2s `setInterval` 轮询 + `pollRef.current` + `clearInterval` cleanup（unmount / error 分支全覆盖）
+- 固定标题 `<h1>正在为您准备图书...</h1>`（不 fetch book title，避免跨 agent 边界）
+- 进度条映射 `progressPct`：0 uploading → 5 confirming → 10-40 classifying → 40-95 extracting → 100 first-module-ready
+- 按 `modules[]` 渲染模块列表 + 处理状态 icon + `firstModuleReady` 启用"开始阅读"CTA → `router.replace('/books/{id}/reader')`
+- 404 终止轮询，`parseStatus='failed'` 或 `kpExtractionStatus='failed'` → 错误态
+
+**R2 CORS 要求**：bucket 必须允许 Vercel origin + localhost 的 `GET/PUT/HEAD`（`.ccb/r2-cors-policy.json` 参考值）；R2 bucket-scoped access key 无 `PutBucketCors` 权限，需通过 Cloudflare Dashboard（或 Account token）手动配
+
+**内部信号护城河**：`/api/books/confirm` 和 `/api/books/[id]/status` 响应禁止返回 `kp.type/importance/detailed_content/ocr_quality` 4 字段（M4 moat 硬约束延续）
+
 ### 上传自动化流程（M5.5）
 
 - **ProcessingPoller 三阶段**：OCR 进度条（真实页码）→ 自动触发 KP 提取 → router.refresh 显示模块地图
@@ -501,4 +549,4 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - 自定义域名（Cloudflare Registrar + Vercel CNAME）
 - 监控全量接入（Sentry Next.js 前端 + Vercel Analytics 仪表盘）
 - Secrets 管理（当前 `GCP_SA_KEY_JSON` 明文存 Vercel env，应迁 Secret Manager 或 Vercel Encrypted Env 升级）
-- 🚨 PDF 上传 presigned URL 直传 R2（绕过 Vercel 4.5MB body 上限，阻塞 >4.5MB 扫描 PDF，已归停车场 T2 基础设施）
+- ✅ PDF 上传 presigned URL 直传 R2（M4.5 已实现：T1-T8 代码完成，T9 R2 CORS / Vercel Fluid Compute toggle 需用户 Dashboard 操作，T10 14.2MB 真书端到端压测）
