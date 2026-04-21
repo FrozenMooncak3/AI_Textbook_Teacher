@@ -2072,3 +2072,9 @@ Files: `src/lib/upload-flow.ts`, `src/lib/upload-flow.test.ts`, `src/app/api/boo
 ## 2026-04-21 | M4.5 Task 5: remove PDF branch from POST /api/books
 Completed: Removed the legacy PDF upload branch from `POST /api/books` so large PDF uploads can no longer hit the old server-side body path. The TXT branch and GET handler remain unchanged. PDF uploads now return `400` with `code: 'USE_PRESIGN_ENDPOINT'` and a log entry directing callers to the new presign flow. Added route-level regression tests covering the unchanged TXT success path and the new PDF rejection behavior.
 Files: `src/app/api/books/route.ts`, `src/app/api/books/route.test.ts`, `src/lib/test-stubs/books-route/**`
+
+---
+
+## 2026-04-21 | M4.5 Task 6: extend book status endpoint for preparing page
+Completed: Expanded `GET /api/books/[bookId]/status` to preserve the legacy `parseStatus` and dual snake_case OCR/KP fields while adding preparing-page fields for `bookId`, `uploadStatus`, normalized `kpExtractionStatus`, module readiness, `progressPct`, `firstModuleReady`, and `estimatedSecondsRemaining`. The route now fetches module rows, normalizes historical `done/error/running` statuses, and falls back `ocr_*` counters to `0` for older books with NULL values. Added route-level regression tests for the pending-upload and fully-completed states.
+Files: `src/app/api/books/[bookId]/status/route.ts`, `src/app/api/books/[bookId]/status/route.test.ts`, `src/lib/test-stubs/book-status/**`
