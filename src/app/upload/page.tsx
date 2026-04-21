@@ -10,7 +10,13 @@ import LoadingState from '@/components/LoadingState'
 import DecorativeBlur from '@/components/ui/DecorativeBlur'
 import Breadcrumb from '@/components/ui/Breadcrumb'
 
-type UploadStatus = 'idle' | 'uploading' | 'redirecting'
+type UploadStatus =
+  | { kind: 'idle' }
+  | { kind: 'signing' }
+  | { kind: 'uploading'; pct: number; loadedBytes: number; totalBytes: number }
+  | { kind: 'confirming' }
+  | { kind: 'redirecting' }
+  | { kind: 'error'; message: string; retryTo: 'idle' | 'books' }
 
 export default function UploadPage() {
   const router = useRouter()
@@ -19,7 +25,7 @@ export default function UploadPage() {
   const [title, setTitle] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState('')
-  const [status, setStatus] = useState<UploadStatus>('idle')
+  const [status, setStatus] = useState<UploadStatus>({ kind: 'idle' })
   const [userName, setUserName] = useState('用户')
 
   useEffect(() => {
@@ -49,30 +55,135 @@ export default function UploadPage() {
     e.preventDefault()
     if (!file) { setError('请先选择一个文件'); return }
     if (!title.trim()) { setError('请输入教材标题'); return }
-
-    setStatus('uploading')
     setError('')
 
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('title', title.trim())
+    const isPdfFile = file.name.toLowerCase().endsWith('.pdf')
+
+    if (!isPdfFile) {
+      // TXT branch: keep legacy POST /api/books flow
+      setStatus({ kind: 'signing' })
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('title', title.trim())
+      try {
+        const res = await fetch('/api/books', { method: 'POST', body: formData })
+        const data = await res.json()
+        if (!res.ok) {
+          setStatus({
+            kind: 'error',
+            message: data.error ?? '上传失败，请重试',
+            retryTo: 'idle',
+          })
+          return
+        }
+        setStatus({ kind: 'redirecting' })
+        router.push(`/books/${data.bookId}/reader`)
+      } catch {
+        setStatus({ kind: 'error', message: '网络请求失败', retryTo: 'idle' })
+      }
+      return
+    }
+
+    // PDF branch: presign -> XHR PUT -> confirm
+    if (file.size > 50 * 1024 * 1024) {
+      setError('文件过大，请上传小于 50MB 的文件')
+      return
+    }
 
     try {
-      const res = await fetch('/api/books', { method: 'POST', body: formData })
-      const data = await res.json()
+      // Step 1: signing
+      setStatus({ kind: 'signing' })
+      const presignRes = await fetch('/api/uploads/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: file.name,
+          size: file.size,
+          contentType: 'application/pdf',
+        }),
+      })
+      const presignJson = await presignRes.json()
+      if (!presignRes.ok) {
+        setStatus({
+          kind: 'error',
+          message: presignJson.error ?? '获取上传凭证失败',
+          retryTo: 'idle',
+        })
+        return
+      }
+      const { bookId, uploadUrl } = presignJson.data as {
+        bookId: number
+        uploadUrl: string
+      }
 
-      if (!res.ok) {
-        setError(data.error ?? '上传失败，请重试')
-        setStatus('idle')
+      // Step 2: XHR PUT with progress
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('PUT', uploadUrl)
+        xhr.setRequestHeader('Content-Type', 'application/pdf')
+        xhr.upload.onprogress = (ev) => {
+          if (!ev.lengthComputable) return
+          setStatus({
+            kind: 'uploading',
+            pct: Math.round((ev.loaded / ev.total) * 100),
+            loadedBytes: ev.loaded,
+            totalBytes: ev.total,
+          })
+        }
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve()
+          else if (xhr.status === 403) reject(new Error('上传权限校验失败，请刷新重试'))
+          else reject(new Error(`上传失败 (HTTP ${xhr.status})`))
+        }
+        xhr.onerror = () => reject(new Error('上传网络错误，请检查网络连接'))
+        xhr.ontimeout = () => reject(new Error('上传网络超时，请检查网络连接'))
+        xhr.send(file)
+      })
+
+      // Step 3: confirming
+      setStatus({ kind: 'confirming' })
+      const confirmRes = await fetch('/api/books/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookId, title: title.trim() }),
+      })
+      const confirmJson = await confirmRes.json()
+      if (confirmRes.status === 409 && confirmJson.code === 'PROCESSING_FAILED') {
+        setStatus({
+          kind: 'error',
+          message: confirmJson.error ?? '上传成功但处理失败，请稍后前往首页查看',
+          retryTo: 'books',
+        })
+        return
+      }
+      if (!confirmRes.ok) {
+        setStatus({
+          kind: 'error',
+          message: confirmJson.error ?? '确认上传失败',
+          retryTo: 'idle',
+        })
         return
       }
 
-      setStatus('redirecting')
-      router.push(`/books/${data.bookId}/reader`)
-    } catch {
-      setError('网络请求失败')
-      setStatus('idle')
+      // Step 4: redirect to preparing page
+      setStatus({ kind: 'redirecting' })
+      router.push(`/books/${bookId}/preparing`)
+    } catch (err) {
+      setStatus({
+        kind: 'error',
+        message: err instanceof Error ? err.message : '上传失败',
+        retryTo: 'idle',
+      })
     }
+  }
+
+  function handleRetry() {
+    if (status.kind === 'error' && status.retryTo === 'books') {
+      router.push('/books')
+      return
+    }
+    setStatus({ kind: 'idle' })
+    setError('')
   }
 
   const navItems = [
@@ -99,16 +210,41 @@ export default function UploadPage() {
           </header>
 
           <ContentCard className="p-8 md:p-12">
-            {status !== 'idle' ? (
+            {status.kind !== 'idle' ? (
               <div className="py-10 text-center space-y-6">
-                <LoadingState 
-                  label={status === 'uploading' ? '正在上传并识别内容...' : '准备就绪，正在跳转...'} 
-                />
-                {status === 'uploading' && isPdf && (
-                  <p className="text-xs text-primary font-medium bg-primary/5 rounded-xl p-4 leading-relaxed">
-                    温馨提示：PDF 文件需要进行 OCR 文字识别，<br />
-                    大文件可能需要 1-2 分钟，请不要关闭页面。
-                  </p>
+                {status.kind === 'signing' && (
+                  <LoadingState label="正在准备上传凭证..." />
+                )}
+                {status.kind === 'uploading' && (
+                  <div className="space-y-4">
+                    <LoadingState label={`正在上传教材 ${status.pct}%`} />
+                    <div className="w-full bg-surface-container-low rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-primary h-2 transition-all duration-200"
+                        style={{ width: `${status.pct}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-on-surface-variant">
+                      {(status.loadedBytes / 1024 / 1024).toFixed(1)} / {(status.totalBytes / 1024 / 1024).toFixed(1)} MB
+                    </p>
+                  </div>
+                )}
+                {status.kind === 'confirming' && (
+                  <LoadingState label="文件已上传，正在初步解析..." />
+                )}
+                {status.kind === 'redirecting' && (
+                  <LoadingState label="准备就绪，正在跳转中心..." />
+                )}
+                {status.kind === 'error' && (
+                  <div className="space-y-4">
+                    <div className="bg-error/10 text-error p-4 rounded-xl text-sm font-bold flex items-center justify-center gap-3">
+                      <span className="material-symbols-outlined text-lg">error</span>
+                      {status.message}
+                    </div>
+                    <AmberButton onClick={handleRetry} fullWidth>
+                      {status.retryTo === 'books' ? '回到书籍中心' : '返回重试'}
+                    </AmberButton>
+                  </div>
                 )}
               </div>
             ) : (
