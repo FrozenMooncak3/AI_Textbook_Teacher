@@ -26,16 +26,16 @@ interface BookStatus {
   firstModuleReady: boolean
 }
 
-function getStatusText(s: BookStatus | null): string {
-  if (!s) return '正在初始化...'
-  if (s.uploadStatus === 'pending') return '等待上传确认...'
-  if (s.parseStatus === 'pending') return '等待解析图书内容...'
-  if (s.parseStatus === 'processing') return '正在深度解析图书，请稍候...'
+function statusText(s: BookStatus | null): string {
+  if (!s) return '正在为你准备这本书...'
+  if (s.uploadStatus === 'pending') return '上传中...'
+  if (s.parseStatus === 'pending') return '开始处理...'
+  if (s.parseStatus === 'processing') return '正在识别页面内容...'
   if (s.parseStatus === 'completed' && s.kpExtractionStatus !== 'completed') {
-    return '图书解析完成，正在智能提取知识点...'
+    return '正在提取知识点...'
   }
-  if (s.kpExtractionStatus === 'completed') return '图书已准备就绪，开启学习之旅吧！'
-  return '正在处理中...'
+  if (s.kpExtractionStatus === 'completed') return '全部准备完成！'
+  return '正在为你准备这本书...'
 }
 
 export default function PreparingPage({ params }: { params: Promise<{ bookId: string }> }) {
@@ -45,7 +45,7 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
 
   const [status, setStatus] = useState<BookStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [userName, setUserName] = useState('加载中...')
+  const [userName, setUserName] = useState('用户')
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Fetch user display name
@@ -67,7 +67,7 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
         const res = await fetch(`/api/books/${bookIdNum}/status`)
         if (!res.ok) {
           if (res.status === 404) {
-            setError('找不到该图书信息，请返回图书库重试。')
+            setError('书不存在或无权访问')
             if (pollRef.current) clearInterval(pollRef.current)
           }
           return
@@ -77,7 +77,7 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
         setStatus(s)
         
         if (s.parseStatus === 'failed' || s.kpExtractionStatus === 'failed') {
-          setError('图书处理遇到了一点问题，请尝试重新上传。')
+          setError('处理出错，请删除书重新上传')
           if (pollRef.current) clearInterval(pollRef.current)
         }
       } catch {
@@ -97,15 +97,15 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
   const allReady = status?.kpExtractionStatus === 'completed'
 
   const buttonLabel = allReady
-    ? '开始学习'
+    ? '开始阅读 →'
     : firstReady
-      ? '第一章已就绪，抢先阅读'
-      : '图书准备中...'
+      ? '开始阅读第一模块 →'
+      : '准备中...'
 
   const navItems = [
-    { icon: 'home', label: '我的书架', href: '/' },
-    { icon: 'cloud_upload', label: '上传图书', href: '/upload' },
-    { icon: 'analytics', label: '学习记录', href: '/logs' },
+    { icon: 'home', label: '首页中心', href: '/' },
+    { icon: 'cloud_upload', label: '上传教材', href: '/upload' },
+    { icon: 'analytics', label: '系统日志', href: '/logs' },
   ]
 
   return (
@@ -119,10 +119,10 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
         <div className="max-w-2xl w-full relative z-10 space-y-8">
           <header className="text-center space-y-2">
             <h1 className="text-3xl font-black text-on-surface font-headline tracking-tight">
-              正在为您准备图书...
+              正在准备的书
             </h1>
             <p className="text-on-surface-variant font-medium">
-              正在为您准备专属 AI 学习助手
+              正在为你准备这本书
             </p>
           </header>
 
@@ -133,7 +133,7 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
               </div>
               <p className="text-sm font-bold text-on-surface">{error}</p>
               <AmberButton onClick={() => router.push('/')} fullWidth>
-                回到书架
+                前往书架
               </AmberButton>
             </ContentCard>
           ) : (
@@ -147,7 +147,7 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
                   />
                 </div>
                 <p className="text-sm text-on-surface-variant text-center font-bold">
-                  {getStatusText(status)} ({status?.progressPct ?? 0}%)
+                  {statusText(status)} · {status?.progressPct ?? 0}%
                 </p>
               </div>
 
@@ -200,11 +200,6 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
                 >
                   {buttonLabel}
                 </AmberButton>
-                {!firstReady && !error && (
-                  <p className="text-xs text-on-surface-variant text-center mt-4 animate-bounce">
-                    ☕ 稍等片刻，知识正在通过 AI 注入中...
-                  </p>
-                )}
               </div>
             </>
           )}
