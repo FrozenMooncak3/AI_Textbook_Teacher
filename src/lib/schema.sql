@@ -26,6 +26,22 @@ CREATE TABLE IF NOT EXISTS books (
 
 ALTER TABLE books ADD COLUMN IF NOT EXISTS learning_mode TEXT NOT NULL DEFAULT 'full';
 ALTER TABLE books ADD COLUMN IF NOT EXISTS preferred_learning_mode TEXT;
+-- M4.5: upload stage tracking (for presigned URL upload flow)
+ALTER TABLE books ADD COLUMN IF NOT EXISTS upload_status TEXT NOT NULL DEFAULT 'confirmed';
+ALTER TABLE books ADD COLUMN IF NOT EXISTS file_size BIGINT NOT NULL DEFAULT 0;
+
+-- Ensure CHECK constraint is present (idempotent via NOT EXISTS probe)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    WHERE t.relname = 'books' AND c.conname = 'books_upload_status_check'
+  ) THEN
+    ALTER TABLE books ADD CONSTRAINT books_upload_status_check
+      CHECK (upload_status IN ('pending', 'confirmed'));
+  END IF;
+END $$;
 
 DO $$
 DECLARE
