@@ -20,7 +20,7 @@
 
 **前端（Gemini T7-T8，各 1 次 retry）**：
 - **T7** `8e497a8`：`src/app/upload/page.tsx` 重写为 6 态状态机 `{ kind: 'idle'|'signing'|'uploading'|'confirming'|'redirecting'|'error' }` — PDF 分支走 presign → XHR PUT (`upload.onprogress` 0-100%) → confirm → `router.push /preparing`；TXT 分支保留走 POST /api/books → `/reader`。`error` 态附 `retryTo: 'idle'|'books'`，409 PROCESSING_FAILED 跳 /books 让用户重传，其他错误当场重试。50MB client 校验 + Content-Type 提示
-- **T8** `4ed397d`（retry 1 `8c96c72`）：`src/app/books/[bookId]/preparing/{page.tsx,loading.tsx}` 2s setInterval 轮询 status + pollRef cleanup + 进度条 0→5→10-40→40-95→100 映射 + modules[] 渲染 + firstModuleReady 解锁"开始阅读"CTA → `router.replace('/books/{id}/reader')`；404 + parseStatus='failed' + kpExtractionStatus='failed' 错误态。**Retry 原因**：Gemini 一轮出两条 Blocking — (a) 越界建 `src/app/api/books/[bookId]/route.ts` 违反 dispatch Must-NOT + 文件边界（Codex 专属 `src/app/api/**`）；(b) `function cn(...inputs: any[])` 违反 CLAUDE.md 技术红线。Retry dispatch 042 明文指令删文件 + 去 bookMeta state + 硬编码 `<h1>` + 改 `cn` 类型；retry 1 PASS
+- **T8** `4ed397d`（retry 1 `8c96c72`；Claude polish `2e89788`）：`src/app/books/[bookId]/preparing/{page.tsx,loading.tsx}` 2s setInterval 轮询 status + pollRef cleanup + 进度条 0→5→10-40→40-95→100 映射 + modules[] 渲染 + firstModuleReady 解锁"开始阅读"CTA → `router.replace('/books/{id}/reader')`；404 + parseStatus='failed' + kpExtractionStatus='failed' 错误态。**Retry 原因**：Gemini 一轮出两条 Blocking — (a) 越界建 `src/app/api/books/[bookId]/route.ts` 违反 dispatch Must-NOT + 文件边界（Codex 专属 `src/app/api/**`）；(b) `function cn(...inputs: any[])` 违反 CLAUDE.md 技术红线。Retry dispatch 042 明文指令删文件 + 去 bookMeta state + 硬编码 `<h1>` + 改 `cn` 类型；retry 1 PASS（Blocking 2/2 关闭 + 1 条文案 Advisory 遗留）。**Claude polish 2e89788**：用户"你直接改吧"授权跨边界对齐 AC 文案（h1'正在准备的书' + statusText 5 态 + buttonLabel 3 态 + navItems 跨页一致 + 错误文案 + userName 默认'用户'），build/lint exit 0
 
 **关键事件**：
 - **Autonomous 全自动模式**：用户一句"全部 auto"授权，Claude 全程 dispatch + review + retry + docs 不再逐任务问准许。task-execution skill Step 3.2.5 硬 check 保留（build/lint/test exit 0）
@@ -33,7 +33,7 @@
 - 前端：`src/app/upload/page.tsx`（6 态状态机）· `src/app/books/[bookId]/preparing/{page.tsx,loading.tsx}`（新）
 - 配置：`.ccb/r2-cors-policy.json`（参考值，用户手动贴 Dashboard）
 
-**Commits**：`aafc735`（T1）· `49619d0`（T2）· `81dc1cb`（T3）· `11899ec`（T4）· `5db90e6`（T5）· `30cd9eb`（T6）· `8e497a8`（T7）· `4ed397d` + `8c96c72`（T8+retry 1）
+**Commits**：`aafc735`（T1）· `49619d0`（T2）· `81dc1cb`（T3）· `11899ec`（T4）· `5db90e6`（T5）· `30cd9eb`（T6）· `8e497a8`（T7）· `4ed397d` + `8c96c72` + `2e89788`（T8+retry 1+claude polish）· `f238c5b`（T11 docs closeout）
 
 **剩余**：T9（用户 Dashboard）+ T10（14.2MB 真书压测）+ milestone-audit 收 M4.5
 
