@@ -18,7 +18,7 @@ interface BookRow {
   user_id: number
   upload_status: string
   parse_status: string
-  file_size: number
+  file_size: string
 }
 
 interface R2Config {
@@ -101,11 +101,12 @@ export const POST = handleRoute(async (req) => {
       new HeadObjectCommand({ Bucket: bucket, Key: objectKey })
     )
     const actualSize = headResult.ContentLength ?? 0
+    const expectedSize = Number(book.file_size)
 
-    if (book.file_size > 0 && actualSize !== book.file_size) {
+    if (expectedSize > 0 && actualSize !== expectedSize) {
       await logAction(
         'book_upload_size_mismatch',
-        `bookId=${bookId}, expected=${book.file_size}, actual=${actualSize}`,
+        `bookId=${bookId}, expected=${expectedSize}, actual=${actualSize}`,
         'error'
       )
       throw new UserError('Upload size mismatch', 'UPLOAD_INCOMPLETE', 400)

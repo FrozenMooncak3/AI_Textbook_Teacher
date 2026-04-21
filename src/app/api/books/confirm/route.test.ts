@@ -53,7 +53,7 @@ type ConfirmBook = {
   user_id: number
   upload_status: string
   parse_status: string
-  file_size: number
+  file_size: string
 } | undefined
 
 type StubState = typeof globalThis & {
@@ -226,7 +226,7 @@ test('returns 409 when a previously confirmed upload already failed', async () =
     user_id: 7,
     upload_status: 'confirmed',
     parse_status: 'error',
-    file_size: 1_000_000,
+    file_size: '1000000',
   }
 
   const { POST } = await loadConfirmRoute()
@@ -248,7 +248,7 @@ test('short-circuits when the upload is already confirmed and healthy', async ()
     user_id: 7,
     upload_status: 'confirmed',
     parse_status: 'processing',
-    file_size: 1_000_000,
+    file_size: '1000000',
   }
 
   const { POST } = await loadConfirmRoute()
@@ -269,7 +269,7 @@ test('returns 400 when the uploaded object size mismatches the recorded file siz
     user_id: 7,
     upload_status: 'pending',
     parse_status: 'pending',
-    file_size: 1_000_000,
+    file_size: '1000000',
   }
   stubState.__confirmHeadContentLength = 1_000_001
 
@@ -291,7 +291,7 @@ test('confirms a pending upload after a successful HEAD check', async () => {
     user_id: 7,
     upload_status: 'pending',
     parse_status: 'pending',
-    file_size: 1_000_000,
+    file_size: '1000000',
   }
 
   const { POST } = await loadConfirmRoute()
@@ -316,4 +316,28 @@ test('confirms a pending upload after a successful HEAD check', async () => {
   ])
   assert.equal(stubState.__confirmLogCalls.at(-1)?.[0], 'book_confirmed')
   assert.equal(stubState.__confirmLogCalls.at(-1)?.[1], 'bookId=42, title=\"Physics\"')
+})
+
+test('accepts string file_size from pg BIGINT when sizes match', async () => {
+  stubState.__confirmBook = {
+    id: 42,
+    user_id: 7,
+    upload_status: 'pending',
+    parse_status: 'pending',
+    file_size: '14929623',
+  }
+  stubState.__confirmHeadContentLength = 14_929_623
+
+  const { POST } = await loadConfirmRoute()
+  const res = await POST(mkRequest({ bookId: 42, title: 'Physics Volume 2' }))
+  const json = await res.json()
+
+  assert.equal(res.status, 200)
+  assert.equal(json.success, true)
+  assert.deepEqual(json.data, { bookId: 42, processing: true })
+  assert.equal(stubState.__confirmRunCalls.length, 1)
+  assert.deepEqual(stubState.__confirmRunCalls[0].params, ['Physics Volume 2', 42])
+  assert.deepEqual(stubState.__confirmUploadFlowCalls, [
+    { bookId: 42, objectKey: 'books/42/original.pdf' },
+  ])
 })
