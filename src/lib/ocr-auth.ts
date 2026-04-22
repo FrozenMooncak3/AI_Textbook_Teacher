@@ -1,8 +1,9 @@
-import { GoogleAuth } from 'google-auth-library'
+import { GoogleAuth, type IdTokenClient } from 'google-auth-library'
 
 const requireIamAuth = process.env.OCR_REQUIRE_IAM_AUTH === 'true'
 
 let cachedAuth: GoogleAuth | null = null
+const clientCache = new Map<string, IdTokenClient>()
 
 function getAuth(): GoogleAuth {
   if (!cachedAuth) {
@@ -26,9 +27,13 @@ export async function buildOcrHeaders(targetUrl: string): Promise<Record<string,
   }
 
   if (requireIamAuth) {
-    const auth = getAuth()
     const audience = new URL(targetUrl).origin
-    const client = await auth.getIdTokenClient(audience)
+    let client = clientCache.get(audience)
+    if (!client) {
+      const auth = getAuth()
+      client = await auth.getIdTokenClient(audience)
+      clientCache.set(audience, client)
+    }
     const idHeaders = await client.getRequestHeaders()
     const authHeader = idHeaders.Authorization || idHeaders.authorization
     if (authHeader) {
