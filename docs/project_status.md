@@ -11,7 +11,10 @@
 
 **进行中**：M4.6 OCR 管线诊断 + 性能优化（待 brainstorm）
 - 触发：M4.5 收尾 live E2E 验证 book 11/12 暴露 Vercel → Cloud Run 调用 hang 4-6 分钟问题（OCR 服务直接探测 4.5s 返 200 正常，瓶颈在 Vercel 出站 fetch / google-auth-library token 获取或 Vercel↔GCP 网络）
-- 范围候选：诊断生产 OCR hang 根因 + Cloud Run min-instances 配置 + Vision API batching + book 10/11/12 stuck artifact 清理
+- 2026-04-22 已尝试两个低代价修复（user 在外面 dispatch，未做 live 验证）：
+  - **Phase A** 同 commit redeploy（`dpl_C7HDhBS8gQsJZwAbeqfDXtupKziB` PROMOTED）— 测"Vercel 平台抽风"假设，未 live 验证是否修好
+  - **Phase B** `OCR_REQUIRE_IAM_AUTH=false` + redeploy → 直接探测发现 Cloud Run 服务侧本身要求 IAM invoker 权限（无 Bearer 1.3s 内 GCP 平台层 403）→ 路径不可行，env 已恢复 `true`
+- 范围候选：诊断生产 OCR hang 根因 + Cloud Run min-instances 配置 + Vision API batching + book 10/11/12 stuck artifact 清理 + 加诊断日志（runtime logs 看不到时无法 narrow down）
 - 排队前先 brainstorm 决定范围 / 优先级
 
 **已完成**：
@@ -79,7 +82,7 @@
 
 ## 4. 未决问题
 
-- **🚨 OCR 管线 Vercel→Cloud Run hang**（M4.5 收尾暴露，转 M4.6）：book 11/12 上传 confirm 后 `runClassifyAndExtract` 调 OCR `/classify-pdf` 超时 4-6 分钟报 `TypeError: fetch failed`。OCR 服务本身从外部直接探测 4.5 秒返 200 正常 → 根因在 Vercel 出站方向（候选：google-auth-library token 获取 hang / Vercel→GCP 网络抖动 / Vercel 函数运行时 bug）。无 Vercel runtime logs 权限看不到内部 trace。**影响**：现在生产无法上传任何扫描 PDF；book 10/11/12 是 stuck artifacts。M4.6 第一件事
+- **🚨 OCR 管线 Vercel→Cloud Run hang**（M4.5 收尾暴露，转 M4.6）：book 11/12 上传 confirm 后 `runClassifyAndExtract` 调 OCR `/classify-pdf` 超时 4-6 分钟报 `TypeError: fetch failed`。OCR 服务本身从外部直接探测 4.5 秒返 200 正常 → 根因在 Vercel 出站方向（候选：google-auth-library token 获取 hang / Vercel→GCP 网络抖动 / Vercel 函数运行时 bug）。无 Vercel runtime logs 权限看不到内部 trace。**今日诊断进展**：(a) 已 redeploy 同 commit（Phase A）— 排除部分平台抽风假设但未 live 验证；(b) 临时关 `OCR_REQUIRE_IAM_AUTH` 路径已确认不可行（Cloud Run 服务侧硬要求 IAM invoker，无 Bearer 时 GCP 平台层 1.3s 403）。**影响**：现在生产无法上传任何扫描 PDF；book 10/11/12 是 stuck artifacts。M4.6 第一件事
 - **扫描 PDF 端到端人工测试 ⚠️ 退化**：book 5 smoke 曾通过（2026-04-19）但今日（2026-04-22）book 11/12 复测失败 — 同代码同基础设施，4 天内回归
 - **Advisory 累计**：Phase 2 新增 6 条（T2:2 / T3:2 / T5:1 / T8:1）+ M4.5 hotfix 累 2 条（T13 idempotency / T14 inline stub TS 注解），累积 M4.6 milestone-audit 时批量评估
 - **Phase 3 阶段收尾**：域名、监控、Secrets 三件事打包（低优先，Phase 2 稳定后再做）
