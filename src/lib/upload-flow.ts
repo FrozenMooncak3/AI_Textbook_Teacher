@@ -1,6 +1,7 @@
 import { insert, run } from '@/lib/db'
 import { logAction } from '@/lib/log'
 import { buildOcrHeaders } from '@/lib/ocr-auth'
+import { retryWithBackoff } from '@/lib/retry'
 import { triggerReadyModulesExtraction } from '@/lib/services/kp-extraction-service'
 import { chunkText } from '@/lib/text-chunker'
 
@@ -44,11 +45,15 @@ export async function runClassifyAndExtract(
 
   try {
     const classifyUrl = `${ocrBase}/classify-pdf`
-    const classifyRes = await fetch(classifyUrl, {
-      method: 'POST',
-      headers: await buildOcrHeaders(classifyUrl),
-      body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId }),
-    })
+    const classifyRes = await retryWithBackoff(
+      async () => fetch(classifyUrl, {
+        method: 'POST',
+        headers: await buildOcrHeaders(classifyUrl),
+        body: JSON.stringify({ r2_object_key: r2ObjectKey, book_id: bookId }),
+        signal: AbortSignal.timeout(30_000),
+      }),
+      { maxAttempts: 2, baseMs: 1000 }
+    )
 
     if (!classifyRes.ok) {
       await markOcrFailure(bookId, `classify-pdf HTTP ${classifyRes.status}`)
@@ -70,15 +75,19 @@ export async function runClassifyAndExtract(
     )
 
     const extractUrl = `${ocrBase}/extract-text`
-    const extractRes = await fetch(extractUrl, {
-      method: 'POST',
-      headers: await buildOcrHeaders(extractUrl),
-      body: JSON.stringify({
-        r2_object_key: r2ObjectKey,
-        book_id: bookId,
-        classifications: pages,
+    const extractRes = await retryWithBackoff(
+      async () => fetch(extractUrl, {
+        method: 'POST',
+        headers: await buildOcrHeaders(extractUrl),
+        body: JSON.stringify({
+          r2_object_key: r2ObjectKey,
+          book_id: bookId,
+          classifications: pages,
+        }),
+        signal: AbortSignal.timeout(30_000),
       }),
-    })
+      { maxAttempts: 2, baseMs: 1000 }
+    )
 
     if (!extractRes.ok) {
       await markOcrFailure(bookId, `extract-text HTTP ${extractRes.status}`)
@@ -122,6 +131,7 @@ export async function runClassifyAndExtract(
           book_id: bookId,
           classifications: pages,
         }),
+        signal: AbortSignal.timeout(30_000),
       })
         .then(async (response) => {
           if (response.ok) {
