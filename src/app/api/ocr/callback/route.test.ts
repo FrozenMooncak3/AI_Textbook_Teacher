@@ -13,7 +13,8 @@ export async function query() {
   return []
 }
 
-export async function run() {
+export async function run(sql, params) {
+  globalThis.__ocrCallbackRunCalls.push({ sql, params })
   return { rows: [], rowCount: 0, command: 'UPDATE', oid: 0, fields: [] }
 }
 `)}`
@@ -50,6 +51,10 @@ const registerHooks = (nodeModule as typeof nodeModule & {
 
 type StubState = typeof globalThis & {
   __ocrCallbackTriggerCalls: number[]
+  __ocrCallbackRunCalls: Array<{
+    sql: string
+    params: unknown[]
+  }>
 }
 
 function resolveLocalModule(basePath: string): string | undefined {
@@ -127,6 +132,7 @@ function mkRequest(body: unknown, headers: Record<string, string> = {}): NextReq
 
 test.beforeEach(() => {
   stubState.__ocrCallbackTriggerCalls = []
+  stubState.__ocrCallbackRunCalls = []
 })
 
 test('rejects request without Authorization header (401)', async () => {
@@ -228,4 +234,24 @@ test('does not trigger KP extraction on OCR error', async () => {
 
   assert.equal(res.status, 200)
   assert.deepEqual(stubState.__ocrCallbackTriggerCalls, [])
+})
+
+test('flips pending modules to done on book-level OCR success', async () => {
+  process.env.OCR_SERVER_TOKEN = TOKEN
+  const { POST } = await import('./route')
+  const req = mkRequest({
+    event: 'module_complete',
+    book_id: 42,
+    module_id: 0,
+    status: 'success',
+  })
+
+  const res = await POST(req)
+
+  assert.equal(res.status, 200)
+  assert.deepEqual(stubState.__ocrCallbackTriggerCalls, [42])
+  assert.match(
+    stubState.__ocrCallbackRunCalls[0]?.sql ?? '',
+    /ocr_status IN \('pending', 'processing'\)/
+  )
 })

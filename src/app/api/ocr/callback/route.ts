@@ -78,7 +78,7 @@ async function handleModuleComplete(event: ModuleCompleteEvent): Promise<void> {
 
   if (event.module_id === 0) {
     await run(
-      "UPDATE modules SET ocr_status = $1 WHERE book_id = $2 AND ocr_status = 'processing'",
+      "UPDATE modules SET ocr_status = $1 WHERE book_id = $2 AND ocr_status IN ('pending', 'processing')",
       [nextStatus, event.book_id]
     )
     await run(
