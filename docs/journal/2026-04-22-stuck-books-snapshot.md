@@ -87,3 +87,26 @@ M4.6 workaround 上线后，用户重传同一批 PDF 验证：
 
 - ✅ 通过 → 本快照归档，R2 对象可按需清理（或保留 60 天）
 - ❌ 未通过 → 走 T6B 诊断阶段，加 instrumentation 定位 hang 真正点
+
+---
+
+## Cleanup 范围扩展（2026-04-22，用户批准）
+
+清完 10/11/12 后复查 DB，发现 plan 叙述"book 11 = 14MB 真书"失准——真实 14MB 真书是 **book 7**（`手把手教你读财报(新准则升级版)`，369 OCR 页，parse_status=`processing` stuck）；同波受害者还有 book 6/8/9。经用户批准，一并清掉。
+
+**ad-hoc 清理**（非 `scripts/cleanup-stuck-books-m4.6.sql`，用 `node + pg` 直接跑 `DELETE FROM books WHERE id IN (6, 7, 8, 9)`）：
+
+| id | title | file_size | parse_status | upload_status | ocr_pages | modules | 症状 |
+|----|-------|-----------|--------------|---------------|-----------|---------|------|
+| 6  | `手把手教你读财报(新准则升级版).pdf` | 14929623 (14.9MB) | pending | **pending** | 0 | 0 | 从未完成 R2 PUT（presign 后客户端放弃？）|
+| 7  | `手把手教你读财报(新准则升级版)` | 14929623 (14.9MB) | **processing** | confirmed | 369 | 1 | **真·14MB 真书**——classify-pdf 成功拿到 369 页分类，后续 OCR 卡住，DB 留 processing 永不转 done |
+| 8  | `pdf_scanned_ocr` | 8220630 (8MB) | error | confirmed | 27 | 1 | 扫描 OCR 测试，明确 error |
+| 9  | `epa_sample_letter_sent_to_commissioners_dated_february_29_2015` | 2024538 (2MB) | processing | confirmed | 0 | 0 | 与 book 10 同内容，classify 前就卡 |
+
+**DELETE 结果：** 4 books + 2 modules（book 7 的 1 行 + book 8 的 1 行）cascade 清除。验证 0 剩余。
+
+**未清：** books 3/4/5（更早历史遗留，非本波 OCR hang 受害者）保留不动。
+
+**清理后状态（top 3）：** book 5 (done, 0-byte test) / book 4 (processing) / book 3 (error) — 均为 M4.5 前期产物。
+
+**R2 对象：** 同样保留。用户若重传同一批 PDF，presign 会创建新 book ID（从 13 开始）。旧 R2 对象占用几十 MB，留作诊断样本。
