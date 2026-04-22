@@ -4,6 +4,44 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-22 | M4.5 hotfix — T12+T13+T14 修 confirm BIGINT + OCR callback 缺 trigger KP + UPDATE filter 排除 pending（T10 生产暴露）
+
+**目的**：T10 14.2MB 真书生产压测一次性暴露三个 pre-existing bug 链式连环，阻塞 M4.5 收尾，分三 hotfix 收掉。
+
+**T12 — confirm route BIGINT 类型 bug** `c061a1c`
+- **现象**：14929623 byte 14.2MB PDF 上传 R2 成功，POST `/api/books/confirm` 返 400 `UPLOAD_INCOMPLETE`，Neon log 显示 `expected=14929623 actual=14929623` 但触发 mismatch 分支
+- **Root cause**：`pg` driver 默认把 `BIGINT` 解码成 string，`BookRow.file_size` 类型写成 `number`，confirm 路由用 `===` 比较 string vs number 永远不等。原测试 stub 用 JS number 没模拟 driver 真实行为，stub 掩盖
+- **修**：`src/app/api/books/confirm/route.ts` `BookRow.file_size` 类型改 `string`、用 `Number()` coerce 后比对；test stub 同步改 string；新增回归测 `'accepts string file_size from pg BIGINT when sizes match'`
+- **遗留**：`src/lib/test-stubs/confirm/db.ts:16` `ConfirmBook.file_size` 仍 `number`，test 文件 StubState 本地重定义覆盖了它所以测试 PASS，类型契约 drift 待 milestone-audit 或 micro-dispatch 收
+
+**T13 — OCR callback 缺 trigger KP 提取** `f400bb8`
+- **现象**：T12 修后 book 10（epa_sample_letter_*，3 页全 mixed/scanned）走完 OCR `parse_status=done`，但 `kp_extraction_status` 永远 pending；UI 进度条卡 40%
+- **Root cause**：`triggerReadyModulesExtraction` (`src/lib/services/kp-extraction-service.ts:543-553`) SQL 要求 `ocr_status IN ('done','skipped')`，目前只在 `src/lib/upload-flow.ts:145` classify 完成时调（此时 `ocr_status='processing'`），OCR 跑完后 `handleModuleComplete` 把 `ocr_status` 改 `done` 但**没人重新 trigger KP**。Bug 以前未暴露因为 M4.5 之前 4.5MB 限制挡住扫描 PDF，纯文字 PDF 走 PDFLoader 不经 OCR 路径
+- **修**：`src/app/api/ocr/callback/route.ts` `handleModuleComplete` 在两处加 fire-and-forget 调用 — `module_id===0 && status==='success'`（书级完成）和 `module_id!==0 && status==='success'`（单模块完成），错误走 `.catch` + `logAction`，模式照 `upload-flow.ts:145-147`
+- **测试**：`route.test.ts` 加 `kp-extraction-service` data-URL stub + 3 个新测（book-level success / per-module success / error 不调），8/8 PASS
+
+**T14 — callback module_id=0 UPDATE filter 排除 pending** `c0f69de`
+- **现象**：T13 deploy 后 book 10 仍 stuck — `parse_status=done` 但 module 5 `ocr_status='pending'`、`kp_extraction_status='pending'`。T13 trigger 在生产被调，但 trigger SQL `WHERE ocr_status IN ('done','skipped')` 排除 pending 模块，找不到 ready module
+- **Root cause**：`src/app/api/ocr/callback/route.ts:81` `module_id===0` 路径 UPDATE WHERE 子句 `ocr_status='processing'` 太严格。但 `src/lib/upload-flow.ts:107` 创建 module 时初始 `'pending'`，OCR 服务直接发 `module_id=0` book-level callback 跳过 'processing' 中间态——没人把 'pending' 翻成 'processing'，UPDATE 永远 match 0 行，模块永远卡 'pending'
+- **修**：`route.ts:81` WHERE 子句加 'pending'：`ocr_status IN ('pending', 'processing')`。一行 SQL 改 + 一个回归测试（route.test.ts:239-256）抓 `__ocrCallbackRunCalls[0].sql` 用 regex `/ocr_status IN \('pending', 'processing'\)/` 锁字面值
+- **测试**：db stub `run()` 增强记录 `{sql, params}`，9/9 PASS
+
+**关键事件**
+- T12+T13+T14 都是 **pre-existing bug 链式连环**，与 M4.5 上传重构本身设计无关 — bug 早就在，M4.5 让 14MB+ 扫描 PDF 第一次能跑通完整管线，三层 bug 才依次暴露：
+  - **T12** 阻在 confirm 入口（BIGINT 类型）
+  - **T13** 阻在 OCR 完成→KP 启动衔接（trigger 缺调用）
+  - **T14** 阻在 OCR 完成本身（UPDATE filter 排除 pending）
+- T14 fix 只对**未来** callback 生效，book 10 是 stuck artifact（已 fire 过的 callback 不重放）；live E2E 验证需上传新 PDF
+- 三 fix 都走 task-execution Full Review（Codex 实施 + subagent + Claude 双 pass + build/lint/test 三绿硬 check）
+
+**Commits**：`c061a1c`（T12）· `f400bb8`（T13）· `c0f69de`（T14）
+
+**Vercel 部署**：T12 `dpl_6WkeKrqhdW7SHyRW4gNKcFWkP8tq` READY · T13 `dpl_HP22U8n6RtnLNHGMjz8g7RxnxypR` READY · T14 `dpl_8QdJL9JzrQhdM4Gx3hDJkgj3HXq8` READY
+
+**剩余**：T10 live E2E 重跑（用户传新小扫描 PDF，期望 pending → processing → done → KP completed 全流程）+ milestone-audit 收 M4.5 + 起 M4.6（OCR 性能 + book 10 cleanup）
+
+---
+
 ## 2026-04-21 | M4.5 PDF 上传重构 — T1-T8 代码落地（autonomous 执行）
 
 **目的**：解 Vercel Hobby 4.5MB 请求体上限阻塞 14.2MB 扫描 PDF 上传的核心卡点。流程重构：client XHR 直传 R2 + fire-and-forget 处理 + `/preparing` 过渡页轮询 + 首模块就绪解锁阅读。

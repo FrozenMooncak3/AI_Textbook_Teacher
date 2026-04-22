@@ -9,20 +9,25 @@
 
 **方向**：MVP 扩展三线——扫描 PDF（✅）→ 教学系统（M4 ✅）→ 留存机制，串行执行
 
-**进行中**：M4.5 PDF 上传重构 + 准备页 UX
-- 代码 ✅ T1-T8 全部 PASS（2026-04-21 autonomous 完成）：T1 schema 列 `aafc735` · T2 `buildPresignedPutUrl` `49619d0` · T3 presign 端点 `81dc1cb` · T4 confirm + upload-flow `11899ec` · T5 删 POST /api/books PDF 分支 `5db90e6` · T6 status 14 字段 `30cd9eb` · T7 upload 6 态状态机 `8e497a8` · T8 /preparing 页 `4ed397d` + retry 1 `8c96c72`（Gemini 越界建 /api/books/[id]/route.ts + `any` 违规两条 Blocking → Claude 指导修回）
-- ⬜ T9（用户）：Cloudflare Dashboard 贴 R2 CORS 策略（参考 `.ccb/r2-cors-policy.json` — bucket-scoped key 无 PutBucketCors 权限，autonomous 尝试失败已上报）+ Vercel Dashboard 确认 Fluid Compute 开启
-- ⬜ T10（用户）：14.2MB 369 页中文扫描 PDF 生产端到端压测
-- ✅ T11（Claude）：docs 同步（本次 session 执行，架构 / 状态 / changelog / INDEX / journal）
-→ [spec](superpowers/specs/2026-04-21-pdf-upload-refactor-design.md) · [plan](superpowers/plans/2026-04-21-m4.5-pdf-upload-refactor.md) · [WIP](superpowers/specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md) · [research](research/2026-04-20-pdf-upload-speed-options.md)
+**进行中**：M4.6 OCR 管线诊断 + 性能优化（待 brainstorm）
+- 触发：M4.5 收尾 live E2E 验证 book 11/12 暴露 Vercel → Cloud Run 调用 hang 4-6 分钟问题（OCR 服务直接探测 4.5s 返 200 正常，瓶颈在 Vercel 出站 fetch / google-auth-library token 获取或 Vercel↔GCP 网络）
+- 范围候选：诊断生产 OCR hang 根因 + Cloud Run min-instances 配置 + Vision API batching + book 10/11/12 stuck artifact 清理
+- 排队前先 brainstorm 决定范围 / 优先级
 
 **已完成**：
+- **M4.5 PDF 上传重构 + 准备页 UX** ✅ 完成（2026-04-21 主体 + 2026-04-22 hotfix 链 + 收尾）：T1-T8 8 commit autonomous 落地 + T9-T10 用户手动配置 + T11 docs。M4.5 让 14MB+ 扫描 PDF 第一次能跑通完整管线，连环暴露 3 pre-existing bug，三个 hotfix 收掉：
+  - **T12** `c061a1c`：confirm route BIGINT 类型 bug（pg driver 把 BIGINT 解码成 string，原代码 `===` 比较 string vs number 永远不等 → 14MB PDF 卡 confirm 400 UPLOAD_INCOMPLETE）。`BookRow.file_size` 类型改 string + Number() coerce
+  - **T13** `f400bb8`：OCR callback 缺 trigger KP 提取（`triggerReadyModulesExtraction` 只在 classify 时调用，OCR 完成后没人重 trigger → kp_extraction_status 永卡 pending）。callback `module_id===0` + `module_id!==0` 两 success 路径 fire-and-forget 调 trigger
+  - **T14** `c0f69de`：callback `module_id=0` UPDATE WHERE filter 排除 pending（OCR 服务跳过 'processing' 中间态直接发 book-level callback → UPDATE 永远 match 0 行 → module 卡 pending → trigger SQL 找不到 ready module）。WHERE 子句加 `IN ('pending','processing')`，一行 SQL + 1 回归测
+  - 三 hotfix 都走 task-execution Full Review（subagent + Claude 双 pass + build/lint/test 三绿硬 check）
+  - **遗留**：(a) live E2E 重跑因 Vercel→Cloud Run 出站 fetch hang 失败两次（OCR 服务本身 4.5s 返 200 正常，根因待 M4.6 诊断）— T13/T14 仅经单元测试 + 部署 READY 验证；(b) book 10/11/12 stuck artifacts 待 M4.6 cleanup
+  - → [spec](superpowers/specs/2026-04-21-pdf-upload-refactor-design.md) · [plan](superpowers/plans/2026-04-21-m4.5-pdf-upload-refactor.md) · [research](research/2026-04-20-pdf-upload-speed-options.md)
 - **云部署**（阶段 1 ✅ 2026-04-16；阶段 2 ✅ 2026-04-19；阶段 3 ⬜ 未开始：域名 + 监控 + Secrets）
 - **M4 教学系统** ✅ 完成（2026-04-20 本 session 收尾）：19 tasks 全 PASS。L1 引擎：KP 类型迁移 + zod + schema（teaching_sessions + user_subscriptions + prompt_templates.model）+ retry/teaching-types/entitlement/teacher-model + teacher-prompts（Zod refine）+ seed 5 teacher 模板 + teaching-sessions API（create + messages retry + 409 struggling）+ L2 Tier A 6 后端端点（switch-mode / reset-and-start / clusters / module / start-qa / status 扩展）+ book-meta-analyzer。L2 Tier B 前端：Modal + BookTOC（基础 + 引导态）+ ObjectivesList + ModeSwitchDialog + /books 页改造 + /activate 激活页 + /teach 教学对话页（retry ×1）+ /teaching-complete 完成中页。Moat 硬约束：4 字段全 grep 0 hits。技术债登记：start-qa API stale redirectUrl（前端已 workaround）。→ [spec](superpowers/specs/2026-04-15-m4-teaching-mode-design.md) · [plan](superpowers/plans/2026-04-15-m4-teaching-mode.md)
 
 **排队中**：M5 留存机制（未启动 — 待决策）
 
-**下一步**：用户执行 T9（R2 CORS + Vercel Fluid Compute toggle）→ T10（14.2MB 真书压测）→ milestone-audit 收 M4.5
+**下一步**：M4.6 brainstorm（OCR Vercel↔Cloud Run hang 根因诊断 + Cloud Run 性能优化 + book 10/11/12 cleanup 范围拍板）
 
 **平行 · 元系统进化**：✅ 完成（2026-04-19 本 session 端到端落地）。Survey → Spec → Plan → 10 commits（c423c63 / 7eb1313 / 3227a3d / 36b5303 / 0684391 / ed50bbf / d783baf / 96b25fd / cfe8456 / 024de5e），T1 8 低成本 + T2 Retrospective 2.0 + M10 review 外化全部上线。Kill switch：`AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用所有 hook 机制。Spec: `superpowers/specs/2026-04-19-system-evolution-design.md`；Plan: `superpowers/plans/2026-04-19-system-evolution.md`。
 
@@ -30,6 +35,7 @@
 
 ## 2. 最近关键决策
 
+- 2026-04-22 M4.5 hotfix 链 + 收尾（本 session 执行）：T10 14.2MB 真书生产压测连环暴露 3 pre-existing bug，三 hotfix 收掉后关 M4.5。**T12** confirm BIGINT 类型（pg driver string vs `BookRow.file_size: number` `===` 永不等）`c061a1c` · **T13** OCR callback 缺 KP trigger（`triggerReadyModulesExtraction` 只在 classify 调，OCR 完成后没人重 trigger）`f400bb8` · **T14** callback `module_id=0` UPDATE WHERE 排除 pending（OCR 跳过 'processing' 中间态，UPDATE 永远 match 0 行）`c0f69de`。三 hotfix 都走 task-execution Full Review（subagent + Claude 双 pass + build/lint/test 三绿硬 check）。Live E2E 重跑 book 11/12 因 Vercel→Cloud Run 出站 fetch hang 4-6 分钟失败两次，OCR 服务直接探测 4.5s 返 200 正常 — 根因在 Vercel 出站 fetch 或 google-auth-library，需 M4.6 诊断。M4.5 收尾基于单元测试 + 代码 review + 部署 READY 三重证据，live E2E 转 M4.6。→ [changelog](changelog.md#2026-04-22)
 - 2026-04-21 M4.5 代码落地（autonomous，本 session 执行）：T1-T8 8 commit 全 PASS。后端（Codex T1-T6）：books schema upload_status+file_size / `buildPresignedPutUrl` / `POST /api/uploads/presign` / `POST /api/books/confirm` + `upload-flow.ts` fire-and-forget / 删 `POST /api/books` 的 PDF 分支 / `GET /api/books/[id]/status` 扩 14 字段。前端（Gemini T7-T8）：`/upload` 6 态状态机 + XHR 进度 + PDF/TXT 分支 + 50MB client 校验 · `/books/[id]/preparing` 2s polling + firstModuleReady CTA。T8 Gemini 一次越界建 `/api/books/[id]/route.ts` + `any[]` 两违规，retry 1 修回；其余任务零 Blocking。R2 CORS 程序化写入失败（bucket-scoped key 无 PutBucketCors 权限）→ T9 surfaced 给用户 Dashboard 手动配。Kill switch 与 moat grep 校验保持生效。→ [plan](superpowers/plans/2026-04-21-m4.5-pdf-upload-refactor.md) · [spec](superpowers/specs/2026-04-21-pdf-upload-refactor-design.md)
 - 2026-04-21 M4.5 PDF 上传重构 brainstorm 完成：解停车场 T2 🚨 4.5MB 上限。8 决策全拍板——(1) Presigned URL 直传 R2 + (2) books 加 upload_status/file_size 2 列 + (3) /confirm fire-and-forget 启动 classify + (4) upload 页 XHR onprogress 6 态状态机 + (5) /preparing 页 2s polling + 第一模块就绪解锁按钮 + (6) R2 CORS 用户手动配 + (7) 7 类错误中文文案 + Sentry + (8) 14.2MB 真书端到端压测。调研 `2026-04-20-pdf-upload-speed-options.md` 29S+11A+2B 源。拒绝替代：不换 OCR / 不拆函数 / 不升 Pro / 不走 SSE。Round-2 subagent review 捉出 3 Critical + 4 Important 修完：file_path 列未用 → 改走 buildObjectKey 约定 / objectKey 格式统一 / 过滤仅列表端点 / confirm 幂等区分成功失败态 / kp_extraction_status 枚举修正 / confirm 改 fire-and-forget 避 UI 等 300s / status route 已存在标"调整"保旧字段。→ [spec](superpowers/specs/2026-04-21-pdf-upload-refactor-design.md) · [WIP](superpowers/specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md)
 - 2026-04-20 M4 教学系统完整上线（本 session 收尾）：19 tasks 全 PASS。后端（L1 T1-T11）Codex：KP 枚举 / zod / schema / retry / 类型 / entitlement / prompt-templates model / teacher Zod / seed / teaching-sessions API；（L2 T12）6 backend endpoints + book-meta-analyzer。前端（L2 T13-T19）Gemini：4 组件（Modal + BookTOC + ObjectivesList + ModeSwitchDialog）+ /books 页改造 + /activate + /teach（retry ×1 用 skeleton-driven 派发）+ /teaching-complete。Review 硬规则：每 dispatch post-completion grep 校验 4 moat 字段 0 hits + Step 3.2.5 tsc/build exit 0 强制 gate。关键事件：Gemini 对"严禁修改 docs"硬约束 3 次违规 → self-remediate 模式（Claude 直接 Edit 不再 retry 教 Gemini）；T18 30% 完成度 retry ×1 验证 skeleton-driven dispatch（附完整代码骨架）有效；技术债：start-qa API stale `redirectUrl` 前端 workaround，后续 hotfix。→ [spec](superpowers/specs/2026-04-15-m4-teaching-mode-design.md) · [plan](superpowers/plans/2026-04-15-m4-teaching-mode.md)
@@ -52,7 +58,8 @@
 **代码结构**：`docs/architecture.md §0 摘要卡`（只读摘要卡，不读 §1-N）
 
 **当前 WIP / 排队中里程碑**：
-- **M4.5 PDF 上传重构**（进行中）：`docs/superpowers/specs/2026-04-21-pdf-upload-refactor-design.md` + [WIP](superpowers/specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md) · plan 待 writing-plans 生成
+- **M4.6 OCR 管线诊断 + 性能优化**（待 brainstorm）：触发自 M4.5 收尾 live E2E 失败暴露 Vercel→Cloud Run hang 问题
+- **M4.5 PDF 上传重构** ✅ 完成：`docs/superpowers/specs/2026-04-21-pdf-upload-refactor-design.md` · `plans/2026-04-21-m4.5-pdf-upload-refactor.md`
 - 云部署：`docs/superpowers/specs/2026-04-12-cloud-deployment-design.md`
 - M4 教学系统：`docs/superpowers/specs/2026-04-15-m4-teaching-mode-design.md` + `plans/2026-04-15-m4-teaching-mode.md`
 
@@ -72,9 +79,9 @@
 
 ## 4. 未决问题
 
-- **扫描 PDF 端到端人工测试 ✅**：book 5 smoke 通过（2026-04-19）——完整链路 Vercel → R2 → Cloud Run Vision → callback → parse_status=done
-- **Advisory 累计**：Phase 2 新增 6 条（T2:2 / T3:2 / T5:1 / T8:1），累积里程碑 milestone-audit 时批量评估
+- **🚨 OCR 管线 Vercel→Cloud Run hang**（M4.5 收尾暴露，转 M4.6）：book 11/12 上传 confirm 后 `runClassifyAndExtract` 调 OCR `/classify-pdf` 超时 4-6 分钟报 `TypeError: fetch failed`。OCR 服务本身从外部直接探测 4.5 秒返 200 正常 → 根因在 Vercel 出站方向（候选：google-auth-library token 获取 hang / Vercel→GCP 网络抖动 / Vercel 函数运行时 bug）。无 Vercel runtime logs 权限看不到内部 trace。**影响**：现在生产无法上传任何扫描 PDF；book 10/11/12 是 stuck artifacts。M4.6 第一件事
+- **扫描 PDF 端到端人工测试 ⚠️ 退化**：book 5 smoke 曾通过（2026-04-19）但今日（2026-04-22）book 11/12 复测失败 — 同代码同基础设施，4 天内回归
+- **Advisory 累计**：Phase 2 新增 6 条（T2:2 / T3:2 / T5:1 / T8:1）+ M4.5 hotfix 累 2 条（T13 idempotency / T14 inline stub TS 注解），累积 M4.6 milestone-audit 时批量评估
 - **Phase 3 阶段收尾**：域名、监控、Secrets 三件事打包（低优先，Phase 2 稳定后再做）
-- **停车场 🚨 T2**：Vercel 4.5MB body 限制（`journal/2026-04-19-pdf-upload-size-limit.md`）→ **M4.5 T1-T8 代码已上线**（commits `aafc735 … 8c96c72`），T9/T10 用户手动后 milestone-audit + INDEX 下架该 pointer
 - **停车场 🚨 T1**（工程流程）：里程碑开发必须先切隔离分支（`journal/2026-04-21-dev-branch-isolation.md`）— M4.5 session 闪退暴露 master=prod 的半成品直达生产风险，M5 开始前必须决策是否升级规则 4 为"里程碑级强制 worktree"
 

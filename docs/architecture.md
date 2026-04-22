@@ -469,7 +469,8 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 **Cloud Run → Vercel 回调契约**（`/api/ocr/callback`，Bearer `OCR_SERVER_TOKEN`）：
 - `progress`：`{ event:'progress', book_id, module_id?, pages_done, pages_total }` → `UPDATE books SET ocr_current_page, ocr_total_pages, parse_status='processing'`
 - `page_result`：`{ event:'page_result', book_id, module_id, page_number, text }` → 在 `books.raw_text` 中字符串 replace `[OCR_PENDING]` 占位
-- `module_complete`：`{ event:'module_complete', book_id, module_id, status, error? }` → `module_id=0` 时批量把 `ocr_status='processing'` 模块翻成 done/error 并设 `books.parse_status`；`module_id>0` 时更新单模块，若该书所有模块都 done/skipped 自动 `parse_status='done'`
+- `module_complete`：`{ event:'module_complete', book_id, module_id, status, error? }` → `module_id=0` 时批量把 `ocr_status IN ('pending','processing')` 模块翻成 done/error 并设 `books.parse_status`（M4.5 hotfix T14：原 filter 漏掉 pending 模块导致刚分类 scanned 还未 processing 的模块永远卡住）；`module_id>0` 时更新单模块，若该书所有模块都 done/skipped 自动 `parse_status='done'`
+- 任一回调成功路径都 fire-and-forget 触发 `triggerReadyModulesExtraction(bookId)`（M4.5 hotfix T13：原仅在 extract-text 完成时触发，scanned PDF 走 OCR 路径完全跳过 KP 抽取，导致模块永远 `kp_extraction_status='pending'`）
 
 **middleware 豁免**：`src/middleware.ts` 精确匹配 `pathname === '/api/ocr/callback'` 跳过 session cookie 鉴权，让路由自己的 Bearer 鉴权接管（原 prefix `/api/auth/` 不覆盖 OCR 回调导致 smoke test 阻塞，已修 commit 6d918d0）
 

@@ -5,11 +5,11 @@
 ## Specs
 
 ### 进行中（in_progress）
-- [2026-04-21] M4.5 PDF 上传重构 + 准备页 UX 设计 `[M4.5, PDF-upload, presigned-URL, R2-direct-upload, preparing-page, Suspense, skeleton-screen]` 🚧 → [spec](specs/2026-04-21-pdf-upload-refactor-design.md) · [WIP](specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md)
 - [2026-04-15] M4教学模式最小闭环设计 `[M4, teaching-mode, teacher-AI, transcript, prompt]` → [spec](specs/2026-04-15-m4-teaching-mode-design.md)
 - [2026-04-12] 云部署里程碑设计 `[cloud, deployment, Supabase, Docker, three-phase]` → [spec](specs/2026-04-12-cloud-deployment-design.md)
 
 ### 已完成（resolved）
+- [2026-04-21] M4.5 PDF 上传重构 + 准备页 UX 设计 `[M4.5, PDF-upload, presigned-URL, R2-direct-upload, preparing-page, fire-and-forget, hotfix-T12-T13-T14]` → [spec](specs/2026-04-21-pdf-upload-refactor-design.md) · [WIP](specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md)
 - [2026-04-19] 系统进化机制设计 `[system-evolution, design, T1, T2, hooks, skills, 10-mechanisms, implemented]` → [spec](specs/2026-04-19-system-evolution-design.md)
 - [2026-04-19] 系统进化机制设计Brainstorm进度追踪 `[system-evolution, design, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-19-system-evolution-design-brainstorm-state.md)
 - [2026-04-19] 系统进化系统设计Handoff `[system-evolution, brainstorm-handoff, 方案A, 冷启动指令]` → [spec](specs/2026-04-19-system-evolution-design-handoff.md)
@@ -57,12 +57,12 @@
 ## Plans
 
 ### 进行中（in_progress）
-- [2026-04-21] M4.5 PDF 上传重构 + 准备页 UX 实施计划 `[M4.5, PDF-upload, presigned-URL, R2-direct-upload, preparing-page, fire-and-forget, skeleton]` 🚧 → [plan](plans/2026-04-21-m4.5-pdf-upload-refactor.md)
 - [2026-04-18] 云部署阶段2 Cloud Run OCR `[cloud, deployment, Cloud-Run, Google-Vision, callback, phase-2]` → [plan](plans/2026-04-18-cloud-deployment-phase2.md)
 - [2026-04-15] M4教学模式最小闭环 `[M4, teaching-mode, teacher-AI, prompt, transcript]` → [plan](plans/2026-04-15-m4-teaching-mode.md)
 - [2026-04-15] 云部署阶段1数据层上云 `[cloud, deployment, database, Supabase, phase-1]` → [plan](plans/2026-04-15-cloud-deployment-phase1.md)
 
 ### 已完成（resolved）
+- [2026-04-21] M4.5 PDF 上传重构 + 准备页 UX 实施计划 `[M4.5, PDF-upload, presigned-URL, R2-direct-upload, preparing-page, fire-and-forget, T1-T8, hotfix-T12-T13-T14]` → [plan](plans/2026-04-21-m4.5-pdf-upload-refactor.md)
 - [2026-04-19] 系统进化 10 机制实施 `[system-evolution, hooks, skills, T1-T2, retrospective-2.0, review-externalization, implemented]` → [plan](plans/2026-04-19-system-evolution.md)
 - [2026-04-15] Session-Init Token Optimization 实施计划 `[session-init, token, index, frontmatter, memory-cleanup]` → [plan](plans/2026-04-15-session-init-token-optimization.md)
 - [2026-04-15] 调研能力Skill构建 `[research, skill, authority-weighting, brainstorming]` → [plan](plans/2026-04-15-research-capability.md)

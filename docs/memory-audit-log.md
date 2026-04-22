@@ -24,3 +24,5 @@
 2026-04-21 | op:add | file:project_m4-5-brainstorm-wip.md | reason:M4.5 brainstorm 开启，按 brainstorming skill WIP Protocol 要求添加 compact 防御 pointer（指向 docs/superpowers/specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md），brainstorm 完成后删除
 2026-04-21 | op:add | file:feedback_ux-user-signal.md | reason:用户复盘指出 Opus 4.6 多次否决其进度条请求（"你终于肯弄进度条了"），固化"用户 UX 反馈 = 产品信号，默认实现"规则，禁止再用 MVP minimum 回绝 UX 诉求
 2026-04-21 | op:edit | file:feedback_ux-user-signal.md | reason:用户补充"不用全信我，我就随便说说"——修正过于绝对的"100% 必须实现"表述，改成"认真评估 + 拿证据辩论"，避免矫枉过正变 yes-man
+2026-04-21 23:55 | op:edit | file:reference_vercel-deployment.md | reason:T9 持久化 Vercel 30-day token（用户 2026-04-21 显式授权跨 session 保留）
+2026-04-22 00:03 | op:edit | file:reference_vercel-deployment.md | reason:T9 持久化 Cloudflare API token + CF native R2 CORS endpoint 形状（用户 2026-04-22 显式授权）
