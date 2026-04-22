@@ -3,6 +3,7 @@ import { query, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
+import { triggerReadyModulesExtraction } from '@/lib/services/kp-extraction-service'
 
 interface ProgressEvent {
   event: 'progress'
@@ -66,6 +67,12 @@ async function handlePageResult(event: PageResultEvent): Promise<void> {
   await run('UPDATE books SET raw_text = $1 WHERE id = $2', [updated, event.book_id])
 }
 
+function triggerKpExtraction(bookId: number): void {
+  void triggerReadyModulesExtraction(bookId).catch(async (error) => {
+    await logAction('triggerReadyModulesExtraction error', `bookId=${bookId}: ${String(error)}`, 'error')
+  })
+}
+
 async function handleModuleComplete(event: ModuleCompleteEvent): Promise<void> {
   const nextStatus = event.status === 'success' ? 'done' : 'error'
 
@@ -78,6 +85,10 @@ async function handleModuleComplete(event: ModuleCompleteEvent): Promise<void> {
       `UPDATE books SET parse_status = $1 WHERE id = $2`,
       [event.status === 'success' ? 'done' : 'error', event.book_id]
     )
+    if (event.status === 'success') {
+      triggerKpExtraction(event.book_id)
+      return
+    }
     if (event.status === 'error') {
       await logAction(
         'ocr_callback_book_error',
@@ -89,6 +100,9 @@ async function handleModuleComplete(event: ModuleCompleteEvent): Promise<void> {
   }
 
   await run('UPDATE modules SET ocr_status = $1 WHERE id = $2', [nextStatus, event.module_id])
+  if (event.status === 'success') {
+    triggerKpExtraction(event.book_id)
+  }
 
   const pendingModules = await query<{ count: string }>(
     `SELECT COUNT(*)::text AS count

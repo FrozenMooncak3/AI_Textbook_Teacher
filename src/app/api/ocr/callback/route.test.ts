@@ -20,6 +20,11 @@ export async function run() {
 const LOG_STUB_URL = `data:text/javascript,${encodeURIComponent(`
 export async function logAction() {}
 `)}`
+const KP_EXTRACTION_STUB_URL = `data:text/javascript,${encodeURIComponent(`
+export async function triggerReadyModulesExtraction(bookId) {
+  globalThis.__ocrCallbackTriggerCalls.push(bookId)
+}
+`)}`
 
 interface ResolveContext {
   parentURL?: string
@@ -42,6 +47,10 @@ type RegisterHooks = (hooks: {
 const registerHooks = (nodeModule as typeof nodeModule & {
   registerHooks: RegisterHooks
 }).registerHooks
+
+type StubState = typeof globalThis & {
+  __ocrCallbackTriggerCalls: number[]
+}
 
 function resolveLocalModule(basePath: string): string | undefined {
   const candidates = [
@@ -67,6 +76,10 @@ registerHooks({
 
     if (specifier === '@/lib/log') {
       return { url: LOG_STUB_URL, shortCircuit: true }
+    }
+
+    if (specifier === '@/lib/services/kp-extraction-service') {
+      return { url: KP_EXTRACTION_STUB_URL, shortCircuit: true }
     }
 
     if (specifier === './log' && context.parentURL === HANDLE_ROUTE_URL) {
@@ -96,6 +109,8 @@ registerHooks({
   },
 })
 
+const stubState = globalThis as StubState
+
 const TOKEN = 'test-token-32chars-xxxxxxxxxxxxxx'
 
 function mkRequest(body: unknown, headers: Record<string, string> = {}): NextRequest {
@@ -109,6 +124,10 @@ function mkRequest(body: unknown, headers: Record<string, string> = {}): NextReq
     body: JSON.stringify(body),
   })
 }
+
+test.beforeEach(() => {
+  stubState.__ocrCallbackTriggerCalls = []
+})
 
 test('rejects request without Authorization header (401)', async () => {
   process.env.OCR_SERVER_TOKEN = TOKEN
@@ -160,4 +179,53 @@ test('accepts progress event (200 or 500 depending on DB)', async () => {
   })
   const res = await POST(req)
   assert.ok([200, 500].includes(res.status), `expected 200 or 500, got ${res.status}`)
+})
+
+test('triggers KP extraction after book-level OCR success', async () => {
+  process.env.OCR_SERVER_TOKEN = TOKEN
+  const { POST } = await import('./route')
+  const req = mkRequest({
+    event: 'module_complete',
+    book_id: 42,
+    module_id: 0,
+    status: 'success',
+  })
+
+  const res = await POST(req)
+
+  assert.equal(res.status, 200)
+  assert.deepEqual(stubState.__ocrCallbackTriggerCalls, [42])
+})
+
+test('triggers KP extraction after per-module OCR success', async () => {
+  process.env.OCR_SERVER_TOKEN = TOKEN
+  const { POST } = await import('./route')
+  const req = mkRequest({
+    event: 'module_complete',
+    book_id: 42,
+    module_id: 7,
+    status: 'success',
+  })
+
+  const res = await POST(req)
+
+  assert.equal(res.status, 200)
+  assert.deepEqual(stubState.__ocrCallbackTriggerCalls, [42])
+})
+
+test('does not trigger KP extraction on OCR error', async () => {
+  process.env.OCR_SERVER_TOKEN = TOKEN
+  const { POST } = await import('./route')
+  const req = mkRequest({
+    event: 'module_complete',
+    book_id: 42,
+    module_id: 0,
+    status: 'error',
+    error: 'vision timeout',
+  })
+
+  const res = await POST(req)
+
+  assert.equal(res.status, 200)
+  assert.deepEqual(stubState.__ocrCallbackTriggerCalls, [])
 })
