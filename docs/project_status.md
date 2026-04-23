@@ -9,13 +9,13 @@
 
 **方向**：MVP 扩展三线——扫描 PDF（✅）→ 教学系统（M4 ✅）→ 留存机制，串行执行
 
-**进行中**：M4.6 OCR 管线诊断 + 性能优化（待 brainstorm）
-- 触发：M4.5 收尾 live E2E 验证 book 11/12 暴露 Vercel → Cloud Run 调用 hang 4-6 分钟问题（OCR 服务直接探测 4.5s 返 200 正常，瓶颈在 Vercel 出站 fetch / google-auth-library token 获取或 Vercel↔GCP 网络）
-- 2026-04-22 已尝试两个低代价修复（user 在外面 dispatch，未做 live 验证）：
-  - **Phase A** 同 commit redeploy（`dpl_C7HDhBS8gQsJZwAbeqfDXtupKziB` PROMOTED）— 测"Vercel 平台抽风"假设，未 live 验证是否修好
-  - **Phase B** `OCR_REQUIRE_IAM_AUTH=false` + redeploy → 直接探测发现 Cloud Run 服务侧本身要求 IAM invoker 权限（无 Bearer 1.3s 内 GCP 平台层 403）→ 路径不可行，env 已恢复 `true`
-- 范围候选：诊断生产 OCR hang 根因 + Cloud Run min-instances 配置 + Vision API batching + book 10/11/12 stuck artifact 清理 + 加诊断日志（runtime logs 看不到时无法 narrow down）
-- 排队前先 brainstorm 决定范围 / 优先级
+**进行中**：M4.6 OCR 管线修复 — 待真机复验后收官
+- **T1-T4 完成**（2026-04-22）：IdTokenClient audience 缓存（`f98b548`）+ classify/extract-text fetch 30s timeout + retry×1（`7c54934`）+ stuck books cleanup SQL（`8a879f8`）+ docs 骨架
+- **T15 hotfix 完成**（2026-04-23）：live test book 13（14.9MB 369 页）暴露 Cloud Run 容器 OOM 崩溃（`e0bb0c5`）。Python-side：`scripts/ocr_server.py` Vision client 模块级 singleton + 每 50 页 `gc.collect()` + progress log；Infra-side：用户 Console 手动 Cloud Run memory 512 MiB → 4 GiB
+- **原 waitUntil 假设已推翻**：Cloud Run log 决定性证据 `Out-of-memory event detected` + `Container terminated on signal 9`（kernel SIGKILL，Python 来不及打错）— 详见 `journal/2026-04-22-m4.6-incomplete-fix-diagnosis.md` 2026-04-23 重写段
+- **诊断能力升级**：用户给 SA `vercel-ocr-invoker@` 加 `roles/logging.privateLogViewer`，`.ccb/gcp-logs.js` 可自动抓 Cloud Run logs（Clash 7897 代理 + undici ProxyAgent + retry×5）
+- **待**：用户 Cloud Run 4 GiB deploy 生效 + 真机重传 book 13 验证 OCR 跑完 369 页、callback 触发、`parse_status=done`，通过即收官
+- → [spec](superpowers/specs/2026-04-22-m4.6-ocr-pipeline-design.md) · [plan](superpowers/plans/2026-04-22-m4.6-ocr-pipeline-fix.md) · [T15 诊断](journal/2026-04-22-m4.6-incomplete-fix-diagnosis.md)
 
 **已完成**：
 - **M4.5 PDF 上传重构 + 准备页 UX** ✅ 完成（2026-04-21 主体 + 2026-04-22 hotfix 链 + 收尾）：T1-T8 8 commit autonomous 落地 + T9-T10 用户手动配置 + T11 docs。M4.5 让 14MB+ 扫描 PDF 第一次能跑通完整管线，连环暴露 3 pre-existing bug，三个 hotfix 收掉：
@@ -38,6 +38,7 @@
 
 ## 2. 最近关键决策
 
+- 2026-04-23 M4.6 T15 hotfix — Cloud Run 容器 OOM 修复（本 session 执行）：book 13 14.9MB 369 页 live test 暴露 OCR 跑 14 分钟后内核 SIGKILL 容器。原诊断 waitUntil 假设被 Cloud Run log 推翻（`Out-of-memory event detected` + `Container terminated on signal 9`）。根因：`scripts/ocr_server.py` `google_ocr()` 每页新建 `vision.ImageAnnotatorClient()`，369 个 gRPC channel + PIL image 残骸累积撞破 512 MiB。修复：Python-side 模块级 singleton + `gc.collect()` 每 50 页 + progress log（`e0bb0c5`）；Infra-side 用户 Console 手动 Cloud Run memory 512→4096 MiB。同日给 SA `vercel-ocr-invoker@` 加 `roles/logging.privateLogViewer` 后 `.ccb/gcp-logs.js` 自动抓 Cloud Run logs 能力上线。诊断教训：跨服务链路"一端无日志"≠"请求没送达"，Python 被 SIGKILL 时来不及写错误，必须**两端日志都查清**。待真机复验。→ [changelog](changelog.md#2026-04-23) · [诊断](journal/2026-04-22-m4.6-incomplete-fix-diagnosis.md)
 - 2026-04-22 M4.5 hotfix 链 + 收尾（本 session 执行）：T10 14.2MB 真书生产压测连环暴露 3 pre-existing bug，三 hotfix 收掉后关 M4.5。**T12** confirm BIGINT 类型（pg driver string vs `BookRow.file_size: number` `===` 永不等）`c061a1c` · **T13** OCR callback 缺 KP trigger（`triggerReadyModulesExtraction` 只在 classify 调，OCR 完成后没人重 trigger）`f400bb8` · **T14** callback `module_id=0` UPDATE WHERE 排除 pending（OCR 跳过 'processing' 中间态，UPDATE 永远 match 0 行）`c0f69de`。三 hotfix 都走 task-execution Full Review（subagent + Claude 双 pass + build/lint/test 三绿硬 check）。Live E2E 重跑 book 11/12 因 Vercel→Cloud Run 出站 fetch hang 4-6 分钟失败两次，OCR 服务直接探测 4.5s 返 200 正常 — 根因在 Vercel 出站 fetch 或 google-auth-library，需 M4.6 诊断。M4.5 收尾基于单元测试 + 代码 review + 部署 READY 三重证据，live E2E 转 M4.6。→ [changelog](changelog.md#2026-04-22)
 - 2026-04-21 M4.5 代码落地（autonomous，本 session 执行）：T1-T8 8 commit 全 PASS。后端（Codex T1-T6）：books schema upload_status+file_size / `buildPresignedPutUrl` / `POST /api/uploads/presign` / `POST /api/books/confirm` + `upload-flow.ts` fire-and-forget / 删 `POST /api/books` 的 PDF 分支 / `GET /api/books/[id]/status` 扩 14 字段。前端（Gemini T7-T8）：`/upload` 6 态状态机 + XHR 进度 + PDF/TXT 分支 + 50MB client 校验 · `/books/[id]/preparing` 2s polling + firstModuleReady CTA。T8 Gemini 一次越界建 `/api/books/[id]/route.ts` + `any[]` 两违规，retry 1 修回；其余任务零 Blocking。R2 CORS 程序化写入失败（bucket-scoped key 无 PutBucketCors 权限）→ T9 surfaced 给用户 Dashboard 手动配。Kill switch 与 moat grep 校验保持生效。→ [plan](superpowers/plans/2026-04-21-m4.5-pdf-upload-refactor.md) · [spec](superpowers/specs/2026-04-21-pdf-upload-refactor-design.md)
 - 2026-04-21 M4.5 PDF 上传重构 brainstorm 完成：解停车场 T2 🚨 4.5MB 上限。8 决策全拍板——(1) Presigned URL 直传 R2 + (2) books 加 upload_status/file_size 2 列 + (3) /confirm fire-and-forget 启动 classify + (4) upload 页 XHR onprogress 6 态状态机 + (5) /preparing 页 2s polling + 第一模块就绪解锁按钮 + (6) R2 CORS 用户手动配 + (7) 7 类错误中文文案 + Sentry + (8) 14.2MB 真书端到端压测。调研 `2026-04-20-pdf-upload-speed-options.md` 29S+11A+2B 源。拒绝替代：不换 OCR / 不拆函数 / 不升 Pro / 不走 SSE。Round-2 subagent review 捉出 3 Critical + 4 Important 修完：file_path 列未用 → 改走 buildObjectKey 约定 / objectKey 格式统一 / 过滤仅列表端点 / confirm 幂等区分成功失败态 / kp_extraction_status 枚举修正 / confirm 改 fire-and-forget 避 UI 等 300s / status route 已存在标"调整"保旧字段。→ [spec](superpowers/specs/2026-04-21-pdf-upload-refactor-design.md) · [WIP](superpowers/specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md)
@@ -82,8 +83,8 @@
 
 ## 4. 未决问题
 
-- **🚨 OCR 管线 Vercel→Cloud Run hang**（M4.5 收尾暴露，转 M4.6）：book 11/12 上传 confirm 后 `runClassifyAndExtract` 调 OCR `/classify-pdf` 超时 4-6 分钟报 `TypeError: fetch failed`。OCR 服务本身从外部直接探测 4.5 秒返 200 正常 → 根因在 Vercel 出站方向（候选：google-auth-library token 获取 hang / Vercel→GCP 网络抖动 / Vercel 函数运行时 bug）。无 Vercel runtime logs 权限看不到内部 trace。**今日诊断进展**：(a) 已 redeploy 同 commit（Phase A）— 排除部分平台抽风假设但未 live 验证；(b) 临时关 `OCR_REQUIRE_IAM_AUTH` 路径已确认不可行（Cloud Run 服务侧硬要求 IAM invoker，无 Bearer 时 GCP 平台层 1.3s 403）。**影响**：现在生产无法上传任何扫描 PDF；book 10/11/12 是 stuck artifacts。M4.6 第一件事
-- **扫描 PDF 端到端人工测试 ⚠️ 退化**：book 5 smoke 曾通过（2026-04-19）但今日（2026-04-22）book 11/12 复测失败 — 同代码同基础设施，4 天内回归
+- **🚨 M4.6 T15 真机复验待做**：T15 commit `e0bb0c5` + Cloud Run 4 GiB deploy（用户 Console）完成后，重传 book 13（或任意 300+ 页真书）验证 OCR 跑完不 OOM、callback 触发、`parse_status=done`。通过即 M4.6 收官
+- **M4.5 收尾"Vercel→Cloud Run hang"问题已由 T15 解**：原假设是 Vercel 出站 fetch 问题（waitUntil/TLS/网络），实际是 Cloud Run 容器 OOM SIGKILL。T1-T2 (`f98b548` + `7c54934`) classify/extract-text 的 fetch 稳定性修复仍有价值（缓存 IdTokenClient + timeout + retry），但根因在 T15。stuck books cleanup 已在 T3-T4 做过
 - **Advisory 累计**：Phase 2 新增 6 条（T2:2 / T3:2 / T5:1 / T8:1）+ M4.5 hotfix 累 2 条（T13 idempotency / T14 inline stub TS 注解），累积 M4.6 milestone-audit 时批量评估
 - **Phase 3 阶段收尾**：域名、监控、Secrets 三件事打包（低优先，Phase 2 稳定后再做）
 - **停车场 🚨 T1**（工程流程）：里程碑开发必须先切隔离分支（`journal/2026-04-21-dev-branch-isolation.md`）— M4.5 session 闪退暴露 master=prod 的半成品直达生产风险，M5 开始前必须决策是否升级规则 4 为"里程碑级强制 worktree"

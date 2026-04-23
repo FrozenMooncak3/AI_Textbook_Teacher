@@ -4,6 +4,35 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-23 | M4.6 hotfix — T15 修 Cloud Run 容器 OOM（book 13 live test 暴露）
+
+**目的**：M4.6 收尾 live test 用户传 book 13（14.9MB 《手把手教你读财报》369 页，第一本真正大书）暴露 Cloud Run OCR 容器 OOM 崩溃，阻塞任何 >~200 页 PDF。诊断 + 收掉。
+
+**T15 — Cloud Run OCR server 内存管理修复** `e0bb0c5`
+- **现象**：用户上传 book 13 后 UI 卡 10-12% 长达 35+ 分钟；DB `modules.ocr_status=pending` 永不转 done；Vercel DB logs 仅 3 条（presign / confirmed / classified），之后 33 分钟零日志
+- **诊断过程**：最初假设 Vercel Fluid 丢 fire-and-forget fetch（waitUntil 缺失假设）。用户拿到 Cloud Run Console 截图显示 `POST /ocr-pdf 202 898ms` → 假设被推翻。派 SA 带 `logging.privateLogViewer` role 直查 Cloud Run logs，时间窗 11:25-11:40 UTC 拿到决定性证据：`11:40:49.882Z Out-of-memory event detected in container` + `11:40:49.934Z Container terminated on signal 9`（kernel OOM killer SIGKILL）
+- **Root cause**：`scripts/ocr_server.py:137-152` `google_ocr()` 每页新建一个 `vision.ImageAnnotatorClient()`。每个 client 含 gRPC channel + TLS cert pool + auth token cache，Python GC 懒回收，369 个 client 残骸 + 每页 PIL image (1.5x ~2-4 MB) + PNG buffer 累积 heap → 14+ 分钟撞破 Cloud Run 默认 512 MiB 容器内存 → 内核 SIGKILL 进程 → Python 来不及打错误日志（SIGKILL 绕过用户态） → callback 永不触发 → DB 永远 stuck pending
+- **为什么之前没暴露**：M4.5 book 5 smoke / book 7/10/11/12 都是小书（几页 ~几十页），client 残骸不够撞 512 MiB。book 13 是第一本真正大书（369 页），第一次稳定触发
+- **修**：`scripts/ocr_server.py` 三项改动（+26 行）
+  - `_vision_client` 模块级 singleton + `threading.Lock()` 双重检查锁 + `_get_vision_client()` lazy init
+  - `google_ocr()` 调用 `_get_vision_client()` 替换 `vision.ImageAnnotatorClient()`，消除每页新建
+  - `process_pdf_ocr()` 循环内每 50 页 `gc.collect()` + `print(f"[ocr] book {book_id} progress {ocr_count}/{total_to_ocr}", flush=True)`
+- **并行修复（用户 Console 手动）**：Cloud Run service `ai-textbook-ocr` memory 512 MiB → 4 GiB，部署新 revision
+- **Review**：Spot Check 级，Claude diff 字节级匹配 dispatch + Python `ast.parse()` 独立执行 PASS（Node.js 工具链不覆盖 Python）；Advisory 1（`from google.cloud import vision` 在两处函数内各 import 一次，可提模块级，非 blocking）
+
+**关键事件**
+- 诊断跑偏教训：看到"Cloud Run 侧无日志"就假设"请求没送达"是错的——Python 被 SIGKILL 时来不及打日志。跨服务链路诊断必须**两端日志都查清**才能下结论
+- 同日用户在 Cloud Run IAM 上临时加了 SA `vercel-ocr-invoker@awesome-nucleus-403711` 的 `roles/logging.privateLogViewer` 权限，使 `.ccb/gcp-logs.js` 可自动抓日志（GFW 下走 Clash 7897 代理 + undici ProxyAgent + retry×5）
+- 原 journal `docs/journal/2026-04-22-m4.6-incomplete-fix-diagnosis.md` waitUntil 假设已 2026-04-23 重写推翻
+
+**Commits**：`e0bb0c5`（T15）
+
+**剩余**：用户 Cloud Run 4 GiB deploy 完成 + T15 commit push 后，真机重传 book 13 验证（期望 OCR 跑完 369 页、progress log 可见、callback 成功、parse_status=done），通过后 M4.6 收官
+
+**涉及文件**：`scripts/ocr_server.py` · `.ccb/gcp-logs.js`（诊断工具，未 commit）· `.ccb/gcp-run-config.js`（诊断工具，未 commit）· `docs/journal/2026-04-22-m4.6-incomplete-fix-diagnosis.md`（重写推翻原假设）
+
+---
+
 ## 2026-04-22 | M4.5 hotfix — T12+T13+T14 修 confirm BIGINT + OCR callback 缺 trigger KP + UPDATE filter 排除 pending（T10 生产暴露）
 
 **目的**：T10 14.2MB 真书生产压测一次性暴露三个 pre-existing bug 链式连环，阻塞 M4.5 收尾，分三 hotfix 收掉。

@@ -1,6 +1,7 @@
 # Journal Index
 
 ## open（需要关注）
+- [bug:m4.6-t15-oom] 🔄 **M4.6 T15 Cloud Run 容器 OOM 已修，待真机复验**：原 waitUntil 假设被 Cloud Run log 推翻（`Out-of-memory event detected` + SIGKILL）。真根因 `scripts/ocr_server.py` `google_ocr()` 每页新建 Vision client 369 次累积撞破 512 MiB。T15 commit `e0bb0c5` singleton + gc；Cloud Run memory 512→4 GiB（用户 Console）。原 journal 已重写推翻 waitUntil 段 `[M4.6, T15, Cloud-Run, OOM, Vision-client, singleton, gRPC-channel, book-13, 369-pages]` → [诊断 journal](./2026-04-22-m4.6-incomplete-fix-diagnosis.md)
 - [milestone:phase-2-done] **云部署**：阶段 1+2 已上线（R2+Vercel+Neon+Cloud Run Vision OCR），E2E smoke 通过（2026-04-19），阶段 3（域名+监控+secrets）未启动 `[cloud-deployment, Vercel, Cloud-Run, R2, Phase2-done]` → [spec](../superpowers/specs/2026-04-12-cloud-deployment-design.md) · [audit](./2026-04-19-cloud-deployment-phase2-audit.md)
 - [testing] M6 用户测试：多个问题待收集（Date.slice 已修复，其他问题待 brainstorm）`[M6, user-testing, bug-triage, Date.slice]` → [2026-04-07-m6-user-testing.md](./2026-04-07-m6-user-testing.md)
 - [idea:m5-intake] QA/复习时旁边可看原文（M5 启动时拉入 scope）`[QA, review, side-by-side, PDF-viewer, M5]` → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
@@ -24,6 +25,7 @@
 - **T3** 渐进 Hint 系统（浅提示→跳原文→解析，subscription 分级）`[hint-system, subscription, progressive-help, UX]` → [2026-04-03-review-ux-ideas.md](./2026-04-03-review-ux-ideas.md)
 
 ### 交互 / UX
+- **T2** 上传 progress UX 脱节——前端定格 10% 但后端已到 OCR 中段（M4.6 live test 暴露），需真进度/阶段文案/SSE `[upload-progress, UX, progress-bar, backend-frontend-sync, M4.6-live-test]` → [2026-04-22-upload-progress-ux.md](./2026-04-22-upload-progress-ux.md)
 - **T2** 模块阅读选文字问AI（选中文字→提问→AI回答，复用screenshot-ask第二步）`[text-selection, AI-QA, module-reading, interactive]` → [2026-04-03-module-text-ask-ai.md](./2026-04-03-module-text-ask-ai.md)
 - **T2** 笔记跳转原文 `[notes, source-linking, navigation]` → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
 - **T2** 右键选中多功能：做笔记、高亮等 `[context-menu, highlight, notes, text-selection]` → [2026-03-31-walking-ideas.md](./2026-03-31-walking-ideas.md)
