@@ -3,6 +3,16 @@ steps:
     args: ['build', '-f', 'Dockerfile.ocr', '-t', 'us-central1-docker.pkg.dev/awesome-nucleus-403711/ai-textbook-teacher/ai-textbook-ocr:first', '.']
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-central1-docker.pkg.dev/awesome-nucleus-403711/ai-textbook-teacher/ai-textbook-ocr:first']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'ai-textbook-ocr'
+      - '--image=us-central1-docker.pkg.dev/awesome-nucleus-403711/ai-textbook-teacher/ai-textbook-ocr:first'
+      - '--region=us-central1'
+      - '--memory=4Gi'
+      - '--platform=managed'
+      - '--quiet'
 images:
   - 'us-central1-docker.pkg.dev/awesome-nucleus-403711/ai-textbook-teacher/ai-textbook-ocr:first'
 options:
