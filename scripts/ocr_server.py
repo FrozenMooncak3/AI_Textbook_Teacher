@@ -5,6 +5,7 @@ import io
 import os
 import tempfile
 import threading
+import gc
 from typing import Any
 
 import boto3
@@ -48,6 +49,26 @@ if SENTRY_DSN:
     print(f"[sentry] initialized (env={os.environ.get('SENTRY_ENVIRONMENT', 'production')})", flush=True)
 else:
     print("[sentry] SENTRY_DSN not configured; skipping init", flush=True)
+
+_vision_client = None
+_vision_client_lock = threading.Lock()
+
+
+def _get_vision_client():
+    """Lazy-init and reuse a single Vision client across all OCR calls.
+
+    M4.6 T15: was previously instantiated per-page, causing gRPC channel /
+    TLS pool accumulation on 369-page books → Cloud Run 512 MiB OOM kill.
+    """
+    global _vision_client
+    if _vision_client is None:
+        with _vision_client_lock:
+            if _vision_client is None:
+                from google.cloud import vision
+
+                _vision_client = vision.ImageAnnotatorClient()
+    return _vision_client
+
 
 OCR_PROVIDER = os.environ.get("OCR_PROVIDER", "google")
 
@@ -138,7 +159,7 @@ def google_ocr(page_image: Image.Image) -> str:
     """OCR a page image via Google Cloud Vision API (document_text_detection)."""
     from google.cloud import vision
 
-    client = vision.ImageAnnotatorClient()
+    client = _get_vision_client()
 
     buffer = io.BytesIO()
     page_image.save(buffer, format="PNG")
@@ -230,6 +251,10 @@ def process_pdf_ocr(
                         "pages_total": total_to_ocr,
                     }
                 )
+
+                if ocr_count % 50 == 0:
+                    gc.collect()
+                    print(f"[ocr] book {book_id} progress {ocr_count}/{total_to_ocr}", flush=True)
         finally:
             doc.close()
 
