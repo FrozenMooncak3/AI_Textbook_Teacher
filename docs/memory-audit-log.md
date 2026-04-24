@@ -32,3 +32,5 @@
 2026-04-22 | op:edit | file:feedback_explain-research.md | reason:用户 2026-04-22 反馈"以后能不能每次解释完专业术语后都用这种方式给我讲一遍啊，我现在是高管是 CEO"——把规则范围从 research findings 扩展到所有技术解释，加入"两段式（专业版+大白话版）"具体格式 + anti-patterns 清单
 2026-04-22 | op:edit | file:feedback_autonomous-execution.md | reason:M4.6 T1 dispatch 后用户反馈"你自己定时检查"——把 self-polling pattern（Bash run_in_background until-loop 20s 轮询 git log 或 inbox 报告）固化进规则，避免下次 task-execution Phase 2 再 end turn 等用户
 2026-04-22 | op:edit | file:feedback_autonomous-execution.md | reason:M4.6 T2 dispatch 后用户二次强化"你一直自己自动检查直到完成"——固化 run-to-completion 规则：task-execution 一旦启动就跑完整个 plan，只在 (1) 全部完成 (2) 需要 escalate 的 critical issue (3) 用户手动动作边界（如 live test）才停。ccb-dispatch-protocol 的 3-step approval 仅在启动新 plan 时生效，plan 内任务间不生效。
+2026-04-24 | op:add | file:project_vercel-fire-and-forget-after.md | reason:M4.6 T17 landing 新规则——Vercel API route 长 fire-and-forget 必须 after() 包裹；长 fetch vs short fetch 对 isolate 寿命敏感度不同
+2026-04-24 | op:edit | file:MEMORY.md | reason:Project 段加 Vercel Fire-and-Forget 索引行

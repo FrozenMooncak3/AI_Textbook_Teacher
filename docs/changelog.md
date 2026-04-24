@@ -4,6 +4,33 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-24 | M4.6 hotfix — T17 修 Vercel isolate 过早终止（book 16/17 live test 暴露）
+
+**目的**：T15 + T16 landing 后用户重传书 book 16 / 17 仍然卡死在 `parse_status=processing`、`ocr_total_pages=0`、0 modules；零 OCR 进度日志。第三轮 hotfix 收掉真正的主凶。
+
+**T17 — `src/app/api/books/confirm/route.ts` 用 `after()` 包裹 runClassifyAndExtract** `d33a79f`
+- **现象**：用户重传 book 16，Cloud Run 11:49:05Z 收到 `classify-pdf` 请求，11:49:31Z 返回 200（耗时 25.5 秒）。但 Vercel 侧 DB 未更新，零 extract-text / ocr-pdf 后续日志，书永远停在 processing
+- **Root cause**：`src/app/api/books/confirm/route.ts:134` 的 `void runClassifyAndExtract(bookId, objectKey).catch(...)` 是裸 fire-and-forget。Vercel serverless isolate 在 `return Response` 后 ~10-15s 内被终止。`classify-pdf` 内层 fetch 耗 25s → 响应到达时 Vercel isolate 已死 → `runClassifyAndExtract` 无法继续触发 `extract-text` / `ocr-pdf` → DB 永远停在 processing
+- **为什么 T15 之前没暴露**：T15（Cloud Run OOM）landing 之前 Cloud Run 根本回不来结果，管线被上游挡住，这个 bug 被遮。T15 修好 OOM 后（book 16/17）才暴露
+- **为什么 `ocr-pdf` 同样 fire-and-forget 没中枪**：`ocr-pdf` 端点立刻 return 202（1 秒内），short fetch 赶在 Vercel isolate 死之前完成；`classify-pdf` 是 long fetch（同步调 Gemini API，25s）才中枪
+- **04-22 诊断漏**：当时只验证"fetch 到达 Cloud Run"（✅ 确认 classify-pdf / ocr-pdf 都 202 / 200 正常），没验证"Vercel isolate 活到响应回来那一刻"（❌）。short-fetch 和 long-fetch 对 isolate 寿命敏感度不同
+- **修**：`confirm/route.ts` 新增 `import { after } from 'next/server'`；134-136 行的 `void ... .catch(...)` 替换为 `after(async () => { try { await runClassifyAndExtract(bookId, objectKey) } catch (error) { await logAction('runClassifyAndExtract unhandled', ...) } })`。Next 15+ 稳定 API，Vercel 内部用 `waitUntil` 延长 isolate 寿命直到 promise 完成
+- **约束边界**：Vercel Hobby plan 单函数最长 30s / Pro 300s。`classify-pdf` 现在 25s 够用；若未来用户传 500+ 页超大书 classify 冲破 30s，需改为异步 callback 模式（像 ocr-pdf 那样）。当前 369 页内 A 方案撑得住
+- **Review**：Spot Check，Claude diff 字节级匹配 dispatch；Hard check 三绿（`npm run lint` exit 0 / `npm run build` exit 0）；无 blocking / advisory
+
+**关键事件**
+- M4.6 系列第三个 hotfix（T15 → T16 → T17）。每一轮都是真 bug，但都不是真正的主凶——T15 修了 Cloud Run 自己的内存管理，T16 修了 Cloud Build 缺 deploy 步骤导致代码不上线，T17 才修到 Vercel 这侧的 orphaned promise。主凶藏在链路最顶端的 API route 里，一直被下游问题遮住
+- 教训：跨服务异步链路诊断必须**验证两端的生命周期**，不能只看"请求送到了"——还要看"响应回来时发起方还活着没"。long-fetch vs short-fetch 在 serverless 下行为差异巨大
+- 04-22 journal `docs/journal/2026-04-22-m4.6-incomplete-fix-diagnosis.md` 中原"退推 waitUntil 假设"的推理需要再次回修——waitUntil 假设部分正确（classify-pdf 确实受 isolate 生命周期影响），只是当时证据不够
+
+**Commits**：`d33a79f`（T17）
+
+**剩余**：用户部署本 commit 到 Vercel（master push 自动部署）+ 删除 stuck book 16/17 DB 行 + 再传一本新书验证全链路跑通（期望 classify → extract → ocr-pdf 触发 → OCR 完成 → callback → KP 提取 → parse_status=done）
+
+**涉及文件**：`src/app/api/books/confirm/route.ts`（T17）
+
+---
+
 ## 2026-04-23 | M4.6 hotfix — T15 修 Cloud Run 容器 OOM（book 13 live test 暴露）
 
 **目的**：M4.6 收尾 live test 用户传 book 13（14.9MB 《手把手教你读财报》369 页，第一本真正大书）暴露 Cloud Run OCR 容器 OOM 崩溃，阻塞任何 >~200 页 PDF。诊断 + 收掉。
@@ -27,9 +54,18 @@
 
 **Commits**：`e0bb0c5`（T15）
 
-**剩余**：用户 Cloud Run 4 GiB deploy 完成 + T15 commit push 后，真机重传 book 13 验证（期望 OCR 跑完 369 页、progress log 可见、callback 成功、parse_status=done），通过后 M4.6 收官
+**T16 — cloudbuild.ocr.yaml 追加 gcloud run deploy 步骤** `f097994`
+- **背景**：T15 修代码 push 后发现 Cloud Run 仍跑老 revision `00006-8hx`。查 `cloudbuild.ocr.yaml` 只有 build + push 两步，**没有 Cloud Run deploy**——镜像进了 Artifact Registry 但 Cloud Run 不会因 `:first` tag 移动而自动拉新部署。Revision 在创建时就把镜像锁死在具体 digest，tag 漂移不触发重启。T15 code 上线实际靠用户手动点 Console "Edit & Deploy New Revision" + bump memory 到 4 GiB
+- **坑的深度**：每次 OCR server 改动都要（1）等 Cloud Build 跑完 build+push ~90s，（2）登 Cloud Run Console 手动触发新 revision，（3）重传 memory 设置不被忘。任何一步漏掉 = 新代码不上线 / 内存回退 512 MiB
+- **修**：`cloudbuild.ocr.yaml` 追加第 3 步 `gcr.io/cloud-builders/gcloud` 跑 `run deploy ai-textbook-ocr` + `--image=...` + `--region=us-central1` + `--memory=4Gi`（固化 bump）+ `--platform=managed` + `--quiet`。既有 `images:` / `options:` 块未动。不加 `--allow-unauthenticated` / `--service-account` / `--set-env-vars`——Cloud Run service 现有 IAM + env 不被覆盖
+- **IAM 前置条件**：Cloud Build service account 需要 `roles/run.admin` + `roles/iam.serviceAccountUser`（SA 一般是 `<project-number>@cloudbuild.gserviceaccount.com`）。Codex 已在 commit body 标注，首次触发若 permission denied 用户去 IAM 控制台补权限即可
+- **Review**：Spot Check，diff 字节级核对 dispatch + python `yaml.safe_load` 解析 PASS；Hard check 例外声明（Cloud Build YAML 不在 Node.js 工具链覆盖范围）；无 blocking / advisory
 
-**涉及文件**：`scripts/ocr_server.py` · `.ccb/gcp-logs.js`（诊断工具，未 commit）· `.ccb/gcp-run-config.js`（诊断工具，未 commit）· `docs/journal/2026-04-22-m4.6-incomplete-fix-diagnosis.md`（重写推翻原假设）
+**Commits**：`e0bb0c5`（T15）· `f097994`（T16）
+
+**剩余**：用户 Cloud Run 4 GiB deploy 完成 + T15 + T16 push 后，真机重传（book 14 已重置为 error，用户重传会创建 book 15）验证（期望 OCR 跑完 369 页、progress log 可见、callback 成功、parse_status=done），通过后 M4.6 收官。后续改 OCR server 只需 `git push` 一次动作，Cloud Build 会自动跑完 build → push → deploy 三步
+
+**涉及文件**：`scripts/ocr_server.py`（T15）· `cloudbuild.ocr.yaml`（T16）· `.ccb/gcp-logs.js`（诊断工具，未 commit）· `.ccb/gcp-run-config.js`（诊断工具，未 commit）· `docs/journal/2026-04-22-m4.6-incomplete-fix-diagnosis.md`（重写推翻原假设）
 
 ---
 
