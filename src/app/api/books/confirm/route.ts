@@ -1,4 +1,5 @@
 import { HeadObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { after } from 'next/server'
 import { z } from 'zod'
 import { requireUser } from '@/lib/auth'
 import { queryOne, run } from '@/lib/db'
@@ -131,8 +132,12 @@ export const POST = handleRoute(async (req) => {
     return { data: { bookId, processing: true } }
   }
 
-  void runClassifyAndExtract(bookId, objectKey).catch(async (error) => {
-    await logAction('runClassifyAndExtract unhandled', `bookId=${bookId}: ${String(error)}`, 'error')
+  after(async () => {
+    try {
+      await runClassifyAndExtract(bookId, objectKey)
+    } catch (error) {
+      await logAction('runClassifyAndExtract unhandled', `bookId=${bookId}: ${String(error)}`, 'error')
+    }
   })
 
   await logAction('book_confirmed', `bookId=${bookId}, title="${title}"`)
