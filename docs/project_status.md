@@ -9,15 +9,16 @@
 
 **方向**：MVP 扩展三线——扫描 PDF（✅）→ 教学系统（M4 ✅）→ 留存机制，串行执行
 
-**进行中**：M4.6 OCR 管线修复 — 待真机复验后收官
+**进行中**：M4.6 OCR 管线修复 ✅ 代码全修完（T15+T16+T17 实测通过）— **战略方向暂停**等成本架构 brainstorm（2026-04-25 触发，详见下方 🚨）
 - **T1-T4 完成**（2026-04-22）：IdTokenClient audience 缓存（`f98b548`）+ classify/extract-text fetch 30s timeout + retry×1（`7c54934`）+ stuck books cleanup SQL（`8a879f8`）+ docs 骨架
 - **T15 hotfix 完成**（2026-04-23）：live test book 13（14.9MB 369 页）暴露 Cloud Run 容器 OOM 崩溃（`e0bb0c5`）。Python-side：`scripts/ocr_server.py` Vision client 模块级 singleton + 每 50 页 `gc.collect()` + progress log；Infra-side：用户 Console 手动 Cloud Run memory 512 MiB → 4 GiB
 - **T16 hotfix 完成**（2026-04-23）：T15 push 后 Cloud Run 仍跑旧 revision 暴露 `cloudbuild.ocr.yaml` 只 build+push 不 deploy（`f097994`）。追加第 3 步 `gcloud run deploy` 固化 `--memory=4Gi`，未来 push `scripts/**` / `Dockerfile.ocr` 会自动 build → push → deploy 一条龙。IAM 前置（Cloud Build SA 需 `roles/run.admin` + `roles/iam.serviceAccountUser`）已标注 commit body
 - **T17 hotfix 完成**（2026-04-24）：T15/T16 landing 后 book 16/17 仍卡 `parse_status=processing` 暴露真正主凶 — `src/app/api/books/confirm/route.ts:134` 裸 fire-and-forget 在 Vercel isolate 过早终止（classify-pdf 同步 25s，响应回来 Vercel 已死）（`d33a79f`）。用 `import { after } from 'next/server'` 包裹 runClassifyAndExtract，Vercel 内部走 `waitUntil` 延长 isolate 寿命。1 文件 +7 -2。`ocr-pdf` 同样 fire-and-forget 没暴露因为 1s 内 return 202（short fetch 赶在 isolate 死前完成）—— long-fetch vs short-fetch 对 isolate 寿命敏感度不同
 - **原 waitUntil 假设部分正确**：T15 Cloud Run 日志证明 OOM 是真 bug，但 waitUntil 缺失也是真 bug（T17 证明）。两个独立 bug 被 T15 遮住。04-22 journal 推翻段需要再次回修
 - **诊断能力升级**：用户给 SA `vercel-ocr-invoker@` 加 `roles/logging.privateLogViewer`，`.ccb/gcp-logs.js` 可自动抓 Cloud Run logs（Clash 7897 代理 + undici ProxyAgent + retry×5）
-- **待**：用户部署 `d33a79f` 到 Vercel（master push 自动部署）+ 删除 stuck book 16/17 DB 行 + 再传一本新书验证全链路（classify → extract → ocr-pdf → callback → KP 提取 → `parse_status=done`），通过即 M4.6 收官
-- → [spec](superpowers/specs/2026-04-22-m4.6-ocr-pipeline-design.md) · [plan](superpowers/plans/2026-04-22-m4.6-ocr-pipeline-fix.md) · [T15 诊断](journal/2026-04-22-m4.6-incomplete-fix-diagnosis.md)
+- **真机验证（2026-04-25）**：book 18（369 页）28s classify + 6 min OCR 全跑通，T17 fix 完美生效。但 KP 提取阶段 Google AI Studio 余额耗尽 → 错误原文 `Your prepayment credits are depleted` → 引出战略级成本问题
+- 🚨 **战略阻塞 → next session brainstorm**：估算单本成本 50 页 ~3 元 / 369 页 ~8-15 元；抖音/小红书引流 100 人 = 一晚烧 500-1000 元。**下一个 session 必须 brainstorm OCR 选型 + KP 模型 + 用户侧防御 + 商业模式**——入口 `docs/superpowers/specs/2026-04-25-ocr-cost-brainstorm-prompt.md`（含完整流程指引）
+- → [spec](superpowers/specs/2026-04-22-m4.6-ocr-pipeline-design.md) · [plan](superpowers/plans/2026-04-22-m4.6-ocr-pipeline-fix.md) · [成本冲击 journal](journal/2026-04-25-ocr-cost-shock.md) · [brainstorm 入口](superpowers/specs/2026-04-25-ocr-cost-brainstorm-prompt.md)
 
 **已完成**：
 - **M4.5 PDF 上传重构 + 准备页 UX** ✅ 完成（2026-04-21 主体 + 2026-04-22 hotfix 链 + 收尾）：T1-T8 8 commit autonomous 落地 + T9-T10 用户手动配置 + T11 docs。M4.5 让 14MB+ 扫描 PDF 第一次能跑通完整管线，连环暴露 3 pre-existing bug，三个 hotfix 收掉：
@@ -32,7 +33,7 @@
 
 **排队中**：M5 留存机制（未启动 — 待决策）
 
-**下一步**：用户部署 T17（`d33a79f`，master push 自动 Vercel 部署）+ cleanup stuck book 16/17 + 重传真机验证全链路（期望第一次跑通 classify → OCR → KP → `parse_status=done`），成功即关 M4.6 → 起 M5
+**下一步**：🚨 **OCR + KP 成本架构 brainstorm**（next session 入口 `docs/superpowers/specs/2026-04-25-ocr-cost-brainstorm-prompt.md`）。M4.6 代码修完且实测通过，但每本书烧 8-15 元发现成本会爆——必须先 brainstorm 出可上量的 OCR + KP 方案，再决定 M5 / 上量动作 / 待 cleanup 的 stuck books
 
 **平行 · 元系统进化**：✅ 完成（2026-04-19 本 session 端到端落地）。Survey → Spec → Plan → 10 commits（c423c63 / 7eb1313 / 3227a3d / 36b5303 / 0684391 / ed50bbf / d783baf / 96b25fd / cfe8456 / 024de5e），T1 8 低成本 + T2 Retrospective 2.0 + M10 review 外化全部上线。Kill switch：`AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用所有 hook 机制。Spec: `superpowers/specs/2026-04-19-system-evolution-design.md`；Plan: `superpowers/plans/2026-04-19-system-evolution.md`。
 
