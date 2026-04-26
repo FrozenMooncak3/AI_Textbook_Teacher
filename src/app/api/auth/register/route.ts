@@ -1,6 +1,7 @@
 import { pool } from '@/lib/db'
 import { UserError, SystemError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
+import { incrementQuotaForInviteCode } from '@/lib/services/quota-service'
 import {
   SESSION_COOKIE,
   createSession,
@@ -131,6 +132,10 @@ export const POST = handleRoute(async (req) => {
 
   if (!user) {
     throw new SystemError('User creation did not return a record')
+  }
+
+  if (inviteCode) {
+    await incrementQuotaForInviteCode(user.id, inviteCode)
   }
 
   const token = await createSession(user.id)
