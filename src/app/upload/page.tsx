@@ -10,6 +10,7 @@ import LoadingState from '@/components/LoadingState'
 import DecorativeBlur from '@/components/ui/DecorativeBlur'
 import Breadcrumb from '@/components/ui/Breadcrumb'
 import ScanPdfRejectionModal, { type RejectReason } from '@/components/upload/ScanPdfRejectionModal'
+import QuotaIndicator from '@/components/upload/QuotaIndicator'
 
 type UploadStatus =
   | { kind: 'idle' }
@@ -43,12 +44,18 @@ export default function UploadPage() {
   const [error, setError] = useState('')
   const [status, setStatus] = useState<UploadStatus>({ kind: 'idle' })
   const [userName, setUserName] = useState('加载中...')
+  const [quota, setQuota] = useState<{ remaining: number; total: number } | null>(null)
 
   useEffect(() => {
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
-        if (data.success) setUserName(data.data.display_name || data.data.email)
+        const user = data.data
+        if (!user) return
+        if (user.display_name) setUserName(user.display_name)
+        if (typeof user.book_quota_remaining === 'number' && typeof user.book_quota_total === 'number') {
+          setQuota({ remaining: user.book_quota_remaining, total: user.book_quota_total })
+        }
       })
       .catch(() => {})
   }, [])
@@ -255,6 +262,8 @@ export default function UploadPage() {
             <h1 className="text-3xl font-black text-on-surface font-headline tracking-tight mb-2">上传新教材</h1>
             <p className="text-on-surface-variant font-medium">支持 PDF / TXT / PPTX 格式（上限 10 MB），AI 老师将为您定制学习路径</p>
           </header>
+
+          {quota && <QuotaIndicator remaining={quota.remaining} total={quota.total} />}
 
           <ContentCard className="p-8 md:p-12">
             {status.kind !== 'idle' && status.kind !== 'rejected' ? (
