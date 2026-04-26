@@ -5,6 +5,7 @@
 ## Specs
 
 ### 进行中（in_progress）
+- [2026-04-25] OCR + KP 提取成本架构重设 `[OCR, KP-extraction, cost-architecture, DeepSeek-V3.2, Qwen3-Max, Gemini-下线, PDF-MD5-cache, .pptx, scanned-PDF-rejection, 邮箱收集, 留学生, MVP-范围切割, 5决策7lock]` → [spec](specs/2026-04-25-ocr-cost-architecture-design.md) · [WIP](specs/2026-04-25-ocr-cost-brainstorm-state.md)
 - [2026-04-22] M4.6 OCR 管线诊断 + 性能优化设计 `[M4.6, OCR, Vercel, Cloud-Run, hang, fetch-timeout, IdTokenClient-cache, google-auth-library, stuck-artifacts]` → [spec](specs/2026-04-22-m4.6-ocr-pipeline-design.md) · [WIP](specs/2026-04-22-m4.6-ocr-pipeline-brainstorm-state.md)
 - [2026-04-15] M4教学模式最小闭环设计 `[M4, teaching-mode, teacher-AI, transcript, prompt]` → [spec](specs/2026-04-15-m4-teaching-mode-design.md)
 - [2026-04-12] 云部署里程碑设计 `[cloud, deployment, Supabase, Docker, three-phase]` → [spec](specs/2026-04-12-cloud-deployment-design.md)
@@ -58,6 +59,7 @@
 ## Plans
 
 ### 进行中（in_progress）
+- [2026-04-25] OCR + KP 成本架构实施计划（M4.7）`[M4.7, cost-architecture, DeepSeek-V3.2, Qwen3-Max, kp-cache, PDF-MD5, .pptx, scanned-PDF-rejection, monthly-budget-500, free-tier-1book, invite-extension, 6-phase, 7工作日]` → [plan](plans/2026-04-25-ocr-cost-architecture.md)
 - [2026-04-22] M4.6 OCR 管线 hang 修复实施计划 `[M4.6, OCR, Vercel, Cloud-Run, hang, fetch-timeout, retry, IdTokenClient-cache, stuck-artifacts-cleanup]` → [plan](plans/2026-04-22-m4.6-ocr-pipeline-fix.md)
 - [2026-04-18] 云部署阶段2 Cloud Run OCR `[cloud, deployment, Cloud-Run, Google-Vision, callback, phase-2]` → [plan](plans/2026-04-18-cloud-deployment-phase2.md)
 - [2026-04-15] M4教学模式最小闭环 `[M4, teaching-mode, teacher-AI, prompt, transcript]` → [plan](plans/2026-04-15-m4-teaching-mode.md)

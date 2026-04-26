@@ -36,6 +36,13 @@
 
 - [2026-04-11] PDF处理技术选型（OCR横评） `[PDF处理, OCR, PaddleOCR, Marker, 扫描PDF]` → [link](2026-04-11-pdf-processing-research.md)
 - [2026-04-20] M4.5 PDF 上传第一步 UX/速度优化（4 维度 sub-agent）`[PDF上传, Vercel-Fluid-Compute, 4.5MB-body-limit, presigned-URL, R2直传, Gemini-2.5-Pro, Mistral-OCR-3, 骨架屏, Harrison-CHI-2010, Hobby-TOS-商业]` 🔴 → [link](2026-04-20-pdf-upload-speed-options.md)
+- [2026-04-25] KP 提取 LLM 选型（中文教材场景）`[KP提取, LLM选型, DeepSeek-V3.2, Qwen3-Max, Gemini-Flash, GLM-4.7, Yi-Lightning, JSON可靠度, 中国可达, 单本成本, prompt-cache]` 🔴 → [link](2026-04-25-kp-llm-zh.md)
+- [2026-04-25] OCR + KP 成本架构层省钱（缓存/chunking/用户隔离）`[PDF-MD5缓存, prompt-cache, chunking-overlap, 用户隔离, 半全局共享, 教材命中率]` 🟡 → [link](2026-04-25-cost-arch-optimization.md)
+
+## 用户研究 / 产品定位（2026-04-25 起独立分组）
+
+- [2026-04-11] 用户定位分析（中国留学生市场） `[用户定位, 留学生, 产品定位, 营销策略, 目标市场]` → [link](2026-04-11-user-positioning.md)
+- [2026-04-25] 用户画像 + PPT 解析可行性（中文 PPT 扩展决策）`[用户画像, 留学生, 考研, K12, 抖音引流, PPT解析, python-pptx, markitdown, NotebookLM, D0扩展]` 🔴 → [link](2026-04-25-user-persona-ppt.md)
 
 ## 工程 / 工具
 

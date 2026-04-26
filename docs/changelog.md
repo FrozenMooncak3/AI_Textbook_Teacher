@@ -4,6 +4,55 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-26 | M4.7 OCR + KP 成本架构 plan ready（brainstorm-chain 收尾）
+
+**目的**：2026-04-25 book 18 暴露单本成本 8-15 元 / Google AI Studio 余额耗尽 → 触发战略级架构重设。本日完成 brainstorm + writing-plans 全链路收尾。
+
+**关键产物**
+- **Spec**：`docs/superpowers/specs/2026-04-25-ocr-cost-architecture-design.md`（~600 行，7 决策 D0/D0-PPT/D5/D6/D1/D2/D7 全 lock，Round 1+2 spec-document-reviewer 通过）
+- **Plan**：`docs/superpowers/plans/2026-04-25-ocr-cost-architecture.md`（~2700 行，6 phase / 27 task / ~7 工作日）
+- **WIP 决策追溯**：`docs/superpowers/specs/2026-04-25-ocr-cost-brainstorm-state.md`（保留作 decision trail，不删）
+- **3 篇 🔴/🟡 调研**：`docs/research/2026-04-25-kp-llm-zh.md`（KP LLM 选型 35 S+15 A）+ `2026-04-25-cost-arch-optimization.md`（缓存粒度 + 用户隔离）+ `2026-04-25-user-persona-ppt.md`（用户画像 + python-pptx 可行性）
+
+**7 决策摘要**
+- **D0** MVP 范围切割：仅接受 TXT + 文字版 PDF + PPTX，≤10MB / ≤100 页（PDF）/ ≤200 张（PPT）；扫描 PDF / 图像式 PPT 检测时拒绝并收邮箱做 launch list
+- **D0-PPT** PPT 解析：python-pptx 抽 text frames + tables + notes（不抽 picture），与 OCR Cloud Run 共部署（`/parse-pptx` 端点）
+- **D5** KP 模型：Gemini 2.5 Pro 全下线，DeepSeek V3.2（baseline，1.94/7.92 元每 M token，~74% off Gemini）+ Qwen3-Max（fallback，DashScope OpenAI compat）+ 教学付费档锁 Sonnet 4.6（独立 Anthropic billing）
+- **D6** PDF MD5 全书级缓存：半全局共享（kp_cache 无 user_id），命中率 20-25% × 90% off 教材常见 → 月度再省 22%
+- **D1** 月度预算双层 + 邮件告警：单本 1.5 元拦截 + 月 500 元账户上限 + 80%/100% 阈值 resend.com 邮件（无 RESEND_API_KEY 降级 console.warn）
+- **D2** OCR 路径 standby：`scripts/ocr_server.py` + `cloudbuild.ocr.yaml` 不动，留 M5+ 重启
+- **D7** 上传流控：免费档首本 quota_remaining=1 + 邀请码 +1 / 1 小时 1 本 rate-limit / >5 本/月异常告警 + 月度 quota reset cron
+
+**Plan 文件结构（6 phase）**
+- Phase 0 — DB schema 5 表 + provider 注册（DeepSeek/Qwen via createOpenAI baseURL，无新 npm 依赖）+ teacher-model premium-locked 修正 + r2-client.ts exports 整合
+- Phase 1 — 6 服务（cost-meter / quota / kp-cache / pdf-md5 / cost-estimator / budget-email-alert）
+- Phase 2 — 9 API/cron task（presign + confirm + register hook + KP extraction hook + teaching messages hook + scan-pdf-waitlist + 2 cron + vercel.json）
+- Phase 3 — pptx_parser.py + ocr_server.py /parse-pptx 端点 + TS 客户端
+- Phase 4 — 4 UI task 派 Gemini（ScanPdfRejectionModal / QuotaIndicator / CacheHitBadge / upload page extension）
+- Phase 5 — Vercel env 配置 + KP 回归测试 + 教学回归 + smoke test
+- Phase 6 — architecture.md 同步 + 关闭 brainstorm 清理
+
+**Plan-document-reviewer 修复 3 个真实 blocker**
+- Task 0.4 新增（r2-client.ts 提到 Phase 0）：原 Task 1.4 import 私有 `getR2Client` 会编译失败，新 Task 0.4 把 getR2Client / getR2Bucket / getR2ObjectBuffer 都 export，并把 buildObjectKey + buildPresignedPutUrl 加 contentType 参数支持 PPTX
+- Task 3.1 Step 3 修：项目无 `requirements.txt`，改为修改 Dockerfile.ocr line 6 内联 pip install 末尾追加 `python-pptx==0.6.23`
+- Task 1.5 cost-estimator.ts 补 `computeMessageCost(modelId, usage)` export：Task 2.5（teaching messages）和 Task 2.4（KP 抽取）都需要按实际 token usage 计算成本，原 plan 漏 export
+
+**关键事件**
+- 用户授权"一条龙全部你自己搞定"，Claude 自驱完成 brainstorm → writing-plans → reviewer → 修复 → 文档同步 → 提交全链路
+- 3 维度 🔴/🟡 调研全部 sub-agent 并行（research-before-decision skill 强制源质量 S/A/B 加权 + URL 验证可达 + 5 问硬 gate）
+- spec round 1 + round 2 review 各发现 6 / 4 个改进项，逐个修完二轮通过
+- plan 一次性写完 2700 行，reviewer 一轮通过（仅 advisory，3 个真实 blocker 已二次修复）
+
+**Commits**：本日单 commit 落盘 spec + plan + WIP + INDEX 更新 + project_status + changelog + 3 篇调研 + memory 清理（详见 commit body）
+
+**剩余**：用户审阅 plan 后选择执行模式 —— Subagent-Driven（推荐）或 Inline Execution。Phase 0-4 不依赖以上 3 个 secret 可先行落地，Phase 5 切换前用户需在 Vercel 配 DEEPSEEK_API_KEY + DASHSCOPE_API_KEY + RESEND_API_KEY（可选）
+
+**涉及文件**
+- 新增：`docs/superpowers/specs/2026-04-25-ocr-cost-architecture-design.md` · `docs/superpowers/plans/2026-04-25-ocr-cost-architecture.md` · `docs/superpowers/specs/2026-04-25-ocr-cost-brainstorm-state.md` · `docs/research/2026-04-25-kp-llm-zh.md` · `docs/research/2026-04-25-cost-arch-optimization.md` · `docs/research/2026-04-25-user-persona-ppt.md`
+- 修改：`docs/superpowers/INDEX.md`（spec + plan 各加一行）· `docs/research/INDEX.md`（3 行）· `docs/project_status.md`（M4.6 暂停 → M4.7 plan ready）· `docs/changelog.md`（本条目）· `docs/memory-audit-log.md`（清理 brainstorm-WIP pointer）
+
+---
+
 ## 2026-04-24 | M4.6 hotfix — T17 修 Vercel isolate 过早终止（book 16/17 live test 暴露）
 
 **目的**：T15 + T16 landing 后用户重传书 book 16 / 17 仍然卡死在 `parse_status=processing`、`ocr_total_pages=0`、0 modules；零 OCR 进度日志。第三轮 hotfix 收掉真正的主凶。

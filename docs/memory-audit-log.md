@@ -36,3 +36,10 @@
 2026-04-24 | op:edit | file:MEMORY.md | reason:Project 段加 Vercel Fire-and-Forget 索引行
 2026-04-25 | op:add | file:project_ocr-cost-shock.md | reason:用户因 book 18 KP 阶段 Google credits depleted 喊停，要求 brainstorm 重设 OCR + KP 成本架构，next session 入口已写
 2026-04-25 | op:edit | file:MEMORY.md | reason:Project 段加 OCR Cost Shock 索引行
+2026-04-25 | op:add | file:project_ocr-cost-brainstorm-wip.md | reason:OCR + KP 成本架构 brainstorm 开启，按 brainstorming skill WIP Protocol 添加 compact 防御 pointer（指向 docs/superpowers/specs/2026-04-25-ocr-cost-brainstorm-state.md），brainstorm 完成后删除
+2026-04-25 | op:edit | file:MEMORY.md | reason:Project 段加 OCR Cost Brainstorm WIP 索引行（与 cost-shock 区分：cost-shock 是事件/状态，brainstorm-wip 是流程指针）
+
+## 2026-04-26
+
+2026-04-26 | op:delete | file:project_ocr-cost-brainstorm-wip.md | reason:M4.7 brainstorm + writing-plans 链路完整收尾（spec round 1+2 review + plan reviewer 通过 + 3 真实 blocker 修完），按 brainstorming skill WIP Protocol "Remove the MEMORY.md pointer created for this brainstorm" 移除流程指针；WIP 文件 docs/superpowers/specs/2026-04-25-ocr-cost-brainstorm-state.md 保留作 decision trail 不删
+2026-04-26 | op:edit | file:MEMORY.md | reason:Project 段移除 OCR Cost Brainstorm WIP 索引行（M4.7 brainstorm 完成，cost-shock 索引保留作战略事件记录）
