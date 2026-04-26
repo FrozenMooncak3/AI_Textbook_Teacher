@@ -15,6 +15,7 @@ import sentry_sdk
 from botocore.client import Config
 from flask import Flask, jsonify, request
 from PIL import Image, ImageOps
+from pptx_parser import parse_pptx
 
 try:
     import pymupdf4llm
@@ -71,6 +72,7 @@ def _get_vision_client():
 
 
 OCR_PROVIDER = os.environ.get("OCR_PROVIDER", "google")
+MAX_PPTX_SLIDES = 200
 
 app = Flask(__name__)
 
@@ -132,6 +134,16 @@ def _download_pdf_from_r2(object_key: str) -> str:
     tmp.close()
     _r2_client().download_file(bucket, object_key, tmp.name)
     return tmp.name
+
+
+def _download_to_bytes(object_key: str) -> bytes:
+    """Download R2 object to memory bytes (for in-memory parsing like python-pptx)."""
+    bucket = os.environ.get("R2_BUCKET")
+    if not bucket:
+        raise RuntimeError("R2_BUCKET env var missing")
+    buf = io.BytesIO()
+    _r2_client().download_fileobj(bucket, object_key, buf)
+    return buf.getvalue()
 
 
 def _cleanup_if_temp(path: str, downloaded: bool) -> None:
@@ -493,6 +505,44 @@ def ocr_pdf_route() -> tuple[Any, int] | Any:
     )
     worker.start()
     return jsonify({"status": "accepted"}), 202
+
+
+@app.post("/parse-pptx")
+def parse_pptx_route() -> tuple[Any, int] | Any:
+    auth_error = _require_bearer()
+    if auth_error:
+        return auth_error
+
+    body = request.get_json(silent=True) or {}
+    r2_key = str(body.get("r2_object_key", "")).strip()
+    raw_book_id = body.get("book_id")
+
+    if not r2_key:
+        return jsonify({"error": "missing r2_object_key"}), 400
+
+    if raw_book_id is None:
+        return jsonify({"error": "missing book_id"}), 400
+
+    try:
+        book_id = int(raw_book_id)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid book_id"}), 400
+
+    try:
+        buffer = _download_to_bytes(r2_key)
+    except Exception as error:
+        return jsonify({"error": f"R2 download failed: {error}"}), 500
+
+    try:
+        result = parse_pptx(buffer)
+    except Exception as error:
+        return jsonify({"error": f"parse_pptx failed: {error}"}), 500
+
+    if result["slide_count"] > MAX_PPTX_SLIDES:
+        return jsonify({"error": "too_many_slides", "slide_count": result["slide_count"]}), 400
+
+    _ = book_id
+    return jsonify(result)
 
 
 def main() -> None:

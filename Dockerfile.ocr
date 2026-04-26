@@ -3,9 +3,10 @@ FROM python:3.10-slim
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
-RUN pip install flask PyMuPDF pymupdf4llm Pillow numpy boto3 google-cloud-vision sentry-sdk requests
+RUN pip install flask PyMuPDF pymupdf4llm Pillow numpy boto3 google-cloud-vision sentry-sdk requests python-pptx==0.6.23
 
 COPY scripts/ocr_server.py .
+COPY scripts/pptx_parser.py .
 
 ENV OCR_HOST=0.0.0.0
 ENV OCR_PORT=8000
