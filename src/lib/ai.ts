@@ -14,7 +14,6 @@ function getCustomFetch(): typeof globalThis.fetch | undefined {
     return undefined
   }
 
-  // Dynamic require avoids loading the proxy client when no proxy is configured.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { ProxyAgent, fetch: undiciFetch } = require('undici') as typeof import('undici')
   const proxyAgent = new ProxyAgent(proxy)
@@ -25,8 +24,6 @@ function getCustomFetch(): typeof globalThis.fetch | undefined {
       dispatcher: proxyAgent,
     } as Parameters<typeof undiciFetch>[1])
 
-    // Read full body then re-wrap with the global Response to avoid
-    // stream incompatibility between undici and Turbopack's polyfill.
     const body = await response.arrayBuffer()
     return new Response(body, {
       status: response.status,
@@ -54,20 +51,49 @@ const openai = createOpenAI({
   ...(customFetch ? { fetch: customFetch } : {}),
 })
 
+// D5 (2026-04-25): DeepSeek V3.2 via OpenAI-compat baseURL (避免新依赖)
+const deepseek = createOpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: 'https://api.deepseek.com',
+  ...(customFetch ? { fetch: customFetch } : {}),
+})
+
+// D5 (2026-04-25): Qwen3-Max via DashScope OpenAI-compat baseURL
+const qwen = createOpenAI({
+  apiKey: process.env.DASHSCOPE_API_KEY,
+  baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  ...(customFetch ? { fetch: customFetch } : {}),
+})
+
 const registry = createProviderRegistry({
   anthropic,
   google,
   openai,
+  deepseek,
+  qwen,
 })
 
-type ProviderModelId = `anthropic:${string}` | `google:${string}` | `openai:${string}`
+export type ProviderModelId =
+  | `anthropic:${string}`
+  | `google:${string}`
+  | `openai:${string}`
+  | `deepseek:${string}`
+  | `qwen:${string}`
 
 export const AI_MODEL_ID =
   (process.env.AI_MODEL as ProviderModelId | undefined) || 'anthropic:claude-sonnet-4-6'
+
+export const AI_MODEL_FALLBACK_ID =
+  (process.env.AI_MODEL_FALLBACK as ProviderModelId | undefined) || 'qwen:qwen3-max'
+
 export const timeout = 300_000
 
 export function getModel() {
   return registry.languageModel(AI_MODEL_ID)
+}
+
+export function getFallbackModel() {
+  return registry.languageModel(AI_MODEL_FALLBACK_ID)
 }
 
 export { registry }
