@@ -5,13 +5,19 @@ import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
 import { buildPresignedPutUrl } from '@/lib/r2-client'
+import { isBudgetExceeded } from '@/lib/services/cost-meter-service'
+import { checkQuotaAndRateLimit } from '@/lib/services/quota-service'
 
-const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024
+// D0 lock: 10 MB
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+const PDF_CONTENT_TYPE = 'application/pdf'
+const PPTX_CONTENT_TYPE =
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation'
 
 const RequestSchema = z.object({
   filename: z.string().trim().min(1).max(255),
-  size: z.number().int().positive().max(MAX_PDF_SIZE_BYTES),
-  contentType: z.literal('application/pdf'),
+  size: z.number().int().positive().max(MAX_FILE_SIZE_BYTES),
+  contentType: z.enum([PDF_CONTENT_TYPE, PPTX_CONTENT_TYPE]),
 })
 
 export const POST = handleRoute(async (req) => {
@@ -27,7 +33,23 @@ export const POST = handleRoute(async (req) => {
     )
   }
 
-  const { filename, size } = parsed.data
+  const { filename, size, contentType } = parsed.data
+
+  const quotaCheck = await checkQuotaAndRateLimit(user.id)
+  if (!quotaCheck.ok) {
+    if (quotaCheck.reason === 'quota_exceeded') {
+      throw new UserError('上传额度已用完，邀请好友可获取 +1 本额度', 'QUOTA_EXCEEDED', 403)
+    }
+    throw new UserError('上传太频繁，1 小时后再试', 'RATE_LIMIT_1H', 429)
+  }
+
+  if (await isBudgetExceeded()) {
+    throw new UserError(
+      '本月预算已用完，请下月再试或联系我们升级',
+      'MONTHLY_BUDGET_EXCEEDED',
+      503
+    )
+  }
 
   const bookId = await insert(
     `INSERT INTO books (
@@ -44,11 +66,11 @@ export const POST = handleRoute(async (req) => {
     [user.id, filename, size]
   )
 
-  const { uploadUrl, objectKey } = await buildPresignedPutUrl(bookId)
+  const { uploadUrl, objectKey } = await buildPresignedPutUrl(bookId, contentType)
 
   await logAction(
     'book_presign_issued',
-    `bookId=${bookId}, filename=${filename}, size=${size}`
+    `bookId=${bookId}, filename=${filename}, size=${size}, contentType=${contentType}`
   )
 
   return {
