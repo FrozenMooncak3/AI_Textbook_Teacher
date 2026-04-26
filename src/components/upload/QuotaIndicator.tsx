@@ -14,7 +14,7 @@ export default function QuotaIndicator({ remaining, total }: QuotaIndicatorProps
   return (
     <div className="flex flex-wrap items-center justify-center gap-3 mb-6 px-4 py-3 bg-surface-container-low rounded-xl">
       <span className="text-sm font-bold text-on-surface-variant">
-        今日剩余上传额度 <span className="text-primary text-base font-black">{remaining}</span> 本 / 总共 {total} 本
+        剩余上传额度 <span className="text-primary text-base font-black">{remaining}</span> 本 / 累计 {total} 本
       </span>
       <div className="flex gap-1.5">
         {dots.map((isUsed, i) => (
@@ -28,7 +28,7 @@ export default function QuotaIndicator({ remaining, total }: QuotaIndicatorProps
       </div>
       {remaining === 0 && (
         <span className="text-xs font-bold text-primary ml-2">
-          额度已用完，邀请好友可获得 +1 额度
+          已用完，邀请好友 +1 本
         </span>
       )}
     </div>
