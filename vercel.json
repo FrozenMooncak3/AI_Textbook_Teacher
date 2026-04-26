@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/monthly-cost-reset",
+      "schedule": "0 16 1 * *"
+    },
+    {
+      "path": "/api/cron/abuse-alert",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
