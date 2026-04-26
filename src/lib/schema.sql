@@ -380,3 +380,79 @@ WHERE NOT EXISTS (
   FROM user_subscriptions s
   WHERE s.user_id = u.id
 );
+
+-- ========================================================================
+-- 2026-04-25: OCR + KP 成本架构（D1/D6/D7）— 5 张新表 + books 2 列 + users 3 列
+-- 来源: docs/superpowers/specs/2026-04-25-ocr-cost-architecture-design.md
+-- ========================================================================
+
+-- D6: KP 全书级缓存（半全局共享，无 user_id；教材客观知识点跨用户复用）
+CREATE TABLE IF NOT EXISTS kp_cache (
+  id            BIGSERIAL PRIMARY KEY,
+  pdf_md5       TEXT UNIQUE NOT NULL,
+  page_count    INTEGER NOT NULL,
+  language      TEXT NOT NULL CHECK (language IN ('zh', 'en')),
+  model_used    TEXT NOT NULL,
+  kp_payload    JSONB NOT NULL,
+  hit_count     INTEGER NOT NULL DEFAULT 0,
+  last_hit_at   TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_kp_cache_md5 ON kp_cache(pdf_md5);
+
+-- D1: 月度账户预算 meter（month-of-year reset by cron `0 16 1 * *` UTC = 北京 1 号 0:00）
+CREATE TABLE IF NOT EXISTS monthly_cost_meter (
+  id              BIGSERIAL PRIMARY KEY,
+  year_month      TEXT UNIQUE NOT NULL,             -- 'YYYY-MM' 北京时区
+  total_cost_yuan NUMERIC(10, 4) NOT NULL DEFAULT 0,
+  alert_80_sent   BOOLEAN NOT NULL DEFAULT FALSE,   -- 80% 预警邮件已发
+  last_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_monthly_cost_meter_ym ON monthly_cost_meter(year_month);
+
+-- D1: 每次 LLM 调用的成本明细（KP 提取 / 教学对话）
+CREATE TABLE IF NOT EXISTS cost_log (
+  id          BIGSERIAL PRIMARY KEY,
+  book_id     INTEGER REFERENCES books(id) ON DELETE SET NULL,
+  user_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  call_type   TEXT NOT NULL CHECK (call_type IN ('kp_extraction', 'teaching_free', 'teaching_premium')),
+  model       TEXT NOT NULL,
+  input_tokens  INTEGER NOT NULL DEFAULT 0,
+  output_tokens INTEGER NOT NULL DEFAULT 0,
+  cost_yuan   NUMERIC(10, 6) NOT NULL DEFAULT 0,
+  cache_hit   BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_cost_log_book ON cost_log(book_id);
+CREATE INDEX IF NOT EXISTS idx_cost_log_user_date ON cost_log(user_id, created_at);
+
+-- D7: 上传事件流水（rate-limit + 异常检测查询用；写入时机 = confirm 成功后）
+CREATE TABLE IF NOT EXISTS book_uploads_log (
+  id          BIGSERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  book_id     INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_book_uploads_log_user_time ON book_uploads_log(user_id, created_at);
+
+-- D0: 拒绝时邮箱收集（launch list / 众筹早鸟池）
+CREATE TABLE IF NOT EXISTS email_collection_list (
+  id                 BIGSERIAL PRIMARY KEY,
+  email              TEXT NOT NULL,
+  reject_reason      TEXT NOT NULL CHECK (reject_reason IN ('scanned_pdf', 'too_large', 'too_many_pages', 'too_many_slides', 'unsupported_type')),
+  book_filename      TEXT,
+  book_size_bytes    BIGINT,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  launch_notified_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_email_collection_email ON email_collection_list(email);
+
+-- D6: books 加 file_md5 + cache_hit 列
+ALTER TABLE books ADD COLUMN IF NOT EXISTS file_md5 TEXT;
+ALTER TABLE books ADD COLUMN IF NOT EXISTS cache_hit BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE INDEX IF NOT EXISTS idx_books_md5 ON books(file_md5);
+
+-- D7: users 加 quota / invite_code_used / suspicious_flag 列
+ALTER TABLE users ADD COLUMN IF NOT EXISTS book_quota_remaining INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS invite_code_used TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS suspicious_flag BOOLEAN NOT NULL DEFAULT FALSE;
