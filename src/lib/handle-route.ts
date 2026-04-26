@@ -10,6 +10,7 @@ interface RouteResult {
 }
 
 type RouteContext = { params: Promise<Record<string, string>> }
+type AppRouteContext = { params: Promise<unknown> }
 
 interface RouteCookie {
   name: string
@@ -28,9 +29,9 @@ type RouteHandler = (
 ) => Promise<RouteResult>
 
 export function handleRoute(fn: RouteHandler) {
-  return async (req: NextRequest, context?: RouteContext): Promise<NextResponse> => {
+  return async (req: NextRequest, context?: AppRouteContext): Promise<NextResponse> => {
     try {
-      const result = await fn(req, context)
+      const result = await fn(req, context as RouteContext | undefined)
       const response = NextResponse.json(
         { success: true, data: result.data },
         {
