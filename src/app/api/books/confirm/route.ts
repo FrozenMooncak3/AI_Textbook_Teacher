@@ -1,17 +1,35 @@
-import { HeadObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { HeadObjectCommand } from '@aws-sdk/client-s3'
 import { after } from 'next/server'
 import { z } from 'zod'
+import { PDFParse } from 'pdf-parse'
 import { requireUser } from '@/lib/auth'
 import { queryOne, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
-import { buildObjectKey } from '@/lib/r2-client'
+import {
+  buildObjectKey,
+  getR2Bucket,
+  getR2Client,
+  getR2ObjectBuffer,
+} from '@/lib/r2-client'
 import { runClassifyAndExtract } from '@/lib/upload-flow'
+import { computePdfMd5FromR2 } from '@/lib/pdf-md5'
+import { AI_MODEL_ID } from '@/lib/ai'
+import { estimateBookCostYuan, assertWithinBookBudget } from '@/lib/services/cost-estimator'
+import { applyCacheToBook, lookupCache } from '@/lib/services/kp-cache-service'
+import { consumeQuotaAndLogUpload } from '@/lib/services/quota-service'
+
+const MAX_PAGES = 100
+const MAX_PPTX_SLIDES = 200
+const PDF_CONTENT_TYPE = 'application/pdf'
+const PPTX_CONTENT_TYPE =
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation'
 
 const RequestSchema = z.object({
   bookId: z.number().int().positive(),
   title: z.string().trim().min(1).max(255),
+  contentType: z.enum([PDF_CONTENT_TYPE, PPTX_CONTENT_TYPE]),
 })
 
 interface BookRow {
@@ -20,44 +38,6 @@ interface BookRow {
   upload_status: string
   parse_status: string
   file_size: string
-}
-
-interface R2Config {
-  accountId: string
-  accessKeyId: string
-  secretAccessKey: string
-  bucket: string
-}
-
-let cachedClient: S3Client | null = null
-
-function readR2Config(): R2Config {
-  const accountId = process.env.R2_ACCOUNT_ID
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
-  const bucket = process.env.R2_BUCKET
-
-  if (!accountId || !accessKeyId || !secretAccessKey || !bucket) {
-    throw new Error('R2 env vars missing: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET all required')
-  }
-
-  return { accountId, accessKeyId, secretAccessKey, bucket }
-}
-
-function getR2Client(): S3Client {
-  if (cachedClient) {
-    return cachedClient
-  }
-
-  const { accountId, accessKeyId, secretAccessKey } = readR2Config()
-  cachedClient = new S3Client({
-    region: 'auto',
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-    forcePathStyle: true,
-    credentials: { accessKeyId, secretAccessKey },
-  })
-
-  return cachedClient
 }
 
 export const POST = handleRoute(async (req) => {
@@ -73,7 +53,7 @@ export const POST = handleRoute(async (req) => {
     )
   }
 
-  const { bookId, title } = parsed.data
+  const { bookId, title, contentType } = parsed.data
   const book = await queryOne<BookRow>(
     `SELECT id, user_id, upload_status, parse_status, file_size
      FROM books
@@ -94,15 +74,157 @@ export const POST = handleRoute(async (req) => {
     return { data: { bookId, processing: true } }
   }
 
-  const objectKey = buildObjectKey(bookId)
-  const { bucket } = readR2Config()
+  const objectKey = buildObjectKey(bookId, contentType)
+  await verifyR2HeadObject(objectKey, Number(book.file_size), bookId)
+  const fileMd5 = await computePdfMd5FromR2(objectKey)
+
+  if (contentType === PDF_CONTENT_TYPE) {
+    return handlePdfConfirm({
+      bookId,
+      userId: user.id,
+      objectKey,
+      title,
+      fileMd5,
+    })
+  }
+
+  return handlePptxConfirm({
+    bookId,
+    userId: user.id,
+    objectKey,
+    title,
+    fileMd5,
+  })
+})
+
+async function handlePdfConfirm({
+  bookId,
+  userId,
+  objectKey,
+  title,
+  fileMd5,
+}: {
+  bookId: number
+  userId: number
+  objectKey: string
+  title: string
+  fileMd5: string
+}) {
+  const buffer = await getR2ObjectBuffer(objectKey)
+  const parser = new PDFParse({ data: buffer })
+
+  let pageCount = 0
+  let extractedText = ''
+  try {
+    const parsed = await parser.getText()
+    pageCount = parsed.total
+    extractedText = parsed.text
+  } finally {
+    await parser.destroy()
+  }
+
+  if (pageCount > MAX_PAGES) {
+    throw new UserError(`PDF 页数 ${pageCount} 超过 100 页上限`, 'TOO_MANY_PAGES', 400)
+  }
+
+  const textRatio = extractedText.trim().length / Math.max(pageCount, 1)
+  if (textRatio < 50) {
+    throw new UserError(
+      '检测到这是扫描版 PDF，目前仅支持文字版 PDF',
+      'SCANNED_PDF_REJECTED',
+      400
+    )
+  }
+
+  const cache = await lookupCache(fileMd5, pageCount, 'zh')
+  if (cache.hit) {
+    await run(
+      `UPDATE books
+       SET file_md5 = $1,
+           cache_hit = TRUE,
+           upload_status = 'confirmed',
+           title = $2
+       WHERE id = $3`,
+      [fileMd5, title, bookId]
+    )
+    await applyCacheToBook(bookId, cache.payload, fileMd5)
+
+    const consumed = await consumeQuotaAndLogUpload(userId, bookId)
+    if (!consumed) {
+      throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+    }
+
+    await logAction('book_confirmed_cache_hit', `bookId=${bookId}, md5=${fileMd5}`)
+    return { data: { bookId, processing: false, cacheHit: true } }
+  }
+
+  const estimateYuan = estimateBookCostYuan(pageCount, AI_MODEL_ID)
+  assertWithinBookBudget(estimateYuan)
+
+  const updateResult = await run(
+    `UPDATE books
+     SET file_md5 = $1,
+         upload_status = 'confirmed',
+         parse_status = 'processing',
+         title = $2
+     WHERE id = $3 AND upload_status = 'pending'`,
+    [fileMd5, title, bookId]
+  )
+
+  if ((updateResult.rowCount ?? 0) === 0) {
+    return { data: { bookId, processing: true } }
+  }
+
+  const consumed = await consumeQuotaAndLogUpload(userId, bookId)
+  if (!consumed) {
+    throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+  }
+
+  after(async () => {
+    try {
+      await runClassifyAndExtract(bookId, objectKey)
+    } catch (error) {
+      await logAction('runClassifyAndExtract unhandled', `bookId=${bookId}: ${String(error)}`, 'error')
+    }
+  })
+
+  await logAction(
+    'book_confirmed_pdf',
+    `bookId=${bookId}, md5=${fileMd5}, pages=${pageCount}, est=${estimateYuan}`
+  )
+
+  return { data: { bookId, processing: true } }
+}
+
+async function handlePptxConfirm({
+  bookId,
+  userId,
+  objectKey,
+  title,
+  fileMd5,
+}: {
+  bookId: number
+  userId: number
+  objectKey: string
+  title: string
+  fileMd5: string
+}): Promise<never> {
+  void bookId
+  void userId
+  void objectKey
+  void title
+  void fileMd5
+  void MAX_PPTX_SLIDES
+  throw new Error('TODO Task 3.2: implement PPTX confirm path')
+}
+
+async function verifyR2HeadObject(objectKey: string, expectedSize: number, bookId: number) {
+  const client = getR2Client()
+  const bucket = getR2Bucket()
 
   try {
-    const headResult = await getR2Client().send(
-      new HeadObjectCommand({ Bucket: bucket, Key: objectKey })
-    )
-    const actualSize = headResult.ContentLength ?? 0
-    const expectedSize = Number(book.file_size)
+    const head = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: objectKey }))
+    const actualSize = head.ContentLength ?? 0
 
     if (expectedSize > 0 && actualSize !== expectedSize) {
       await logAction(
@@ -120,27 +242,4 @@ export const POST = handleRoute(async (req) => {
     await logAction('book_upload_missing_object', `bookId=${bookId}, err=${String(error)}`, 'error')
     throw new UserError('Upload not found in storage', 'UPLOAD_INCOMPLETE', 400)
   }
-
-  const updateResult = await run(
-    `UPDATE books
-     SET upload_status = 'confirmed', parse_status = 'processing', title = $1
-     WHERE id = $2 AND upload_status = 'pending'`,
-    [title, bookId]
-  )
-
-  if ((updateResult.rowCount ?? 0) === 0) {
-    return { data: { bookId, processing: true } }
-  }
-
-  after(async () => {
-    try {
-      await runClassifyAndExtract(bookId, objectKey)
-    } catch (error) {
-      await logAction('runClassifyAndExtract unhandled', `bookId=${bookId}: ${String(error)}`, 'error')
-    }
-  })
-
-  await logAction('book_confirmed', `bookId=${bookId}, title="${title}"`)
-
-  return { data: { bookId, processing: true } }
-})
+}
