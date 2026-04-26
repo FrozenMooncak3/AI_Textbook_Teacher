@@ -44,7 +44,7 @@ export const POST = handleRoute(async (req) => {
     [user.id, filename, size]
   )
 
-  const { uploadUrl, objectKey } = await buildPresignedPutUrl(bookId, 900)
+  const { uploadUrl, objectKey } = await buildPresignedPutUrl(bookId)
 
   await logAction(
     'book_presign_issued',
