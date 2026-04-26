@@ -3,10 +3,11 @@ import { after } from 'next/server'
 import { z } from 'zod'
 import { PDFParse } from 'pdf-parse'
 import { requireUser } from '@/lib/auth'
-import { queryOne, run } from '@/lib/db'
+import { insert, queryOne, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
+import { parsePptx } from '@/lib/pptx-parse'
 import {
   buildObjectKey,
   getR2Bucket,
@@ -15,10 +16,12 @@ import {
 } from '@/lib/r2-client'
 import { runClassifyAndExtract } from '@/lib/upload-flow'
 import { computePdfMd5FromR2 } from '@/lib/pdf-md5'
+import { triggerReadyModulesExtraction } from '@/lib/services/kp-extraction-service'
 import { AI_MODEL_ID } from '@/lib/ai'
 import { estimateBookCostYuan, assertWithinBookBudget } from '@/lib/services/cost-estimator'
 import { applyCacheToBook, lookupCache } from '@/lib/services/kp-cache-service'
 import { consumeQuotaAndLogUpload } from '@/lib/services/quota-service'
+import { chunkText } from '@/lib/text-chunker'
 
 const MAX_PAGES = 100
 const MAX_PPTX_SLIDES = 200
@@ -208,14 +211,97 @@ async function handlePptxConfirm({
   objectKey: string
   title: string
   fileMd5: string
-}): Promise<never> {
-  void bookId
-  void userId
-  void objectKey
-  void title
-  void fileMd5
-  void MAX_PPTX_SLIDES
-  throw new Error('TODO Task 3.2: implement PPTX confirm path')
+}) {
+  const { slideCount, rawText: parsedRawText } = await parsePptx(objectKey, bookId)
+  const rawText = parsedRawText.replace(/^--- SLIDE (\d+) ---$/gm, '--- PAGE $1 ---')
+
+  if (slideCount > MAX_PPTX_SLIDES) {
+    throw new UserError(
+      `PPT 张数 ${slideCount} 超过 ${MAX_PPTX_SLIDES} 张上限`,
+      'TOO_MANY_SLIDES',
+      400
+    )
+  }
+
+  const cache = await lookupCache(fileMd5, slideCount, 'zh')
+  if (cache.hit) {
+    await run(
+      `UPDATE books
+       SET file_md5 = $1,
+           cache_hit = TRUE,
+           upload_status = 'confirmed',
+           title = $2,
+           raw_text = $3
+       WHERE id = $4`,
+      [fileMd5, title, rawText, bookId]
+    )
+    await applyCacheToBook(bookId, cache.payload, fileMd5)
+
+    const consumed = await consumeQuotaAndLogUpload(userId, bookId)
+    if (!consumed) {
+      throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+    }
+
+    await logAction(
+      'book_confirmed_pptx_cache_hit',
+      `bookId=${bookId}, md5=${fileMd5}, slides=${slideCount}`
+    )
+    return { data: { bookId, processing: false, cacheHit: true } }
+  }
+
+  const updateResult = await run(
+    `UPDATE books
+     SET file_md5 = $1,
+         upload_status = 'confirmed',
+         parse_status = 'done',
+         title = $2,
+         raw_text = $3
+     WHERE id = $4 AND upload_status = 'pending'`,
+    [fileMd5, title, rawText, bookId]
+  )
+
+  if ((updateResult.rowCount ?? 0) === 0) {
+    return { data: { bookId, processing: true } }
+  }
+
+  const consumed = await consumeQuotaAndLogUpload(userId, bookId)
+  if (!consumed) {
+    throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+  }
+
+  const chunks = chunkText(rawText)
+  for (let index = 0; index < chunks.length; index += 1) {
+    const chunk = chunks[index]
+    await insert(
+      `INSERT INTO modules (book_id, title, order_index, page_start, page_end, text_status, ocr_status, kp_extraction_status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        bookId,
+        chunk.title,
+        index,
+        chunk.pageStart,
+        chunk.pageEnd,
+        'ready',
+        'skipped',
+        'pending',
+      ]
+    )
+  }
+
+  after(async () => {
+    try {
+      await triggerReadyModulesExtraction(bookId)
+    } catch (err) {
+      await logAction('pptx_kp_trigger_failed', `bookId=${bookId}: ${String(err)}`, 'error')
+    }
+  })
+
+  await logAction(
+    'book_confirmed_pptx',
+    `bookId=${bookId}, md5=${fileMd5}, slides=${slideCount}`
+  )
+
+  return { data: { bookId, processing: true } }
 }
 
 async function verifyR2HeadObject(objectKey: string, expectedSize: number, bookId: number) {
