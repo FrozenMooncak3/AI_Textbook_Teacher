@@ -12,6 +12,8 @@ interface User {
   id: number
   email: string
   display_name: string | null
+  book_quota_remaining: number
+  book_quota_total: number
 }
 
 interface ModuleOwnerRow {
@@ -60,7 +62,15 @@ export async function createSession(userId: number): Promise<string> {
 export async function getUserFromSession(token: string): Promise<User | undefined> {
   return queryOne<User>(
     `
-      SELECT u.id, u.email, u.display_name
+      SELECT
+        u.id,
+        u.email,
+        u.display_name,
+        u.book_quota_remaining,
+        u.book_quota_remaining + COALESCE(
+          (SELECT COUNT(*)::int FROM book_uploads_log WHERE user_id = u.id),
+          0
+        ) AS book_quota_total
       FROM sessions s
       JOIN users u ON u.id = s.user_id
       WHERE s.token = $1 AND s.expires_at > NOW()
