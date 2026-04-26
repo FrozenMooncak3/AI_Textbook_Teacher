@@ -10,6 +10,8 @@ interface BookStatusRow {
   kp_extraction_status: string
   ocr_current_page: number | null
   ocr_total_pages: number | null
+  cache_hit: boolean
+  cache_hit_count: number
 }
 
 interface ModuleStatusRow {
@@ -42,6 +44,10 @@ interface BookStatusResponse {
   progressPct: number
   firstModuleReady: boolean
   estimatedSecondsRemaining: number | null
+  cacheHit: boolean
+  cacheHitCount: number
+  cache_hit: boolean
+  cache_hit_count: number
 }
 
 function normalizeStatus(raw: string): 'pending' | 'processing' | 'completed' | 'failed' {
@@ -65,8 +71,13 @@ export const GET = handleRoute(async (req, context) => {
   await requireBookOwner(req, id)
 
   const book = await queryOne<BookStatusRow>(
-    `SELECT id, upload_status, parse_status, kp_extraction_status, ocr_current_page, ocr_total_pages
-     FROM books WHERE id = $1`,
+    `SELECT b.id, b.upload_status, b.parse_status, b.kp_extraction_status,
+            b.ocr_current_page, b.ocr_total_pages,
+            b.cache_hit,
+            COALESCE(kc.hit_count, 0)::int AS cache_hit_count
+     FROM books b
+     LEFT JOIN kp_cache kc ON kc.pdf_md5 = b.file_md5
+     WHERE b.id = $1`,
     [id]
   )
 
@@ -133,6 +144,10 @@ export const GET = handleRoute(async (req, context) => {
     progressPct: Math.round(progressPct),
     firstModuleReady: modules[0]?.ready ?? false,
     estimatedSecondsRemaining: null,
+    cacheHit: book.cache_hit ?? false,
+    cacheHitCount: book.cache_hit_count ?? 0,
+    cache_hit: book.cache_hit ?? false,
+    cache_hit_count: book.cache_hit_count ?? 0,
   }
 
   return { data: response }
