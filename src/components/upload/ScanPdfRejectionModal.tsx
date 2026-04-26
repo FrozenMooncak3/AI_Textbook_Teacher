@@ -70,23 +70,23 @@ export default function ScanPdfRejectionModal({
   }
 
   return (
-    <Modal open={open} onClose={handleClose} title="抱歉，该图书暂不支持直接解析">
+    <Modal open={open} onClose={handleClose} title="📚 暂不支持这种文件">
       {submitted ? (
         <div className="space-y-4 py-2">
           <div className="bg-primary/10 text-primary p-4 rounded-xl text-sm font-bold flex items-center gap-3">
             <span className="material-symbols-outlined text-lg">check_circle</span>
-            申请提交成功！我们已记录您的需求，并将在支持此类图书的第一时间通知您。
+            邮箱已收到！我们会在功能上线第一时间通知你。
           </div>
           <AmberButton onClick={handleClose} fullWidth>
-            返回上传更多图书
+            我先用电子版试试
           </AmberButton>
         </div>
       ) : (
         <div className="space-y-5">
           <p className="text-on-surface text-sm leading-relaxed">
-            由于该图书属于<strong>扫描版 PDF</strong>，为了确保 AI 深度解析的质量，我们正针对此类文档进行
-            <strong>深度优化</strong>，以解决复杂排版和文字识别精度问题。请留下您的邮箱，我们将在该功能
-            <strong>准备就绪时通知您</strong>。
+            检测到这是<strong>扫描版 PDF（图像式）</strong>。我们目前还在打磨大型扫描书的识别能力，
+            <strong>留下邮箱</strong>，开放第一时间通知你 + 众筹支持者享受
+            <strong>早鸟解锁特权</strong>。
           </p>
           <TextInput
             label="您的邮箱"
@@ -107,14 +107,14 @@ export default function ScanPdfRejectionModal({
               disabled={!isValidEmail || submitting}
               fullWidth
             >
-              {submitting ? '提交中...' : '提交订阅需求'}
+              {submitting ? '提交中...' : '加入早鸟名单'}
             </AmberButton>
             <button
               onClick={handleClose}
               disabled={submitting}
               className="px-5 py-3 rounded-xl text-sm font-bold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors disabled:opacity-50"
             >
-              返回上传更多图书
+              我先用电子版试试
             </button>
           </div>
         </div>
