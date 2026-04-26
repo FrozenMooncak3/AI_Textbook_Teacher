@@ -75,7 +75,7 @@ export default function ScanPdfRejectionModal({
         <div className="space-y-4 py-2">
           <div className="bg-primary/10 text-primary p-4 rounded-xl text-sm font-bold flex items-center gap-3">
             <span className="material-symbols-outlined text-lg">check_circle</span>
-            提交成功！我们已记录您的需求，将在支持此类图书后第一时间通过邮件通知您。
+            申请提交成功！我们已记录您的需求，并将在支持此类图书的第一时间通知您。
           </div>
           <AmberButton onClick={handleClose} fullWidth>
             返回上传更多图书
@@ -84,8 +84,8 @@ export default function ScanPdfRejectionModal({
       ) : (
         <div className="space-y-5">
           <p className="text-on-surface text-sm leading-relaxed">
-            由于该图书属于<strong>扫描版 PDF</strong>（即由图片组成的文档），为了保证 AI 解析的极致准确度，我们正在进行针对性的
-            <strong>深度优化</strong>，以提升文字识别精度和排版还原效果。请留下您的邮箱，我们将在该功能
+            由于该图书属于<strong>扫描版 PDF</strong>，为了确保 AI 深度解析的质量，我们正针对此类文档进行
+            <strong>深度优化</strong>，以解决复杂排版和文字识别精度问题。请留下您的邮箱，我们将在该功能
             <strong>准备就绪时通知您</strong>。
           </p>
           <TextInput
