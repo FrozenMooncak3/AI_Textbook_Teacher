@@ -11,6 +11,7 @@ import ProgressBar from '@/components/ui/ProgressBar'
 import DecorativeBlur from '@/components/ui/DecorativeBlur'
 import BookTOC from '@/components/BookTOC'
 import ModeSwitchDialog from '@/components/ModeSwitch/ModeSwitchDialog'
+import CacheHitBadge from '@/components/book/CacheHitBadge'
 
 interface DashboardData {
   book: {
@@ -79,6 +80,7 @@ export default function ActionHub({
 }) {
   const [data, setData] = useState<DashboardData | null>(null)
   const [moduleStatuses, setModuleStatuses] = useState<Record<number, ModuleStatus>>({})
+  const [cacheHitCount, setCacheHitCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isRecentTestsOpen, setIsRecentTestsOpen] = useState(false)
   
@@ -93,9 +95,10 @@ export default function ActionHub({
   useEffect(() => {
     async function fetchData() {
       try {
-        const [dashRes, statusRes] = await Promise.all([
+        const [dashRes, statusRes, cacheRes] = await Promise.all([
           fetch(`/api/books/${bookId}/dashboard`),
-          fetch(`/api/books/${bookId}/module-status`)
+          fetch(`/api/books/${bookId}/module-status`),
+          fetch(`/api/books/${bookId}/status`)
         ])
 
         const dashJson = await dashRes.json()
@@ -115,6 +118,13 @@ export default function ActionHub({
             }
           })
           setModuleStatuses(statuses)
+        }
+
+        if (cacheRes.ok) {
+          const cacheJson = await cacheRes.json()
+          if (typeof cacheJson.data?.cacheHitCount === 'number') {
+            setCacheHitCount(cacheJson.data.cacheHitCount)
+          }
         }
       } catch {
         // Silently handle — LoadingState already covers error display
@@ -209,6 +219,7 @@ export default function ActionHub({
           />
 
           <div className="flex-1 min-w-0 space-y-12">
+            <CacheHitBadge hitCount={cacheHitCount} />
             {/* Breadcrumb & Mode Switch */}
             <div className="space-y-4">
               <Breadcrumb items={breadcrumbItems} />

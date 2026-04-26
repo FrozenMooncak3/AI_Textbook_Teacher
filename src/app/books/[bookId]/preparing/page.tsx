@@ -7,6 +7,7 @@ import AppSidebar from '@/components/ui/AppSidebar'
 import ContentCard from '@/components/ui/ContentCard'
 import AmberButton from '@/components/ui/AmberButton'
 import DecorativeBlur from '@/components/ui/DecorativeBlur'
+import CacheHitBadge from '@/components/book/CacheHitBadge'
 
 interface ModuleStatus {
   id: number
@@ -24,6 +25,8 @@ interface BookStatus {
   modules: ModuleStatus[]
   progressPct: number
   firstModuleReady: boolean
+  cacheHit: boolean
+  cacheHitCount: number
 }
 
 function statusText(s: BookStatus | null): string {
@@ -138,6 +141,7 @@ export default function PreparingPage({ params }: { params: Promise<{ bookId: st
             </ContentCard>
           ) : (
             <>
+              {status && <CacheHitBadge hitCount={status.cacheHitCount} />}
               {/* Progress Bar Section */}
               <div className="space-y-3">
                 <div className="w-full bg-surface-container rounded-full h-3 overflow-hidden shadow-inner">
