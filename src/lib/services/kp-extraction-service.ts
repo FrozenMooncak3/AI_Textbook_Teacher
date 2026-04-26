@@ -1,11 +1,20 @@
 import { generateText } from 'ai'
-import { getModel, timeout } from '../ai'
+import {
+  AI_MODEL_FALLBACK_ID,
+  AI_MODEL_ID,
+  getFallbackModel,
+  getModel,
+  timeout,
+} from '../ai'
 import { pool, query, queryOne, run } from '../db'
 import { SystemError } from '../errors'
 import { mergeChunkResults, mergeModuleGroups } from '../kp-merger'
 import { logAction } from '../log'
 import { getPrompt } from '../prompt-templates'
 import { chunkText } from '../text-chunker'
+import { computeMessageCost } from './cost-estimator'
+import { writeCacheFromBook } from './kp-cache-service'
+import { recordCost } from './cost-meter-service'
 import type {
   Stage0Result,
   Stage1Result,
@@ -15,6 +24,12 @@ import type {
 } from './kp-extraction-types'
 
 const MAX_CHARS_PER_CALL = 120_000
+
+interface ModelCallResult {
+  text: string
+  usage: { promptTokens: number; completionTokens: number }
+  modelUsed: string
+}
 
 function splitIntoLines(text: string): string[] {
   return text.split('\n')
@@ -36,15 +51,83 @@ function buildStructureScanText(lines: string[]): string {
     .join('\n')
 }
 
-async function callModel(prompt: string, maxOutputTokens: number): Promise<string> {
-  const { text } = await generateText({
-    model: getModel(),
+async function callModel(
+  prompt: string,
+  maxOutputTokens: number,
+  model: ReturnType<typeof getModel>,
+  modelUsed: string
+): Promise<ModelCallResult> {
+  const result = await generateText({
+    model,
     maxOutputTokens,
     prompt,
     abortSignal: AbortSignal.timeout(timeout),
   })
 
-  return text
+  return {
+    text: result.text,
+    usage: {
+      promptTokens: result.usage.inputTokens ?? 0,
+      completionTokens: result.usage.outputTokens ?? 0,
+    },
+    modelUsed,
+  }
+}
+
+async function callModelChain<T>(
+  prompt: string,
+  maxOutputTokens: number,
+  context: string,
+  bookId: number
+): Promise<T> {
+  const attempts = [
+    { model: getModel(), modelId: AI_MODEL_ID },
+    { model: getModel(), modelId: AI_MODEL_ID },
+    { model: getFallbackModel(), modelId: AI_MODEL_FALLBACK_ID },
+  ]
+  let lastError: unknown = new SystemError(`${context}: no model attempts executed`)
+
+  for (const attempt of attempts) {
+    try {
+      const result = await callModel(prompt, maxOutputTokens, attempt.model, attempt.modelId)
+
+      try {
+        const costYuan = computeMessageCost(result.modelUsed, result.usage)
+        void recordCost({
+          bookId,
+          userId: null,
+          callType: 'kp_extraction',
+          model: result.modelUsed,
+          inputTokens: result.usage.promptTokens,
+          outputTokens: result.usage.completionTokens,
+          costYuan,
+        }).catch((error) => {
+          void logAction(
+            'kp_cost_log_failed',
+            `bookId=${bookId}, model=${result.modelUsed}, context=${context}: ${String(error)}`,
+            'error'
+          )
+        })
+      } catch (error) {
+        void logAction(
+          'kp_cost_log_failed',
+          `bookId=${bookId}, model=${result.modelUsed}, context=${context}: ${String(error)}`,
+          'error'
+        )
+      }
+
+      return parseJSON<T>(result.text, context)
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  await logAction(
+    'kp_fallback_chain_exhausted',
+    `bookId=${bookId}, context=${context}: ${String(lastError)}`,
+    'error'
+  )
+  throw lastError
 }
 
 function repairLooseJSON(candidate: string): string {
@@ -114,16 +197,15 @@ function parseJSON<T>(text: string, context: string): T {
   }
 }
 
-async function structureScan(rawText: string): Promise<Stage0Result> {
+async function structureScan(rawText: string, bookId: number): Promise<Stage0Result> {
   const lines = splitIntoLines(rawText)
   const prompt = await getPrompt('extractor', 'structure_scan', {
     ocr_text: buildStructureScanText(lines),
   })
-  const response = await callModel(prompt, 4_096)
-  return parseJSON<Stage0Result>(response, 'Stage 0')
+  return callModelChain<Stage0Result>(prompt, 4_096, 'Stage 0', bookId)
 }
 
-async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP[]> {
+async function blockExtract(rawText: string, sections: Section[], bookId: number): Promise<RawKP[]> {
   const lines = splitIntoLines(rawText)
   const allKPs: RawKP[] = []
   let previousTail = '无'
@@ -133,7 +215,6 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
     const end = Math.min(lines.length - 1, section.line_end)
     const blockLines = lines.slice(start, end + 1)
     const textBlock = blockLines.join('\n')
-    let rawResponse = ''
 
     if (!textBlock.trim()) {
       await logAction('KP extraction skipped', `Section "${section.title}" has empty text`, 'warn')
@@ -147,9 +228,12 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
     })
 
     try {
-      const response = await callModel(prompt, 8_192)
-      rawResponse = response
-      const result = parseJSON<Stage1Result>(response, `Stage 1: ${section.title}`)
+      const result = await callModelChain<Stage1Result>(
+        prompt,
+        8_192,
+        `Stage 1: ${section.title}`,
+        bookId
+      )
 
       allKPs.push(...result.knowledge_points)
 
@@ -163,45 +247,42 @@ async function blockExtract(rawText: string, sections: Section[]): Promise<RawKP
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       await logAction('KP extraction failed', `Section "${section.title}" failed: ${message}`, 'warn')
-      if (rawResponse) {
-        await logAction(
-          'KP raw response',
-          `Section "${section.title}" first 500 chars: ${rawResponse.slice(0, 500)}`,
-          'warn'
-        )
-      }
     }
   }
 
   return allKPs
 }
 
-async function qualityCheck(rawKPs: RawKP[], modules: Stage0Result['modules']): Promise<Stage2Result> {
+async function qualityCheck(
+  rawKPs: RawKP[],
+  modules: Stage0Result['modules'],
+  bookId: number
+): Promise<Stage2Result> {
   const prompt = await getPrompt('extractor', 'quality_check', {
     kp_table: JSON.stringify(rawKPs, null, 2),
     module_structure: JSON.stringify(modules, null, 2),
   })
 
-  const response = await callModel(prompt, 16_384)
-  return parseJSON<Stage2Result>(response, 'Stage 2')
+  return callModelChain<Stage2Result>(prompt, 16_384, 'Stage 2', bookId)
 }
 
 async function extractChunk(
   rawText: string,
+  bookId: number,
   chunkLabel?: string
 ): Promise<{ stage0: Stage0Result; stage2: Stage2Result }> {
   const labelPrefix = chunkLabel ? `${chunkLabel} ` : ''
 
-  const stage0 = await structureScan(rawText)
+  const stage0 = await structureScan(rawText, bookId)
   await logAction(
     'Stage 0 complete',
     `${labelPrefix}sections=${stage0.sections.length}, modules=${stage0.modules.length}`
   )
 
-  const rawKPs = await blockExtract(rawText, stage0.sections)
+  const rawKPs = await blockExtract(rawText, stage0.sections, bookId)
   await logAction('Stage 1 complete', `${labelPrefix}raw_kps=${rawKPs.length}`)
 
-  const stage2 = await qualityCheck(rawKPs, stage0.modules)
+  const stage2 = await qualityCheck(rawKPs, stage0.modules, bookId)
   await logAction(
     'Stage 2 complete',
     `${labelPrefix}final_kps=${stage2.final_knowledge_points.length}, clusters=${stage2.clusters.length}`
@@ -216,6 +297,7 @@ async function writeResultsToDB(
   stage2: Stage2Result
 ): Promise<void> {
   const client = await pool.connect()
+  let committed = false
 
   try {
     await client.query('BEGIN')
@@ -309,11 +391,16 @@ async function writeResultsToDB(
 
     await client.query("UPDATE books SET kp_extraction_status = 'completed' WHERE id = $1", [bookId])
     await client.query('COMMIT')
+    committed = true
   } catch (error) {
     await client.query('ROLLBACK')
     throw error
   } finally {
     client.release()
+  }
+
+  if (committed) {
+    void maybeWriteCacheForCompletedBook(bookId)
   }
 }
 
@@ -412,6 +499,35 @@ export async function syncBookKpStatus(bookId: number): Promise<void> {
   }
 
   await run('UPDATE books SET kp_extraction_status = $1 WHERE id = $2', [bookStatus, bookId])
+
+  if (bookStatus === 'completed') {
+    void maybeWriteCacheForCompletedBook(bookId)
+  }
+}
+
+async function maybeWriteCacheForCompletedBook(bookId: number): Promise<void> {
+  try {
+    const meta = await queryOne<{
+      file_md5: string | null
+      text_pages_count: number | null
+      scanned_pages_count: number | null
+    }>(
+      'SELECT file_md5, text_pages_count, scanned_pages_count FROM books WHERE id = $1',
+      [bookId]
+    )
+
+    if (!meta?.file_md5) {
+      await logAction('kp_cache_skip_no_md5', `bookId=${bookId}: file_md5 null, skipping cache write`, 'warn')
+      return
+    }
+
+    const pageCount = Math.max(1, (meta.text_pages_count ?? 0) + (meta.scanned_pages_count ?? 0))
+    void writeCacheFromBook(bookId, meta.file_md5, pageCount, 'zh', AI_MODEL_ID).catch((error) => {
+      void logAction('kp_cache_write_failed', `bookId=${bookId}, err=${String(error)}`, 'error')
+    })
+  } catch (error) {
+    await logAction('kp_cache_write_failed', `bookId=${bookId}, err=${String(error)}`, 'error')
+  }
 }
 
 /**
@@ -488,7 +604,7 @@ export async function extractModule(
     let stage2: Stage2Result
 
     if (chunks.length === 1) {
-      const extracted = await extractChunk(moduleText, `module ${moduleId}: ${moduleName}`)
+      const extracted = await extractChunk(moduleText, bookId, `module ${moduleId}: ${moduleName}`)
       stage2 = extracted.stage2
     } else {
       await logAction(
@@ -499,7 +615,7 @@ export async function extractModule(
       const chunkStage2Results: Stage2Result[] = []
       for (const [chunkIndex, chunk] of chunks.entries()) {
         const chunkLabel = `module ${moduleId} chunk ${chunkIndex + 1}/${chunks.length}: ${chunk.title}`
-        const extracted = await extractChunk(chunk.text, chunkLabel)
+        const extracted = await extractChunk(chunk.text, bookId, chunkLabel)
         chunkStage2Results.push(extracted.stage2)
       }
 
@@ -591,7 +707,7 @@ export async function extractKPs(bookId: number): Promise<void> {
     let stage2: Stage2Result
 
     if (chunks.length === 1) {
-      const extracted = await extractChunk(book.raw_text)
+      const extracted = await extractChunk(book.raw_text, bookId)
       stage0 = extracted.stage0
       stage2 = extracted.stage2
     } else {
@@ -602,7 +718,7 @@ export async function extractKPs(bookId: number): Promise<void> {
       for (const [chunkIndex, chunk] of chunks.entries()) {
         const chunkLabel = `chunk ${chunkIndex + 1}/${chunks.length}: ${chunk.title}`
         await logAction('KP extraction chunk started', `bookId=${bookId}, ${chunkLabel}`)
-        const extracted = await extractChunk(chunk.text, chunkLabel)
+        const extracted = await extractChunk(chunk.text, bookId, chunkLabel)
         chunkResults.push(extracted)
         await logAction(
           'KP extraction chunk completed',
