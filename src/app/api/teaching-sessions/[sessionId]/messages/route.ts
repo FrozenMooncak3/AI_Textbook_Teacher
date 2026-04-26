@@ -1,11 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { after, NextRequest, NextResponse } from 'next/server'
 import { generateObject } from 'ai'
 import { requireUser } from '@/lib/auth'
 import { registry } from '@/lib/ai'
 import { pool, queryOne } from '@/lib/db'
 import { getUserTier } from '@/lib/entitlement'
+import { logAction } from '@/lib/log'
 import { getActiveTemplate, renderTemplate } from '@/lib/prompt-templates'
 import { classifyError, retryWithBackoff } from '@/lib/retry'
+import { computeMessageCost } from '@/lib/services/cost-estimator'
+import { recordCost } from '@/lib/services/cost-meter-service'
 import { getTeacherModel } from '@/lib/teacher-model'
 import {
   TranscriptOutputSchema,
@@ -227,6 +230,31 @@ export async function POST(
     JSON.stringify(envelope),
     sessionId,
   ])
+
+  after(async () => {
+    try {
+      const messageCost = computeMessageCost(modelId, {
+        promptTokens: usageRecord?.inputTokens ?? 0,
+        completionTokens: usageRecord?.outputTokens ?? 0,
+      })
+
+      await recordCost({
+        bookId: null,
+        userId: user.id,
+        callType: tier === 'premium' ? 'teaching_premium' : 'teaching_free',
+        model: modelId,
+        inputTokens: usageRecord?.inputTokens ?? 0,
+        outputTokens: usageRecord?.outputTokens ?? 0,
+        costYuan: messageCost,
+      })
+    } catch (error) {
+      void logAction(
+        'teaching_cost_log_failed',
+        `userId=${user.id}, sessionId=${sessionId}, model=${modelId}: ${String(error)}`,
+        'error'
+      )
+    }
+  })
 
   return NextResponse.json({
     status: aiOutput.status,
