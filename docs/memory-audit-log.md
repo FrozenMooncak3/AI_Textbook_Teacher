@@ -43,3 +43,9 @@
 
 2026-04-26 | op:delete | file:project_ocr-cost-brainstorm-wip.md | reason:M4.7 brainstorm + writing-plans 链路完整收尾（spec round 1+2 review + plan reviewer 通过 + 3 真实 blocker 修完），按 brainstorming skill WIP Protocol "Remove the MEMORY.md pointer created for this brainstorm" 移除流程指针；WIP 文件 docs/superpowers/specs/2026-04-25-ocr-cost-brainstorm-state.md 保留作 decision trail 不删
 2026-04-26 | op:edit | file:MEMORY.md | reason:Project 段移除 OCR Cost Brainstorm WIP 索引行（M4.7 brainstorm 完成，cost-shock 索引保留作战略事件记录）
+
+## 2026-04-28
+
+2026-04-28 21:35 | op:delete | file:project_m4-6-brainstorm-wip.md | reason:M4.6 brainstorm 状态记忆已严重过期（M4.6 已 2026-04-24 closed with T17 hotfix landing），WIP 指针误导后续 session
+2026-04-28 21:35 | op:delete | file:project_ocr-cost-shock.md | reason:M4.7 OCR + KP 成本架构代码完成（30 commits 落地 + 部署 READY），cost shock 已成为已解决的历史事件，"不要启动新 milestone" 等 how-to-apply 段全部失效；战略上下文已迁移到 docs/changelog.md 2026-04-25/04-26/04-28 entry + project_status.md M4.7 段
+2026-04-28 21:35 | op:edit | file:MEMORY.md | reason:Project 段移除 2 行（M4.6 Brainstorm WIP + OCR Cost Shock），与上方 2 条 delete 同步
