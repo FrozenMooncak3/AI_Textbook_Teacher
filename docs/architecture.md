@@ -14,7 +14,7 @@
 `/modules/[moduleId]` 学习 + `/activate` + `/teach` + `/teaching-complete` + `/qa` + `/test` + `/review?scheduleId=X` + `/notes` + `/mistakes`
 Auth: `/login` `/register`（邀请码）| App Shell: 3 级 error.tsx + AppSidebar + LoadingState
 
-### DB 表（26 张）
+### DB 表（31 张）
 | 分类 | 表 |
 |------|----|
 | 认证 | users, invite_codes, sessions |
@@ -23,6 +23,7 @@ Auth: `/login` `/register`（邀请码）| App Shell: 3 级 error.tsx + AppSideb
 | 测试 | test_papers, test_questions, test_responses, mistakes |
 | 复习 | review_schedule, review_records, review_questions, review_responses |
 | 付费 | **user_subscriptions** |
+| 成本（M4.7）| **kp_cache, monthly_cost_meter, cost_log, book_uploads_log, email_collection_list** |
 | 系统 | prompt_templates, logs |
 
 ### 核心 API
@@ -45,13 +46,17 @@ Auth: `/login` `/register`（邀请码）| App Shell: 3 级 error.tsx + AppSideb
 - `POST /api/modules/[id]/test/generate` — 考官出测试题
 - `POST /api/review/[scheduleId]/generate` — 复习官出复习题
 - `GET /api/review/due` — 待复习列表
+- `POST /api/email-collection/scan-pdf-waitlist` — 扫描 PDF 拒绝时邮箱收集（M4.7 D0，含 reject_reason / book_metadata）
+- `GET /api/cron/monthly-cost-reset` — Vercel Cron `0 16 1 * *`（UTC 16:00 = 北京 1 号 0:00），月度 reset `monthly_cost_meter`（M4.7 D1）
+- `GET /api/cron/abuse-alert` — Vercel Cron 每日扫 `book_uploads_log`，>5 本/30 天 GROUP BY user_id 标 `users.suspicious_flag` + 邮件告警（M4.7 D7）
 
 ### AI 角色（6 个）
 extractor（KP 提取 + 模块地图）| **teacher（5 阶段 Q&A 教学：factual/conceptual/procedural/analytical/evaluative）** | coach（指引 + QA + 反馈 + 笔记）| examiner（测试 + 评分 + 诊断）| reviewer（复习 + P 值）| assistant（截图问 AI）
 
 ### 部署
-生产：Vercel Hobby + Neon Postgres(us-east-1) + Cloudflare R2 + Cloud Run OCR (us-central1, Google Vision, IAM-only)
+生产：Vercel Hobby + Neon Postgres(us-east-1) + Cloudflare R2 + Cloud Run OCR (us-central1, Google Vision, IAM-only, M4.7 起 standby)
 本地：Docker Compose 三容器（app + db + ocr；ocr 走 Google Vision 需挂 GCP SA key）
+M4.7 模型层：KP 提取 + 免费档教学 → DeepSeek V3.2 (`deepseek:deepseek-chat`) 主 + Qwen3-Max (`qwen:qwen3-max`) fallback；付费档教学维持 Sonnet 4.6（独立 Anthropic 账户，不进 500 元月预算）；Gemini 全下线（账户保留 standby 用于 OCR 重启）
 
 ### ⚠️ 核心约束
 - ✅ Vercel Hobby 4.5MB 请求体上限（M4.5 已绕过：PDF 走 presigned URL 直传 R2 + `/api/books/confirm` fire-and-forget）；TXT 仍经 `POST /api/books`
@@ -62,6 +67,9 @@ extractor（KP 提取 + 模块地图）| **teacher（5 阶段 Q&A 教学：factu
 - 学习流（Full 模式 / 阅读）：unstarted → reading → qa → notes_generated → testing → completed
 - 学习流（Teaching 模式 / 教学）：unstarted → taught → qa_in_progress → qa → notes_generated → testing → completed
 - **内部信号护城河**：`kp.type`/`kp.importance`/`kp.detailed_content`/`kp.ocr_quality` 永远服务端保留，UI / API 响应禁止暴露（M4 moat 硬约束，dispatch 必 grep 校验）
+- **D6 半全局共享例外**（M4.7）：`kp_cache` 表无 `user_id` 列，跨用户共享教材客观知识点；其他用户数据（books / 笔记 / Q&A 进度 / 测试成绩）严格按 `user_id` 隔离不变
+- **D7 上传额度 + suspicious_flag**（M4.7）：`users.book_quota_remaining INTEGER DEFAULT 1`（首本免费，邀请码已用 +1）；`POST /api/uploads/presign` 入口 quota 0 拒；过去 1 小时 `book_uploads_log` >1 本拒；月度 `monthly_cost_meter` >500 元全局拒；`users.suspicious_flag` 由 `abuse-alert` cron 扫流水自动标
+- **教学付费墙不变量**（M4.7 D5 §5.5）：`getTeacherModel(tier, override)` 中 `tier='premium'` 强制返回 Sonnet，override 仅对 `free` 生效；`free` tier 路由 DeepSeek（覆盖 prompt_templates.model 字段）
 
 ---
 
@@ -265,9 +273,10 @@ Teaching 模式（教学，M4）：unstarted → taught → qa_in_progress → q
 - 连续 3 次 struggling → 路由返回 HTTP **409 STRUGGLING_FROZEN**，前端锁按钮显示 "建议先回去读原文" CTA → 用户需主动 reset-and-start
 - `status='ready_to_advance'` 或成功进入下一 KP → strugglingStreak 清零
 
-**Tier → 模型映射**（`src/lib/teacher-model.ts`）：
-- `resolveTeacherModel(tier, template)` → 优先 template.model → 否则按 tier（premium=sonnet-4-6, free=haiku-4-5） → 兜底 `AI_MODEL` env
-- 整合到 `src/lib/ai.ts` provider registry（anthropic + openai + google + xai）
+**Tier → 模型映射**（`src/lib/teacher-model.ts`，M4.7 D5 §5.5 修正）：
+- `resolveTeacherModel(tier, template)` 路由：`tier='premium'` **强制返回 Sonnet 4.6**（template.model override 在 premium 上**失效**，护城河补丁防 free 用户付费 tier 被误降级）；`tier='free'` 走 template.model → 否则 `AI_MODEL` env（`deepseek:deepseek-chat`）→ 兜底 `AI_MODEL_FALLBACK` env（`qwen:qwen3-max`）
+- 整合到 `src/lib/ai.ts` provider registry（M4.7：`anthropic` + `openai` + `google`(standby) + `deepseek`（OpenAI-compat baseURL `https://api.deepseek.com`）+ `qwen`（DashScope OpenAI-compat baseURL `https://dashscope.aliyuncs.com/compatible-mode/v1`））；ProviderModelId 类型扩展含 `deepseek:*` / `qwen:*` 前缀
+- Fallback chain（D5 §5.4）：主调用 throw（429 / 503 / JSON parse / Zod schema / network timeout） → 自动重试 fallback 模型；仍失败 → 抛错让 KP service 走 ROLLBACK 到 Gemini Flash standby（保留 Google API 配额，不上量但作为应急逃生通道）
 
 **API 契约**：
 - `POST /api/teaching-sessions { moduleId, clusterId? }` → 创建 session（owner + mode='teaching' 双校验），返回 `{ sessionId, transcript: TranscriptV1 }`
@@ -532,6 +541,9 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 **环境变量（生产 Vercel）**：
 - **Neon 自动注入**：`DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PGHOST`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_*`
 - **手动配置**：`ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `AI_MODEL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `OCR_SERVER_URL`, `OCR_SERVER_TOKEN`, `GCP_SA_KEY_JSON`, `OCR_REQUIRE_IAM_AUTH=true`, `NEXT_CALLBACK_URL`
+- **M4.7 新增**：`DEEPSEEK_API_KEY`（DeepSeek Platform secret，主模型）/ `DASHSCOPE_API_KEY`（阿里云 DashScope 国内站，Qwen fallback）/ `RESEND_API_KEY`（邮件服务：拒绝 waitlist + 月度告警 + 异常告警）/ `CRON_SECRET`（Vercel Cron `Authorization: Bearer` 鉴权）/ `AI_MODEL_FALLBACK=qwen:qwen3-max` / `MONTHLY_BUDGET_PER_BOOK=1.5`（元）/ `MONTHLY_BUDGET_TOTAL=500`（元）/ `BUDGET_ALERT_EMAIL=zs2911@nyu.edu`
+- **M4.7 切换**：`AI_MODEL` 从 `google:gemini-2.5-pro` → `deepseek:deepseek-chat`
+- **M4.7 移除**：`GOOGLE_API_KEY`（Gemini AI Studio key，已下线；`GOOGLE_GENERATIVE_AI_API_KEY` 也可清理，账户保留 standby）；`GOOGLE_APPLICATION_CREDENTIALS`（Cloud Run OCR）保留——OCR standby 状态，M5+ 重启用
 
 **环境变量（Cloud Run OCR 服务）**：
 - `OCR_PROVIDER=google`, `OCR_SERVER_TOKEN`, `NEXT_CALLBACK_URL`, `SENTRY_DSN`（可选）, `SENTRY_ENVIRONMENT`, `R2_*`, `GOOGLE_APPLICATION_CREDENTIALS`（由 SA 绑定自动注入）
@@ -551,3 +563,51 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - 监控全量接入（Sentry Next.js 前端 + Vercel Analytics 仪表盘）
 - Secrets 管理（当前 `GCP_SA_KEY_JSON` 明文存 Vercel env，应迁 Secret Manager 或 Vercel Encrypted Env 升级）
 - ✅ PDF 上传 presigned URL 直传 R2（M4.5 已实现：T1-T8 代码完成，T9 R2 CORS / Vercel Fluid Compute toggle 需用户 Dashboard 操作，T10 14.2MB 真书端到端压测）
+
+### 成本控制层（M4.7 · 2026-04-25 起）
+
+> spec `2026-04-25-ocr-cost-architecture-design.md` 落地。背景：M4.6 OCR + KP 上线后，单本 PDF 上传成本 3-15 元（Vision API + Gemini Pro），不可持续。M4.7 全栈降本 + 用户侧防御。
+
+**模型层**（D5）—— `src/lib/ai.ts`：
+- KP 提取主模型：`deepseek:deepseek-chat`（DeepSeek V3.2，¥1/百万 in，¥3/百万 out，64K 上下文）
+- KP 提取 fallback：`qwen:qwen3-max`（阿里云 DashScope 国内站，OpenAI-compat baseURL `https://dashscope.aliyuncs.com/compatible-mode/v1`）
+- 教学免费档：DeepSeek（受 monthly_cost_meter 500 元封顶）；教学付费档：维持 Sonnet 4.6（独立 Anthropic 账户，不计入此预算）
+- Provider registry 注册 4 家：`anthropic` / `openai` / `google`(standby) / `deepseek` / `qwen`，统一 `ProviderModelId<'provider:model-id'>` 类型
+- Fallback chain：主模型抛错（429 / 503 / JSON parse / Zod schema failure / network timeout）→ 自动重试 fallback；仍失败 → throw 让 extract-service 走 ROLLBACK 到 Gemini Flash standby（仍消耗 Google 配额，但不上量）
+
+**缓存层**（D6）—— `kp_cache` 表 + `books.file_md5` / `books.cache_hit`：
+- 命中键：`(pdf_md5, language, page_count)` 全书级精确匹配；命中率目标 20-25%（教辅类高频书）
+- 命中流程：confirm 阶段算 PDF MD5（buffer 流式 hash 防内存爆）→ `SELECT kp_payload FROM kp_cache` → JSONB 复用 modules + KPs，绕过 runClassifyAndExtract 完整管线 → `UPDATE kp_cache.hit_count += 1, last_hit_at=NOW()`
+- 半全局共享：`kp_cache` 无 `user_id` 列（D6 §6.3，CLAUDE.md 用户隔离不变量例外）；其他用户数据严格按 `user_id` 隔离
+- 写入：第一个完整提取的 book 写 cache（`ON CONFLICT DO NOTHING` 防并发重写）；TTL 暂不设置（教材内容稳定）；命中 KP 记录到 `cost_log` cost=0
+- UI 展示：`CacheHitBadge` (`src/components/book/CacheHitBadge.tsx`) 在 preparing 页 + Action Hub 显示"已为 N 个同学解析过这本书"——社交信号（D6 §6.5）
+
+**预算 + 流控层**（D1 + D7）：
+- 单本封顶：`MONTHLY_BUDGET_PER_BOOK=1.5` 元；超额书强制 ROLLBACK + flag suspicious
+- 月度全局封顶：`MONTHLY_BUDGET_TOTAL=500` 元；触顶 → `monthly_cost_meter.total_cost_yuan >= 500` → 全局拒新书 upload + 告警邮件
+- 上传额度：`users.book_quota_remaining INTEGER DEFAULT 1`（首本免费），邀请码已用 +1
+- 速率限制：1 小时 1 本（`SELECT COUNT(*) FROM book_uploads_log WHERE user_id=? AND created_at > NOW() - INTERVAL '1 hour'`）
+- 异常检测：30 天 GROUP BY user_id HAVING count(*) > 5 → `users.suspicious_flag = true` + 邮件告警（每日 cron）
+- 月度 reset：1 号 0:00 北京时间（UTC `0 16 1 * *`）cron `monthly-cost-reset` 重置 `monthly_cost_meter` + 上月报告邮件
+
+**邮件 + waitlist 层**（D0 §7.2）—— Resend 集成：
+- 拒绝时邮箱收集：`POST /api/email-collection/scan-pdf-waitlist` 写 `email_collection_list`，含 `reject_reason`（>10MB / scanned / >100 页 / >200 张 PPT）+ `book_metadata`
+- 营销定位：众筹早鸟池（`ScanPdfRejectionModal` 文案"加入早鸟名单"）
+- 用途：上线 OCR 完整解析 / .ppt 旧格式 / >100 页 等高级功能时优先通知
+
+**成本审计**：
+- `cost_log` 每次 LLM call 写一行（book_id / user_id / model / cost_yuan / created_at）
+- `monthly_cost_meter` 累加器（year_month / total_cost_yuan / last_updated_at）
+- KP 提取 cache 命中写 `cost_log` cost=0（统计命中率用）
+- 教学免费档 DeepSeek call 累加 monthly meter；付费档 Sonnet **不**累加（独立 Anthropic billing）
+
+**接受类型扩展**（D0 + PPT）：
+- TXT / 文字版 PDF（≤10MB / ≤100 页 / image-ratio < 0.3）/ .pptx（≤200 张幻灯片）
+- 拒绝路径：扫描 PDF / .ppt 旧格式 / 超大 / 超页 → ScanPdfRejectionModal + waitlist
+- PPT 解析：OCR Cloud Run 端点 `/parse-pptx` (python-pptx)，接收 r2_object_key，返回 slides[] 文字内容；Next.js `src/lib/pptx-parse.ts` 封装 + `confirm/route.ts` 走 PPT 分支
+
+**新增 cron**（Vercel Cron + `CRON_SECRET` Bearer 鉴权）：
+- `/api/cron/monthly-cost-reset` — 月初 reset `monthly_cost_meter` + 上月成本报告邮件给 `BUDGET_ALERT_EMAIL`
+- `/api/cron/abuse-alert` — 每日扫 `book_uploads_log` >5 本/30 天，标 `suspicious_flag` + 邮件告警
+
+**Vercel 部署 ⚠️**：M4.6 修复的 fire-and-forget 后台任务必须用 Vercel `after()`（`next/server`），不能裸 void promise（isolate 提前死亡丢任务）；`POST /api/books/confirm` PPT 分支已对齐（`src/lib/pptx-parse.ts` + `runClassifyAndExtract` 双路径）。

@@ -4,6 +4,83 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-28 | M4.7 OCR + KP 成本架构 实施完成（autonomous "一条龙"）
+
+**目的**：执行 M4.7 plan（27 task / 6 phase / ~7 工作日），用户授权"一条龙全部你自己搞定"由 Claude 自驱编排 Codex+Gemini 派发 + review + retry 全流程。本次会话内 Phase 0-4 + T5.1 全部落地，部署 ID `dpl_DdB8QnuNfJLsQamW6BXZJxCc34fQ` 已 READY。
+
+**Phase 0 — 基础（4 commits）**
+- `90e1bb4` D1/D6/D7 schema migration —— 5 张新表（kp_cache / monthly_cost_meter / cost_log / book_uploads_log / email_collection_list）+ books 加 file_md5/cache_hit 列 + users 加 book_quota_remaining/invite_code_used/suspicious_flag 列
+- `905e71d` `src/lib/ai.ts` 注册 deepseek + qwen provider（createOpenAI baseURL 模式，无新 npm 依赖）；ProviderModelId 类型扩展 `deepseek:*` / `qwen:*`
+- `764f17b` `getTeacherModel(tier='premium')` 永远返回 Sonnet 4.6（override 在 premium 上失效，护城河补丁）
+- `4df7182` `r2-client.ts` exports getR2Client/getR2Bucket/getR2ObjectBuffer + buildObjectKey/buildPresignedPutUrl 加 contentType 参数（Phase 1/2 前置）
+
+**Phase 1 — 服务层（6 commits）**
+- `229b547` `budget-email-alert.ts` resend.com 邮件告警（无 RESEND_API_KEY 降级 console.warn）
+- `ead181f` `cost-meter-service.ts` cost_log INSERT + monthly_cost_meter UPSERT + 80%/100% 阈值告警
+- `53b6249` `quota-service.ts` quota check + 1 小时 rate-limit + 邀请码已用扩额
+- `438eb3c` `kp-cache-service.ts` cache lookup（pdf_md5+language+page_count 全书级）+ writeCache（ON CONFLICT DO NOTHING 防并发）+ applyCacheToBook 事务复用 modules+KPs
+- `2e036a9` `pdf-md5.ts` Node Web Streams 流式 MD5（避免 14MB+ 大书内存爆）
+- `b9f6ebb` `cost-estimator.ts` computeMessageCost(modelId, usage) 单本 1.5 元上限拦截 + token 转人民币
+
+**Phase 2 — API/cron（9 commits）**
+- `a737ec5` `POST /api/uploads/presign` + .pptx contentType 白名单 + page-count 校验前置 + quota 0 拒 + rate-limit 拒 + monthly-budget >500 全局拒
+- `d81e335` `POST /api/books/confirm` 全路径扩展（PDF MD5 流式 hash → kp_cache 命中走 applyCacheToBook 跳过下游 / 未命中走 runClassifyAndExtract 正常流 / 写 books.file_md5+cache_hit / quota 减 1）
+- `69fe723` `POST /api/auth/register` 邀请码已用 → `users.book_quota_remaining += 1`
+- `3bd0705` `kp-extraction-service.ts` 三 hook：(a) 调用前查 kp_cache 命中 / (b) DeepSeek + Qwen fallback chain 重试 / (c) 写 cost_log + monthly_cost_meter 累加
+- `b887196` `POST /api/teaching-sessions/[sid]/messages` 教学对话写 cost_log；仅免费档 DeepSeek 累加 monthly meter（付费档 Sonnet 走独立 Anthropic billing 不计入 500 元）
+- `d8af5f6` `POST /api/email-collection/scan-pdf-waitlist` 拒绝时邮箱收集（reject_reason / book_metadata）
+- `64dadc3` `GET /api/cron/monthly-cost-reset` 月初 1 号 0:00 北京（UTC `0 16 1 * *`）reset monthly_cost_meter + 上月成本报告邮件给 BUDGET_ALERT_EMAIL
+- `b917995` `GET /api/cron/abuse-alert` 每日扫 book_uploads_log >5 本/30 天 → suspicious_flag = true + 邮件告警
+- `7f999d8` `vercel.json` 注册 2 cron schedule + `CRON_SECRET` Bearer 鉴权
+
+**Phase 3 — PPT 解析（2 commits）**
+- `8b425ee` `scripts/pptx_parser.py` + Cloud Run `/parse-pptx` 端点；python-pptx 抽 text frames + tables + notes，不抽 picture；输出 SLIDE 标记
+- `c79d357` `src/lib/pptx-parse.ts` Next.js 端 OCR 服务客户端（buildOcrHeaders + 60s timeout + OCR_SERVER_URL fallback）+ `confirm/route.ts` PPT 分支（handlePptxConfirm：parsePptx → SLIDE→PAGE 转换 → 200 张上限 → kp_cache lookup → INSERT modules + after() trigger）。Cloud Build 自动构建 + deploy Cloud Run（M4.6 T16 双步 deploy step 已就绪）
+
+**Phase 4 — UI 派 Gemini（10 commits，3 次 spec_mismatch on copy）**
+- `1981cbb` + `0e9108c` + `245202f` T4.2 `ScanPdfRejectionModal` —— Modal title / body / 按钮 / 成功文案对齐 spec §7.2 众筹早鸟 CTA。Gemini 第 1 次 corporate 重写文案 → Claude direct edit fix（escalation_exception 路径，feedback_direct-edit-when-stuck.md）
+- `0256fc5` T4.1 upload page —— accept .pdf/.txt/.pptx + 50MB→10MB threshold + getFileKind+getContentType helper + UploadStatus 加 rejected 态 + Modal mount。+13 advisory cosmetic 顺手修了 /books 死链 BUG（router.push '/books'→'/'）
+- `96e2701` T4.3a `/api/auth/me` 加 book_quota_remaining + book_quota_total 字段（COUNT(*)::int cast 防 BIGINT mismatch）
+- `acd2a62` + `922faf4` T4.3b `QuotaIndicator` —— 4 dot 视觉 + emerald/amber 配色 + upload page mount。Gemini 第 2 次 corporate 重写（"今日剩余"前缀语义错误 + "总共"→"累计" 偏离 byte-locked）→ Claude direct edit fix
+- `de0cbba` T4.4a `/api/books/[bookId]/status` 加 cacheHit + cacheHitCount（LEFT JOIN kp_cache + COALESCE hit_count::int）
+- `325755e` + `4908c27` T4.4b `CacheHitBadge` —— "已为 N 个同学解析过这本书" social-proof 文案 + ✓ 字符 + emerald 5 token + preparing 页 + ActionHub 双 mount。Gemini 第 3 次 corporate 重写（"已成功为 N 位同学节省了该教材准备时间" cost-saving framing + ✨ icon 违反 dispatch 显式约束）→ Claude direct edit fix
+
+**Phase 5 — env + 回归（T5.1 ✅，T5.2 in flight，T5.3/T5.4 user-blocked）**
+- T5.1 ✅ Vercel env push 9 操作（DEEPSEEK_API_KEY / DASHSCOPE_API_KEY / RESEND_API_KEY / CRON_SECRET 4 secrets encrypted；AI_MODEL_FALLBACK / MONTHLY_BUDGET_PER_BOOK / MONTHLY_BUDGET_TOTAL / BUDGET_ALERT_EMAIL 4 plain；AI_MODEL: `google:gemini-2.5-pro` → `deepseek:deepseek-chat`）。Production redeploy 触发，deploy_id `dpl_DdB8QnuNfJLsQamW6BXZJxCc34fQ` 已 READY。`.ccb/vercel-env-push.js` 通用 helper 保留（未来 env 操作复用）。`.ccb/t5-1-env-data.json` 已删除（含明文 secrets，security cleanup）
+- T5.2 ⏳ 派 Codex 写 `scripts/kp-regression-test.ts`（3 中文教材 fixture × 4 模块 = 12 次 extractModule，验证 JSON parse 100% / 每模块 KP ≥5 / 5 个 type 覆盖率，输出 `.ccb/kp-regression-results.json`）。脚本 commit master 但报告由用户本地跑（DATABASE_URL + DEEPSEEK_API_KEY），不上 Vercel 不入 cron
+- T5.3 🔒 用户人工跑（5 角色 × 10 对话 = 50 评分，Codex 写脚手架）—— 阻塞，需用户腾时间
+- T5.4 🔒 4 路径 smoke（cache miss / cache hit / >10MB-or-scanned 拒绝 / .pptx 上传）—— 需用户浏览器交互（本机出站连不上 *.vercel.app，但 deploy 已 READY 服务器侧验证通过）
+
+**Phase 6 — 收尾（in progress）**
+- T6.1 ✅ `docs/architecture.md` 同步：§摘要卡 DB 表 26→31 + 3 新 cron 端点 + ⚠️ 核心约束加 D6 半全局共享 / D7 quota / 教学付费墙不变量 / DeepSeek+Qwen 摘要；§接口契约 Tier→模型映射加 premium-tier-locked + DeepSeek+Qwen provider registry + Fallback chain；§部署架构 环境变量加 7 个 M4.7 新 env + 切换说明；新增 §成本控制层 章节（模型 / 缓存 / 预算 / 邮件 / 审计 / 接受类型扩展 / 新 cron / Vercel after() ⚠️ 7 段）
+- T6.2 ⏳ 本 changelog entry + project_status.md 更新（本 commit 落盘）
+- T6.3 ⏳ milestone-audit + finishing-a-development-branch（本 session 末尾）
+
+**关键事件 + 教训**
+- **Gemini 在 spec-locked 文案上结构性 bias**：Phase 4 4 单中 3 单（T4.2 / T4.3b / T4.4b）首次提交都 corporate 重写 byte-locked 文案。3 次都走 `feedback_direct-edit-when-stuck.md` Claude direct edit 修复（spec_mismatch failure_type 不再走 retry loop，直接 escalation_exception 路径）。Retrospective 2.0 数据已沉淀在 ledger
+- **Codex 表现稳定**：Phase 0/1/2/3/4-T4.3a/T4.4a 全部一次过，平均 advisory 4-13 项（多为顺手 cosmetic 改动 + 偶尔 BUG fix）。Phase 0-3 13 单 0 spec_mismatch
+- **DeepSeek 成本下降验证**：env 切换后单本预估 KP 提取成本 ¥0.5-1.2（vs Gemini Pro ¥3-15），10x off。fallback Qwen3-Max 阿里云 DashScope OpenAI-compat 集成
+- **Vercel after() Fire-and-Forget 契约延续**：Phase 3 PPT 分支（confirm/route.ts handlePptxConfirm）镜像 PDF 分支用 after() 包裹 triggerReadyModulesExtraction（M4.6 T17 教训）
+- **autonomous 模式无人值守跑全程**：用户提供 3 API keys 后，Phase 5 解锁 + 后续 docs 收尾全自驱完成。中途单点用户决策（DashScope 阿里云延迟 / 留学生用户 / Resend 用途等）实时回答后即刻继续
+- **架构契约加固**：`kp_cache` 半全局共享是 CLAUDE.md 用户隔离不变量的**唯一例外**，已在 architecture.md ⚠️ 核心约束 显式标注。spec §8.3 D6 已锁
+
+**剩余阻塞**
+- T5.2 Codex 编写 kp-regression-test.ts 在途（dispatch 097，~30 min wall-clock）
+- T5.3 / T5.4 需用户人工跑（教学回归 50 评分 / 4 路径 smoke 浏览器交互）
+- M4.7 milestone 闭环：T5.2 review pass + T6.3 milestone-audit + finishing-a-development-branch 后才能整体 close
+
+**涉及文件（核心）**
+- DB schema：`src/lib/schema.sql` (+5 表 +5 列)
+- AI 层：`src/lib/ai.ts` / `src/lib/teacher-model.ts`
+- 服务层：`src/lib/services/{cost-meter,quota,kp-cache,cost-estimator,budget-email-alert}.ts` + `src/lib/{pdf-md5,r2-client,pptx-parse}.ts`
+- API 层：`src/app/api/uploads/presign/route.ts` / `src/app/api/books/confirm/route.ts` / `src/app/api/books/[id]/status/route.ts` / `src/app/api/auth/register/route.ts` / `src/app/api/auth/me/route.ts` / `src/app/api/teaching-sessions/[sid]/messages/route.ts` / `src/app/api/email-collection/scan-pdf-waitlist/route.ts` / `src/app/api/cron/{monthly-cost-reset,abuse-alert}/route.ts`
+- KP service hooks：`src/lib/services/kp-extraction-service.ts`
+- UI 组件：`src/components/upload/{ScanPdfRejectionModal,QuotaIndicator}.tsx` + `src/components/book/CacheHitBadge.tsx`
+- UI 页面 mount：`src/app/upload/page.tsx` / `src/app/books/[bookId]/preparing/page.tsx` / `src/app/books/[bookId]/ActionHub.tsx`
+- Cloud Run：`scripts/{pptx_parser.py,ocr_server.py}` + `Dockerfile.ocr` (python-pptx 0.6.23) + `cloudbuild.ocr.yaml` (M4.6 T16 双步 deploy)
+- 部署：`vercel.json` (+2 cron) + Vercel env 9 操作
+- Docs：`docs/architecture.md` + `docs/changelog.md` + `docs/project_status.md` + `.ccb/task-ledger.json` + `.ccb/inbox/{codex,gemini,claude}/*.md` 35+ dispatch/report
+
 ## 2026-04-26 | M4.7 OCR + KP 成本架构 plan ready（brainstorm-chain 收尾）
 
 **目的**：2026-04-25 book 18 暴露单本成本 8-15 元 / Google AI Studio 余额耗尽 → 触发战略级架构重设。本日完成 brainstorm + writing-plans 全链路收尾。
