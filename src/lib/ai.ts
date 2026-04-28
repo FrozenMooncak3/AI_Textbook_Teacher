@@ -52,18 +52,20 @@ const openai = createOpenAI({
 })
 
 // D5 (2026-04-25): DeepSeek V3.2 via OpenAI-compat baseURL (避免新依赖)
-const deepseek = createOpenAI({
+const deepseekRaw = createOpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
   baseURL: 'https://api.deepseek.com',
   ...(customFetch ? { fetch: customFetch } : {}),
 })
+const deepseek = { ...deepseekRaw, languageModel: deepseekRaw.chat }
 
 // D5 (2026-04-25): Qwen3-Max via DashScope OpenAI-compat baseURL
-const qwen = createOpenAI({
+const qwenRaw = createOpenAI({
   apiKey: process.env.DASHSCOPE_API_KEY,
   baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   ...(customFetch ? { fetch: customFetch } : {}),
 })
+const qwen = { ...qwenRaw, languageModel: qwenRaw.chat }
 
 const registry = createProviderRegistry({
   anthropic,
