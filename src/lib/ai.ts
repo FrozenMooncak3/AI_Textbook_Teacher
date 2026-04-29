@@ -52,19 +52,32 @@ const openai = createOpenAI({
   ...(customFetch ? { fetch: customFetch } : {}),
 })
 
+const DEEPSEEK_QWEN_MAX_OUTPUT_TOKENS = 8192
+
 // DeepSeek/Qwen OpenAI-compatible chat APIs support `json_object`, but not `json_schema`.
-// Drop the schema at the registry layer so the OpenAI provider falls back to basic JSON mode.
+// They also silently truncate oversized JSON when callers forward Gemini-sized budgets such as 65536.
+// Clamp these wrapped providers to their real 8192 output ceiling here; Gemini/Anthropic/OpenAI do not
+// use this middleware, so their larger budgets and native structured-output paths stay unchanged.
 const downgradeJsonSchemaMiddleware: LanguageModelV3Middleware = {
   specificationVersion: 'v3',
   transformParams: async ({ params }) => {
+    const updated: typeof params = { ...params }
+    let changed = false
+
     if (params.responseFormat?.type === 'json' && params.responseFormat.schema) {
-      return {
-        ...params,
-        responseFormat: { type: 'json' as const },
-      }
+      updated.responseFormat = { type: 'json' as const }
+      changed = true
     }
 
-    return params
+    if (
+      params.maxOutputTokens &&
+      params.maxOutputTokens > DEEPSEEK_QWEN_MAX_OUTPUT_TOKENS
+    ) {
+      updated.maxOutputTokens = DEEPSEEK_QWEN_MAX_OUTPUT_TOKENS
+      changed = true
+    }
+
+    return changed ? updated : params
   },
 }
 
