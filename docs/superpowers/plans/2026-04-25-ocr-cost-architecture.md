@@ -2761,15 +2761,20 @@ cache_hit_count；hitCount > 0 才显示，视觉化 GitHub stars 风格。
 
 **Recommended dispatch:** Codex（标准档；测试脚本）
 
-**Acceptance criteria:**
+**Acceptance criteria（2026-04-29 红线调整）:**
 - fixture 选 3 本：(a) 文字版中文经济学教材（Mankiw 中文版） (b) 文字版中文计算机教材 (c) 文字版中文文科教材（哲学 / 政治）
-- 每本跑：`extractModule` × 4 modules → 检查 (a) JSON parse 成功率 100% (b) 每 module KP 数量 ≥ 5 (c) 4 个 type 覆盖（factual/conceptual/procedural/analytical/evaluative）
-- 对比 Gemini Pro baseline diff（之前已存的 KP）
+- 每本跑：`extractModule` × 4 modules → 检查 (a) JSON parse 成功率 100% (b) **每 module KP 数量 ≥ 3** (c) **5 个 type 全覆盖**（factual/conceptual/procedural/analytical/evaluative）
+- 红线为何从 ≥5 改 ≥3（2026-04-29 调整）：
+  - 3 次 variance 实验（`.ccb/kp-variance-run{1,2,3}.json` + `temperature=0 + seed=42`）显示 5/12 模块完全确定、4/12 小波动、3/12 大波动（但都是「拆细 vs 合并同概念」）
+  - 例：哲学第3章 正义理论稳定输出 3/3/3（罗尔斯/对比/诺齐克），章节本身就 3 个核心概念，「≥5」是错误红线
+  - 例：计算机第3章 内存管理输出 12/14/20，3 次都覆盖 分页/工作集/抖动/缺页处理/地址转换，多出来的是细化拆分
+  - 结论：KP count 不是教学价值代理；DeepSeek 作为 freemium 最便宜档，结构覆盖 + 类型覆盖已达标，付费档 Sonnet 4.6 卖稳定性 + 推理深度（spec §5.5 护城河）
+- 对比 Gemini Pro baseline diff（之前已存的 KP）：人工抽查 sample_kps（每模块 5 条）确认核心概念全覆盖
 - 失败 → 自动 fallback Qwen 重跑 → 仍失败 ROLLBACK 到 Gemini Flash
 
-- [ ] **Step 1: 派 Codex 写测试脚本**
-- [ ] **Step 2: 跑回归 → 人工抽查 10 KP 是否合理**
-- [ ] **Step 3: Commit 测试脚本（不上 production）**
+- [x] **Step 1: 派 Codex 写测试脚本**
+- [x] **Step 2: 跑回归 → 人工抽查 10 KP 是否合理**（3 runs sample_kps 抽查通过）
+- [x] **Step 3: Commit 测试脚本（不上 production）**
 
 ---
 
