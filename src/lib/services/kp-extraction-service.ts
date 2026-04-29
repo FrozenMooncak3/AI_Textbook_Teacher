@@ -61,6 +61,8 @@ async function callModel(
     model,
     maxOutputTokens,
     prompt,
+    temperature: 0,
+    seed: 42,
     abortSignal: AbortSignal.timeout(timeout),
   })
 
