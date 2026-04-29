@@ -1,7 +1,7 @@
 import { HeadObjectCommand } from '@aws-sdk/client-s3'
 import { after } from 'next/server'
 import { z } from 'zod'
-import { PDFParse } from 'pdf-parse'
+import pdf from 'pdf-parse'
 import { requireUser } from '@/lib/auth'
 import { insert, queryOne, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
@@ -114,17 +114,9 @@ async function handlePdfConfirm({
   fileMd5: string
 }) {
   const buffer = await getR2ObjectBuffer(objectKey)
-  const parser = new PDFParse({ data: buffer })
-
-  let pageCount = 0
-  let extractedText = ''
-  try {
-    const parsed = await parser.getText()
-    pageCount = parsed.total
-    extractedText = parsed.text
-  } finally {
-    await parser.destroy()
-  }
+  const parsed = await pdf(buffer)
+  const pageCount = parsed.numpages
+  const extractedText = parsed.text
 
   if (pageCount > MAX_PAGES) {
     throw new UserError(`PDF 页数 ${pageCount} 超过 100 页上限`, 'TOO_MANY_PAGES', 400)
