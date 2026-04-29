@@ -1,7 +1,8 @@
-import { createProviderRegistry } from 'ai'
+import { createProviderRegistry, wrapLanguageModel } from 'ai'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
+import type { LanguageModelV3Middleware } from '@ai-sdk/provider'
 
 function getCustomFetch(): typeof globalThis.fetch | undefined {
   const proxy =
@@ -51,13 +52,36 @@ const openai = createOpenAI({
   ...(customFetch ? { fetch: customFetch } : {}),
 })
 
+// DeepSeek/Qwen OpenAI-compatible chat APIs support `json_object`, but not `json_schema`.
+// Drop the schema at the registry layer so the OpenAI provider falls back to basic JSON mode.
+const downgradeJsonSchemaMiddleware: LanguageModelV3Middleware = {
+  specificationVersion: 'v3',
+  transformParams: async ({ params }) => {
+    if (params.responseFormat?.type === 'json' && params.responseFormat.schema) {
+      return {
+        ...params,
+        responseFormat: { type: 'json' as const },
+      }
+    }
+
+    return params
+  },
+}
+
 // D5 (2026-04-25): DeepSeek V3.2 via OpenAI-compat baseURL (避免新依赖)
 const deepseekRaw = createOpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
   baseURL: 'https://api.deepseek.com',
   ...(customFetch ? { fetch: customFetch } : {}),
 })
-const deepseek = { ...deepseekRaw, languageModel: deepseekRaw.chat }
+const deepseek = {
+  ...deepseekRaw,
+  languageModel: (modelId: string) =>
+    wrapLanguageModel({
+      model: deepseekRaw.chat(modelId),
+      middleware: downgradeJsonSchemaMiddleware,
+    }),
+}
 
 // D5 (2026-04-25): Qwen3-Max via DashScope OpenAI-compat baseURL
 const qwenRaw = createOpenAI({
@@ -65,7 +89,14 @@ const qwenRaw = createOpenAI({
   baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   ...(customFetch ? { fetch: customFetch } : {}),
 })
-const qwen = { ...qwenRaw, languageModel: qwenRaw.chat }
+const qwen = {
+  ...qwenRaw,
+  languageModel: (modelId: string) =>
+    wrapLanguageModel({
+      model: qwenRaw.chat(modelId),
+      middleware: downgradeJsonSchemaMiddleware,
+    }),
+}
 
 const registry = createProviderRegistry({
   anthropic,
