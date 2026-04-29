@@ -133,11 +133,35 @@ export function buildTeacherMessages(input: BuildTeacherMessagesInput): AIMessag
     if (m.kind === 'student_response') {
       return { role: 'user', content: m.content }
     }
-    if (m.kind === 'socratic_question' || m.kind === 'struggling_hint') {
-      return { role: 'assistant', content: m.content }
+    if (m.kind === 'socratic_question') {
+      return {
+        role: 'assistant',
+        content: JSON.stringify({
+          status: 'teaching',
+          kpTakeaway: null,
+          message: m.content,
+        }),
+      }
+    }
+    if (m.kind === 'struggling_hint') {
+      return {
+        role: 'assistant',
+        content: JSON.stringify({
+          status: 'struggling',
+          kpTakeaway: null,
+          message: m.content,
+        }),
+      }
     }
     if (m.kind === 'kp_takeaway') {
-      return { role: 'assistant', content: `[kp_takeaway kpId=${m.kpId}] ${m.summary}` }
+      return {
+        role: 'assistant',
+        content: JSON.stringify({
+          status: 'ready_to_advance',
+          kpTakeaway: m.summary,
+          message: m.summary,
+        }),
+      }
     }
     const never: never = m
     throw new Error(`未知 TranscriptMessage kind: ${JSON.stringify(never)}`)
