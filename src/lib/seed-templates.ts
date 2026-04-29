@@ -11,28 +11,41 @@ const SEED_TEMPLATES: TemplateSeed[] = [
   {
     role: 'extractor',
     stage: 'structure_scan',
-    template_text: `浣犳槸涓€涓暀鏉愮煡璇嗙偣鎻愬彇涓撳銆?
-## 浠诲姟
-瀵逛互涓嬫暀鏉?OCR 鏂囨湰杩涜缁撴瀯鎵弿銆傝瘑鍒墍鏈夊皬鑺傛爣棰樸€佽鍙疯寖鍥达紝骞跺缓璁ā鍧楀垎缁勩€?
-## 鎵弿瑙勫垯
-1. 璇嗗埆鎵€鏈変簩绾у拰涓夌骇鏍囬锛堥€氬父鏄?X.X 鎴?X.X.X 缂栧彿锛屾垨鍔犵矖/澶у啓鐨勬爣棰樿锛?
-2. 鏍囨敞姣忎釜灏忚妭鐨勮捣濮嬭鍙峰拰缁撴潫琛屽彿
-3. 浼拌姣忎釜灏忚妭鐨勭煡璇嗙偣鏁伴噺锛?5-15 涓?10 椤垫槸姝ｅ父瀵嗗害
-4. 灏嗗皬鑺傚垎缁勪负瀛︿範妯″潡锛岀‘淇濓細
-   - 姣忎釜妯″潡瑕嗙洊涓€涓畬鏁翠富棰?
-   - 妯″潡闂?KP 鏁伴噺宸窛涓嶈秴杩?2:1
-   - 妯″潡杈圭晫瀵归綈灏忚妭杈圭晫锛堜笉鍦ㄥ皬鑺備腑闂村垏鍓诧級
-5. 蹇界暐鐩綍椤点€佺増鏉冮〉銆佺储寮曢〉绛夐潪姝ｆ枃鍐呭
-6. 鏂囨湰涓殑 "--- PAGE N ---" 鏍囪琛ㄧず PDF 绗?N 椤电殑寮€濮嬶紝鐢ㄦ潵纭畾 page_start 鍜?page_end
+    template_text: `You are a textbook structure scan expert.
 
-## 鏂囨湰锛堝惈琛屽彿锛?{ocr_text}
+## Task
+Scan the OCR text below and identify section structure. Then group sections into learning modules.
 
-## 杈撳嚭瑕佹眰
-杩斿洖涓ユ牸 JSON锛屼笉瑕佹湁浠讳綍棰濆鏂囧瓧銆俻age_start/page_end 浠?"--- PAGE N ---" 鏍囪涓彁鍙栵紝濡傛灉娌℃湁鏍囪鍒欏～ null锛?
+## Rules
+
+### 1. Section identification
+- Identify all level-2 and level-3 headings (typically X.X or X.X.X numbering, or bold/uppercase title lines).
+- For each section, mark the start and end line numbers (line_start / line_end).
+- Estimate KP count for each section (5-15 per section, 10 pages is normal density).
+
+### 2. Module grouping
+- Group sections into learning modules. Each module:
+  - Covers one complete topic.
+  - Differs from other modules in KP count by no more than 2:1 ratio.
+  - Aligns module boundaries with section boundaries (never cut a section mid-way).
+
+### 3. Skip non-content
+- Ignore table of contents, copyright pages, index pages, and other non-body content.
+
+### 4. Page tracking
+- "--- PAGE N ---" markers in the text indicate the start of PDF page N.
+- Use these markers to populate page_start and page_end for each section and module.
+- If no page markers exist, set page_start/page_end to null.
+
+## OCR Text (with line numbers)
+{ocr_text}
+
+## Output
+Return strict JSON only, no extra text:
 {
   "sections": [
     {
-      "title": "灏忚妭鏍囬",
+      "title": "section title",
       "line_start": 0,
       "line_end": 0,
       "page_start": 1,
@@ -44,8 +57,8 @@ const SEED_TEMPLATES: TemplateSeed[] = [
   "modules": [
     {
       "group_id": 1,
-      "title": "妯″潡鍚嶇О锛堟鎷富棰橈紝涓嶆槸灏忚妭鍚嶆嫾鎺ワ級",
-      "sections": ["灏忚妭鏍囬1", "灏忚妭鏍囬2"],
+      "title": "module name (extract the topic, do not concatenate section titles)",
+      "sections": ["section title 1", "section title 2"],
       "estimated_total_kp": 0,
       "page_start": 1,
       "page_end": 5
@@ -64,7 +77,7 @@ Extract knowledge points (KPs) from the block below.
 ## Rules
 - Return strict JSON only. No markdown, no explanation.
 - The entire response must be valid JSON.
-- Escape every double quote inside string values as \".
+- Escape every double quote inside string values as ".
 - Do not use unescaped double quotes inside any string.
 - Keep each KP self-contained and concise.
 - If a source sentence contains quoted terms, rewrite them without raw quotes or escape them.
@@ -115,7 +128,7 @@ Return strict JSON only, with no extra text:
       "description": "one-sentence description",
       "type": "factual|conceptual|procedural|analytical|evaluative",
       "importance": 1,
-      "detailed_content": "complete evidence-based content with escaped quotes like \"fixed asset\"",
+      "detailed_content": "complete evidence-based content with escaped quotes like "fixed asset"",
       "cross_block_risk": false,
       "ocr_quality": "good|uncertain|damaged"
     }
@@ -125,42 +138,48 @@ Return strict JSON only, with no extra text:
   {
     role: 'extractor',
     stage: 'quality_check',
-    template_text: `浣犳槸涓€涓煡璇嗙偣璐ㄩ噺瀹℃牳涓撳銆?
-## 浠诲姟
-瀹℃牳 KP 鎻愬彇缁撴灉锛屾墽琛岃法鍧楃紳鍚堛€佸幓閲嶃€佽仛绫汇€佹ā鍧楀垎閰嶅拰璐ㄩ噺闂ㄦ鏌ャ€?
+    template_text: `You are a knowledge point quality reviewer.
 
-## 瀹℃牳姝ラ
+## Task
+Review the extracted KP list. Perform cross-block stitching, deduplication, clustering, module assignment, and quality gate checks.
 
-### 1. 璺ㄥ潡缂濆悎
-- 鎵惧埌鎵€鏈?cross_block_risk = true 鐨?KP
-- 濡傛灉涓嬩竴涓?KP 鏄画鎺ュ唴瀹癸紙鎻忚堪鐩镐技銆佸悓涓€涓婚锛夛紝鍚堝苟涓轰竴涓?KP
-- 鍚堝苟鍚庣殑 kp_code 鐢ㄥ墠涓€涓?
+## Steps
 
-### 2. 鍘婚噸
-- 涓や釜 KP 鐨?鑰冩硶"瀹屽叏鐩稿悓锛堣兘鍑虹殑棰樹竴妯′竴鏍凤級鈫?鍚堝苟锛屼繚鐣?detailed_content 鏇磋缁嗙殑
+### 1. Cross-block stitching
+- Find all KPs with cross_block_risk = true.
+- If the next KP is a continuation (similar description, same topic), merge them into a single KP.
+- After merging, the kp_code is the first one's.
 
-### 3. 鑱氱被
-- 涓婚鐩歌繎鐨?KP 褰掑叆鍚屼竴鑱氱被锛坈luster锛?
-- 姣忎釜鑱氱被 2-5 涓?KP
-- 鑱氱被鍚嶇О鐢?2-4 涓瓧姒傛嫭涓婚
+### 2. Deduplication
+- If two KPs have completely identical content (the question they would answer is the same), merge them.
+- Keep the more detailed detailed_content.
 
-### 4. 妯″潡鍒嗛厤
-鏍规嵁浠ヤ笅妯″潡缁撴瀯锛屽皢姣忎釜 KP 鍒嗛厤鍒板搴?module_group锛?{module_structure}
+### 3. Clustering
+- Group KPs with similar topics into the same cluster.
+- Each cluster contains 2-5 KPs.
+- Cluster names should be 2-4 characters summarizing the topic.
 
-### 5. 璐ㄩ噺闂紙閫愭潯妫€鏌ワ紝鍏ㄩ儴閫氳繃鎵嶅悎鏍硷級
-1. 姣忎釜灏忚妭鑷冲皯鏈?1 涓?KP
-2. 璁＄畻绫?KP 鍏ㄩ儴鍖呭惈瀹屾暣鍏紡鍜屾楠?
-3. C2 璇勪及绫?KP 鍏ㄩ儴鍖呭惈鐭涚浘淇″彿锛堟鍙弽涓ら潰锛?
-4. 娌℃湁"澶"KP锛坉escription 瓒呰繃 25 瀛椾笖鍚涓嫭绔嬫蹇?鈫?闇€鎷嗗垎锛?
-5. OCR 鎹熷潖鍖哄煙宸叉爣娉?ocr_quality = "damaged" 鎴?"uncertain"
-6. 鎵€鏈?cross_block_risk KP 宸插鐞嗭紙鍚堝苟鎴栫‘璁ょ嫭绔嬶級
-7. 妯″潡闂?KP 鏁伴噺姣斾緥 鈮?2:1
+### 4. Module assignment
+Assign each KP to its module_group based on the module structure below:
+{module_structure}
 
-## 鍘熸 KP 鍒楄〃
+### 5. Quality gates (every check must pass)
+1. Every section has at least 1 KP.
+2. All calculation KPs include complete formulas and steps.
+3. All C2 (evaluative) KPs include contradiction signals (mention both sides of the trade-off).
+4. No "too wide" KPs (description > 25 characters AND covers multiple independent concepts -> must split).
+5. OCR damaged regions are marked with ocr_quality = "damaged" or "uncertain".
+6. All cross_block_risk KPs are resolved (merged or confirmed standalone).
+7. Module-to-module KP count ratio <= 2:1.
+
+## Preservation rule
+Default to keeping every KP from the input list unless it is a duplicate (rule 2) or merged for cross-block stitching (rule 1). Do not drop KPs based on importance score alone. Output should include every distinct KP, even those with low importance ratings.
+
+## Original KP List
 {kp_table}
 
-## 杈撳嚭瑕佹眰
-杩斿洖涓ユ牸 JSON锛屼笉瑕佹湁浠讳綍棰濆鏂囧瓧锛?
+## Output
+Return strict JSON only, no extra text:
 {
   "quality_gates": {
     "all_sections_have_kp": true,
@@ -174,27 +193,27 @@ Return strict JSON only, with no extra text:
   "issues": [
     {
       "kp_code": "2.3-01",
-      "issue": "闂鎻忚堪",
-      "suggestion": "淇寤鸿"
+      "issue": "issue description",
+      "suggestion": "fix recommendation"
     }
   ],
   "final_knowledge_points": [
     {
       "kp_code": "2.3-01",
       "module_group": 1,
-      "cluster_name": "鑱氱被鍚?",
-      "section_name": "鎵€灞炲皬鑺?",
-      "description": "涓€鍙ヨ瘽鎻忚堪",
+      "cluster_name": "cluster name",
+      "section_name": "section name",
+      "description": "one-sentence description",
       "type": "factual|conceptual|procedural|analytical|evaluative",
       "importance": 1,
-      "detailed_content": "瀹屾暣鑷冻鍐呭",
+      "detailed_content": "complete self-contained content",
       "ocr_quality": "good|uncertain|damaged"
     }
   ],
   "clusters": [
     {
       "module_group": 1,
-      "name": "鑱氱被鍚?",
+      "name": "cluster name",
       "kp_codes": ["2.3-01", "2.3-02"]
     }
   ]
