@@ -4,6 +4,49 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-30 | M4.7 真机浏览器上传 hotfix 链 — silent 400 + KP isolate kill 双修
+
+**触发**：用户在浏览器实跑 PDF 上传（book 51 "week 1 - intro.pdf" 5.7MB user 1），UI 显示成功 + 跳 /preparing，但 DB `upload_status=pending` 永卡——T5.4 API smoke 没抓到的产线 bug。两个独立根因连环修：
+
+**Bug #1 — 前端 silent 400**（commit `4ee1325`）：
+- 浏览器 confirm 请求 body 只传 `{ bookId, title }`，缺 `contentType` 字段
+- 后端 zod `RequestSchema` 强制 `contentType: z.enum([PDF_CONTENT_TYPE, PPTX_CONTENT_TYPE])`，缺字段直接 400 INVALID_REQUEST
+- 前端 fetch 之后没看 response.ok，UI 乐观跳页"准备中"——用户看不到 400
+- T5.4 API smoke 用 `node fetch({ contentType })` 严格按文档传字段所以漏抓
+- **修**：`src/app/upload/page.tsx:191` body 加 `contentType`（line 124 已经算好 `getContentType(fileKind)`）。1 字段 +1 -1，Claude 直接改（用户授权"你改吧"）
+
+**Bug #2 — KP 抽取被 Vercel isolate kill**（commit `b55b598`）：
+- 4ee1325 修后 confirm 200，但 book 52 仍卡 `kp_extraction_status=pending`
+- 根因：`src/lib/upload-flow.ts` 的 outer `runClassifyAndExtract` 已被 T17 (`d33a79f`) 包进 `after()` 续命，**但 inner** `void triggerReadyModulesExtraction(bookId).catch(...)` 是裸 fire-and-forget——after() callback resolve 后 Vercel 立刻 terminate isolate，inner promise 被 kill，Stage 0/1/2 永不触发
+- 这是 T17 的漏修：T17 修了 fetch-isolate 同寿命，没修嵌套 fire-and-forget
+- **修**：`src/lib/upload-flow.ts:155-159` `void ... .catch(...)` → `try { await ... } catch (error) { logAction(...) }`，inner 调用 await 化吃 after() 续命窗口
+
+**端到端验证（XHR-equivalent CLI smoke）**：
+- 新 `.ccb/smoke-browser-pdf.sh` 完整模拟浏览器：register → presign → R2 PUT（curl `--data-binary` 模仿 XHR）→ confirm（带 cookie + contentType）→ DB 查 book 状态
+- book 53（10 页 10KB 合成 PDF，user `claude-pdf-1761821632@test.local`）：upload=confirmed / parse=done / kp=completed / module 88=completed / Stage 0/1/2 全留痕 / 71 秒完成
+- ⚠️ 仍未覆盖：UI 层视觉验证（进度页文案 / cache badge 渲染 / 拒绝弹窗按钮）——只能在浏览器里点验
+
+**T5.4 浏览器 smoke 状态更新**：
+- API 契约 + KP isolate 续命：✅ 已修 + 端到端验证（不再依赖用户跑 backend）
+- UI 视觉验证：⬜ 仍需用户做（无 backend 风险，仅"按钮显示对不对"层面）
+- M4.7 正式关闭门槛降低：用户点一次浏览器 PDF 上传 + 看进度页跳转 + 看缓存命中 badge 即可，不需要点全 4 路径
+
+**Files**
+- `src/app/upload/page.tsx`（+1 -1，commit 4ee1325）
+- `src/lib/upload-flow.ts`（+3 -3，commit b55b598）
+- 新增 `.ccb/smoke-browser-pdf.sh` / `.ccb/poll-book52.mjs` / `.ccb/poll-book53.mjs` / `.ccb/check-book51.mjs`（gitignored，验证工具）
+- 合成 PDF：`C:\Users\Administrator\AppData\Local\Temp\smoke\week1.pdf`（fpdf2 生成 10KB / 10 页）
+
+**教训**：
+1. **fire-and-forget 在 Vercel after() 内仍不安全**：after() 只续命到 callback 自身 resolve，callback 内 spawn 的裸 promise 同样被 isolate 杀。需要全链 await
+2. **前端 silent 400**：没看 response.ok 直接乐观跳页，UI 看不到错误，DB 状态是唯一证据。回归 acceptance 应包含「DB 终态验证」不只是「200 OK」
+3. **API smoke ≠ 浏览器 smoke**：node fetch 严格按文档传字段会漏抓"前端字段对齐文档"类 bug；XHR-equivalent curl `--data-binary` 才能完整复刻浏览器 R2 PUT；register/presign/PUT/confirm 全链 cookie smoke 才能 cover auth gate 真验证
+4. **多层 fire-and-forget 嵌套需 audit**：T17 修了 outer 没扫 inner——下一里程碑加 grep gate `grep -rn 'void ' src/lib/ src/app/api/` 检查所有 fire-and-forget
+
+**book 51 stuck artifact**：用户点上传后 DB 卡 `upload_status=pending` 永远不会自愈（4ee1325 之前的状态）。可清理或忽略，不影响后续。
+
+---
+
 ## 2026-04-30 | M4.7 T5.4 API 层全绿 — Cloud Run 重部署 + Path 4 PPTX 解锁（浏览器 smoke 待用户跑）
 
 **触发**：T5.4 4-path API smoke 卡在 Path 4 PPTX，根因是 Cloud Run revision `ai-textbook-ocr-00008-5jg`（2026-04-24 部署）缺 `/parse-pptx` 端点（端点是 commit `8b425ee` 2026-04-26 加的，但 Cloud Build trigger 没配，自动部署从未触发）。
