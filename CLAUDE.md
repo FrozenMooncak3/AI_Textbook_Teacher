@@ -49,6 +49,7 @@ PreCompact hook 每 session 首次 /compact 强制拦一次，要求先更新 pr
 - 不写 TypeScript `any`，不绕过类型系统
 - 不在客户端代码中暴露 `ANTHROPIC_API_KEY`，API 调用只在服务端
 - 不在生产代码中留 `console.log`
+- **Fire-and-forget 全链 after() 续命**（M4.7 hotfix 家族 T13/T17/b55b598/97f046a 教训）：所有 `src/app/api/**` 和 `src/lib/**` 内部 spawn 的**业务关键**异步 promise 必须显式 `import { after } from 'next/server'` 包裹或 await 化，**禁止裸 `void promise.catch(...)`**（Vercel isolate ~10-15s 后 terminate 内部 promise 被 kill）。声称"fire-and-forget / after() / Promise 生命周期"相关 bug 已修前必须跑 `grep -rn 'void [a-zA-Z][a-zA-Z0-9_]*\([^)]*\)\.catch' src/lib/ src/app/api/` 检查——命中行需逐条 audit：**业务关键路径**（trigger KP / fetch OCR / writeCacheFromBook 等数据写路径）必须 after() 包裹；**纯审计日志**（`logAction(...)`）by-design fire-and-forget 不需要包，但要确认无 `.catch(` 关键写副作用。豁免清单同步到 architecture.md "fire-and-forget after() 包裹清单"段
 - **系统进化 hook 总开关**：若 `scripts/hooks/` 下带 `AI_SYSTEM_EVOLUTION_DISABLE` 检查的 hook（如 `post-tool-failure-capture.sh` / `user-correction-counter.sh`）出现异常（误报 / 失败阻塞），设置环境变量 `AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用所有新机制。Windows 当前 shell：`export AI_SYSTEM_EVOLUTION_DISABLE=1`；永久：写入 `~/.bashrc` 或项目 `.env`。恢复：`unset AI_SYSTEM_EVOLUTION_DISABLE` 或 `=0`。
 
 ## CCB 角色分工

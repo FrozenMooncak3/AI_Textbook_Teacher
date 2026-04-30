@@ -112,6 +112,7 @@
 - **Cloud Build 自动 trigger（停车场 T1，P1）**：M4.7 收尾发现 cloudbuild.ocr.yaml 已含 deploy step 但 GitHub push trigger 未配置，每次 OCR server 改动需手动 `gcloud builds submit` 或 Claude REST API 自助。M5 开始前先修。`journal/2026-04-29-cloud-build-trigger-gap.md` 列了候选方案 A/B/C
 - **Advisory 累计**：M4.7 全程零 Blocking 落地，Advisory 累计 ~12 条（schema 命名 / Modal 文案微调 / TS strict 类型注解等），M4.7 milestone-audit 时批量评估
 - **Books 45/47 cache_hit anomaly（T5.4 advisory）**：同 MD5 第二次上传 cache_hit=false，可能是 page_count / lang 字段 mismatch 触发 lookupCache miss，M5 开始前快速诊断或归 stuck 调研
+- **Fire-and-forget 4 处遗留 audit（M4.7 T6.3 milestone-audit grep gate 命中）**：M4.7 已修 confirm/ocr-callback/upload-flow 3 路径，**未在 M4.7 路径内暴露**但 grep 命中：(a) `cost-meter-service.ts:66` triggerBudgetAlertIfThreshold（告警邮件丢失低风险）/ (b) `kp-extraction-service.ts:527` writeCacheFromBook（D6 缓存写入丢失影响命中率）/ (c) `books/[id]/extract/route.ts:68+79` extractModule + triggerReadyModulesExtraction（手动重试路径，用户可绕过）。M5 brainstorm 评估是否升级 after()。详 [architecture.md fire-and-forget 段](architecture.md)
 - **Phase 3 阶段收尾**：域名、监控、Secrets 三件事打包（低优先，M5 开始前再做）
 - **停车场 🚨 T1**（工程流程）：里程碑开发必须先切隔离分支（`journal/2026-04-21-dev-branch-isolation.md`）— M4.5 session 闪退暴露 master=prod 的半成品直达生产风险，M5 开始前必须决策是否升级规则 4 为"里程碑级强制 worktree"
 

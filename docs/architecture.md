@@ -29,7 +29,7 @@ Auth: `/login` `/register`（邀请码）| App Shell: 3 级 error.tsx + AppSideb
 ### 核心 API
 - `POST /api/books` — TXT 上传 + 建书（M4.5 起 PDF 走 presign+confirm 分支，不再经此端点）
 - `POST /api/uploads/presign` — 签发 R2 PUT presigned URL（M4.5，15min TTL，contentType 白名单 application/pdf，objectKey 格式 `books/{userId}/{uuid}.pdf`）
-- `POST /api/books/confirm` — 客户端上传完成后确认入库（M4.5，HeadObject 校验 → INSERT books（upload_status='uploaded', file_size） → fire-and-forget classify + extract-text + 建模块 + KP 触发 → 200 立返 bookId）
+- `POST /api/books/confirm` — 客户端上传完成后确认入库（M4.5；M4.7 加必填 `contentType: 'application/pdf' | '<pptx mime>'`，4ee1325 修前端 silent 400；HeadObject 校验 → INSERT books（upload_status='uploaded', file_size） → after() 包裹的 classify + extract-text + 建模块 + KP 触发 → 200 立返 bookId）
 - `GET /api/books/[id]/status` — 准备页轮询端点（M4.5 扩展 14 字段：bookId / uploadStatus / parseStatus / kpExtractionStatus / progressPct / currentStage / modules[] / firstModuleReady / totalPages / pagesDone / classifyCounts / errorCode / lastError）
 - `GET /api/books/[id]/module-status` — 模块级三元组状态（text/ocr/kp）
 - `POST /api/books/[id]/extract` — 手动触发 KP 提取（全书或 ?moduleId=N）
@@ -396,7 +396,7 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 
 **API 契约**：
 - `POST /api/uploads/presign`：入 `{ fileName: string, contentType: 'application/pdf', fileSize: number }` → 出 `{ uploadUrl: string, objectKey: string }`；contentType 白名单（仅 application/pdf），大小上限 50MB；鉴权 requireUser；objectKey 约定由服务端生成，客户端不得自定义
-- `POST /api/books/confirm`：入 `{ objectKey, fileName, fileSize }` → 出 200 `{ bookId }` / 409 `{ error: 'ALREADY_CONFIRMED', bookId }`（file_path 已存在 books 记录 → 幂等）/ 409 `{ error: 'PROCESSING_FAILED', bookId }`（已有记录但 parse_status='error'，前端跳 `/books` 让用户重传）/ 400 `{ error: 'HEAD_FAILED' }`（HeadObject 404 或 size 不匹配）。成功响应不等 classify 完成（fire-and-forget）
+- `POST /api/books/confirm`：入 `{ bookId, title, contentType }`（M4.7 起 contentType 必填 zod enum `application/pdf` | `<pptx mime>`，4ee1325 修；前端缺字段直接 400 INVALID_REQUEST）→ 出 200 `{ bookId, processing, cacheHit? }`（D6 cache hit 时 processing=false 直跳 fast-path）/ 409 `{ error: 'ALREADY_CONFIRMED', bookId }`（file_path 已存在 books 记录 → 幂等）/ 409 `{ error: 'PROCESSING_FAILED', bookId }`（已有记录但 parse_status='error'，前端跳 `/books` 让用户重传）/ 400 `{ error: 'HEAD_FAILED' }`（HeadObject 404 或 size 不匹配）。成功响应不等 classify 完成（after() 包裹 fire-and-forget）
 - `GET /api/books/[id]/status` 扩展 14 字段：`{ bookId, uploadStatus, parseStatus, kpExtractionStatus, progressPct (0-100), currentStage ('uploading'|'classifying'|'extracting'|'building_modules'|'extracting_kps'|'ready'|'failed'), modules: [{ id, title, orderIndex, textStatus, ocrStatus, kpStatus, pageStart, pageEnd }], firstModuleReady: boolean, totalPages, pagesDone, classifyCounts: {text, scanned, mixed}, errorCode?, lastError? }`；老 status 端点的 polling 调用方行为兼容
 
 **Fire-and-forget 调度**（`src/lib/upload-flow.ts`）：
@@ -542,7 +542,7 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - **Neon 自动注入**：`DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PGHOST`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_*`
 - **手动配置**：`ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `AI_MODEL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `OCR_SERVER_URL`, `OCR_SERVER_TOKEN`, `GCP_SA_KEY_JSON`, `OCR_REQUIRE_IAM_AUTH=true`, `NEXT_CALLBACK_URL`
 - **M4.7 新增**：`DEEPSEEK_API_KEY`（DeepSeek Platform secret，主模型）/ `DASHSCOPE_API_KEY`（阿里云 DashScope 国内站，Qwen fallback）/ `RESEND_API_KEY`（邮件服务：拒绝 waitlist + 月度告警 + 异常告警）/ `CRON_SECRET`（Vercel Cron `Authorization: Bearer` 鉴权）/ `AI_MODEL_FALLBACK=qwen:qwen3-max` / `MONTHLY_BUDGET_PER_BOOK=1.5`（元）/ `MONTHLY_BUDGET_TOTAL=500`（元）/ `BUDGET_ALERT_EMAIL=zs2911@nyu.edu`
-- **M4.7 切换**：`AI_MODEL` 从 `google:gemini-2.5-pro` → `deepseek:deepseek-chat`
+- **M4.7 切换**：`AI_MODEL` 从 `google:gemini-2.5-pro` → `deepseek:deepseek-chat`（生产环境通过 env var 覆盖；`src/lib/ai.ts:130` 代码默认 `anthropic:claude-sonnet-4-6` 作本地 fallback，**生产 env 必须显式设 `AI_MODEL=deepseek:deepseek-chat`** 否则成本回归 Sonnet）
 - **M4.7 移除**：`GOOGLE_API_KEY`（Gemini AI Studio key，已下线；`GOOGLE_GENERATIVE_AI_API_KEY` 也可清理，账户保留 standby）；`GOOGLE_APPLICATION_CREDENTIALS`（Cloud Run OCR）保留——OCR standby 状态，M5+ 重启用
 
 **环境变量（Cloud Run OCR 服务）**：
@@ -574,6 +574,8 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - 教学免费档：DeepSeek（受 monthly_cost_meter 500 元封顶）；教学付费档：维持 Sonnet 4.6（独立 Anthropic 账户，不计入此预算）
 - Provider registry 注册 4 家：`anthropic` / `openai` / `google`(standby) / `deepseek` / `qwen`，统一 `ProviderModelId<'provider:model-id'>` 类型
 - Fallback chain：主模型抛错（429 / 503 / JSON parse / Zod schema failure / network timeout）→ 自动重试 fallback；仍失败 → throw 让 extract-service 走 ROLLBACK 到 Gemini Flash standby（仍消耗 Google 配额，但不上量）
+- **DeepSeek/Qwen 集成约束**（M4.7 hotfix 链 2026-04-29）：(a) provider wrapper 必须用 `chat-completions` API（`createOpenAI` baseURL，874c915）；(b) 输出格式降级 `json_object`（不是 `json_schema`，96838d5 SDK middleware 兼容）；(c) `maxOutputTokens` 硬 cap **8192**（9b2cab7，超出 silent JSON truncation）；(d) **多轮对话 history 必须 `JSON.stringify()` 序列化** assistant message—不 stringify 时 DeepSeek 返回纯空格响应（9ec5115）；(e) KP 提取 callModel 必须显式 `temperature: 0 + seed: 42`（4e4eddc）—SDK 默认 1.0 创意温度导致 ±50% KP count 漂移，T5.2 红线波动根因
+- **Extractor prompts 编码约束**（2026-04-29 7fe3158）：`seed-templates.ts` 的 extractor 段（structure_scan + quality_check + module_kp_extract）必须用英文 ASCII，不允许 GBK 中文 prompt 落地——M0 首 commit `e9bc1fc` Windows GBK 文件被 git 当 UTF-8 写入导致 production 乱码 prompt
 
 **缓存层**（D6）—— `kp_cache` 表 + `books.file_md5` / `books.cache_hit`：
 - 命中键：`(pdf_md5, language, page_count)` 全书级精确匹配；命中率目标 20-25%（教辅类高频书）
@@ -610,4 +612,20 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - `/api/cron/monthly-cost-reset` — 月初 reset `monthly_cost_meter` + 上月成本报告邮件给 `BUDGET_ALERT_EMAIL`
 - `/api/cron/abuse-alert` — 每日扫 `book_uploads_log` >5 本/30 天，标 `suspicious_flag` + 邮件告警
 
-**Vercel 部署 ⚠️**：M4.6 修复的 fire-and-forget 后台任务必须用 Vercel `after()`（`next/server`），不能裸 void promise（isolate 提前死亡丢任务）；`POST /api/books/confirm` PPT 分支已对齐（`src/lib/pptx-parse.ts` + `runClassifyAndExtract` 双路径）。
+**Vercel 部署 ⚠️ — fire-and-forget 全链 after() 续命**（M4.6 + M4.7 hotfix 家族 4 变种合订）：
+所有内部 spawn 的异步任务必须显式 `import { after } from 'next/server'` 包裹，**包括嵌套 promise**——after() 只续命到外层 callback 自身 resolve，内部裸 `void promise.catch(...)` 仍会被 isolate kill。
+- T13 (`f400bb8` 2026-04-22)：confirm 完成后 OCR 完成路径缺 `triggerReadyModulesExtraction` 重 trigger
+- T14 (`c0f69de` 2026-04-22)：callback `module_id=0` UPDATE WHERE 排除 'processing' 中间态
+- T17 (`d33a79f` 2026-04-24)：confirm route outer `runClassifyAndExtract` 包 `after()` 续命（long-fetch 25s vs serverless 10-15s isolate timeout）
+- b55b598 (2026-04-30)：`src/lib/upload-flow.ts:155-159` inner `void triggerReadyModulesExtraction(...).catch(...)` 改 `try { await ... } catch (e) { logAction(...) }` 吃 after() 续命窗口
+- 97f046a (2026-04-30)：`src/app/api/ocr/callback/route.ts` book-level（line 89）+ module-level（line 104）两处 fire-and-forget 改包 `triggerKpExtraction(bookId)` helper 内嵌 `after()`
+
+**当前 after() 包裹清单**（验证已 production 端到端通过）：
+- `src/app/api/books/confirm/route.ts` — runClassifyAndExtract（PDF + PPT 双路径）
+- `src/app/api/ocr/callback/route.ts` — triggerKpExtraction helper
+- `src/lib/upload-flow.ts` — runClassifyAndExtract 内 triggerReadyModulesExtraction await 化
+
+**⚠️ 已知遗留 fire-and-forget 候选**（M4.7 milestone-audit 2026-04-30 grep gate 命中，**未在 M4.7 路径内暴露**，M5 brainstorm 评估是否升级 after()）：
+- `src/lib/services/cost-meter-service.ts:66` — `triggerBudgetAlertIfThreshold(ym).catch(...)` 在 incrementCostMeter 后异步触发预算告警；告警邮件丢失影响低，但累计可能漏发
+- `src/lib/services/kp-extraction-service.ts:527` — `writeCacheFromBook(...).catch(...)` 在 KP 提取完成后写 kp_cache；isolate kill 时本次缓存写入丢失，下次同 MD5 不命中（影响 D6 命中率）
+- `src/app/api/books/[bookId]/extract/route.ts:68 + 79` — 用户手动 `POST /api/books/[id]/extract` 路径的 `extractModule.catch(...)` + `triggerReadyModulesExtraction.catch(...)`；用户期待 KP 提取，isolate kill 会导致状态卡 pending（Action Hub 上手动重试可绕过）
