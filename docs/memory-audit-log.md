@@ -51,3 +51,4 @@
 2026-04-28 21:35 | op:edit | file:MEMORY.md | reason:Project 段移除 2 行（M4.6 Brainstorm WIP + OCR Cost Shock），与上方 2 条 delete 同步
 2026-04-28 22:05 | op:add | file:feedback_persist-secrets-immediately.md | reason:本 session compact 丢失用户 paste 的 DEEPSEEK_API_KEY，用户重发后强提示——固化"用户 paste 密钥/secret 后必须立即 echo 写入 .env.local"规则，避免再次 compact 丢失
 2026-04-28 22:05 | op:edit | file:MEMORY.md | reason:Process 段加 Persist Secrets Immediately 索引行
+2026-04-29 11:59 | op:add | file:project_deepseek-json-history-format.md | reason:T5.3 根因诊断 — DeepSeek json_object + 多轮 + 纯文本 assistant 历史 = 返回纯空格

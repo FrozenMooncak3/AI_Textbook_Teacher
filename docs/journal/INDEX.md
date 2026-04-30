@@ -33,6 +33,7 @@
 - **T2** 学习计划定制（百词斩模式）：AI 预估时长+用户自定节奏 `[study-plan, pacing, AI-estimation, personalization]` → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
 
 ### 基础设施
+- **T1** 🚨 Cloud Build trigger 缺失——OCR server 改 → Cloud Run 部署链断裂，M4.7 T5.4 PPTX smoke 暴露 Cloud Run rev 00008 自 Apr 24 stale（M4.6 T16 只补了 yaml deploy step 没配 trigger），目前 workaround 手动 `gcloud builds submit` `[Cloud-Build, trigger, Cloud-Run, OCR-deploy, CI/CD-gap, M4.7]` → [2026-04-29-cloud-build-trigger-gap.md](./2026-04-29-cloud-build-trigger-gap.md)
 - **T1** 🚨 OCR 管线 Vercel→Cloud Run 出站 fetch hang 4-6 分钟——book 11/12 复测暴露（OCR 直接探测 4.5s 返 200 正常），M4.6 第一件事诊断 google-auth-library / Vercel 网络 / 函数运行时根因 `[OCR, Vercel, Cloud-Run, fetch-hang, google-auth-library, M4.6]` → 见 `docs/project_status.md §4`
 - **T2** 预生成系统——后台预生成下一步内容，消灭等待 `[pregeneration, background-tasks, latency, infrastructure]` → [2026-04-04-pregeneration-system.md](./2026-04-04-pregeneration-system.md)
 - **T3** 语言模式系统——自动切换 prompt 语言，多国语言版本 `[i18n, prompt-language, localization]` → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
