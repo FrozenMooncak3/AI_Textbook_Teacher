@@ -9,7 +9,7 @@
 
 **方向**：MVP 扩展三线——扫描 PDF（✅）→ 教学系统（M4 ✅）→ 留存机制，串行执行
 
-**最近关闭里程碑（2026-04-30）**：**M4.7 OCR + KP 成本架构 ✅ 实质关闭**——T0-T6 全 done，4 路径生产 smoke 全绿，Cloud Run 升级到 rev 00009-g9d，DeepSeek 成本基线落地。M4.6 OCR 管线修复 ✅ 代码全修完（T15+T16+T17 实测通过），但 book 18 暴露 KP 提取阶段 Google AI Studio 余额耗尽 + 单本成本 8-15 元 → 触发 M4.7 战略级重设
+**进行中**：**M4.7 OCR + KP 成本架构 — 代码 + API smoke 全绿，浏览器 smoke 待用户跑（2026-04-30）**——T0-T6 代码全 done，4 路径**带 cookie API smoke** 全绿（confirm 200 / DB 入账 / cost_log 全通），Cloud Run 升级到 rev 00009-g9d，DeepSeek 成本基线落地。但 T5.4 spec 要求**浏览器** 4-path smoke（用户点 UI 上传 + 看进度页 + 看拒绝弹窗），本机无法直访 *.vercel.app 必须用户跑。M4.7 正式关闭等浏览器 smoke 通过。M4.6 OCR 管线修复 ✅ 代码全修完（T15+T16+T17 实测通过），但 book 18 暴露 KP 提取阶段 Google AI Studio 余额耗尽 + 单本成本 8-15 元 → 触发 M4.7 战略级重设
 - **T1-T4 完成**（2026-04-22）：IdTokenClient audience 缓存（`f98b548`）+ classify/extract-text fetch 30s timeout + retry×1（`7c54934`）+ stuck books cleanup SQL（`8a879f8`）+ docs 骨架
 - **T15 hotfix 完成**（2026-04-23）：live test book 13（14.9MB 369 页）暴露 Cloud Run 容器 OOM 崩溃（`e0bb0c5`）。Python-side：`scripts/ocr_server.py` Vision client 模块级 singleton + 每 50 页 `gc.collect()` + progress log；Infra-side：用户 Console 手动 Cloud Run memory 512 MiB → 4 GiB
 - **T16 hotfix 完成**（2026-04-23）：T15 push 后 Cloud Run 仍跑旧 revision 暴露 `cloudbuild.ocr.yaml` 只 build+push 不 deploy（`f097994`）。追加第 3 步 `gcloud run deploy` 固化 `--memory=4Gi`，未来 push `scripts/**` / `Dockerfile.ocr` 会自动 build → push → deploy 一条龙。IAM 前置（Cloud Build SA 需 `roles/run.admin` + `roles/iam.serviceAccountUser`）已标注 commit body
@@ -26,7 +26,7 @@
   - **D7 上传流控**：首本免费 + 邀请码 +1 / 1 小时 1 本上限 / >5 本异常告警
 - ✅ **M4.7 Plan ready（2026-04-26）**：6 phase / 27 tasks / ~7 工作日；plan-document-reviewer 通过；3 个真实 blocker 已修（r2-client exports 提到 Phase 0 / Dockerfile.ocr inline pip install / cost-estimator 加 computeMessageCost export）
 - ✅ **M4.7 Phase 0-4 + T5.1-T5.2 完成（2026-04-27 → 04-29）**：30+ commits autonomous 落地。**Phase 0**（基础设施 4 commit）：schema.sql 5 表 + 5 列 + provider 注册 DeepSeek/Qwen + getTeacherModel premium-locked + r2-client。**Phase 1**（服务层 6 commit）：email/cost-meter/quota/kp-cache/pdf-md5/cost-estimator。**Phase 2**（API 层 9 commit）：presign 文件类型检查 + confirm scan-PDF reject + register 邀请码 + KP cache 双钩 + teaching premium-locked + 邮箱收集 + 月度 reset cron + abuse-alert + vercel.json schedule。**Phase 3**（PPT 解析 2 commit）：pptx_parser.py + /parse-pptx 端点 + confirm PPTX 分支。**Phase 4**（前端 10 commit，含 3 spec_mismatch on copy）：ScanPdfRejectionModal + QuotaIndicator + CacheHitBadge——Gemini 在文案逐字对齐 spec 上 3/4 漂移触发 `feedback_direct-edit-when-stuck` 直接 Edit；后端 API hook 全 Codex 零问题。**Phase 5**：T5.1 Vercel env 推送 + 部署 `dpl_DdB8QnuNfJLsQamW6BXZJxCc34fQ` READY ✅；**T5.2 KP 回归通过 ✅（2026-04-29）**：3 次 variance run 全 12/12 pass 新红线（每模块 ≥3 KP + 5 type 全覆盖 + JSON parse 100%）；红线从 ≥5 改 ≥3 因为「KP count ≠ 教学价值代理」（详见 changelog 2026-04-29 + plan T5.2 acceptance）；T5.3/5.4 user-blocked。**T5.2 关键 hotfix（2026-04-29）**：(a) DB extractor prompts GBK 乱码 → SQL UPDATE 改英文版（structure_scan + quality_check）；(b) `kp-extraction-service.ts` callModel 加 `temperature: 0 + seed: 42`（commit 4e4eddc）；(c) `seed-templates.ts` extractor 3 段同步英文版（commit 7fe3158）防止 DB reset 写回乱码。教训：Gemini 在 byte-locked 文案上结构性漂移（4 任务 3 retry），Codex 在后端 13/13 零 spec_mismatch；DeepSeek 10× 成本压缩 baseline 落地
-- ✅ **2026-04-30 T5.4 全绿 + M4.7 实质关闭**（本 session）：Path 4 PPTX 卡在 Cloud Run rev `00008-5jg`（缺 `/parse-pptx` 端点），用户授权 access token bridge → Claude 用 REST API 自助完成 IAM 加权 4 角色（cloudbuild.builds.editor / run.developer / iam.serviceAccountUser / storage.admin）+ Cloud Build 提交（tar 4 源文件 → GCS bucket `awesome-nucleus-403711_cloudbuild` → POST /v1/builds → 2.5min SUCCESS）+ Cloud Run 升级 rev `00009-g9d`。4 路径生产 smoke 全绿：cache miss（book 48）/ cache hit / 10MB 拒绝（book 49）/ PPTX 直传（book 50 confirm 200 + parse_status=done + KP 提取 completed + 4 条 cost_log）。**P1 遗留**：Cloud Build GitHub trigger 配置缺失（每次 OCR server 改动都要手动 builds submit），归停车场 T1（`journal/2026-04-29-cloud-build-trigger-gap.md`）M5 开始前修
+- ✅ **2026-04-30 T5.4 API 层全绿 + Cloud Run 部署修复**（本 session）：Path 4 PPTX 卡在 Cloud Run rev `00008-5jg`（缺 `/parse-pptx` 端点），用户授权 access token bridge → Claude 用 REST API 自助完成 IAM 加权 4 角色（cloudbuild.builds.editor / run.developer / iam.serviceAccountUser / storage.admin）+ Cloud Build 提交（tar 4 源文件 → GCS bucket `awesome-nucleus-403711_cloudbuild` → POST /v1/builds → 2.5min SUCCESS）+ Cloud Run 升级 rev `00009-g9d`。4 路径**带 cookie API smoke** 全绿：cache miss（book 48）/ cache hit / 10MB 拒绝（book 49）/ PPTX 直传（book 50 confirm 200 + parse_status=done + KP 提取 completed + 4 条 cost_log）。**仍欠**：spec T5.4 acceptance 要求**浏览器**端 4 路径——用户点上传 → 看进度页 → 看拒绝弹窗 → 看缓存命中 badge，必须用户跑（本机无法直访 *.vercel.app）。**P1 遗留**：Cloud Build GitHub trigger 配置缺失（每次 OCR server 改动都要手动 builds submit），归停车场 T1（`journal/2026-04-29-cloud-build-trigger-gap.md`）M5 开始前修
 - 🟡 **2026-04-29 P0 hotfix 链**（T5.4 衍生）：本机 API smoke 暴露 `/api/books/confirm` PDF 路径生产 100% 500（DOMMatrix 未定义）→ 第一轮 fix `598bf33` 把 `@napi-rs/canvas` 提到顶层 dep **失败**（Codex 用无 cookie curl 的 401 当成功证据，没穿越 auth gate；同时 Vercel build cache 屏蔽 NFT trace 重置）→ 第二轮 fix `fe489cf` 把 `pdf-parse` 从 `^2.4.5` 降到 `1.1.1` + 删 `@napi-rs/canvas`（v1 用 pdfjs-dist@2.x 无 canvas 依赖，serverless-safe）**成功**：Codex + Claude 双重带 cookie smoke 都拿到 200，DB 全链路落盘验证通过（cost_log + book_uploads_log + monthly_cost_meter）。**新 memory `feedback_auth-gate-verification.md`**：派 API 路由 fix 任务时 acceptance criteria 必须含带 cookie 真实请求 + 期望 2xx，401/404/405 一律不接受。
 - → [M4.7 spec](superpowers/specs/2026-04-25-ocr-cost-architecture-design.md) · [M4.7 plan](superpowers/plans/2026-04-25-ocr-cost-architecture.md) · [WIP 决策追溯](superpowers/specs/2026-04-25-ocr-cost-brainstorm-state.md) · [M4.6 spec](superpowers/specs/2026-04-22-m4.6-ocr-pipeline-design.md) · [M4.6 plan](superpowers/plans/2026-04-22-m4.6-ocr-pipeline-fix.md) · [成本冲击 journal](journal/2026-04-25-ocr-cost-shock.md)
 
@@ -41,12 +41,13 @@
 - **云部署**（阶段 1 ✅ 2026-04-16；阶段 2 ✅ 2026-04-19；阶段 3 ⬜ 未开始：域名 + 监控 + Secrets）
 - **M4 教学系统** ✅ 完成（2026-04-20 本 session 收尾）：19 tasks 全 PASS。L1 引擎：KP 类型迁移 + zod + schema（teaching_sessions + user_subscriptions + prompt_templates.model）+ retry/teaching-types/entitlement/teacher-model + teacher-prompts（Zod refine）+ seed 5 teacher 模板 + teaching-sessions API（create + messages retry + 409 struggling）+ L2 Tier A 6 后端端点（switch-mode / reset-and-start / clusters / module / start-qa / status 扩展）+ book-meta-analyzer。L2 Tier B 前端：Modal + BookTOC（基础 + 引导态）+ ObjectivesList + ModeSwitchDialog + /books 页改造 + /activate 激活页 + /teach 教学对话页（retry ×1）+ /teaching-complete 完成中页。Moat 硬约束：4 字段全 grep 0 hits。技术债登记：start-qa API stale redirectUrl（前端已 workaround）。→ [spec](superpowers/specs/2026-04-15-m4-teaching-mode-design.md) · [plan](superpowers/plans/2026-04-15-m4-teaching-mode.md)
 
-**排队中**：M5 留存机制（M4.7 已实质关闭，可启动 brainstorm）
+**排队中**：M5 留存机制（M4.7 浏览器 smoke 通过后再启动）
 
 **下一步**：
-1. **commit + push 关 M4.7**：本 session 文档增量（changelog / project_status / journal/INDEX / journal/2026-04-29-cloud-build-trigger-gap / memory-audit-log）一次提交推 origin
-2. **M5 留存机制 brainstorm 启动**：用户决策 trigger 时机（先休息 / 直接进 / 看市场反馈再决定）
-3. **停车场 P1 修 Cloud Build GitHub trigger**：每次 OCR 改动手动 builds submit 不可持续，M5 开始前先修（journal `2026-04-29-cloud-build-trigger-gap.md` 候选方案 A/B/C）
+1. **🚨 用户跑 T5.4 浏览器 smoke**（本机网络不通 *.vercel.app 必须用户做）：4 路径——cache miss（新 PDF）/ cache hit（同 PDF 第二次上传）/ 拒绝弹窗（>10MB 或扫描）/ PPTX 直传——验证 UI 进度页 + 拒绝弹窗 + 缓存命中 badge 文案 + 上传后跳转
+2. **T5.4 通过后 commit "M4.7 正式关闭"**：再做一次 docs swap + push origin 关 M4.7
+3. **M5 留存机制 brainstorm**：T5.4 通过后启动
+4. **停车场 P1 修 Cloud Build GitHub trigger**：M5 开始前先做（journal `2026-04-29-cloud-build-trigger-gap.md` 候选方案 A/B/C）
 
 **平行 · 元系统进化**：✅ 完成（2026-04-19 本 session 端到端落地）。Survey → Spec → Plan → 10 commits（c423c63 / 7eb1313 / 3227a3d / 36b5303 / 0684391 / ed50bbf / d783baf / 96b25fd / cfe8456 / 024de5e），T1 8 低成本 + T2 Retrospective 2.0 + M10 review 外化全部上线。Kill switch：`AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用所有 hook 机制。Spec: `superpowers/specs/2026-04-19-system-evolution-design.md`；Plan: `superpowers/plans/2026-04-19-system-evolution.md`。
 
@@ -103,7 +104,8 @@
 
 ## 4. 未决问题
 
-- **M4.7 实质已关闭（2026-04-30）**：T0-T6 全 done + 4 路径生产 smoke 全绿；T6.3 milestone-audit 推迟到 M5 开始前批量做（M4.7 architecture.md 已在 Phase 0-4 各 commit 同步，无累积漂移）
+- **🚨 M4.7 T5.4 浏览器 smoke pending**：API 层 4 路径全绿（带 cookie curl confirm 200 / DB 入账），但 spec 要求**浏览器**端验证 UI 流——本机不通 *.vercel.app 必须用户跑。通过后 M4.7 正式关闭
+- **M4.7 T6.3 milestone-audit**：T5.4 通过后做 architecture.md 全量验证（Phase 0-4 各 commit 已同步，预计无累积漂移）
 - **Cloud Build 自动 trigger（停车场 T1，P1）**：M4.7 收尾发现 cloudbuild.ocr.yaml 已含 deploy step 但 GitHub push trigger 未配置，每次 OCR server 改动需手动 `gcloud builds submit` 或 Claude REST API 自助。M5 开始前先修。`journal/2026-04-29-cloud-build-trigger-gap.md` 列了候选方案 A/B/C
 - **Advisory 累计**：M4.7 全程零 Blocking 落地，Advisory 累计 ~12 条（schema 命名 / Modal 文案微调 / TS strict 类型注解等），M4.7 milestone-audit 时批量评估
 - **Books 45/47 cache_hit anomaly（T5.4 advisory）**：同 MD5 第二次上传 cache_hit=false，可能是 page_count / lang 字段 mismatch 触发 lookupCache miss，M5 开始前快速诊断或归 stuck 调研
