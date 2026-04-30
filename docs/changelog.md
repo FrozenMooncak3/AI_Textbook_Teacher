@@ -4,6 +4,53 @@
 > 目的：Context 压缩后，新对话的 Claude 读这个文件可以知道"代码里现在有什么"。
 > 规则：每完成一个功能或修改，必须在这里追加一条记录。
 
+## 2026-04-30 | M4.7 第三个 hotfix — OCR callback after() 续命 + T5.4 4 路径 smoke 全绿
+
+**触发**：b55b598 修了 upload-flow inner fire-and-forget 后，T5.4 重跑 4 路径 smoke。Path 1 cache miss（book 55 用户 intro1.pdf 5.7MB）暴露 OCR callback 路径**同结构 bug**——`src/app/api/ocr/callback/route.ts` line 89 `void triggerReadyModulesExtraction(bookId).catch(...)` 是裸 fire-and-forget，OCR 完成发 callback 时 Vercel isolate 在响应回来后 ~10-15s terminate，KP trigger 被 kill → kp_extraction_status 永卡 pending。
+
+**Bug #3 — OCR callback 嵌套 fire-and-forget**（commit `97f046a`）：
+- `src/app/api/ocr/callback/route.ts` book-level success（module_id===0 line 89）+ module-level success（line 104）两处都是裸 `void ... .catch(...)`
+- 修法严格对齐 b55b598 模式：`import { after } from 'next/server'` + 把 `void promise.catch(...)` 改成包一层 `function triggerKpExtraction(bookId): void { after(async () => { try { await triggerReadyModulesExtraction(bookId) } catch (e) { logAction('triggerReadyModulesExtraction error', `bookId=${bookId}: ${String(e)}`, 'error') } }) }`
+- 这是 T13 + T17 + b55b598 同根因家族第 4 个变种——**fire-and-forget 在 Vercel after() 内仍不安全**，所有内部 spawn 的 promise 必须显式包 after()，单纯一层不够
+
+**T5.4 4 路径 smoke 验证**（97f046a 落 production 后实跑）：
+
+| 路径 | book | 结果 | 关键证据 |
+|------|------|------|----------|
+| Path 1 cache miss | book 55（user 10，intro1.pdf 5.7MB） | ✅ upload=confirmed / parse=done / kp=completed / 49 KP / 20 cluster / kp_cache 第 4 行写入 / ~7min | OCR callback after() 续命修复**端到端验证成功** |
+| Path 2 cache hit | book 58（fresh user，同 intro1.pdf） | ✅ confirm `{processing:false, cacheHit:true}` 2967ms / kp_cache hit_count 0→1 / modules+KPs 复用 fast-path | D6 全书级 MD5 缓存 hit 命中 |
+| Path 3 服务端拒绝 | API 层 3a/3b/3c | ✅ 3a too_large（11MB）HTTP 400 zod / 3b unsupported_type（.docx）HTTP 400 enum / 3c .bin HTTP 400 enum | presign 服务端校验工作 |
+| Path 3 扫描 PDF | book 56（pdf_scanned_ocr.pdf 8.2MB） | ⚠️ 文件含文字层（text_pages=32, mixed=27, scanned=0），classifier 识别为文字版 PDF 未触发 confirm 拒绝；email_collection_list waitlist 写入成功 | 测试文件本身不是纯扫描 — UI 拒绝弹窗仍依赖用户浏览器验证 |
+| Path 4 .pptx | book 57（第六周统计学.pptx 6.4MB） | ✅ confirm 200 + parse_status=done + kp completed / kp_cache 第 5 行写入；observation：33 slide → 1012 字符（图像重 PPT 文本提取偏低，登记 advisory） | /parse-pptx 端点工作 |
+
+**Telemetry 全 5 张表落盘验证**：
+- `cost_log`：book 55 共 20 行 / model=deepseek:deepseek-chat / 共 ~0.06 元 / call_type=kp_extract
+- `monthly_cost_meter`：2026-04 total=0.2174 元（远低于 500 元上限 + 1.5 元单本上限）
+- `book_uploads_log`：user 10 / book 55 写入
+- `quota`：user 10 → book_quota_remaining=0（首本免费用掉）
+- `kp_cache`：第 4/5 行新增（book 55 + book 57 各一行）
+
+**硬 check**（task-execution Step 3.2.5 review_termination_criteria）：
+- `npm run build` → exit 0 ✅
+- `npm run lint` → exit 0 ✅
+- `npm test` → N/A（package.json 无 test script，例外声明）
+
+**Files**
+- `src/app/api/ocr/callback/route.ts`（commit 97f046a，+12 -8）
+- 新增 smoke 工具（gitignored）：`.ccb/smoke-path2-cachehit.sh` / `smoke-path3-scanned.sh` / `smoke-path3-rejections.sh` / `smoke-path4-pptx.sh` / `poll-multi.mjs`
+
+**T5.4 状态**：
+- API + telemetry 端到端验证：✅（4 路径全绿 / 5 表落盘 / build+lint 双绿）
+- UI 视觉验证：⬜ 仍需用户浏览器（拒绝弹窗按钮 / 进度页文案 / cache badge 渲染——本机网络无法直访 *.vercel.app）
+
+**M4.7 关闭门槛**：用户浏览器点一次 PDF 上传 + 看进度页跳转 + 看缓存命中 badge 即可 = 正式关闭 → T6.3 milestone-audit + finishing-a-development-branch + push origin
+
+**教训**：
+- fire-and-forget 在 after() 内仍不安全——T13/T17/b55b598/97f046a 同根因家族第 4 个变种，所有内部 spawn 的 promise 必须显式包 `after()` 续命窗口；下一里程碑加 grep gate `grep -rn 'void.*.catch' src/lib/ src/app/api/`
+- T5.4 acceptance 同时跑 API smoke + telemetry table verify 两层证据，比单层 200 OK 强很多——回归脚本/CI 应内嵌 DB 终态查询，不光 HTTP code
+
+---
+
 ## 2026-04-30 | M4.7 真机浏览器上传 hotfix 链 — silent 400 + KP isolate kill 双修
 
 **触发**：用户在浏览器实跑 PDF 上传（book 51 "week 1 - intro.pdf" 5.7MB user 1），UI 显示成功 + 跳 /preparing，但 DB `upload_status=pending` 永卡——T5.4 API smoke 没抓到的产线 bug。两个独立根因连环修：
