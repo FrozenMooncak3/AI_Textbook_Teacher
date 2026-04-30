@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { query, run } from '@/lib/db'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
@@ -68,8 +68,12 @@ async function handlePageResult(event: PageResultEvent): Promise<void> {
 }
 
 function triggerKpExtraction(bookId: number): void {
-  void triggerReadyModulesExtraction(bookId).catch(async (error) => {
-    await logAction('triggerReadyModulesExtraction error', `bookId=${bookId}: ${String(error)}`, 'error')
+  after(async () => {
+    try {
+      await triggerReadyModulesExtraction(bookId)
+    } catch (error) {
+      await logAction('triggerReadyModulesExtraction error', `bookId=${bookId}: ${String(error)}`, 'error')
+    }
   })
 }
 
