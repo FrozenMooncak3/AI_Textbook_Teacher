@@ -152,9 +152,11 @@ export async function runClassifyAndExtract(
       await run("UPDATE books SET parse_status = 'done' WHERE id = $1", [bookId])
     }
 
-    void triggerReadyModulesExtraction(bookId).catch(async (error) => {
+    try {
+      await triggerReadyModulesExtraction(bookId)
+    } catch (error) {
       await logAction('triggerReadyModulesExtraction error', `bookId=${bookId}: ${String(error)}`, 'error')
-    })
+    }
 
     await logAction(
       'book_upload_classified',
