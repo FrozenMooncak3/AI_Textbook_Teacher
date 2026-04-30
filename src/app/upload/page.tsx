@@ -188,7 +188,7 @@ export default function UploadPage() {
       const confirmRes = await fetch('/api/books/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookId, title: title.trim() }),
+        body: JSON.stringify({ bookId, title: title.trim(), contentType }),
       })
       
       const confirmJson = await confirmRes.json()
