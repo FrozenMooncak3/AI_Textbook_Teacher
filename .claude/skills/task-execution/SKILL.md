@@ -286,6 +286,24 @@ review_termination_criteria:
 
 **触发条件**：`review_level` 为 `Full` 或 `Spot Check` 时必走。`Auto-Pass` 已包含 `npm run build` 硬 check，本段不重复。
 
+### Step 3.2.6: Bug class 泛化 gate（防止 instance vs class 混淆）
+
+修复型任务（fix / hotfix / bug-related）review 在声明 `passed` 前**必须**回答以下 3 问。reviewer 把答案写入 ledger `review_summary.notes`：
+
+1. **Bug class fingerprint**：这个 bug 的根因模式是什么？一句话描述，避开"在 X 文件 Y 行少了 Z"这种 instance 描述。例：「Vercel API route 里 naked `void promise.catch` 被 isolate kill」、「zod schema 必填字段在前端 body 缺失」、「moat 字段泄露到客户端 bundle」
+2. **Class 范围**：这个 fingerprint 在代码库哪里可能出现？给出 grep 命令 / 文件 glob / 模块清单
+3. **是否扫了**：fixer 在第 2 步给出的范围内查过同 class 其它 instance 吗？贴出执行的 grep 命令 + 命中行逐条处理（每行标注：业务关键已修 / 纯审计豁免 / 不是同 class 误命中）
+
+**硬规则**：
+- 写不出 1 / 2 / 3 任一 → review **不能 passed**，回 Phase 4 Path B（recycle）让 fixer 补
+- 写出"只是 instance 没扫 class" → 必须 surface to user：「class 没扫，y 接受 / n 让我扫」。用户 n → 强制扫；用户 y → 在 ledger notes 标 `class-scan-deferred:<reason>`，retrospective 时回查
+- **例外**：纯样式 / 文案 / 配置 / 单文件 rename / 纯文档 — Step 3.2.5 例外段已覆盖，本段同例外
+- **class-agnostic**：本 gate 不绑定具体 bug 类别（不为 fire-and-forget 单独装 grep / 不为 zod 单独装 schema check），任何 fix 都问同 3 问
+
+**触发条件**：任务类型为 fix / hotfix / bug-related。feature / refactor / docs 不触发。
+
+**Why this gate exists**：M4.7 fire-and-forget 4 次同 class 复发（T13 / T17 / b55b598 / 97f046a）证明"instance 修好 = class 修好"是结构性认知错误。给具体 bug 类别加 grep gate 是症状级补丁（下一类 bug 还会重演），class-agnostic gate 在每个 fix 落地时强制泛化思考，才能从根上阻断 instance/class 混淆。
+
 ### Step 3.3: Classify Findings
 
 For each finding, assign one severity:

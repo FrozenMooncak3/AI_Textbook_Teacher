@@ -69,8 +69,12 @@ next-env.d.ts
 
 # CCB ad-hoc smoke/debug scripts (contain hardcoded local paths)
 .ccb/*.mjs
+.ccb/*.js
 .ccb/*.sh
 .ccb/*.json
+.ccb/*.log
+.ccb/*.out
+.ccb/*.txt
 .ccb/counters/
 .ccb/history/
 .ccb/precompact-saved-*

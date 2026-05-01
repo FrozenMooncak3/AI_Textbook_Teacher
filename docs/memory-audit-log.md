@@ -52,3 +52,9 @@
 2026-04-28 22:05 | op:add | file:feedback_persist-secrets-immediately.md | reason:本 session compact 丢失用户 paste 的 DEEPSEEK_API_KEY，用户重发后强提示——固化"用户 paste 密钥/secret 后必须立即 echo 写入 .env.local"规则，避免再次 compact 丢失
 2026-04-28 22:05 | op:edit | file:MEMORY.md | reason:Process 段加 Persist Secrets Immediately 索引行
 2026-04-29 11:59 | op:add | file:project_deepseek-json-history-format.md | reason:T5.3 根因诊断 — DeepSeek json_object + 多轮 + 纯文本 assistant 历史 = 返回纯空格
+
+## 2026-04-30
+
+2026-04-30 21:00 | op:edit | file:project_vercel-fire-and-forget-after.md | reason:retrospective 2.0 草稿 a1 — 扩展为 4-variant family（outer naked / inner-of-after() naked / OCR callback book-level / OCR callback module-level）+ grep gate 命令 + 4 处未修候选清单（M4.7 收尾）
+2026-04-30 21:00 | op:add | file:feedback_smoke-must-traverse-auth-gate.md | reason:retrospective 2.0 草稿 a2 — 派 src/app/api/** fix 任务 acceptance 必须三件齐全（cookie + --data-binary + DB 终态查询），M4.7 实证两次假阳性（598bf33 401 / 4ee1325 silent 400）
+2026-04-30 21:00 | op:edit | file:MEMORY.md | reason:Milestones & Review 段加 Smoke Must Traverse Auth Gate 索引行（与 auth-gate-verification 相邻）；Project 段更新 Vercel Fire-and-Forget 描述（4-variant family）
