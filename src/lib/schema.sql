@@ -456,3 +456,18 @@ CREATE INDEX IF NOT EXISTS idx_books_md5 ON books(file_md5);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS book_quota_remaining INTEGER NOT NULL DEFAULT 1;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS invite_code_used TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS suspicious_flag BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Role system (2026-05-02): admin bypass for D7 upload limits
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    WHERE t.relname = 'users' AND c.conname = 'users_role_check'
+  ) THEN
+    ALTER TABLE users ADD CONSTRAINT users_role_check
+      CHECK (role IN ('user', 'admin'));
+  END IF;
+END $$;

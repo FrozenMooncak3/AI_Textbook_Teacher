@@ -2588,3 +2588,11 @@ Files: `src/app/api/books/[bookId]/status/route.ts`, `src/app/api/books/[bookId]
 
 **Spec**：`docs/superpowers/specs/2026-04-25-ocr-cost-architecture-design.md`
 **Plan**：`docs/superpowers/plans/2026-04-25-ocr-cost-architecture.md`
+
+---
+
+## 2026-05-02 | Role Base T1: users.role migration + admin seed
+
+Completed: Added an idempotent `users.role` text column with default `user` and `users_role_check` constraint limiting values to `user`/`admin`. Added `.ccb/admin-role-seed.mjs` to promote `frozenmooncak3@gmail.com` to `admin` through a parameterized update.
+DB: Applied `src/lib/schema.sql` through `scripts/init-neon-schema.ts`; re-ran it to verify idempotence. Ran the admin seed and verified the role column, check constraint, and admin row on the configured Neon main branch.
+Files: `src/lib/schema.sql`, `.ccb/admin-role-seed.mjs`
