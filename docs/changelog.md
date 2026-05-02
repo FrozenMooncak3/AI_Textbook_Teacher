@@ -2596,3 +2596,11 @@ Files: `src/app/api/books/[bookId]/status/route.ts`, `src/app/api/books/[bookId]
 Completed: Added an idempotent `users.role` text column with default `user` and `users_role_check` constraint limiting values to `user`/`admin`. Added `.ccb/admin-role-seed.mjs` to promote `frozenmooncak3@gmail.com` to `admin` through a parameterized update.
 DB: Applied `src/lib/schema.sql` through `scripts/init-neon-schema.ts`; re-ran it to verify idempotence. Ran the admin seed and verified the role column, check constraint, and admin row on the configured Neon main branch.
 Files: `src/lib/schema.sql`, `.ccb/admin-role-seed.mjs`
+
+---
+
+## 2026-05-02 | Role Base T2: auth user role type
+
+Completed: Exported `UserRole = 'user' | 'admin'`, exported the `User` interface with a `role` field, and selected `u.role` in `getUserFromSession` so downstream entitlement tasks can consume the role from authenticated sessions.
+Verification: Used a temporary type-check assertion for red/green proof, then removed it. `npm run lint` passed after the final scoped edit.
+Files: `src/lib/auth.ts`

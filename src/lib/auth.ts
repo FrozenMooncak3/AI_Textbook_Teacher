@@ -3,15 +3,18 @@ import crypto from 'crypto'
 import { queryOne, run } from './db'
 import { UserError } from './errors'
 
+export type UserRole = 'user' | 'admin'
+
 const SESSION_COOKIE = 'session_token'
 
 const SALT_ROUNDS = 12
 export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60
 
-interface User {
+export interface User {
   id: number
   email: string
   display_name: string | null
+  role: UserRole
   book_quota_remaining: number
   book_quota_total: number
 }
@@ -66,6 +69,7 @@ export async function getUserFromSession(token: string): Promise<User | undefine
         u.id,
         u.email,
         u.display_name,
+        u.role,
         u.book_quota_remaining,
         u.book_quota_remaining + COALESCE(
           (SELECT COUNT(*)::int FROM book_uploads_log WHERE user_id = u.id),
