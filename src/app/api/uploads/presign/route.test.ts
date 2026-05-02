@@ -21,6 +21,7 @@ export async function requireUser() {
     id: globalThis.__presignUserId ?? 7,
     email: 'test@example.com',
     display_name: null,
+    role: globalThis.__presignUserRole ?? 'user',
   }
 }
 `)}`
@@ -39,12 +40,34 @@ export async function logAction(...args) {
 `)}`
 
 const R2_STUB_URL = `data:text/javascript,${encodeURIComponent(`
-export async function buildPresignedPutUrl(bookId, expirySeconds = 900) {
-  globalThis.__presignR2Calls.push({ bookId, expirySeconds })
+export async function buildPresignedPutUrl(bookId, contentType = 'application/pdf', expirySeconds = 900) {
+  globalThis.__presignR2Calls.push({ bookId, contentType, expirySeconds })
   return {
     uploadUrl: globalThis.__presignUploadUrl ?? 'https://test-account.r2.cloudflarestorage.com/test-bucket/books/' + bookId + '/original.pdf?X-Amz-Signature=test-signature&X-Amz-Expires=' + expirySeconds,
     objectKey: globalThis.__presignObjectKey ?? 'books/' + bookId + '/original.pdf',
   }
+}
+`)}`
+
+const QUOTA_STUB_URL = `data:text/javascript,${encodeURIComponent(`
+export async function checkQuotaAndRateLimit(userId) {
+  globalThis.__presignQuotaCalls.push(userId)
+  return globalThis.__presignQuotaResult ?? { ok: true }
+}
+
+export async function consumeQuotaAndLogUpload() {
+  return true
+}
+
+export async function incrementQuotaForInviteCode() {
+  return true
+}
+`)}`
+
+const COST_METER_STUB_URL = `data:text/javascript,${encodeURIComponent(`
+export async function isBudgetExceeded() {
+  globalThis.__presignBudgetCalls.push(true)
+  return globalThis.__presignBudgetExceeded ?? false
 }
 `)}`
 
@@ -75,18 +98,30 @@ type LogCall = unknown[]
 
 type R2Call = {
   bookId: number
+  contentType: string
   expirySeconds: number
 }
+
+type PresignUserRole = 'user' | 'admin'
+
+type QuotaResult =
+  | { ok: true }
+  | { ok: false; reason: 'quota_exceeded' | 'rate_limited' }
 
 type StubState = typeof globalThis & {
   __presignAuthMode?: 'authorized' | 'unauthorized'
   __presignUserId?: number
+  __presignUserRole?: PresignUserRole
   __presignInsertId?: number
   __presignUploadUrl?: string
   __presignObjectKey?: string
+  __presignQuotaResult?: QuotaResult
+  __presignBudgetExceeded?: boolean
   __presignInsertCalls: InsertCall[]
   __presignLogCalls: LogCall[]
   __presignR2Calls: R2Call[]
+  __presignQuotaCalls: number[]
+  __presignBudgetCalls: boolean[]
 }
 
 const registerHooks = (nodeModule as typeof nodeModule & {
@@ -131,6 +166,14 @@ registerHooks({
       return { url: R2_STUB_URL, shortCircuit: true }
     }
 
+    if (specifier === '@/lib/services/quota-service') {
+      return { url: QUOTA_STUB_URL, shortCircuit: true }
+    }
+
+    if (specifier === '@/lib/services/cost-meter-service') {
+      return { url: COST_METER_STUB_URL, shortCircuit: true }
+    }
+
     if (specifier.startsWith('@/')) {
       const resolved = resolveLocalModule(path.join(SRC_DIR, specifier.slice(2)))
       if (resolved) {
@@ -159,12 +202,17 @@ const stubState = globalThis as StubState
 function resetStubState(): void {
   stubState.__presignAuthMode = 'authorized'
   stubState.__presignUserId = 7
+  stubState.__presignUserRole = 'user'
   stubState.__presignInsertId = 42
   stubState.__presignUploadUrl = undefined
   stubState.__presignObjectKey = undefined
+  stubState.__presignQuotaResult = { ok: true }
+  stubState.__presignBudgetExceeded = false
   stubState.__presignInsertCalls = []
   stubState.__presignLogCalls = []
   stubState.__presignR2Calls = []
+  stubState.__presignQuotaCalls = []
+  stubState.__presignBudgetCalls = []
 }
 
 function mkRequest(body: unknown): NextRequest {
@@ -238,8 +286,57 @@ test('creates pending book row and returns presigned upload data', async () => {
   assert.match(stubState.__presignInsertCalls[0].sql, /kp_extraction_status/)
   assert.deepEqual(stubState.__presignInsertCalls[0].params, [7, 'test.pdf', 1_000_000])
 
-  assert.deepEqual(stubState.__presignR2Calls, [{ bookId: 42, expirySeconds: 900 }])
+  assert.deepEqual(stubState.__presignR2Calls, [{
+    bookId: 42,
+    contentType: 'application/pdf',
+    expirySeconds: 900,
+  }])
   assert.equal(stubState.__presignLogCalls.length, 1)
   assert.equal(stubState.__presignLogCalls[0][0], 'book_presign_issued')
-  assert.equal(stubState.__presignLogCalls[0][1], 'bookId=42, filename=test.pdf, size=1000000')
+  assert.equal(
+    stubState.__presignLogCalls[0][1],
+    'bookId=42, filename=test.pdf, size=1000000, contentType=application/pdf'
+  )
+})
+
+test('admin user with quota and budget exceeded still gets presigned URL', async () => {
+  stubState.__presignUserId = 1
+  stubState.__presignUserRole = 'admin'
+  stubState.__presignQuotaResult = { ok: false, reason: 'quota_exceeded' }
+  stubState.__presignBudgetExceeded = true
+
+  const { POST } = await import('./route')
+  const res = await POST(mkRequest({
+    filename: 'admin.pdf',
+    size: 1_024,
+    contentType: 'application/pdf',
+  }))
+  const json = await res.json()
+
+  assert.equal(res.status, 200)
+  assert.equal(json.success, true)
+  assert.equal(json.data.bookId, 42)
+  assert.deepEqual(stubState.__presignQuotaCalls, [])
+  assert.deepEqual(stubState.__presignBudgetCalls, [])
+})
+
+test('regular user with quota exceeded gets 403', async () => {
+  stubState.__presignUserId = 7
+  stubState.__presignUserRole = 'user'
+  stubState.__presignQuotaResult = { ok: false, reason: 'quota_exceeded' }
+  stubState.__presignBudgetExceeded = false
+
+  const { POST } = await import('./route')
+  const res = await POST(mkRequest({
+    filename: 'user.pdf',
+    size: 1_024,
+    contentType: 'application/pdf',
+  }))
+  const json = await res.json()
+
+  assert.equal(res.status, 403)
+  assert.equal(json.success, false)
+  assert.equal(json.code, 'QUOTA_EXCEEDED')
+  assert.deepEqual(stubState.__presignQuotaCalls, [7])
+  assert.deepEqual(stubState.__presignBudgetCalls, [])
 })

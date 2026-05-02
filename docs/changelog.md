@@ -2612,3 +2612,11 @@ Files: `src/lib/auth.ts`
 Completed: Added `canBypassUploadLimits(user)` with a narrow structural `role` input so T4/T5 can wrap D7 upload gates without depending on the full auth user shape. Added `node:test` coverage for admin and regular user roles.
 Verification: `node --test src/lib/__tests__/entitlements.test.ts` passed with 2 tests. `npm run lint` passed.
 Files: `src/lib/entitlements.ts`, `src/lib/__tests__/entitlements.test.ts`
+
+---
+
+## 2026-05-03 | Role Base T4: presign admin upload bypass
+
+Completed: Wrapped presign quota, 1h rate-limit, and monthly budget checks in `canBypassUploadLimits(user)` so admin sessions can receive upload URLs while regular users still hit the existing D7 gates. Updated the presign route test harness with role-aware auth plus quota and budget service stubs, and added admin-bypass and regular-user quota denial coverage.
+Verification: `node --test src/app/api/uploads/presign/route.test.ts`, `node --test src/lib/__tests__/entitlements.test.ts`, and `npm run lint`.
+Files: `src/app/api/uploads/presign/route.ts`, `src/app/api/uploads/presign/route.test.ts`
