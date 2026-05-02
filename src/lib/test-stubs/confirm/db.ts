@@ -13,14 +13,16 @@ type ConfirmBook = {
   user_id: number
   upload_status: string
   parse_status: string
-  file_size: number
+  file_size: string
 } | undefined
 
 type StubState = typeof globalThis & {
   __confirmBook: ConfirmBook
   __confirmQueryCalls: QueryCall[]
   __confirmRunCalls: RunCall[]
+  __confirmInsertCalls: QueryCall[]
   __confirmUpdateRowCount?: number
+  __confirmInsertId?: number
 }
 
 const stubState = globalThis as StubState
@@ -45,4 +47,9 @@ export async function run(sql: string, params: unknown[]): Promise<{
     oid: 0,
     fields: [],
   }
+}
+
+export async function insert(sql: string, params: unknown[]): Promise<number> {
+  stubState.__confirmInsertCalls.push({ sql, params })
+  return stubState.__confirmInsertId ?? 101
 }

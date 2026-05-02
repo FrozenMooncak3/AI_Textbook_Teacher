@@ -2620,3 +2620,11 @@ Files: `src/lib/entitlements.ts`, `src/lib/__tests__/entitlements.test.ts`
 Completed: Wrapped presign quota, 1h rate-limit, and monthly budget checks in `canBypassUploadLimits(user)` so admin sessions can receive upload URLs while regular users still hit the existing D7 gates. Updated the presign route test harness with role-aware auth plus quota and budget service stubs, and added admin-bypass and regular-user quota denial coverage.
 Verification: `node --test src/app/api/uploads/presign/route.test.ts`, `node --test src/lib/__tests__/entitlements.test.ts`, and `npm run lint`.
 Files: `src/app/api/uploads/presign/route.ts`, `src/app/api/uploads/presign/route.test.ts`
+
+---
+
+## 2026-05-03 | Role Base T5: confirm admin quota-consumption bypass
+
+Completed: Changed confirm PDF/PPTX helpers to receive the full `User` and wrapped all four `consumeQuotaAndLogUpload` call sites with `canBypassUploadLimits(user)` so admin confirmations do not decrement quota or write upload-log rows. Updated the existing confirm route test harness for the current PDF/cache/quota dependencies and added admin-bypass plus regular-user quota-race coverage.
+Verification: `node --test src/app/api/books/confirm/route.test.ts`, `node --test src/app/api/uploads/presign/route.test.ts`, `node --test src/lib/__tests__/entitlements.test.ts`, and `npm run lint`.
+Files: `src/app/api/books/confirm/route.ts`, `src/app/api/books/confirm/route.test.ts`, `src/lib/test-stubs/confirm/auth.ts`, `src/lib/test-stubs/confirm/db.ts`, `src/lib/test-stubs/confirm/r2-client.ts`

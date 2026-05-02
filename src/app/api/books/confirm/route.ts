@@ -3,7 +3,9 @@ import { after } from 'next/server'
 import { z } from 'zod'
 import pdf from 'pdf-parse'
 import { requireUser } from '@/lib/auth'
+import type { User } from '@/lib/auth'
 import { insert, queryOne, run } from '@/lib/db'
+import { canBypassUploadLimits } from '@/lib/entitlements'
 import { UserError } from '@/lib/errors'
 import { handleRoute } from '@/lib/handle-route'
 import { logAction } from '@/lib/log'
@@ -84,7 +86,7 @@ export const POST = handleRoute(async (req) => {
   if (contentType === PDF_CONTENT_TYPE) {
     return handlePdfConfirm({
       bookId,
-      userId: user.id,
+      user,
       objectKey,
       title,
       fileMd5,
@@ -93,7 +95,7 @@ export const POST = handleRoute(async (req) => {
 
   return handlePptxConfirm({
     bookId,
-    userId: user.id,
+    user,
     objectKey,
     title,
     fileMd5,
@@ -102,17 +104,18 @@ export const POST = handleRoute(async (req) => {
 
 async function handlePdfConfirm({
   bookId,
-  userId,
+  user,
   objectKey,
   title,
   fileMd5,
 }: {
   bookId: number
-  userId: number
+  user: User
   objectKey: string
   title: string
   fileMd5: string
 }) {
+  const userId = user.id
   const buffer = await getR2ObjectBuffer(objectKey)
   const parsed = await pdf(buffer)
   const pageCount = parsed.numpages
@@ -144,9 +147,11 @@ async function handlePdfConfirm({
     )
     await applyCacheToBook(bookId, cache.payload, fileMd5)
 
-    const consumed = await consumeQuotaAndLogUpload(userId, bookId)
-    if (!consumed) {
-      throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+    if (!canBypassUploadLimits(user)) {
+      const consumed = await consumeQuotaAndLogUpload(userId, bookId)
+      if (!consumed) {
+        throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+      }
     }
 
     await logAction('book_confirmed_cache_hit', `bookId=${bookId}, md5=${fileMd5}`)
@@ -170,9 +175,11 @@ async function handlePdfConfirm({
     return { data: { bookId, processing: true } }
   }
 
-  const consumed = await consumeQuotaAndLogUpload(userId, bookId)
-  if (!consumed) {
-    throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+  if (!canBypassUploadLimits(user)) {
+    const consumed = await consumeQuotaAndLogUpload(userId, bookId)
+    if (!consumed) {
+      throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+    }
   }
 
   after(async () => {
@@ -193,17 +200,18 @@ async function handlePdfConfirm({
 
 async function handlePptxConfirm({
   bookId,
-  userId,
+  user,
   objectKey,
   title,
   fileMd5,
 }: {
   bookId: number
-  userId: number
+  user: User
   objectKey: string
   title: string
   fileMd5: string
 }) {
+  const userId = user.id
   const { slideCount, rawText: parsedRawText } = await parsePptx(objectKey, bookId)
   const rawText = parsedRawText.replace(/^--- SLIDE (\d+) ---$/gm, '--- PAGE $1 ---')
 
@@ -229,9 +237,11 @@ async function handlePptxConfirm({
     )
     await applyCacheToBook(bookId, cache.payload, fileMd5)
 
-    const consumed = await consumeQuotaAndLogUpload(userId, bookId)
-    if (!consumed) {
-      throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+    if (!canBypassUploadLimits(user)) {
+      const consumed = await consumeQuotaAndLogUpload(userId, bookId)
+      if (!consumed) {
+        throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+      }
     }
 
     await logAction(
@@ -256,9 +266,11 @@ async function handlePptxConfirm({
     return { data: { bookId, processing: true } }
   }
 
-  const consumed = await consumeQuotaAndLogUpload(userId, bookId)
-  if (!consumed) {
-    throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+  if (!canBypassUploadLimits(user)) {
+    const consumed = await consumeQuotaAndLogUpload(userId, bookId)
+    if (!consumed) {
+      throw new UserError('额度同时被消耗，请刷新页面重试', 'QUOTA_RACE', 409)
+    }
   }
 
   const chunks = chunkText(rawText)
