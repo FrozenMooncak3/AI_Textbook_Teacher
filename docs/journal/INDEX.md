@@ -10,8 +10,6 @@
 
 ## in_progress（解决中）
 
-- [infra:cloud-build-trigger] **T1 Cloud Build trigger brainstorm 进行中**（2026-05-01 启动）：scope = 落地填坑（不重选方案），trigger 配生产，staging 推迟到 MVP 上线前。已锁 2 决策，剩 5 决策（路径精度 / 失败通知 / 首次回归 / IAM 权限 / staging skill 集成） `[Cloud-Build, trigger, GitHub, Cloud-Run-CD, brainstorm, T1]` → [WIP](../superpowers/specs/2026-05-01-cloud-build-trigger-brainstorm-state.md) · [spec skeleton](../superpowers/specs/2026-05-01-cloud-build-trigger-design.md)
-
 ## parked（停车场）
 
 > Tier 说明：T1 = M5.5 必做 | T2 = 独立里程碑评估 | T3 = MVP 后再议
@@ -35,7 +33,6 @@
 - **T2** 学习计划定制（百词斩模式）：AI 预估时长+用户自定节奏 `[study-plan, pacing, AI-estimation, personalization]` → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
 
 ### 基础设施
-- **T1** 🚨 Cloud Build trigger 缺失——已进 brainstorm（2026-05-01）；条目移到 in_progress 段
 - **T1** 🚨 **MVP 上线前必建 staging 环境**（2026-05-01 决策）——T1 brainstorm 决议 staging 不在本次同时做，推迟到 M5 收尾、抖音/小红书引流前一天独立建设。涉及：新 R2 bucket / 新 Neon branch / 新 Cloud Run service `ai-textbook-ocr-staging` / 新 OCR token 一套。**触发条件**：M5 完成 + 用户开始评估上线时刻 `[staging, MVP-launch, R2, Neon, Cloud-Run, T1, MVP-gate]` → [设计源头](../superpowers/specs/2026-05-01-cloud-build-trigger-design.md#6-staging-推迟与-skill-集成)
 - **T1** 🚨 OCR 管线 Vercel→Cloud Run 出站 fetch hang 4-6 分钟——book 11/12 复测暴露（OCR 直接探测 4.5s 返 200 正常），M4.6 第一件事诊断 google-auth-library / Vercel 网络 / 函数运行时根因 `[OCR, Vercel, Cloud-Run, fetch-hang, google-auth-library, M4.6]` → 见 `docs/project_status.md §4`
 - **T2** 预生成系统——后台预生成下一步内容，消灭等待 `[pregeneration, background-tasks, latency, infrastructure]` → [2026-04-04-pregeneration-system.md](./2026-04-04-pregeneration-system.md)
@@ -47,12 +44,14 @@
 ### 工程流程
 - **T1** 🚨 里程碑开发必须先切隔离分支/版本——M4.5 session 闪退暴露 master=prod 半成品直达生产（T7 已上线但 T8 未建→生产 404），M5 开始前必须决策规则 4 升级为"里程碑级强制 worktree" `[dev-branch, worktree, milestone-isolation, master-prod-risk]` → [2026-04-21-dev-branch-isolation.md](./2026-04-21-dev-branch-isolation.md)
 - **T2** M5 收尾时给 `.claude/skills/finishing-a-development-branch/SKILL.md` 加 staging 硬 check 段——T1 Cloud Build trigger brainstorm（2026-05-01）spec review 暴露 Layer 2 实施细节没定（milestone schema / 标记位 / SKILL 插入步 / M5 之前默认放行逻辑全空），推迟到 staging 真建时一并定+实施 `[finishing-skill, staging, hard-check, M5-closeout, T1-spillover]` → [设计源头](../superpowers/specs/2026-05-01-cloud-build-trigger-design.md#62-skill-集成决策-7-修订-2026-05-01-仅-layer-1layer-2-推迟)
+- **T2** Cloud Build trigger 收尾遗留（M5 / MVP 上线前一并做）：(a) Phase 2.1 失败邮件告警——用 Log-based metric + Cloud Monitoring alert 接 `frozenmooncak3@gmail.com` 已配渠道；(b) Compute Default SA Editor → 收紧到专属最小权限 SA（`run.admin` + `iam.serviceAccountUser` + `artifactregistry.writer`）；(c) Artifact Registry 旧镜像清理（19 个 untagged，~5.7GB 超 0.5GB 免费层 ≈$0.5/月）；(d) 决定 ocr-cd 旧 trigger 是 keep-disabled 还是 delete `[Cloud-Build, trigger, T1-spillover, MVP-launch, hardening]` → [设计源头](../superpowers/specs/2026-05-01-cloud-build-trigger-design.md)
 - **T2** Agent 违规事件追溯系统——T8 Gemini 一轮 3 类硬约束违规（file boundary / any / AC 文案自创），现有追溯只到 session-local ledger + 模式级 memory，缺跨 session 可查事件日志。推荐 `.ccb/agent-violations.log` + 扩展 feedback memory 组合，M4.5 闭环后或下次 retrospective 再评估 `[agent-reliability, observability, violation-tracking, retrospective]` → [2026-04-21-agent-violation-tracking.md](./2026-04-21-agent-violation-tracking.md)
 
 ## resolved（已解决）
 
 > 只保留里程碑级 resolved（milestone / audit / brainstorm-chain）。其他归档在 [INDEX-resolved.md](./INDEX-resolved.md)。
 
+- [milestone:resolved] **T1 Cloud Build trigger 落地**（2026-05-02）：13 天 silent fail（旧 trigger ocr-cd SA 错配 ocr-cloudrun-sa 缺 run.admin）真相揭露 + 新 trigger ai-textbook-ocr-master-deploy + Compute Default SA + 4 文件白名单 + `:$SHORT_SHA` image tag + smoke 全绿（fbd2017→rev 00010-6dw）。Phase 2.1 失败邮件 + Layer 2 finishing skill 硬 check 双 deferred 到 M5 收尾时一并做（停车场 T2） `[Cloud-Build, trigger, T1, M5-pre, CI/CD, ocr-cd-deferred-disable, retrospective]` → [spec](../superpowers/specs/2026-05-01-cloud-build-trigger-design.md) · [plan](../superpowers/plans/2026-05-01-cloud-build-trigger.md) · [retrospective](./2026-04-29-cloud-build-trigger-gap.md)
 - [milestone:resolved] **元系统进化 10 机制**：T1 8 条低成本 hook/counter + T2 Retrospective 2.0（skill audit / 挖矿 / m6 交叉检查）+ M10 review 硬 check（2026-04-19）`[meta-evolution, retrospective, skill-audit, hooks]` → [research](../research/2026-04-19-system-evolution-survey.md) · [spec](../superpowers/specs/2026-04-18-system-evolution-research-design.md)
 - [decision:resolved] 两种学习模式（教学模式 / 完整模式）— 被 M4 教学系统 spec 吸收（2026-04-11）`[learning-modes, teaching, M4]` → [2026-04-11-two-learning-modes.md](./2026-04-11-two-learning-modes.md)
 - [decision:resolved] AI 教学环节纳入 MVP — 已由 M4 教学系统 spec + plan 完整设计（2026-04-10）`[AI-teaching, MVP, M4]` → [2026-04-10-teaching-phase.md](./2026-04-10-teaching-phase.md)

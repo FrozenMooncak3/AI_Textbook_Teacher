@@ -48,7 +48,6 @@
 1. **🚨 用户回家后做 UI 视觉验证**（本机网络不通 *.vercel.app 必须用户做）：浏览器点一次 PDF 上传，看进度页跳转 + 缓存命中 badge 文案；可选 PPTX 直传 + 拒绝弹窗（>10MB 或扫描 PDF）。**Backend 已端到端验证**（book 53 XHR-equivalent CLI smoke），仅剩 UI 层"按钮文案 / 渲染对不对"
 2. **UI 验证通过后 commit "M4.7 正式关闭"**：T6.3 milestone-audit + finishing-a-development-branch + push origin
 3. **M5 留存机制 brainstorm**：M4.7 正式关闭后启动
-4. **停车场 P1 修 Cloud Build GitHub trigger**：M5 开始前先做（journal `2026-04-29-cloud-build-trigger-gap.md` 候选方案 A/B/C）
 
 **平行 · 元系统进化**：✅ 完成（2026-04-19 本 session 端到端落地）。Survey → Spec → Plan → 10 commits（c423c63 / 7eb1313 / 3227a3d / 36b5303 / 0684391 / ed50bbf / d783baf / 96b25fd / cfe8456 / 024de5e），T1 8 低成本 + T2 Retrospective 2.0 + M10 review 外化全部上线。Kill switch：`AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用所有 hook 机制。Spec: `superpowers/specs/2026-04-19-system-evolution-design.md`；Plan: `superpowers/plans/2026-04-19-system-evolution.md`。
 
@@ -109,7 +108,7 @@
 
 - **🚨 M4.7 UI 视觉验证 pending**：backend 已端到端 + 4 路径 API smoke 全绿验证（4ee1325 + b55b598 + 97f046a 三 hotfix 后 / book 53 XHR-equivalent 71 秒 / book 55 OCR callback 端到端 ~7min / book 58 cache hit 2967ms / book 57 PPTX 全绿）；剩用户浏览器点一次 PDF 上传 + 看进度页 + cache badge 文案 + 拒绝弹窗（>10MB 或扫描 PDF）。无 backend 风险，仅"按钮显示对不对"层面。通过后 M4.7 正式关闭
 - **M4.7 T6.3 milestone-audit**：T5.4 通过后做 architecture.md 全量验证（Phase 0-4 各 commit 已同步，预计无累积漂移）
-- **Cloud Build 自动 trigger（停车场 T1，P1）**：M4.7 收尾发现 cloudbuild.ocr.yaml 已含 deploy step 但 GitHub push trigger 未配置，每次 OCR server 改动需手动 `gcloud builds submit` 或 Claude REST API 自助。M5 开始前先修。`journal/2026-04-29-cloud-build-trigger-gap.md` 列了候选方案 A/B/C
+- ✅ **2026-05-02 T1 Cloud Build 自动 trigger 落地**（实际真相 retrospective）：实施时发现旧 trigger `ocr-cd` 自 4/19 起就在跑，但用错 SA（runtime SA `ocr-cloudrun-sa` 缺 `roles/run.admin`）→ build+push 镜像成功但 deploy step 13 天 5 次 fail 无人察觉（4/26 起，包括今天 5/2）。新建 trigger `ai-textbook-ocr-master-deploy` 用 Compute Default SA（Editor）跑通；ocr-cd 已 disabled。4 文件白名单（`ocr_server.py`/`pptx_parser.py`/`Dockerfile.ocr`/`cloudbuild.ocr.yaml`）+ image tag `:$SHORT_SHA` + smoke 通过（`fbd2017`→ rev `00010-6dw`）。Layer 2 finishing skill 硬 check 推迟到 M5 收尾时（停车场 T2）。Phase 2.1 失败邮件告警 deferred（停车场 T2）。Spec：`docs/superpowers/specs/2026-05-01-cloud-build-trigger-design.md`
 - **Advisory 累计**：M4.7 全程零 Blocking 落地，Advisory 累计 ~12 条（schema 命名 / Modal 文案微调 / TS strict 类型注解等），M4.7 milestone-audit 时批量评估
 - **Books 45/47 cache_hit anomaly（T5.4 advisory）**：同 MD5 第二次上传 cache_hit=false，可能是 page_count / lang 字段 mismatch 触发 lookupCache miss，M5 开始前快速诊断或归 stuck 调研
 - **Fire-and-forget 4 处遗留 audit（M4.7 T6.3 milestone-audit grep gate 命中）**：M4.7 已修 confirm/ocr-callback/upload-flow 3 路径，**未在 M4.7 路径内暴露**但 grep 命中：(a) `cost-meter-service.ts:66` triggerBudgetAlertIfThreshold（告警邮件丢失低风险）/ (b) `kp-extraction-service.ts:527` writeCacheFromBook（D6 缓存写入丢失影响命中率）/ (c) `books/[id]/extract/route.ts:68+79` extractModule + triggerReadyModulesExtraction（手动重试路径，用户可绕过）。M5 brainstorm 评估是否升级 after()。详 [architecture.md fire-and-forget 段](architecture.md)

@@ -2526,3 +2526,43 @@ Files: `src/app/api/books/route.ts`, `src/app/api/books/route.test.ts`, `src/lib
 ## 2026-04-21 | M4.5 Task 6: extend book status endpoint for preparing page
 Completed: Expanded `GET /api/books/[bookId]/status` to preserve the legacy `parseStatus` and dual snake_case OCR/KP fields while adding preparing-page fields for `bookId`, `uploadStatus`, normalized `kpExtractionStatus`, module readiness, `progressPct`, `firstModuleReady`, and `estimatedSecondsRemaining`. The route now fetches module rows, normalizes historical `done/error/running` statuses, and falls back `ocr_*` counters to `0` for older books with NULL values. Added route-level regression tests for the pending-upload and fully-completed states.
 Files: `src/app/api/books/[bookId]/status/route.ts`, `src/app/api/books/[bookId]/status/route.test.ts`, `src/lib/test-stubs/book-status/**`
+
+---
+
+## 2026-05-02 | T1 Cloud Build trigger 落地（修 13 天 silent fail 的 OCR CI/CD 缺口）
+
+**问题**：M4.7 T5.4 PPTX smoke 失败暴露 Cloud Run OCR service 自 4/24 起卡 stale revision `00008-5jg`。表面诊断（journal `2026-04-29-cloud-build-trigger-gap.md`）认为"trigger 没建，靠手动 `gcloud builds submit`"。
+
+**真相 retrospective（实施时发现）**：trigger `ocr-cd` 自 4/19/2026 起就在跑（commit `efb2e28`），M4.6 T16 commit `f097994`（4/22）补 deploy step 后，每次 push → build + push 镜像成功 → deploy step 因 SA 错配 `ocr-cloudrun-sa` (Cloud Run **runtime** SA, 缺 `roles/run.admin`) 一直 fail。**13 天 5 次连续 fail（4/26 / 4/28×2 / 4/29 / 5/2）无人察觉**，因为没人主动看 build status 也没邮件通知。
+
+**修复**：
+- 新建 trigger `ai-textbook-ocr-master-deploy` on master push，监听 4 文件白名单（`scripts/ocr_server.py` / `scripts/pptx_parser.py` / `Dockerfile.ocr` / `cloudbuild.ocr.yaml`）
+- Service account = **Compute Default SA**（已是 Editor，权限齐全；MVP 阶段足够，专属最小权限 SA 推到 M5 收尾时收紧）
+- yaml image tag `:first` → `:$SHORT_SHA`（commit-sha 追溯）
+- 旧 trigger `ocr-cd` 已 **disabled**（保留作 audit；停车场 T2 决定是否删除）
+
+**Smoke 验证**：commit `fbd2017` push → 新 trigger 触发 → build SUCCESS → Cloud Run rev `00010-6dw` 出现 → Artifact Registry 出现 `:fbd2017` tag。Revert commit `c3c50fb` 二次触发同样工作。
+
+**Deferred 到停车场 T2**：
+- Phase 2.1 失败邮件告警（GCP UI 不支持 Cloud Build native email；Log-based metric + Cloud Monitoring alert 接 `frozenmooncak3@gmail.com` 渠道是 10 分钟 UI 工程，MVP 上线前再做）
+- finishing-a-development-branch SKILL 加 staging 硬 check（spec review 暴露实施细节没定，会卡死 M4.7 closeout）
+- Artifact Registry 19 个旧镜像清理（~5.7GB 超 0.5GB 免费层）
+- 专属最小权限 SA 收紧
+
+**关键教训**：
+1. Cloud Build 失败如不主动监控可以 silent fail 数周（这次 13 天 5 次 fail 0 通知）
+2. trigger config service account 字段易混淆——runtime SA vs build SA 职责完全不同
+3. 表面诊断（"trigger 没建"）vs 实际真相（"trigger 用错 SA"）的差异——retrospective 必须验证假设而不只看 symptom
+
+**Phase 0 修正既有错误描述**：
+- `architecture.md:533` includedFiles 描述从 `scripts/**,Dockerfile.ocr,requirements.txt` 改为 4 文件白名单
+- `changelog.md:568` (M4.6 T14 entry) 加 correction note 说明 T14 当时仅设计未配置
+
+**Spec**：`docs/superpowers/specs/2026-05-01-cloud-build-trigger-design.md`
+**Plan**：`docs/superpowers/plans/2026-05-01-cloud-build-trigger.md`
+**Retrospective journal**：`docs/journal/2026-04-29-cloud-build-trigger-gap.md`（追加真相段）
+
+**Commits**：
+- `3520024` chore(cloudbuild): yaml image tag :first → :$SHORT_SHA + 修 includedFiles 描述
+- `fbd2017` test: cloud build trigger smoke (revert by `c3c50fb`)
+- 后续：本次 Phase 5 文档收尾 commit

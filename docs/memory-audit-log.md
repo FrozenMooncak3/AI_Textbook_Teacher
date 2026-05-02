@@ -65,3 +65,8 @@
 2026-05-01 12:00 | op:edit | file:MEMORY.md | reason:Project 段加 Cloud Build Trigger Brainstorm WIP 索引行
 
 2026-05-01 14:00 | op:edit | file:project_cloud-build-trigger-brainstorm-wip.md | reason:spec review 后 7 决策修订（决策 6 admin 不是 developer / 决策 7 仅 Layer 1，Layer 2 推迟到 M5 收尾），WIP 文件状态同步
+
+## 2026-05-02
+
+2026-05-02 12:30 | op:delete | file:project_cloud-build-trigger-brainstorm-wip.md | reason:T1 Cloud Build trigger plan 全部落地完成（commit 3520024 + 新 trigger smoke fbd2017→00010-6dw 全绿 + Phase 5 文档收尾），WIP memory pointer 不再需要——决策 trail 留在 spec design.md
+2026-05-02 12:30 | op:edit | file:MEMORY.md | reason:Project 段删 Cloud Build Trigger Brainstorm WIP 索引行

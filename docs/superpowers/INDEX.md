@@ -5,13 +5,13 @@
 ## Specs
 
 ### 进行中（in_progress）
-- [2026-05-01] Cloud Build Trigger 配置（OCR 部署链补全）`[Cloud-Build, trigger, GitHub, Cloud-Run-CD, IAM, staging-deferred, T1, finishing-skill-hard-check]` → [spec](specs/2026-05-01-cloud-build-trigger-design.md) · [WIP](specs/2026-05-01-cloud-build-trigger-brainstorm-state.md)
 - [2026-04-25] OCR + KP 提取成本架构重设 `[OCR, KP-extraction, cost-architecture, DeepSeek-V3.2, Qwen3-Max, Gemini-下线, PDF-MD5-cache, .pptx, scanned-PDF-rejection, 邮箱收集, 留学生, MVP-范围切割, 5决策7lock]` → [spec](specs/2026-04-25-ocr-cost-architecture-design.md) · [WIP](specs/2026-04-25-ocr-cost-brainstorm-state.md)
 - [2026-04-22] M4.6 OCR 管线诊断 + 性能优化设计 `[M4.6, OCR, Vercel, Cloud-Run, hang, fetch-timeout, IdTokenClient-cache, google-auth-library, stuck-artifacts]` → [spec](specs/2026-04-22-m4.6-ocr-pipeline-design.md) · [WIP](specs/2026-04-22-m4.6-ocr-pipeline-brainstorm-state.md)
 - [2026-04-15] M4教学模式最小闭环设计 `[M4, teaching-mode, teacher-AI, transcript, prompt]` → [spec](specs/2026-04-15-m4-teaching-mode-design.md)
 - [2026-04-12] 云部署里程碑设计 `[cloud, deployment, Supabase, Docker, three-phase]` → [spec](specs/2026-04-12-cloud-deployment-design.md)
 
 ### 已完成（resolved）
+- [2026-05-01] Cloud Build Trigger 配置（OCR 部署链补全）`[Cloud-Build, trigger, GitHub, Cloud-Run-CD, IAM, staging-deferred, T1, retrospective-真相-13天-silent-fail]` → [spec](specs/2026-05-01-cloud-build-trigger-design.md)
 - [2026-04-21] M4.5 PDF 上传重构 + 准备页 UX 设计 `[M4.5, PDF-upload, presigned-URL, R2-direct-upload, preparing-page, fire-and-forget, hotfix-T12-T13-T14]` → [spec](specs/2026-04-21-pdf-upload-refactor-design.md) · [WIP](specs/2026-04-21-pdf-upload-refactor-brainstorm-state.md)
 - [2026-04-19] 系统进化机制设计 `[system-evolution, design, T1, T2, hooks, skills, 10-mechanisms, implemented]` → [spec](specs/2026-04-19-system-evolution-design.md)
 - [2026-04-19] 系统进化机制设计Brainstorm进度追踪 `[system-evolution, design, brainstorm, WIP, compact-defense]` → [spec](specs/2026-04-19-system-evolution-design-brainstorm-state.md)
@@ -60,7 +60,6 @@
 ## Plans
 
 ### 进行中（in_progress）
-- [2026-05-01] T1 Cloud Build Trigger 落地实施 `[Cloud-Build, trigger, IAM, smoke, T1, M5-pre, ai-textbook-ocr]` → [plan](plans/2026-05-01-cloud-build-trigger.md)
 - [2026-04-25] OCR + KP 成本架构实施计划（M4.7）`[M4.7, cost-architecture, DeepSeek-V3.2, Qwen3-Max, kp-cache, PDF-MD5, .pptx, scanned-PDF-rejection, monthly-budget-500, free-tier-1book, invite-extension, 6-phase, 7工作日]` → [plan](plans/2026-04-25-ocr-cost-architecture.md)
 - [2026-04-22] M4.6 OCR 管线 hang 修复实施计划 `[M4.6, OCR, Vercel, Cloud-Run, hang, fetch-timeout, retry, IdTokenClient-cache, stuck-artifacts-cleanup]` → [plan](plans/2026-04-22-m4.6-ocr-pipeline-fix.md)
 - [2026-04-18] 云部署阶段2 Cloud Run OCR `[cloud, deployment, Cloud-Run, Google-Vision, callback, phase-2]` → [plan](plans/2026-04-18-cloud-deployment-phase2.md)
@@ -68,6 +67,7 @@
 - [2026-04-15] 云部署阶段1数据层上云 `[cloud, deployment, database, Supabase, phase-1]` → [plan](plans/2026-04-15-cloud-deployment-phase1.md)
 
 ### 已完成（resolved）
+- [2026-05-01] T1 Cloud Build Trigger 落地实施 `[Cloud-Build, trigger, IAM, smoke, T1, M5-pre, ai-textbook-ocr, retrospective-真相-13天-silent-fail]` → [plan](plans/2026-05-01-cloud-build-trigger.md)
 - [2026-04-21] M4.5 PDF 上传重构 + 准备页 UX 实施计划 `[M4.5, PDF-upload, presigned-URL, R2-direct-upload, preparing-page, fire-and-forget, T1-T8, hotfix-T12-T13-T14]` → [plan](plans/2026-04-21-m4.5-pdf-upload-refactor.md)
 - [2026-04-19] 系统进化 10 机制实施 `[system-evolution, hooks, skills, T1-T2, retrospective-2.0, review-externalization, implemented]` → [plan](plans/2026-04-19-system-evolution.md)
 - [2026-04-15] Session-Init Token Optimization 实施计划 `[session-init, token, index, frontmatter, memory-cleanup]` → [plan](plans/2026-04-15-session-init-token-optimization.md)

@@ -1,7 +1,7 @@
 # Cloud Build Trigger 配置设计
 
 **日期**：2026-05-01
-**状态**：进行中（brainstorm WIP → spec → review → 实施）
+**状态**：已实施（2026-05-02；plan 见 ../plans/2026-05-01-cloud-build-trigger.md）
 **关联**：[brainstorm WIP](2026-05-01-cloud-build-trigger-brainstorm-state.md) · [research 04-14](../../research/2026-04-14-cloud-cicd-options.md) · [journal 04-29](../../journal/2026-04-29-cloud-build-trigger-gap.md)
 
 ---
@@ -11,8 +11,9 @@
 （决策 1 锁定）本次 brainstorm 是 **落地填坑**，不重新选方案：
 
 - 方案 C（Cloud Run Continuous Deployment / Cloud Build GitHub trigger）2026-04-14 调研已拍定，理由依然有效
-- M4.6 T16 commit `f097994` 只补了 yaml 的 deploy 步骤，没建 trigger
-- 1 年来 OCR server 改动靠手动 `gcloud builds submit`，触发了 M4.7 T5.4 PPTX smoke 失败
+- 实施前以为是"trigger 没建"，**实施时（2026-05-02）发现真相**：trigger `ocr-cd` 自 4/19/2026 起就在跑（commit `efb2e28`），M4.6 T16 commit `f097994`（4/22）补 deploy step 后，每次 push → build + push 镜像成功 → deploy step 因 SA 错配 ocr-cloudrun-sa（runtime SA，缺 `roles/run.admin`）一直 fail。**13 天 5 次连续 fail 无人察觉**（4/26 / 4/28×2 / 4/29 / 5/2），直至建新 trigger `ai-textbook-ocr-master-deploy` 发现并 disable ocr-cd
+- M4.7 T5.4 PPTX smoke 失败的真因 = 落后的旧 revision `00008-5jg` 是 4/24 stale 起来的（ocr-cd 自 4/26 起 fail）
+- 旧 journal `2026-04-29-cloud-build-trigger-gap.md` 写的"trigger 没建"是表面诊断，**真因是 trigger 用错 SA**
 
 不重新讨论方案 C vs B（GitHub Actions）vs A（手动）。
 
