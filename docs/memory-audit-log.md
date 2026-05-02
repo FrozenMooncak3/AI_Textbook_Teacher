@@ -70,3 +70,8 @@
 
 2026-05-02 12:30 | op:delete | file:project_cloud-build-trigger-brainstorm-wip.md | reason:T1 Cloud Build trigger plan 全部落地完成（commit 3520024 + 新 trigger smoke fbd2017→00010-6dw 全绿 + Phase 5 文档收尾），WIP memory pointer 不再需要——决策 trail 留在 spec design.md
 2026-05-02 12:30 | op:edit | file:MEMORY.md | reason:Project 段删 Cloud Build Trigger Brainstorm WIP 索引行
+2026-05-02 14:35 | op:add | file:project_role-admin-staging-brainstorm.md | reason:开 brainstorm WIP（角色系统+admin+staging），MEMORY.md 加索引指针
+2026-05-02 14:50 | op:add | file:feedback_translate-each-decision.md | reason:用户纠正"翻译"含义为每决策必翻译，写成 feedback memory
+2026-05-02 15:10 | op:edit | file:project_role-admin-staging-brainstorm.md | reason:brainstorm 暂停于决策 5，更新状态描述（已锁 0-4）+ resume 触发条件
+2026-05-02 15:25 | op:edit | file:project_role-admin-staging-brainstorm.md | reason:校准状态——决策 1+2 立刻落地，决策 5-7 paused，原全暂停标记是误解
+2026-05-03 00:55 | op:edit | file:project_role-admin-staging-brainstorm.md | reason:决策 1+2 落地完成，状态收敛——5 commits（5a8d5da/ee76b54/3fe14a8/5a457b0/a4e15e7）+ 15 单元测试覆盖；5-7 paused 状态保留

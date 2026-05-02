@@ -70,6 +70,7 @@ M4.7 模型层：KP 提取 + 免费档教学 → DeepSeek V3.2 (`deepseek:deepse
 - **D6 半全局共享例外**（M4.7）：`kp_cache` 表无 `user_id` 列，跨用户共享教材客观知识点；其他用户数据（books / 笔记 / Q&A 进度 / 测试成绩）严格按 `user_id` 隔离不变
 - **D7 上传额度 + suspicious_flag**（M4.7）：`users.book_quota_remaining INTEGER DEFAULT 1`（首本免费，邀请码已用 +1）；`POST /api/uploads/presign` 入口 quota 0 拒；过去 1 小时 `book_uploads_log` >1 本拒；月度 `monthly_cost_meter` >500 元全局拒；`users.suspicious_flag` 由 `abuse-alert` cron 扫流水自动标
 - **教学付费墙不变量**（M4.7 D5 §5.5）：`getTeacherModel(tier, override)` 中 `tier='premium'` 强制返回 Sonnet，override 仅对 `free` 生效；`free` tier 路由 DeepSeek（覆盖 prompt_templates.model 字段）
+- **角色系统骨架**（2026-05-03）：`users.role TEXT NOT NULL DEFAULT 'user'` enum (`'user' | 'admin'`)；admin 通过 `canBypassUploadLimits(user)` 函数（`src/lib/entitlements.ts`）绕过 D7 三层拦截：(a) `presign` 端点跳过 `checkQuotaAndRateLimit` + `isBudgetExceeded`；(b) `confirm` 端点 4 个调用点全跳过 `consumeQuotaAndLogUpload`（PDF cache hit / PDF non-cache / PPTX cache hit / PPTX non-cache）。`monthly_cost_meter` 写入不变（admin 自测占用份额可忽略，bypass 仅在检查侧）；`cost_log` 审计写入不变（admin 行为始终留痕）。决策 5-7（admin 后台 UI）暂停到 MVP 上线前 brainstorm resume。
 
 ---
 

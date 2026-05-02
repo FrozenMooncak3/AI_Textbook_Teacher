@@ -5,6 +5,7 @@
 ## Specs
 
 ### 进行中（in_progress）
+- [2026-05-02] 角色系统 + admin 后台 ✅ 决策 1+2 已实施 / 决策 5-7（admin 监控 UI）paused MVP 上线前 resume `[role-system, dev-bypass, entitlement, T1, decisions-1-2-resolved, decisions-5-7-paused]` → [spec](specs/2026-05-02-role-admin-staging-design.md) · [WIP](specs/2026-05-02-role-admin-staging-brainstorm-state.md)
 - [2026-04-25] OCR + KP 提取成本架构重设 `[OCR, KP-extraction, cost-architecture, DeepSeek-V3.2, Qwen3-Max, Gemini-下线, PDF-MD5-cache, .pptx, scanned-PDF-rejection, 邮箱收集, 留学生, MVP-范围切割, 5决策7lock]` → [spec](specs/2026-04-25-ocr-cost-architecture-design.md) · [WIP](specs/2026-04-25-ocr-cost-brainstorm-state.md)
 - [2026-04-22] M4.6 OCR 管线诊断 + 性能优化设计 `[M4.6, OCR, Vercel, Cloud-Run, hang, fetch-timeout, IdTokenClient-cache, google-auth-library, stuck-artifacts]` → [spec](specs/2026-04-22-m4.6-ocr-pipeline-design.md) · [WIP](specs/2026-04-22-m4.6-ocr-pipeline-brainstorm-state.md)
 - [2026-04-15] M4教学模式最小闭环设计 `[M4, teaching-mode, teacher-AI, transcript, prompt]` → [spec](specs/2026-04-15-m4-teaching-mode-design.md)
@@ -67,6 +68,7 @@
 - [2026-04-15] 云部署阶段1数据层上云 `[cloud, deployment, database, Supabase, phase-1]` → [plan](plans/2026-04-15-cloud-deployment-phase1.md)
 
 ### 已完成（resolved）
+- [2026-05-02] 角色系统骨架（决策 1+2）实施 `[role-system, dev-bypass, entitlement, schema-migration, presign, confirm, 6-tasks, 5-commits, 16-tests]` → [plan](plans/2026-05-02-role-base.md)
 - [2026-05-01] T1 Cloud Build Trigger 落地实施 `[Cloud-Build, trigger, IAM, smoke, T1, M5-pre, ai-textbook-ocr, retrospective-真相-13天-silent-fail]` → [plan](plans/2026-05-01-cloud-build-trigger.md)
 - [2026-04-21] M4.5 PDF 上传重构 + 准备页 UX 实施计划 `[M4.5, PDF-upload, presigned-URL, R2-direct-upload, preparing-page, fire-and-forget, T1-T8, hotfix-T12-T13-T14]` → [plan](plans/2026-04-21-m4.5-pdf-upload-refactor.md)
 - [2026-04-19] 系统进化 10 机制实施 `[system-evolution, hooks, skills, T1-T2, retrospective-2.0, review-externalization, implemented]` → [plan](plans/2026-04-19-system-evolution.md)

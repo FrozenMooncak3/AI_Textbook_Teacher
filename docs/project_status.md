@@ -9,9 +9,11 @@
 
 **方向**：MVP 扩展三线——扫描 PDF（✅）→ 教学系统（M4 ✅）→ 留存机制，串行执行
 
-**进行中**：**无** — M4.7 已正式关闭（2026-05-02），M5 留存机制按用户决策推迟到 MVP 上线后。当前阶段聚焦 MVP 上线前散事（停车场 T1，下一步段列出）。
+**进行中**：**无** — M4.7 已正式关闭（2026-05-02），角色系统骨架（决策 1+2）已实施（2026-05-03），M5 留存机制按用户决策推迟到 MVP 上线后。当前阶段聚焦 MVP 上线前散事（停车场 T1，下一步段列出）。
 
-**最近关闭**：**M4.7 OCR + KP 成本架构** ✅ 正式关闭（2026-05-02）——backend 端到端 + 4 路径 API smoke 全绿 + UI 视觉验证用户实跑通过（拒绝弹窗 / 进度页跳转 / quota 拦截工作）。M4.7 战略级 7 决策全落地（D0 文件类型限制 / D5 DeepSeek 替代 Gemini / D6 PDF MD5 缓存 / D1 月度预算双层 / D7 上传流控）抵御抖音引流烧钱风险。后续 spillover：T1 Cloud Build trigger 落地（5/2，独立 spec/plan，13 天 silent fail 真相揭露）+ 临时 SQL 给 user_id=1 加 99 quota 解锁开发自测（5/2 触发停车场 T1「角色系统 + admin 后台」）。M4.6 OCR 管线修复（T15+T16+T17）已并入 M4.7 收尾。
+**最近关闭**：**角色系统骨架（决策 1+2）** ✅ 落地完成（2026-05-03）——`users.role` enum + `canBypassUploadLimits(user)` entitlement 函数 + presign/confirm 三层 bypass。schema migration 应用到生产 Neon main 分支，user_id=1（`frozenmooncak3@gmail.com`）已 seed 为 admin，再也不用临时 SQL set 99。15 单元测试（5 presign + 9 confirm + 2 entitlements）双向覆盖：admin 在 quota=0 + budget exceeded 时仍 200 + 不消耗 quota；regular user 仍命中 D7 三层拦截。Codex 实施 5 commits（5a8d5da/ee76b54/3fe14a8/5a457b0/a4e15e7），全 PASS（subagent + 本地 reproduce 双重验证）。决策 3+4 已锁但未落地（无 UI 就无路径/守卫要建），决策 5-7（admin 监控 UI / 邀请码生成 / ban）暂停到 MVP 上线前 brainstorm resume。文件清单：`src/lib/schema.sql` + `src/lib/auth.ts` + `src/lib/entitlements.ts` + `src/lib/__tests__/entitlements.test.ts` + `src/app/api/uploads/presign/route.ts` + `route.test.ts` + `src/app/api/books/confirm/route.ts` + `route.test.ts` + `src/lib/test-stubs/confirm/{auth,db,r2-client}.ts` + `.ccb/admin-role-seed.mjs`。
+
+**前一里程碑**：**M4.7 OCR + KP 成本架构** ✅ 正式关闭（2026-05-02）——backend 端到端 + 4 路径 API smoke 全绿 + UI 视觉验证用户实跑通过（拒绝弹窗 / 进度页跳转 / quota 拦截工作）。M4.7 战略级 7 决策全落地（D0 文件类型限制 / D5 DeepSeek 替代 Gemini / D6 PDF MD5 缓存 / D1 月度预算双层 / D7 上传流控）抵御抖音引流烧钱风险。后续 spillover：T1 Cloud Build trigger 落地（5/2，独立 spec/plan，13 天 silent fail 真相揭露）+ 临时 SQL 给 user_id=1 加 99 quota 解锁开发自测（5/2 触发停车场 T1「角色系统 + admin 后台」）。M4.6 OCR 管线修复（T15+T16+T17）已并入 M4.7 收尾。
 - **T1-T4 完成**（2026-04-22）：IdTokenClient audience 缓存（`f98b548`）+ classify/extract-text fetch 30s timeout + retry×1（`7c54934`）+ stuck books cleanup SQL（`8a879f8`）+ docs 骨架
 - **T15 hotfix 完成**（2026-04-23）：live test book 13（14.9MB 369 页）暴露 Cloud Run 容器 OOM 崩溃（`e0bb0c5`）。Python-side：`scripts/ocr_server.py` Vision client 模块级 singleton + 每 50 页 `gc.collect()` + progress log；Infra-side：用户 Console 手动 Cloud Run memory 512 MiB → 4 GiB
 - **T16 hotfix 完成**（2026-04-23）：T15 push 后 Cloud Run 仍跑旧 revision 暴露 `cloudbuild.ocr.yaml` 只 build+push 不 deploy（`f097994`）。追加第 3 步 `gcloud run deploy` 固化 `--memory=4Gi`，未来 push `scripts/**` / `Dockerfile.ocr` 会自动 build → push → deploy 一条龙。IAM 前置（Cloud Build SA 需 `roles/run.admin` + `roles/iam.serviceAccountUser`）已标注 commit body
