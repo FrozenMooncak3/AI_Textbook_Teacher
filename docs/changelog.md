@@ -565,7 +565,7 @@
 - docker-compose.yml + .env.example：app 段 HOST/PORT → OCR_SERVER_URL + TOKEN + SENTRY_DSN；ocr 段删 DATABASE_URL，默认 OCR_PROVIDER=google（T11）
 - GCP：SA `ocr-cloudrun-sa@awesome-nucleus-403711` + `serviceUsageConsumer` + `artifactregistry.reader`；Artifact Registry repo `ai-textbook-teacher` (us-central1)（T12）
 - Cloud Run 服务：`ai-textbook-ocr` @ us-central1，IAM-only，URL `https://ai-textbook-ocr-408273773864.us-central1.run.app`（T13）
-- Cloud Build GitHub trigger：`includedFiles = scripts/**, Dockerfile.ocr, requirements.txt`，push master 自动重建（T14）
+- Cloud Build GitHub trigger：T14 当时**仅设计未配置**（含 includedFiles 误写为 `scripts/**, Dockerfile.ocr, requirements.txt`，但 trigger 实际未建直至 M5 前期 T1 才落地——见 `docs/superpowers/specs/2026-05-01-cloud-build-trigger-design.md`）
 - Cloudflare R2 CORS：bucket `ai-textbook-pdfs` 加 CORS 规则允许 Vercel 域名 + localhost（T15 发现）
 - Google Cloud Vision API：在项目 `awesome-nucleus-403711` 启用（T15 发现）
 

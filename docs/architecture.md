@@ -530,7 +530,7 @@ ToggleSwitch（开关：Radix Switch）、AIInsightBox（AI 洞察卡片）、Fi
 - **数据库**：Neon Serverless Postgres（us-east-1）— Vercel Integration 自动注入 `DATABASE_URL`，Preview 环境自动 DB branch
 - **文件存储**：Cloudflare R2 bucket `ai-textbook-pdfs` — S3 兼容 API，对象路径 `books/{bookId}/original.pdf`，CORS 允许 Vercel 域名 + localhost
 - **PDF 服务**：`/api/books/[bookId]/pdf` → 302 redirect 到 R2 presigned URL（1h TTL），绕开 Vercel 4.5MB 响应限制
-- **OCR**：Cloud Run 服务 `ai-textbook-ocr` @ us-central1，URL `https://ai-textbook-ocr-408273773864.us-central1.run.app`，IAM-only（禁止未鉴权调用），Google Vision API 调用，Cloud Build GitHub trigger `includedFiles=scripts/**,Dockerfile.ocr,requirements.txt` 自动 CD
+- **OCR**：Cloud Run 服务 `ai-textbook-ocr` @ us-central1，URL `https://ai-textbook-ocr-408273773864.us-central1.run.app`，IAM-only（禁止未鉴权调用），Google Vision API 调用，Cloud Build GitHub trigger `includedFiles=scripts/ocr_server.py,scripts/pptx_parser.py,Dockerfile.ocr,cloudbuild.ocr.yaml` 自动 CD（M5 前期 T1 落地，2026-05-01 spec）
 - **Sentry**：OCR 服务可选 DSN（`SENTRY_DSN` 未设时 print 不崩），环境标签 `SENTRY_ENVIRONMENT`
 
 **本地开发环境（Docker Compose）**：
