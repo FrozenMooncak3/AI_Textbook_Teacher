@@ -2604,3 +2604,11 @@ Files: `src/lib/schema.sql`, `.ccb/admin-role-seed.mjs`
 Completed: Exported `UserRole = 'user' | 'admin'`, exported the `User` interface with a `role` field, and selected `u.role` in `getUserFromSession` so downstream entitlement tasks can consume the role from authenticated sessions.
 Verification: Used a temporary type-check assertion for red/green proof, then removed it. `npm run lint` passed after the final scoped edit.
 Files: `src/lib/auth.ts`
+
+---
+
+## 2026-05-02 | Role Base T3: admin upload entitlement helper
+
+Completed: Added `canBypassUploadLimits(user)` with a narrow structural `role` input so T4/T5 can wrap D7 upload gates without depending on the full auth user shape. Added `node:test` coverage for admin and regular user roles.
+Verification: `node --test src/lib/__tests__/entitlements.test.ts` passed with 2 tests. `npm run lint` passed.
+Files: `src/lib/entitlements.ts`, `src/lib/__tests__/entitlements.test.ts`
