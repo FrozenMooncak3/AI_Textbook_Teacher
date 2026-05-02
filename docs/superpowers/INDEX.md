@@ -60,6 +60,7 @@
 ## Plans
 
 ### 进行中（in_progress）
+- [2026-05-01] T1 Cloud Build Trigger 落地实施 `[Cloud-Build, trigger, IAM, smoke, T1, M5-pre, ai-textbook-ocr]` → [plan](plans/2026-05-01-cloud-build-trigger.md)
 - [2026-04-25] OCR + KP 成本架构实施计划（M4.7）`[M4.7, cost-architecture, DeepSeek-V3.2, Qwen3-Max, kp-cache, PDF-MD5, .pptx, scanned-PDF-rejection, monthly-budget-500, free-tier-1book, invite-extension, 6-phase, 7工作日]` → [plan](plans/2026-04-25-ocr-cost-architecture.md)
 - [2026-04-22] M4.6 OCR 管线 hang 修复实施计划 `[M4.6, OCR, Vercel, Cloud-Run, hang, fetch-timeout, retry, IdTokenClient-cache, stuck-artifacts-cleanup]` → [plan](plans/2026-04-22-m4.6-ocr-pipeline-fix.md)
 - [2026-04-18] 云部署阶段2 Cloud Run OCR `[cloud, deployment, Cloud-Run, Google-Vision, callback, phase-2]` → [plan](plans/2026-04-18-cloud-deployment-phase2.md)
