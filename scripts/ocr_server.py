@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """HTTP wrapper around Google Vision OCR for screenshot recognition and PDF OCR."""
-# trigger smoke 2026-05-01 — verify Cloud Build trigger end-to-end
 
 import io
 import os
