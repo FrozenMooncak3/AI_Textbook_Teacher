@@ -2566,3 +2566,25 @@ Files: `src/app/api/books/[bookId]/status/route.ts`, `src/app/api/books/[bookId]
 - `3520024` chore(cloudbuild): yaml image tag :first → :$SHORT_SHA + 修 includedFiles 描述
 - `fbd2017` test: cloud build trigger smoke (revert by `c3c50fb`)
 - 后续：本次 Phase 5 文档收尾 commit
+
+---
+
+## 2026-05-02 | M4.7 OCR + KP 成本架构正式关闭
+
+7 决策（D0/D0-PPT/D5/D6/D1/D2/D7）全部落地 + 代码 + API smoke + UI 视觉验证全过：
+
+**已完成验证**：
+- 后端 30+ commit Phase 0-4 落地（schema 5 表 / DeepSeek+Qwen provider / 服务层 6 文件 / API 9 端点 / PPT 解析 / 前端 3 组件）
+- T5.2 KP 回归 3 次 variance run 12/12 pass（红线从 ≥5 改 ≥3 因为 KP count ≠ 教学价值代理）
+- T5.4 4 路径 API smoke 全绿（cache miss / cache hit / 服务端拒绝 / PPTX）
+- 真机浏览器 hotfix 链 3 commit（4ee1325 + b55b598 + 97f046a）修 fire-and-forget 4-variant family 第 4 个变种
+- UI 视觉验证用户实跑通过（拒绝弹窗 / 进度页跳转 / quota 拦截）
+
+**Spillover 衍生**：
+- T1 Cloud Build trigger 独立 spec/plan（5/1-5/2 完成，13 天 silent fail 真相揭露）
+- 5/2 自测被 D7 quota 拦 → 临时 SQL 给 user_id=1 加 99 quota 解锁 → 触发停车场 T1「角色系统 + admin 后台」决策
+
+**M5 留存机制按用户 5/2 决策推迟到 MVP 上线后**——先做 MVP 上线前必做项（停车场 T1）：角色系统 + staging + Cloud Build trigger 收尾遗留 + 里程碑级强制 worktree。
+
+**Spec**：`docs/superpowers/specs/2026-04-25-ocr-cost-architecture-design.md`
+**Plan**：`docs/superpowers/plans/2026-04-25-ocr-cost-architecture.md`

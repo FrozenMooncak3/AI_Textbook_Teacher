@@ -9,7 +9,9 @@
 
 **方向**：MVP 扩展三线——扫描 PDF（✅）→ 教学系统（M4 ✅）→ 留存机制，串行执行
 
-**进行中**：**M4.7 OCR + KP 成本架构 — backend 端到端 + 4 路径 smoke 全绿，UI 视觉验证待用户做（2026-04-30）**——T0-T6 代码全 done + 3 真机 hotfix（4ee1325 前端 silent 400 + b55b598 upload-flow inner fire-and-forget + 97f046a OCR callback 嵌套 fire-and-forget）已修 + T5.4 4 路径 API smoke 全绿（cache miss book 55 / cache hit book 58 / 服务端拒绝 API 400 / .pptx book 57）+ telemetry 全 5 表落盘验证（cost_log 20 行 / monthly_cost_meter 0.2174 元 / book_uploads_log / quota 减 1 / kp_cache 4-5 行）。仅剩 UI 层视觉验证：用户浏览器点一次 PDF 上传 + 看进度页跳转 + 看缓存命中 badge 文案。M4.6 OCR 管线修复 ✅ 代码全修完（T15+T16+T17 实测通过），但 book 18 暴露 KP 提取阶段 Google AI Studio 余额耗尽 + 单本成本 8-15 元 → 触发 M4.7 战略级重设
+**进行中**：**无** — M4.7 已正式关闭（2026-05-02），M5 留存机制按用户决策推迟到 MVP 上线后。当前阶段聚焦 MVP 上线前散事（停车场 T1，下一步段列出）。
+
+**最近关闭**：**M4.7 OCR + KP 成本架构** ✅ 正式关闭（2026-05-02）——backend 端到端 + 4 路径 API smoke 全绿 + UI 视觉验证用户实跑通过（拒绝弹窗 / 进度页跳转 / quota 拦截工作）。M4.7 战略级 7 决策全落地（D0 文件类型限制 / D5 DeepSeek 替代 Gemini / D6 PDF MD5 缓存 / D1 月度预算双层 / D7 上传流控）抵御抖音引流烧钱风险。后续 spillover：T1 Cloud Build trigger 落地（5/2，独立 spec/plan，13 天 silent fail 真相揭露）+ 临时 SQL 给 user_id=1 加 99 quota 解锁开发自测（5/2 触发停车场 T1「角色系统 + admin 后台」）。M4.6 OCR 管线修复（T15+T16+T17）已并入 M4.7 收尾。
 - **T1-T4 完成**（2026-04-22）：IdTokenClient audience 缓存（`f98b548`）+ classify/extract-text fetch 30s timeout + retry×1（`7c54934`）+ stuck books cleanup SQL（`8a879f8`）+ docs 骨架
 - **T15 hotfix 完成**（2026-04-23）：live test book 13（14.9MB 369 页）暴露 Cloud Run 容器 OOM 崩溃（`e0bb0c5`）。Python-side：`scripts/ocr_server.py` Vision client 模块级 singleton + 每 50 页 `gc.collect()` + progress log；Infra-side：用户 Console 手动 Cloud Run memory 512 MiB → 4 GiB
 - **T16 hotfix 完成**（2026-04-23）：T15 push 后 Cloud Run 仍跑旧 revision 暴露 `cloudbuild.ocr.yaml` 只 build+push 不 deploy（`f097994`）。追加第 3 步 `gcloud run deploy` 固化 `--memory=4Gi`，未来 push `scripts/**` / `Dockerfile.ocr` 会自动 build → push → deploy 一条龙。IAM 前置（Cloud Build SA 需 `roles/run.admin` + `roles/iam.serviceAccountUser`）已标注 commit body
@@ -42,12 +44,17 @@
 - **云部署**（阶段 1 ✅ 2026-04-16；阶段 2 ✅ 2026-04-19；阶段 3 ⬜ 未开始：域名 + 监控 + Secrets）
 - **M4 教学系统** ✅ 完成（2026-04-20 本 session 收尾）：19 tasks 全 PASS。L1 引擎：KP 类型迁移 + zod + schema（teaching_sessions + user_subscriptions + prompt_templates.model）+ retry/teaching-types/entitlement/teacher-model + teacher-prompts（Zod refine）+ seed 5 teacher 模板 + teaching-sessions API（create + messages retry + 409 struggling）+ L2 Tier A 6 后端端点（switch-mode / reset-and-start / clusters / module / start-qa / status 扩展）+ book-meta-analyzer。L2 Tier B 前端：Modal + BookTOC（基础 + 引导态）+ ObjectivesList + ModeSwitchDialog + /books 页改造 + /activate 激活页 + /teach 教学对话页（retry ×1）+ /teaching-complete 完成中页。Moat 硬约束：4 字段全 grep 0 hits。技术债登记：start-qa API stale redirectUrl（前端已 workaround）。→ [spec](superpowers/specs/2026-04-15-m4-teaching-mode-design.md) · [plan](superpowers/plans/2026-04-15-m4-teaching-mode.md)
 
-**排队中**：M5 留存机制（M4.7 浏览器 smoke 通过后再启动）
+**排队中**：M5 留存机制——**用户 5/2 决策推迟到 MVP 上线后**（先做 MVP 上线前必做项再上线）
 
-**下一步**：
-1. **🚨 用户回家后做 UI 视觉验证**（本机网络不通 *.vercel.app 必须用户做）：浏览器点一次 PDF 上传，看进度页跳转 + 缓存命中 badge 文案；可选 PPTX 直传 + 拒绝弹窗（>10MB 或扫描 PDF）。**Backend 已端到端验证**（book 53 XHR-equivalent CLI smoke），仅剩 UI 层"按钮文案 / 渲染对不对"
-2. **UI 验证通过后 commit "M4.7 正式关闭"**：T6.3 milestone-audit + finishing-a-development-branch + push origin
-3. **M5 留存机制 brainstorm**：M4.7 正式关闭后启动
+**下一步**（MVP 上线前必做项 / 停车场 T1，按依赖顺序）：
+1. **角色系统 + admin 后台**（5/2 加进停车场 T1）——`users.role` user/dev/admin + presign bypass quota + admin 后台 UI（流水 / quota 改 / 邀请码生成 / ban）；工程量 1-2 天。**触发原因**：5/2 自测被 D7 quota 拦，临时 SQL update 解锁
+2. **staging 环境建设**（2026-05-01 决策）——新 R2 bucket + Neon branch + Cloud Run service `ai-textbook-ocr-staging` + OCR token 一套；工程量 1-2 天
+3. **Cloud Build trigger 收尾 4 项**（停车场 T2，可与 staging 同批做）：(a) Phase 2.1 失败邮件告警（Log-based metric + Cloud Monitoring alert 接 frozenmooncak3@gmail.com 渠道）；(b) Compute Default SA Editor 收紧到专属最小权限 SA；(c) Artifact Registry 19 个旧镜像清理；(d) ocr-cd 旧 trigger 决定 keep-disabled vs delete
+4. **里程碑级强制 worktree 决策**（停车场 T1，工程流程）——M4.5 闪退暴露 master=prod 风险，MVP 上线前必须升级规则 4
+5. **Phase 3 阶段收尾**（云部署）：域名 + 监控 + Secrets
+
+**MVP 上线时**：抖音/小红书引流准备
+**MVP 上线后**：M5 留存机制 brainstorm（streak / 复习提醒 / 成就等）
 
 **平行 · 元系统进化**：✅ 完成（2026-04-19 本 session 端到端落地）。Survey → Spec → Plan → 10 commits（c423c63 / 7eb1313 / 3227a3d / 36b5303 / 0684391 / ed50bbf / d783baf / 96b25fd / cfe8456 / 024de5e），T1 8 低成本 + T2 Retrospective 2.0 + M10 review 外化全部上线。Kill switch：`AI_SYSTEM_EVOLUTION_DISABLE=1` 一键禁用所有 hook 机制。Spec: `superpowers/specs/2026-04-19-system-evolution-design.md`；Plan: `superpowers/plans/2026-04-19-system-evolution.md`。
 
