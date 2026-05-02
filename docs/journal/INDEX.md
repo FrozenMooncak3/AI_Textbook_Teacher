@@ -33,6 +33,7 @@
 - **T2** 学习计划定制（百词斩模式）：AI 预估时长+用户自定节奏 `[study-plan, pacing, AI-estimation, personalization]` → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
 
 ### 基础设施
+- **T1** 🚨 **MVP 上线前必做角色系统 + admin 后台**（2026-05-02 决策）——`users.role` 列（user / dev / admin）+ presign 端点 dev/admin bypass quota + 1h limit；admin 后台 UI 看流水 + 改单用户 quota + 邀请码生成 + ban / un-ban 用户。**触发原因**：开发自测被 D7 quota 拦（5/2 临时 SQL update 给 user_id=1 加到 99 解锁），生产环境若没 admin 后台无法监控真实用户行为 / 调单点 quota / 应对 abuse 案例。工程量约 1-2 天。**触发条件**：MVP 上线前必做，跟 staging / Cloud Build trigger 收尾一并 `[role-system, admin-panel, dev-bypass, T1, MVP-launch]` → [触发 SQL audit](../../.ccb/admin-quota-bump.mjs)
 - **T1** 🚨 **MVP 上线前必建 staging 环境**（2026-05-01 决策）——T1 brainstorm 决议 staging 不在本次同时做，推迟到 M5 收尾、抖音/小红书引流前一天独立建设。涉及：新 R2 bucket / 新 Neon branch / 新 Cloud Run service `ai-textbook-ocr-staging` / 新 OCR token 一套。**触发条件**：M5 完成 + 用户开始评估上线时刻 `[staging, MVP-launch, R2, Neon, Cloud-Run, T1, MVP-gate]` → [设计源头](../superpowers/specs/2026-05-01-cloud-build-trigger-design.md#6-staging-推迟与-skill-集成)
 - **T1** 🚨 OCR 管线 Vercel→Cloud Run 出站 fetch hang 4-6 分钟——book 11/12 复测暴露（OCR 直接探测 4.5s 返 200 正常），M4.6 第一件事诊断 google-auth-library / Vercel 网络 / 函数运行时根因 `[OCR, Vercel, Cloud-Run, fetch-hang, google-auth-library, M4.6]` → 见 `docs/project_status.md §4`
 - **T2** 预生成系统——后台预生成下一步内容，消灭等待 `[pregeneration, background-tasks, latency, infrastructure]` → [2026-04-04-pregeneration-system.md](./2026-04-04-pregeneration-system.md)
