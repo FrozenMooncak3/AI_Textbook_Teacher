@@ -5,6 +5,7 @@
 ## Specs
 
 ### 进行中（in_progress）
+- [2026-05-01] Cloud Build Trigger 配置（OCR 部署链补全）`[Cloud-Build, trigger, GitHub, Cloud-Run-CD, IAM, staging-deferred, T1, finishing-skill-hard-check]` → [spec](specs/2026-05-01-cloud-build-trigger-design.md) · [WIP](specs/2026-05-01-cloud-build-trigger-brainstorm-state.md)
 - [2026-04-25] OCR + KP 提取成本架构重设 `[OCR, KP-extraction, cost-architecture, DeepSeek-V3.2, Qwen3-Max, Gemini-下线, PDF-MD5-cache, .pptx, scanned-PDF-rejection, 邮箱收集, 留学生, MVP-范围切割, 5决策7lock]` → [spec](specs/2026-04-25-ocr-cost-architecture-design.md) · [WIP](specs/2026-04-25-ocr-cost-brainstorm-state.md)
 - [2026-04-22] M4.6 OCR 管线诊断 + 性能优化设计 `[M4.6, OCR, Vercel, Cloud-Run, hang, fetch-timeout, IdTokenClient-cache, google-auth-library, stuck-artifacts]` → [spec](specs/2026-04-22-m4.6-ocr-pipeline-design.md) · [WIP](specs/2026-04-22-m4.6-ocr-pipeline-brainstorm-state.md)
 - [2026-04-15] M4教学模式最小闭环设计 `[M4, teaching-mode, teacher-AI, transcript, prompt]` → [spec](specs/2026-04-15-m4-teaching-mode-design.md)

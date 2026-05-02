@@ -10,6 +10,8 @@
 
 ## in_progress（解决中）
 
+- [infra:cloud-build-trigger] **T1 Cloud Build trigger brainstorm 进行中**（2026-05-01 启动）：scope = 落地填坑（不重选方案），trigger 配生产，staging 推迟到 MVP 上线前。已锁 2 决策，剩 5 决策（路径精度 / 失败通知 / 首次回归 / IAM 权限 / staging skill 集成） `[Cloud-Build, trigger, GitHub, Cloud-Run-CD, brainstorm, T1]` → [WIP](../superpowers/specs/2026-05-01-cloud-build-trigger-brainstorm-state.md) · [spec skeleton](../superpowers/specs/2026-05-01-cloud-build-trigger-design.md)
+
 ## parked（停车场）
 
 > Tier 说明：T1 = M5.5 必做 | T2 = 独立里程碑评估 | T3 = MVP 后再议
@@ -33,7 +35,8 @@
 - **T2** 学习计划定制（百词斩模式）：AI 预估时长+用户自定节奏 `[study-plan, pacing, AI-estimation, personalization]` → [2026-03-31-m3-brainstorming.md](./2026-03-31-m3-brainstorming.md)
 
 ### 基础设施
-- **T1** 🚨 Cloud Build trigger 缺失——OCR server 改 → Cloud Run 部署链断裂，M4.7 T5.4 PPTX smoke 暴露 Cloud Run rev 00008 自 Apr 24 stale（M4.6 T16 只补了 yaml deploy step 没配 trigger），目前 workaround 手动 `gcloud builds submit` `[Cloud-Build, trigger, Cloud-Run, OCR-deploy, CI/CD-gap, M4.7]` → [2026-04-29-cloud-build-trigger-gap.md](./2026-04-29-cloud-build-trigger-gap.md)
+- **T1** 🚨 Cloud Build trigger 缺失——已进 brainstorm（2026-05-01）；条目移到 in_progress 段
+- **T1** 🚨 **MVP 上线前必建 staging 环境**（2026-05-01 决策）——T1 brainstorm 决议 staging 不在本次同时做，推迟到 M5 收尾、抖音/小红书引流前一天独立建设。涉及：新 R2 bucket / 新 Neon branch / 新 Cloud Run service `ai-textbook-ocr-staging` / 新 OCR token 一套。**触发条件**：M5 完成 + 用户开始评估上线时刻 `[staging, MVP-launch, R2, Neon, Cloud-Run, T1, MVP-gate]` → [设计源头](../superpowers/specs/2026-05-01-cloud-build-trigger-design.md#6-staging-推迟与-skill-集成)
 - **T1** 🚨 OCR 管线 Vercel→Cloud Run 出站 fetch hang 4-6 分钟——book 11/12 复测暴露（OCR 直接探测 4.5s 返 200 正常），M4.6 第一件事诊断 google-auth-library / Vercel 网络 / 函数运行时根因 `[OCR, Vercel, Cloud-Run, fetch-hang, google-auth-library, M4.6]` → 见 `docs/project_status.md §4`
 - **T2** 预生成系统——后台预生成下一步内容，消灭等待 `[pregeneration, background-tasks, latency, infrastructure]` → [2026-04-04-pregeneration-system.md](./2026-04-04-pregeneration-system.md)
 - **T3** 语言模式系统——自动切换 prompt 语言，多国语言版本 `[i18n, prompt-language, localization]` → [2026-03-22-m0-verification.md](./2026-03-22-m0-verification.md)
@@ -43,6 +46,7 @@
 
 ### 工程流程
 - **T1** 🚨 里程碑开发必须先切隔离分支/版本——M4.5 session 闪退暴露 master=prod 半成品直达生产（T7 已上线但 T8 未建→生产 404），M5 开始前必须决策规则 4 升级为"里程碑级强制 worktree" `[dev-branch, worktree, milestone-isolation, master-prod-risk]` → [2026-04-21-dev-branch-isolation.md](./2026-04-21-dev-branch-isolation.md)
+- **T2** M5 收尾时给 `.claude/skills/finishing-a-development-branch/SKILL.md` 加 staging 硬 check 段——T1 Cloud Build trigger brainstorm（2026-05-01）spec review 暴露 Layer 2 实施细节没定（milestone schema / 标记位 / SKILL 插入步 / M5 之前默认放行逻辑全空），推迟到 staging 真建时一并定+实施 `[finishing-skill, staging, hard-check, M5-closeout, T1-spillover]` → [设计源头](../superpowers/specs/2026-05-01-cloud-build-trigger-design.md#62-skill-集成决策-7-修订-2026-05-01-仅-layer-1layer-2-推迟)
 - **T2** Agent 违规事件追溯系统——T8 Gemini 一轮 3 类硬约束违规（file boundary / any / AC 文案自创），现有追溯只到 session-local ledger + 模式级 memory，缺跨 session 可查事件日志。推荐 `.ccb/agent-violations.log` + 扩展 feedback memory 组合，M4.5 闭环后或下次 retrospective 再评估 `[agent-reliability, observability, violation-tracking, retrospective]` → [2026-04-21-agent-violation-tracking.md](./2026-04-21-agent-violation-tracking.md)
 
 ## resolved（已解决）

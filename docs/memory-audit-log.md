@@ -58,3 +58,10 @@
 2026-04-30 21:00 | op:edit | file:project_vercel-fire-and-forget-after.md | reason:retrospective 2.0 草稿 a1 — 扩展为 4-variant family（outer naked / inner-of-after() naked / OCR callback book-level / OCR callback module-level）+ grep gate 命令 + 4 处未修候选清单（M4.7 收尾）
 2026-04-30 21:00 | op:add | file:feedback_smoke-must-traverse-auth-gate.md | reason:retrospective 2.0 草稿 a2 — 派 src/app/api/** fix 任务 acceptance 必须三件齐全（cookie + --data-binary + DB 终态查询），M4.7 实证两次假阳性（598bf33 401 / 4ee1325 silent 400）
 2026-04-30 21:00 | op:edit | file:MEMORY.md | reason:Milestones & Review 段加 Smoke Must Traverse Auth Gate 索引行（与 auth-gate-verification 相邻）；Project 段更新 Vercel Fire-and-Forget 描述（4-variant family）
+
+## 2026-05-01
+
+2026-05-01 12:00 | op:add | file:project_cloud-build-trigger-brainstorm-wip.md | reason:T1 Cloud Build trigger 配置 brainstorm 启动，按 brainstorming skill WIP 协议加 memory pointer 防 compact 丢失；WIP 完成 + 转 spec/plan 后删除
+2026-05-01 12:00 | op:edit | file:MEMORY.md | reason:Project 段加 Cloud Build Trigger Brainstorm WIP 索引行
+
+2026-05-01 14:00 | op:edit | file:project_cloud-build-trigger-brainstorm-wip.md | reason:spec review 后 7 决策修订（决策 6 admin 不是 developer / 决策 7 仅 Layer 1，Layer 2 推迟到 M5 收尾），WIP 文件状态同步

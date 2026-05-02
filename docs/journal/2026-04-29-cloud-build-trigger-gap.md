@@ -10,7 +10,7 @@
 
 M4.7 T5.4 4-Path API smoke 验证 PPTX 路径返回 500 SYSTEM_ERROR。Cloud Run 日志查到 OCR server 在 `/parse-pptx` 上返回 404，但 `scripts/ocr_server.py` 源码第 510 行 `@app.post("/parse-pptx")` 路由确实存在（commit `8b425ee` Apr 26 加的）。
 
-定位到 Cloud Run 服务 `ocr-server` 当前 latest revision = `00008-5jg`（Apr 24 部署），落后于 master HEAD 三个 OCR 改动 commit。
+定位到 Cloud Run 服务 `ai-textbook-ocr` 当前 latest revision = `00008-5jg`（Apr 24 部署），落后于 master HEAD 三个 OCR 改动 commit。
 
 ---
 
@@ -84,4 +84,4 @@ gcloud builds submit --config=cloudbuild.ocr.yaml --project=awesome-nucleus-4037
 
 - M4.6 T16 commit `f097994`（deploy step 加进 yaml，但没配 trigger）
 - M4.7 T5.4 commit `8b425ee`（/parse-pptx 加进 source，但没自动部署）
-- Cloud Run 服务 `ocr-server` revision 00008-5jg（Apr 24 起 stale）
+- Cloud Run 服务 `ai-textbook-ocr` revision 00008-5jg（Apr 24 起 stale）
